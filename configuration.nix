@@ -111,6 +111,11 @@
   # Enable Fish
   programs.fish.enable = true;
 
+  # Enable Nerd Fonts
+  fonts.packages = with pkgs; [
+    (nerdfonts.override { fonts = [ "CodeNewRoman" ]; })
+  ];
+
   # Enable Virtualbox
    virtualisation.virtualbox.host.enable = true;
    users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
@@ -166,6 +171,11 @@
     wine
     fastfetch
     vesktop
+    starship
+    bottles
+    obs-studio
+    gearlever
+    protonup-qt
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
