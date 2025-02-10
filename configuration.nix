@@ -25,6 +25,16 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  # Raise package download timeout
+  nix.settings.stalled-download-timeout = 99999999;
+
+  # Openvpn setup
+  services.openvpn.servers = {
+    homeVPN = { config = '' config /etc/NordVPN/us9529.conf '';
+    # updateResolvConf = true;
+    };
+  };
+
   # Set your time zone.
   time.timeZone = "America/New_York";
 
@@ -56,6 +66,16 @@
     layout = "us";
     variant = "";
   };
+
+  # Enable flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  # Enable package overrides for NUR access
+  # nixpkgs.config.packageOverrides = pkgs: {
+  #   nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+  #     inherit pkgs;
+  #   };
+  # };
 
   # Enable Nvidia
   # Enable OpenGL
@@ -99,6 +119,16 @@
 
   # Allow Unfree Packages
   nixpkgs.config.allowUnfree = true;
+
+  # Enable automatic updating
+  system.autoUpgrade.enable = true;
+  system.autoUpgrade.dates = "weekly";
+
+  # Enable automatic cleanup
+  nix.gc.automatic = true;
+  nix.gc.dates = "daily";
+  nix.gc.options = "--delete-older-than 10d";
+  nix.settings.auto-optimise-store = true;
 
   # Enable Steam
   programs.steam = {
@@ -158,9 +188,11 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    vim
     wget
+    unzip
     git
+    tree
     thunderbird
     alacritty
     btop
@@ -176,6 +208,7 @@
     obs-studio
     gearlever
     protonup-qt
+    openvpn
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
