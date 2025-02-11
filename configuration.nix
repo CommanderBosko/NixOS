@@ -1,6 +1,4 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# The NixOS manual is accessible by running ‘nixos-help’
 
 { config, pkgs, ... }:
 
@@ -29,9 +27,9 @@
 
   # Openvpn setup
   services.openvpn.servers = {
-    homeVPN = { config = '' config /etc/nordvpn/us11656.manassas1.nordvpn.conf '';
-    updateResolvConf = true;
-    };
+    homeVPN = { config = '' config /etc/nordvpn/us11656.manassas1.nordvpn.conf ''; };
+    pVPN = { config = '' config /etc/nordvpn/us10399.newYork.nordvpn.conf ''; };
+    # updateResolvConf = true;
   };
 
   # Set your time zone.
@@ -69,14 +67,7 @@
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  # Enable package overrides for NUR access
-  # nixpkgs.config.packageOverrides = pkgs: {
-  #   nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-  #     inherit pkgs;
-  #   };
-  # };
-
-  # Enable Nvidia
+  #####NVIDIA GRAPHICS START#####
   # Enable OpenGL
   hardware.graphics = {
     enable = true;
@@ -109,18 +100,19 @@
     open = false;
 
     # Enable the Nvidia settings menu,
-	# accessible via `nvidia-settings`.
+    # accessible via `nvidia-settings`.
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
+  #####NVIDIA GRAPHICS END#####
 
   # Allow Unfree Packages
   nixpkgs.config.allowUnfree = true;
 
   # Enable automatic updating
-  system.autoUpgrade.enable = true;
+  system.autoUpgrade.enable = false;
   system.autoUpgrade.dates = "weekly";
 
   # Enable automatic cleanup
@@ -169,12 +161,7 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
     #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
@@ -185,9 +172,6 @@
     isNormalUser = true;
     description = "bosko";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      kdePackages.kate
-    ];
   };
 
   # Install firefox.
@@ -201,10 +185,13 @@
     bottles
     fastfetch
     flatpak
+    freetube
+    gamemode
     gearlever
     git
     heroic
     htop
+    kate
     lutris
     neofetch
     neovim
@@ -214,8 +201,6 @@
     protonup-qt
     spotify
     starship
-    steam
-    steam-run
     thunderbird
     tree
     unzip
