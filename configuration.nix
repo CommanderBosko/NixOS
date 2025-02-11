@@ -11,9 +11,8 @@
     ];
 
   # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/vda";
-  boot.loader.grub.useOSProber = true;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -30,8 +29,8 @@
 
   # Openvpn setup
   services.openvpn.servers = {
-    homeVPN = { config = '' config /etc/NordVPN/us9529.conf '';
-    # updateResolvConf = true;
+    homeVPN = { config = '' config /etc/nordvpn/us11656.manassas1.nordvpn.conf '';
+    updateResolvConf = true;
     };
   };
 
@@ -141,14 +140,23 @@
   # Enable Fish
   programs.fish.enable = true;
 
+  # Enable starship
+  programs.starship = {
+    enable = true;
+    settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
+  };
+
   # Enable Nerd Fonts
   fonts.packages = with pkgs; [
-    (nerdfonts.override { fonts = [ "CodeNewRoman" ]; })
+    (nerdfonts.override { fonts = [ "CodeNewRoman" "Meslo"]; })
   ];
 
   # Enable Virtualbox
-   virtualisation.virtualbox.host.enable = true;
-   users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
+
+  # Enable flatpak
+  services.flatpak.enable = true;
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -188,27 +196,35 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim
-    wget
-    unzip
-    git
-    tree
-    thunderbird
     alacritty
     btop
-    htop
-    spotify
-    lutris
-    heroic
-    wine
-    fastfetch
-    vesktop
-    starship
     bottles
-    obs-studio
+    fastfetch
+    flatpak
     gearlever
-    protonup-qt
+    git
+    heroic
+    htop
+    lutris
+    neofetch
+    neovim
+    obs-studio
     openvpn
+    protontricks
+    protonup-qt
+    spotify
+    starship
+    steam
+    steam-run
+    thunderbird
+    tree
+    unzip
+    vesktop
+    vim
+    vlc
+    wine
+    winetricks
+    wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
