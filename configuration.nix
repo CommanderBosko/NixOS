@@ -129,6 +129,9 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
   };
 
+  # Enable gamemode
+  programs.gamemode.enable = true;
+
   # Enable Fish
   programs.fish.enable = true;
 
@@ -193,6 +196,7 @@
     htop
     kate
     lutris
+    mangohud
     neofetch
     neovim
     obs-studio
