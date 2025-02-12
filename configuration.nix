@@ -8,6 +8,8 @@
       ./hardware-configuration.nix
     ];
 
+  ##### OS SETUP #####
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -50,12 +52,22 @@
     LC_TIME = "en_US.UTF-8";
   };
 
+  # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.users.bosko = {
+    isNormalUser = true;
+    description = "bosko";
+    extraGroups = [ "networkmanager" "wheel" ];
+  };
+
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
+  services.displayManager.defaultSession = "plasma";
+  services.displayManager.autoLogin.enable = true;
+  services.displayManager.autoLogin.user = "bosko";
   services.desktopManager.plasma6.enable = true;
 
   # Configure keymap in X11
@@ -67,15 +79,13 @@
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  #####NVIDIA GRAPHICS START#####
   # Enable OpenGL
-  hardware.graphics = {
-    enable = true;
-  };
+  hardware.graphics.enable = true;
 
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia"];
 
+  #####NVIDIA GRAPHICS START#####
   hardware.nvidia = {
 
     # Modesetting is required.
@@ -90,17 +100,7 @@
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
     powerManagement.finegrained = false;
-
-    # Use the NVidia open source kernel module (not to be confused with the
-    # independent third-party "nouveau" open source driver).
-    # Support is limited to the Turing and later architectures. Full list of
-    # supported GPUs is at:
-    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
-    # Only available from driver 515.43.04+
     open = false;
-
-    # Enable the Nvidia settings menu,
-    # accessible via `nvidia-settings`.
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
@@ -112,46 +112,19 @@
   nixpkgs.config.allowUnfree = true;
 
   # Enable automatic updating
-  system.autoUpgrade.enable = false;
-  system.autoUpgrade.dates = "weekly";
+  system.autoUpgrade = {
+    enable = false;
+    dates = "weekly";
+  };
 
   # Enable automatic cleanup
-  nix.gc.automatic = true;
-  nix.gc.dates = "daily";
-  nix.gc.options = "--delete-older-than 10d";
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 1d";
+  };
+
   nix.settings.auto-optimise-store = true;
-
-  # Enable Steam
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
-    localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
-  };
-
-  # Enable gamemode
-  programs.gamemode.enable = true;
-
-  # Enable Fish
-  programs.fish.enable = true;
-
-  # Enable starship
-  programs.starship = {
-    enable = true;
-    settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
-  };
-
-  # Enable Nerd Fonts
-  fonts.packages = with pkgs; [
-    (nerdfonts.override { fonts = [ "CodeNewRoman" "Meslo"]; })
-  ];
-
-  # Enable Virtualbox
-  virtualisation.virtualbox.host.enable = true;
-  users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
-
-  # Enable flatpak
-  services.flatpak.enable = true;
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
@@ -167,21 +140,47 @@
     #jack.enable = true;
   };
 
+  # Enable Fish
+  programs.fish.enable = true;
+
+  # Enable starship
+  programs.starship = {
+    enable = true;
+    settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
+  };
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.bosko = {
-    isNormalUser = true;
-    description = "bosko";
-    extraGroups = [ "networkmanager" "wheel" ];
-  };
+  ##### SOFTWARE SETUP #####
+
+  # Enable gamemode
+  programs.gamemode.enable = true;
+
+  # Enable Nerd Fonts
+  fonts.packages = with pkgs; [
+    (nerdfonts.override { fonts = [ "CodeNewRoman" "Meslo"]; })
+  ];
 
   # Install firefox.
   programs.firefox.enable = true;
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  # Enable Virtualbox
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
+
+  # Enable flatpak
+  services.flatpak.enable = true;
+
+  # Enable Steam
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
+    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
+    localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
+  };
+
+  # Packages to install
   environment.systemPackages = with pkgs; [
     alacritty
     btop
@@ -215,25 +214,6 @@
     winetricks
     wget
   ];
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
