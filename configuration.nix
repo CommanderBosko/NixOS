@@ -85,7 +85,7 @@
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia"];
 
-  #####NVIDIA GRAPHICS START#####
+  # NVIDIA GRAPHICS START #
   hardware.nvidia = {
 
     # Modesetting is required.
@@ -106,7 +106,7 @@
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
-  #####NVIDIA GRAPHICS END#####
+  # NVIDIA GRAPHICS END #
 
   # Allow Unfree Packages
   nixpkgs.config.allowUnfree = true;
@@ -185,6 +185,7 @@
     alacritty
     btop
     bottles
+    distrobox
     fastfetch
     flatpak
     freetube
@@ -200,6 +201,7 @@
     neovim
     obs-studio
     openvpn
+    podman
     protontricks
     protonup-qt
     spotify
