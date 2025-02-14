@@ -11,8 +11,10 @@
   ##### OS SETUP #####
 
   # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+  };
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -64,10 +66,12 @@
   services.xserver.enable = true;
 
   # Enable the KDE Plasma Desktop Environment.
-  services.displayManager.sddm.enable = true;
-  services.displayManager.defaultSession = "plasma";
-  services.displayManager.autoLogin.enable = true;
-  services.displayManager.autoLogin.user = "bosko";
+  services.displayManager = {
+    sddm.enable = true;
+    defaultSession = "plasma";
+    autoLogin.enable = true;
+    autoLogin.user = "bosko";
+  };
   services.desktopManager.plasma6.enable = true;
 
   # Configure keymap in X11
@@ -124,6 +128,7 @@
     options = "--delete-older-than 1d";
   };
 
+  # Optimise store on rebuild
   nix.settings.auto-optimise-store = true;
 
   # Enable CUPS to print documents.
