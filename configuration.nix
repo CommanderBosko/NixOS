@@ -176,8 +176,14 @@
   virtualisation.virtualbox.host.enable = true;
   users.extraGroups.vboxusers.members = [ "user-with-access-to-virtualbox" ];
 
-  # Enable flatpak
+  # Enable flatpaks
   services.flatpak.enable = true;
+
+  # Enable appimages
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
 
   # Enable Steam
   programs.steam = {
@@ -189,11 +195,16 @@
 
   # Packages to install
   environment.systemPackages = with pkgs; [
+    appimage-run
     alacritty
     btop
     bottles
+    digikam
     distrobox
+    docker
     fastfetch
+    firefox
+    fish
     flatpak
     freetube
     gamemode
@@ -208,7 +219,6 @@
     neovim
     obs-studio
     openvpn
-    podman
     protontricks
     protonup-qt
     spotify
@@ -217,6 +227,7 @@
     tree
     unzip
     vesktop
+    virtualbox
     vim
     vlc
     wine
