@@ -215,6 +215,7 @@
     kate
     lutris
     mangohud
+    megasync
     neofetch
     neovim
     obs-studio
