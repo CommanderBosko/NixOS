@@ -1,49 +1,44 @@
 # The NixOS manual is accessible by running ‘nixos-help’
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [ # Include the results of the hardware scan
       ./hardware-configuration.nix
     ];
 
-  ##### OS SETUP #####
+  ##### SYSTEM SETUP #####
 
-  # Bootloader.
+  # Set NixOS version
+  system.stateVersion = "24.11";
+
+  # Bootloader
   boot.loader = {
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
   };
 
+  # Networking setup
   networking = {
-    hostName = "nixos"; # Define your hostname.
-    # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-    # Configure network proxy if necessary
-    # proxy.default = "http://user:password@proxy:port/";
-    # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-    # Enable networking
+    hostName = "nixos";
     networkmanager.enable = true;
   };
 
-  # Raise package download timeout
-  nix.settings.stalled-download-timeout = 99999999;
+  # Bluetooth
+    # hardware.bluetooth.enable = true;
 
   # Openvpn setup
   services.openvpn.servers = {
     homeVPN = { config = '' config /etc/nordvpn/us11656.manassas1.nordvpn.conf ''; };
     pVPN = { config = '' config /etc/nordvpn/us10399.newYork.nordvpn.conf ''; };
-    # updateResolvConf = true;
   };
 
-  # Set your time zone.
+  # Time zone
   time.timeZone = "America/New_York";
 
-  # Select internationalisation properties.
+  # Select internationalisation properties
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -56,18 +51,18 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
+  # Define a user accounts. Don't forget to set a password with ‘passwd’
   users.users.bosko = {
     isNormalUser = true;
     description = "bosko";
     extraGroups = [ "networkmanager" "wheel" ];
   };
 
-  # Enable the X11 windowing system.
-  # You can disable this if you're only using the Wayland session.
+  # Enable the X11 windowing system
+  # You can disable this if you're only using the Wayland session
   services.xserver.enable = true;
 
-  # Enable the KDE Plasma Desktop Environment.
+  # Enable the KDE Plasma Desktop Environment
   services.displayManager = {
     sddm.enable = true;
     defaultSession = "plasma";
@@ -83,18 +78,18 @@
   };
 
   # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Enable OpenGL
   hardware.graphics.enable = true;
 
-  # Load nvidia driver for Xorg and Wayland
+  # Load video drivers
   services.xserver.videoDrivers = ["nvidia"];
 
-  # NVIDIA GRAPHICS START #
+  # Nvidia settings
   hardware.nvidia = {
 
-    # Modesetting is required.
+    # Modesetting is required
     modesetting.enable = true;
 
     # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
@@ -112,31 +107,32 @@
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
-  # NVIDIA GRAPHICS END #
 
-  # Allow Unfree Packages
+  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # Enable automatic updating
+  # Automatic updating
   system.autoUpgrade = {
-    enable = false;
-    dates = "weekly";
+    enable = true;
+    dates = "daily";
+    persistent = true;
   };
 
-  # Enable automatic cleanup
+  # Automatic cleanup
   nix.gc = {
     automatic = true;
     dates = "daily";
-    options = "--delete-older-than 1d";
+    options = "--delete-older-than 7d";
+    persistent = true;
   };
 
   # Optimise store on rebuild
   nix.settings.auto-optimise-store = true;
 
-  # Enable CUPS to print documents.
+  # Enable CUPS to print
   services.printing.enable = true;
 
-  # Enable sound with pipewire.
+  # Enable sound
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -144,19 +140,19 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    #jack.enable = true;
+    jack.enable = true;
   };
 
   # Enable Fish
   programs.fish.enable = true;
 
-  # Enable starship
+  # Enable Starship
   programs.starship = {
     enable = true;
     settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
+  # Enable touchpad support (enabled default in most desktopManager)
   # services.xserver.libinput.enable = true;
 
   ##### SOFTWARE SETUP #####
@@ -217,7 +213,6 @@
     mangohud
     megasync
     neofetch
-    neovim
     obs-studio
     openvpn
     protontricks
@@ -235,13 +230,4 @@
     winetricks
     wget
   ];
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.11"; # Did you read the comment?
-
 }
