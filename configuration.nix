@@ -152,6 +152,10 @@
     settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
   };
 
+  # Enable SSH
+  services.openssh.enable = true;
+  programs.ssh.startAgent = true;
+
   # Enable touchpad support (enabled default in most desktopManager)
   # services.xserver.libinput.enable = true;
 
@@ -195,6 +199,7 @@
     alacritty
     btop
     bottles
+    cmatrix
     digikam
     distrobox
     docker
