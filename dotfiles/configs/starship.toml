@@ -1,0 +1,112 @@
+{ config, lib, pkgs, ... }:
+
+let
+  starshipConfig = {
+    "$schema" = "https://starship.rs/config-schema.json";
+    format = "[](color_orange)\os\$username\[](bg:color_yellow fg:color_orange)\$directory\[](fg:color_yellow bg:color_aqua)\$git_branch\$git_status\[](fg:color_aqua bg:color_blue)\$c\$rust\$golang\$nodejs\$php\$java\$kotlin\$haskell\[](fg:color_blue bg:color_bg3)\$docker_context\$conda\[ ](fg:color_bg3)\$time\[ ](fg:color_bg1)\$line_break$character";
+    palette = "gruvbox_dark";
+    palettes.gruvbox_dark = {
+      color_fg0 = "#fbf1c7";
+      color_bg1 = "#3c3836";
+      color_bg3 = "#665c54";
+      color_blue = "#458588";
+      color_aqua = "#689d6a";
+      color_green = "#98971a";
+      color_orange = "#d65d0e";
+      color_purple = "#b16286";
+      color_red = "#cc241d";
+      color_yellow = "#d79921";
+    };
+    os.style = "bg:color_orange fg:color_fg0";
+    os.symbols = {
+      Windows = "󰍲";
+      "Windows_PowerShell" = "💻";
+      "Windows_Command" = "cmd";
+      "Windows_Terminal" = "wt";
+      "Windows_Subsystem" = "wsl";
+      "Windows_Subsystem_for_Linux" = "wsl";
+      Macos = "🐶";
+      "Macos_Catalina" = "🐱";
+      "Macos_Big_Sur" = "🐶";
+      "Macos_Monterey" = "🐶";
+      "Macos_Ventura" = "🐶";
+      Linux = "🐧";
+      "Linux_Ubuntu" = "🐺";
+      "Linux_Debian" = "🐋";
+      "Linux_Mint" = "🐨";
+      "Linux_Fedora" = "🐉";
+      "Linux_Arch" = "🐛";
+      "Linux_Gentoo" = "🐢";
+      "Linux_Alpine" = "🐡";
+      "Linux_CentOS" = "🐨";
+      "Linux_RedHat" = "🐨";
+      "Linux_RedHatEnterprise" = "🐨";
+      "Linux_OpenSUSE" = "🐧";
+      "Linux_Suse" = "🐧";
+      "Linux_Manjaro" = "🐧";
+    };
+    username.show_always = true;
+    username.style_user = "bg:color_orange fg:color_fg0";
+    username.style_root = "bg:color_orange fg:color_fg0";
+    username.format = "[ $user ]($style_user)";
+    directory.style = "fg:color_fg0 bg:color_yellow";
+    directory.format = "[ $path ]($style)";
+    directory.truncation_length = 0;
+    directory.truncation_symbol = "…/";
+    directory.substitutions = {
+      "Documents" = "📂 ";
+      "Downloads" = "💻 ";
+      "Music" = "🎶 ";
+      "Pictures" = "💿 ";
+      "Developer" = "💻 ";
+    };
+    git_branch.symbol = "🛎";
+    git_branch.style = "fg:color_fg0 bg:color_aqua";
+    git_branch.format = "[[ $symbol $branch]($style)}\\n$indent[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)";
+    git_status.style = "fg:color_fg0 bg:color_aqua";
+    git_status.format = "[[(($all_status$ahead_behind))]($style)}\\n$indent[🛎](fg:color_fg0 bg:color_aqua) ";
+    nodejs.symbol = "⬢ ";
+    nodejs.style = "bg:color_blue";
+    nodejs.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    c.symbol = "🐢 ";
+    c.style = "bg:color_blue";
+    c.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    rust.symbol = "🦀 ";
+    rust.style = "bg:color_blue";
+    rust.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    golang.symbol = "⛓ ";
+    golang.style = "bg:color_blue";
+    golang.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    php.symbol = "🐘 ";
+    php.style = "bg:color_blue";
+    php.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    java.symbol = "☕ ";
+    java.style = "bg:color_blue";
+    java.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    kotlin.symbol = "💻 ";
+    kotlin.style = "bg:color_blue";
+    kotlin.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    haskell.symbol = "🐢 ";
+    haskell.style = "bg:color_blue";
+    haskell.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    python.symbol = "🐍 ";
+    python.style = "bg:color_blue";
+    python.format = "[[ $symbol($version) ](fg:color_fg0 bg:color_blue)";
+    docker_context.symbol = "🐋 ";
+    docker_context.style = "bg:color_bg3";
+    docker_context.format = "[[ $symbol($context) ](fg:color_fg0 bg:color_bg3)";
+    conda.style = "bg:color_bg3";
+    conda.format = "[[ $symbol($environment) ](fg:color_fg0 bg:color_bg3)";
+    time.style = "fg:color_fg0 bg:color_bg1";
+    time.format = "[[ 🕒 $time ]($style)}\\n";
+    line_break.symbol = " ";
+    character.success_symbol = "[ ✓ ](bold fg:color_green) ";
+    character.error_symbol = "[ ✗ ](bold fg:color_red) ";
+    character.info_symbol = "[ i ](bold fg:color_green) ";
+    character.jobs_symbol = "[ J ](fg:color_blue) ";
+  };
+
+  in {
+    programs.starship.enable = true;
+    programs.starship.settings = starshipConfig;
+  }
