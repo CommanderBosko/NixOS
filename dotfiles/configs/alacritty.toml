@@ -1,0 +1,75 @@
+# Switch shell from bash to fish
+[terminal.shell]
+program = "fish"
+
+# Window configuration
+[window]
+padding = { x = 5, y = 5 }
+decorations = "full"  # Options: "full", "none", "transparent", "buttonless"
+dimensions = { columns = 130, lines = 35 }  # Set initial window size
+
+# Font configuration
+[font]
+normal = { family = "CodeNewRoman Nerd Font", style = "Regular" }
+size = 11.0
+offset = { x = 0, y = 0 }
+
+# Colors
+[colors]
+[colors.primary]
+#background = "0x1e1e2e"
+background = "#000000"
+foreground = "0xc0caf5"
+
+[colors.cursor]
+text = "0x000000"
+cursor = "0xffffff"
+
+[colors.selection]
+text = "0x000000"
+background = "0xffffff"
+
+[colors.normal]
+black = "0x1c1c1c"
+red = "0xaf5f5f"
+green = "0x5f875f"
+yellow = "0x87875f"
+blue = "0x5f87af"
+magenta = "0x5f5f87"
+cyan = "0x5f8787"
+white = "0x6c6c6c"
+
+[colors.bright]
+black = "0x444444"
+red = "0xff5f87"
+green = "0x87af5f"
+yellow = "0xffffaf"
+blue = "0x87afd7"
+magenta = "0xaf87d7"
+cyan = "0x5fd7d7"
+white = "0xffffff"
+
+# Cursor style
+[cursor]
+style = "Block"  # Options: "Block", "Underline", "Beam"
+
+# Key bindings
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Copy"
+key = "C"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Hide"
+key = "H"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "Quit"
+key = "Q"
+mods = "Control"
