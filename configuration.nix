@@ -30,8 +30,8 @@
 
   # Openvpn setup
   services.openvpn.servers = {
-    homeVPN = { config = '' config /etc/nordvpn/us11656.manassas1.nordvpn.conf ''; };
-    pVPN = { config = '' config /etc/nordvpn/us10399.newYork.nordvpn.conf ''; };
+    homeVPN = { config = '' config ./dotfiles/vpn/us11656.manassas1.nordvpn.conf ''; };
+    # pVPN = { config = '' config ./dotfiles/vpn/us10399.newYork.nordvpn.conf ''; };
   };
 
   # Time zone
@@ -65,11 +65,15 @@
   # Enable the KDE Plasma Desktop Environment
   services.displayManager = {
     sddm.enable = true;
-    defaultSession = "plasma";
+    defaultSession = "hyprland";
     autoLogin.enable = true;
     autoLogin.user = "bosko";
   };
   services.desktopManager.plasma6.enable = true;
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -78,7 +82,7 @@
   };
 
   # Enable flakes
-  # nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Enable OpenGL
   hardware.graphics.enable = true;
@@ -149,7 +153,7 @@
   # Enable Starship
   programs.starship = {
     enable = true;
-    settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
+    settings = pkgs.lib.importTOML ./dotfiles/configs/starship.toml;
   };
 
   # Enable SSH
@@ -199,7 +203,6 @@
     alacritty
     btop
     bottles
-    cmatrix
     digikam
     distrobox
     docker
@@ -213,15 +216,19 @@
     git
     heroic
     htop
+    hyprpaper
     kate
+    kitty
     lutris
     mangohud
     megasync
     neofetch
+    neovim
     obs-studio
     openvpn
     protontricks
     protonup-qt
+    rofi
     spotify
     starship
     thunderbird
@@ -231,6 +238,7 @@
     virtualbox
     vim
     vlc
+    waybar
     wine
     winetricks
     wget
