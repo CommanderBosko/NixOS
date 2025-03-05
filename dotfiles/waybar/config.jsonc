@@ -29,7 +29,11 @@
     "hyprland/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
-        "tooltip": false
+        "tooltip": false,
+	"format": "{icon}",
+	"format-icons": {
+	    "active": ""
+	}
     },
 
     "tray": {
@@ -39,7 +43,7 @@
 
     "clock": {
         "format": "{:%I:%M %p - %a, %d %b %Y}",
-        "tooltip": false
+        "tooltip": true
     },
 
     "cpu": {
