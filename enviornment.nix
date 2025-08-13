@@ -89,13 +89,25 @@
   # Optimise store on rebuild
   nix.settings.auto-optimise-store = true;
 
-  # Enable Fish
-  programs.fish.enable = true;
+  # Enable Z shell
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+    shellAliases = {
+      ll = "ls -l";
+      edit = "sudo -e";
+      update = "sudo nixos-rebuild switch";
+    };
+    histSize = 10000;
+    histFile = "$HOME/.zsh_history";
+    setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
+  };
 
   # Enable Starship
   programs.starship = {
     enable = true;
-    settings = pkgs.lib.importTOML /home/bosko/.config/starship.toml;
   };
 
   # Enable gamemode
@@ -123,6 +135,12 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
   };
 
+  # Enable Albion Online libraries
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [ krb5 ];
+  };
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -136,7 +154,6 @@
     docker
     fastfetch
     firefox
-    fish
     flatpak
     freetube
     gamemode
@@ -144,28 +161,32 @@
     git
     heroic
     htop
-    hyprpaper
     kitty
     lutris
     mangohud
-    #megasync
+    megasync
+    mumble
     micro
+    nh
+    nix-index
     obs-studio
     openvpn
     protontricks
     protonup-qt
+    pyfa
     pywal
-    rofi
     spotify
     starship
+    tidal-hifi
     tree
     unzip
     vesktop
+    vkbasalt
     vlc
-    vscodium
     waybar
     wine
     winetricks
     wget
+    zsh
   ];
 }
