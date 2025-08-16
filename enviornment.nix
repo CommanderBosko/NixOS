@@ -33,7 +33,7 @@
     variant = "";
   };
 
-  # Bluetooth
+  # Enable Bluetooth
   hardware.bluetooth.enable = true;
 
   # Enable CUPS to print documents.
@@ -89,7 +89,7 @@
   # Optimise store on rebuild
   nix.settings.auto-optimise-store = true;
 
-  # Enable Z shell
+  # Enable and configure Z shell
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -97,18 +97,20 @@
     syntaxHighlighting.enable = true;
     shellAliases = {
       ll = "ls -l";
-      edit = "sudo -e";
+      edit = "sudo micro";
       update = "sudo nixos-rebuild switch";
+      ".." = "cd ..";
+      "/" = "cd /";
+      "~" = "cd ~";
     };
     histSize = 10000;
     histFile = "$HOME/.zsh_history";
     setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
+    shellInit = "(cat ~/.cache/wal/sequences &)";
   };
 
   # Enable Starship
-  programs.starship = {
-    enable = true;
-  };
+  programs.starship.enable = true;
 
   # Enable gamemode
   programs.gamemode.enable = true;
@@ -124,7 +126,7 @@
 
   # Install fonts
   fonts.packages = with pkgs; [
-  nerd-fonts.code-new-roman
+    nerd-fonts.code-new-roman
   ];
 
   # Enable Steam
@@ -135,19 +137,45 @@
     localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
   };
 
-  # Enable Albion Online libraries
+  # Enable shared libraries
   programs.nix-ld = {
     enable = true;
-    libraries = with pkgs; [ krb5 ];
+    libraries = with pkgs; [
+      alsa-lib
+      dbus
+      expat
+      fontconfig
+      freetype
+      glib
+      krb5
+      libGL
+      nspr
+      nss
+      pipewire
+      SDL2
+      SDL2_mixer
+      xorg.libX11
+      xorg.libXau
+      xorg.libXcomposite
+      xorg.libXdamage
+      xorg.libXdmcp
+      xorg.libXfixes
+      xorg.libXrandr
+      xorg.libXrender
+      xorg.libXtst
+      xwayland
+      wayland
+    ];
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  # System packages to install
   environment.systemPackages = with pkgs; [
     appimage-run
     brave
     btop
     bottles
+    cava
+    cmatrix
     digikam
     discord
     distrobox
@@ -171,11 +199,11 @@
     nix-index
     obs-studio
     openvpn
+    php
     protontricks
     protonup-qt
     pyfa
     pywal
-    spotify
     starship
     tidal-hifi
     tree
