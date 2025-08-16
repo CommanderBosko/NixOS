@@ -6,7 +6,13 @@
     shell = pkgs.zsh;
     isNormalUser = true;
     description = "bosko";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "libvirtd"
+    ];
+
+    # User specific packages
     packages = with pkgs; [
     ];
   };
