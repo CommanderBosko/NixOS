@@ -6,17 +6,18 @@
     bosko.url = "github:CommanderBosko/NixOS?ref=main";
   };
 
-  outputs = { self, nixpkgs, bosko, ... }: {
+  outputs = { self, nixpkgs, bosko, ... }@inputs: {
     nixosConfigurations.venom = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
+      system = "x86_64-linux"; # don't forget this
+      specialArgs = { inherit inputs; };
       modules = [
-        bosko.nixosModules.bootloader
-        bosko.nixosModules.environment
-        bosko.nixosModules.hardware
-        bosko.nixosModules.networking
-        bosko.nixosModules.nvidia
-        bosko.nixosModules.users
-        bosko.nixosModules.virtualisation
+        "${bosko}/dotfiles/venom/bootloader.nix"
+        "${bosko}/dotfiles/venom/enviornment.nix"
+        "${bosko}/dotfiles/hardware-configuration.nix"
+        "${bosko}/dotfiles/venom/networking.nix"
+        "${bosko}/dotfiles/venom/nvidia.nix"
+        "${bosko}/dotfiles/venom/users.nix"
+        "${bosko}/dotfiles/venom/virtualisation.nix"
       ];
     };
   };
