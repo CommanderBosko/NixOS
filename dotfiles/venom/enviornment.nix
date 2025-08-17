@@ -101,7 +101,8 @@
     shellAliases = {
       ll = "ls -l";
       edit = "sudo micro";
-      update = "sudo nixos-rebuild switch";
+      rebuild = "sudo nixos-rebuild switch --flake ~/NixOS/.#venom";
+      update = "nix flake update --flake ~/NixOS/."
       ".." = "cd ..";
       "/" = "cd /";
       "~" = "cd ~";
