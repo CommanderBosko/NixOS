@@ -108,40 +108,9 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
     #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
-
-  # Enable and configure Z shell
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-    shellAliases = {
-      ll = "ls -l";
-      edit = "sudo micro";
-      rebuild = "sudo nixos-rebuild switch --flake ~/NixOS/.#venom";
-      update = "nix flake update --flake ~/NixOS/.";
-      ".." = "cd ..";
-      "/" = "cd /";
-      "~" = "cd ~";
-    };
-    histSize = 10000;
-    histFile = "$HOME/.zsh_history";
-    setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
-    shellInit = "(cat ~/.cache/wal/sequences &)";
-  };
-
-  # Enable Starship
-  programs.starship.enable = true;
-
-  # Enable gamemode
-  programs.gamemode.enable = true;
 
   # Enable flatpaks
   services.flatpak.enable = true;
@@ -152,54 +121,84 @@
     '';
   };
 
-  # Enable appimages
-  programs.appimage = {
-    enable = true;
-    binfmt = true;
-  };
-
   # Install fonts
   fonts.packages = with pkgs; [
     nerd-fonts.code-new-roman
   ];
 
-  # Enable Steam
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
-    localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
-  };
+  # Programs
+  programs = {
+    # Enable and configure Z shell
+    zsh = {
+      enable = true;
+      enableCompletion = true;
+      autosuggestions.enable = true;
+      syntaxHighlighting.enable = true;
+      shellAliases = {
+        ll = "ls -l";
+        edit = "sudo micro";
+        rebuild = "sudo nixos-rebuild switch --flake ~/NixOS/.#venom";
+        update = "nix flake update --flake ~/NixOS/.";
+        ".." = "cd ..";
+        "/" = "cd /";
+        "~" = "cd ~";
+      };
+      histSize = 10000;
+      histFile = "$HOME/.zsh_history";
+      setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
+      shellInit = "(cat ~/.cache/wal/sequences &)";
+    };
 
-  # Enable shared libraries
-  programs.nix-ld = {
-    enable = true;
-    libraries = with pkgs; [
-      alsa-lib
-      dbus
-      expat
-      fontconfig
-      freetype
-      glib
-      krb5
-      libGL
-      nspr
-      nss
-      pipewire
-      SDL2
-      SDL2_mixer
-      xorg.libX11
-      xorg.libXau
-      xorg.libXcomposite
-      xorg.libXdamage
-      xorg.libXdmcp
-      xorg.libXfixes
-      xorg.libXrandr
-      xorg.libXrender
-      xorg.libXtst
-      xwayland
-      wayland
-    ];
+    # Enable Starship
+    starship.enable = true;
+
+    # Enable gamemode
+    gamemode.enable = true;
+
+    # Enable appimages
+    appimage = {
+      enable = true;
+      binfmt = true;
+    };
+
+    # Enable Steam
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
+      dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
+      localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
+    };
+
+    # Enable shared libraries
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        alsa-lib
+        dbus
+        expat
+        fontconfig
+        freetype
+        glib
+        krb5
+        libGL
+        nspr
+        nss
+        pipewire
+        SDL2
+        SDL2_mixer
+        xorg.libX11
+        xorg.libXau
+        xorg.libXcomposite
+        xorg.libXdamage
+        xorg.libXdmcp
+        xorg.libXfixes
+        xorg.libXrandr
+        xorg.libXrender
+        xorg.libXtst
+        xwayland
+        wayland
+      ];
+    };
   };
 
   # System packages to install

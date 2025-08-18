@@ -3,6 +3,26 @@
     "bosko": {
       "inputs": {
         "bosko": "bosko_2",
+        "nixpkgs": "nixpkgs_6"
+      },
+      "locked": {
+        "lastModified": 1755480751,
+        "narHash": "sha256-tW9hwkSUKcIrkp2OrXz2E8+5yIXXjqvyGTvabQkH0vk=",
+        "owner": "CommanderBosko",
+        "repo": "NixOS",
+        "rev": "fa461e5f64d70318011dbd2cf7ef4e2bc47928d9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CommanderBosko",
+        "ref": "main",
+        "repo": "NixOS",
+        "type": "github"
+      }
+    },
+    "bosko_2": {
+      "inputs": {
+        "bosko": "bosko_3",
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
@@ -20,9 +40,9 @@
         "type": "github"
       }
     },
-    "bosko_2": {
+    "bosko_3": {
       "inputs": {
-        "bosko": "bosko_3",
+        "bosko": "bosko_4",
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
@@ -40,9 +60,9 @@
         "type": "github"
       }
     },
-    "bosko_3": {
+    "bosko_4": {
       "inputs": {
-        "bosko": "bosko_4",
+        "bosko": "bosko_5",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
@@ -60,9 +80,9 @@
         "type": "github"
       }
     },
-    "bosko_4": {
+    "bosko_5": {
       "inputs": {
-        "bosko": "bosko_5",
+        "bosko": "bosko_6",
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
@@ -80,7 +100,7 @@
         "type": "github"
       }
     },
-    "bosko_5": {
+    "bosko_6": {
       "inputs": {
         "nixpkgs": "nixpkgs"
       },
@@ -195,10 +215,26 @@
         "type": "github"
       }
     },
+    "nixpkgs_7": {
+      "locked": {
+        "lastModified": 1755186698,
+        "narHash": "sha256-wNO3+Ks2jZJ4nTHMuks+cxAiVBGNuEBXsT29Bz6HASo=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "fbcf476f790d8a217c3eab4e12033dc4a0f6d23c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "bosko": "bosko",
-        "nixpkgs": "nixpkgs_6"
+        "nixpkgs": "nixpkgs_7"
       }
     }
   },
