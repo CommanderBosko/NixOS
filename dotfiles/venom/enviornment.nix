@@ -1,52 +1,104 @@
 { config, pkgs, ... }:
 
 {
-  # Set NixOS Version
-  system.stateVersion = "25.05";
+  # System
+  system = {
+    # Set NixOS Version
+    stateVersion = "25.05";
+
+    # Automatic updating
+    autoUpgrade = {
+      enable = true;
+      dates = "daily";
+      persistent = true;
+    };
+  };
 
   # Set your time zone.
   time.timeZone = "America/New_York";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
-
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "en_US.UTF-8";
-    LC_IDENTIFICATION = "en_US.UTF-8";
-    LC_MEASUREMENT = "en_US.UTF-8";
-    LC_MONETARY = "en_US.UTF-8";
-    LC_NAME = "en_US.UTF-8";
-    LC_NUMERIC = "en_US.UTF-8";
-    LC_PAPER = "en_US.UTF-8";
-    LC_TELEPHONE = "en_US.UTF-8";
-    LC_TIME = "en_US.UTF-8";
+  i18n = {
+    defaultLocale = "en_US.UTF-8";
+    extraLocaleSettings = {
+      LC_ADDRESS = "en_US.UTF-8";
+      LC_IDENTIFICATION = "en_US.UTF-8";
+      LC_MEASUREMENT = "en_US.UTF-8";
+      LC_MONETARY = "en_US.UTF-8";
+      LC_NAME = "en_US.UTF-8";
+      LC_NUMERIC = "en_US.UTF-8";
+      LC_PAPER = "en_US.UTF-8";
+      LC_TELEPHONE = "en_US.UTF-8";
+      LC_TIME = "en_US.UTF-8";
+    };
   };
 
-  # Enable the X11 windowing system.
-  # You can disable this if you're only using the Wayland session.
-  services.xserver.enable = true;
+  # Services
+  services = {
+    # Enable the X11 windowing system.
+    xserver = {
+      enable = true;
 
-  # Enable the KDE Plasma Desktop Environment.
-  services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
+      # Configure keymap in X11
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
 
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "us";
-    variant = "";
+      # Enable touchpad support (enabled default in most desktopManager).
+      # libinput.enable = true;
+    };
+
+    # Enable the KDE Plasma Desktop Environment.
+    desktopManager.plasma6.enable = true;
+
+    # Enable automatic login for the user.
+    displayManager = {
+      autoLogin.enable = true;
+      autoLogin.user = "bosko";
+      sddm.enable = true;
+    };
+
+    # Enable CUPS to print documents.
+    printing.enable = true;
   };
 
-  # Enable Bluetooth
-  hardware.bluetooth.enable = true;
+  hardware = {
+    # Bluetooth
+  	bluetooth = {
+      enable = true;
+	  powerOnBoot = true;
+	  settings = {
+	    General = {
+	      Enable = "Source,Sink,Media,Socket";
+	      Experimental = true;
+	    };
+      };
+    };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
+    # Enable OpenGL
+    graphics.enable = true;
+  };
 
-  # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
 
-  # Enable OpenGL
-  hardware.graphics.enable = true;
+  # Nix settings
+  nix = {
+    # Enable flakes
+    settings.experimental-features = [ "nix-command" "flakes" ];
+
+    # Automatic cleanup
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than 7d";
+      persistent = true;
+    };
+
+    # Optimise store on rebuild
+    settings.auto-optimise-store = true;
+  };
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
@@ -63,34 +115,6 @@
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
-
-  # Enable automatic login for the user.
-  services.displayManager.autoLogin.enable = true;
-  services.displayManager.autoLogin.user = "bosko";
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
-  # Automatic updating
-  system.autoUpgrade = {
-    enable = true;
-    dates = "daily";
-    persistent = true;
-  };
-
-  # Automatic cleanup
-  nix.gc = {
-    automatic = true;
-    dates = "daily";
-    options = "--delete-older-than 7d";
-    persistent = true;
-  };
-
-  # Optimise store on rebuild
-  nix.settings.auto-optimise-store = true;
 
   # Enable and configure Z shell
   programs.zsh = {
@@ -121,6 +145,12 @@
 
   # Enable flatpaks
   services.flatpak.enable = true;
+  systemd.services.flatpak-repo = {
+    path = [ pkgs.flatpak ];
+    script = ''
+      flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    '';
+  };
 
   # Enable appimages
   programs.appimage = {
