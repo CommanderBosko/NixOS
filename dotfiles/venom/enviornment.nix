@@ -120,10 +120,12 @@
       ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
-  # Flatpaks to install
-  flatpak.packages = [
-    "dev.aunetx.deezer"
-  ];
+  # Install scripts at launch
+  system.activationScripts.flatpakApps = {
+    text = ''
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub dev.aunetx.deezer
+    '';
+  };
 
   # Install fonts
   fonts.packages = with pkgs; [

@@ -3,14 +3,14 @@
     "bosko": {
       "inputs": {
         "bosko": "bosko_2",
-        "nixpkgs": "nixpkgs_10"
+        "nixpkgs": "nixpkgs_11"
       },
       "locked": {
-        "lastModified": 1755482656,
-        "narHash": "sha256-Th4Klpw3H3//sNJx0E5fATq5FYW/4AxdcLFoY7ERX+E=",
+        "lastModified": 1755483196,
+        "narHash": "sha256-o04qcTXhFwevpBoC35AbzC7HY2jAeo2qZmwJHUaC+eU=",
         "owner": "CommanderBosko",
         "repo": "NixOS",
-        "rev": "2cbc7baccbb1d84c5908cc5433d7f23aee4ef7db",
+        "rev": "8f18cb4420ff3701d94c03ac00b16b56616850c1",
         "type": "github"
       },
       "original": {
@@ -21,6 +21,26 @@
       }
     },
     "bosko_10": {
+      "inputs": {
+        "bosko": "bosko_11",
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1755467718,
+        "narHash": "sha256-ujKp9+lS1CXmp5C0VK5oRZLJZr5X3eSrrZjzg8ekodI=",
+        "owner": "CommanderBosko",
+        "repo": "NixOS",
+        "rev": "3680d6bab18e7e2ebc40fb794036bed9d840fc82",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CommanderBosko",
+        "ref": "main",
+        "repo": "NixOS",
+        "type": "github"
+      }
+    },
+    "bosko_11": {
       "inputs": {
         "nixpkgs": "nixpkgs"
       },
@@ -42,6 +62,26 @@
     "bosko_2": {
       "inputs": {
         "bosko": "bosko_3",
+        "nixpkgs": "nixpkgs_10"
+      },
+      "locked": {
+        "lastModified": 1755482656,
+        "narHash": "sha256-Th4Klpw3H3//sNJx0E5fATq5FYW/4AxdcLFoY7ERX+E=",
+        "owner": "CommanderBosko",
+        "repo": "NixOS",
+        "rev": "2cbc7baccbb1d84c5908cc5433d7f23aee4ef7db",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CommanderBosko",
+        "ref": "main",
+        "repo": "NixOS",
+        "type": "github"
+      }
+    },
+    "bosko_3": {
+      "inputs": {
+        "bosko": "bosko_4",
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
@@ -59,9 +99,9 @@
         "type": "github"
       }
     },
-    "bosko_3": {
+    "bosko_4": {
       "inputs": {
-        "bosko": "bosko_4",
+        "bosko": "bosko_5",
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
@@ -79,9 +119,9 @@
         "type": "github"
       }
     },
-    "bosko_4": {
+    "bosko_5": {
       "inputs": {
-        "bosko": "bosko_5",
+        "bosko": "bosko_6",
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
@@ -99,9 +139,9 @@
         "type": "github"
       }
     },
-    "bosko_5": {
+    "bosko_6": {
       "inputs": {
-        "bosko": "bosko_6",
+        "bosko": "bosko_7",
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
@@ -119,9 +159,9 @@
         "type": "github"
       }
     },
-    "bosko_6": {
+    "bosko_7": {
       "inputs": {
-        "bosko": "bosko_7",
+        "bosko": "bosko_8",
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
@@ -139,9 +179,9 @@
         "type": "github"
       }
     },
-    "bosko_7": {
+    "bosko_8": {
       "inputs": {
-        "bosko": "bosko_8",
+        "bosko": "bosko_9",
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
@@ -159,9 +199,9 @@
         "type": "github"
       }
     },
-    "bosko_8": {
+    "bosko_9": {
       "inputs": {
-        "bosko": "bosko_9",
+        "bosko": "bosko_10",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
@@ -170,26 +210,6 @@
         "owner": "CommanderBosko",
         "repo": "NixOS",
         "rev": "618e7e8d7285c6a81946bb8160fa457f19ef6f32",
-        "type": "github"
-      },
-      "original": {
-        "owner": "CommanderBosko",
-        "ref": "main",
-        "repo": "NixOS",
-        "type": "github"
-      }
-    },
-    "bosko_9": {
-      "inputs": {
-        "bosko": "bosko_10",
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "lastModified": 1755467718,
-        "narHash": "sha256-ujKp9+lS1CXmp5C0VK5oRZLJZr5X3eSrrZjzg8ekodI=",
-        "owner": "CommanderBosko",
-        "repo": "NixOS",
-        "rev": "3680d6bab18e7e2ebc40fb794036bed9d840fc82",
         "type": "github"
       },
       "original": {
@@ -232,6 +252,22 @@
       }
     },
     "nixpkgs_11": {
+      "locked": {
+        "lastModified": 1755186698,
+        "narHash": "sha256-wNO3+Ks2jZJ4nTHMuks+cxAiVBGNuEBXsT29Bz6HASo=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "fbcf476f790d8a217c3eab4e12033dc4a0f6d23c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_12": {
       "locked": {
         "lastModified": 1755186698,
         "narHash": "sha256-wNO3+Ks2jZJ4nTHMuks+cxAiVBGNuEBXsT29Bz6HASo=",
@@ -378,7 +414,7 @@
     "root": {
       "inputs": {
         "bosko": "bosko",
-        "nixpkgs": "nixpkgs_11"
+        "nixpkgs": "nixpkgs_12"
       }
     }
   },
