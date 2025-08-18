@@ -112,14 +112,18 @@
     #media-session.enable = true;
   };
 
-  # Enable flatpaks
+  # Flatpaks
   services.flatpak.enable = true;
-  systemd.services.flatpak-repo = {
-    path = [ pkgs.flatpak ];
-    script = ''
-      flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  # Flathub repo
+  system.activationScripts.flathub = {
+    text = ''
+      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
+  # Flatpaks to install
+  flatpak.packages = [
+    "dev.aunetx.deezer"
+  ];
 
   # Install fonts
   fonts.packages = with pkgs; [
