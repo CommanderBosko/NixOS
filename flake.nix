@@ -9,7 +9,7 @@
 
   outputs = { self, nixpkgs, bosko, ... }@inputs: {
     nixosConfigurations.venom = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux"; # don't forget this
+      system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         "${bosko}/dotfiles/venom/bootloader.nix"
