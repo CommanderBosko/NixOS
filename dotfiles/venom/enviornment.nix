@@ -137,7 +137,7 @@
       shellAliases = {
         ll = "ls -l";
         edit = "sudo micro";
-        update = "nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#venom";
+        update = "nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#venom --impure";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
