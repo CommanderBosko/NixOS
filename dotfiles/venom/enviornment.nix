@@ -199,7 +199,6 @@
         SDL2_mixer
         udev
         vulkan-loader
-        vulkan-tools
         xorg.libX11
         xorg.libXau
         xorg.libXcomposite
@@ -216,11 +215,8 @@
         xorg.libSM
         xorg.libXtst
         xorg.libXt
-        xorg.xprop
-        xorg.xwininfo
         xwayland
         wayland
-        wmctrl
         zlib
       ];
     };
@@ -269,10 +265,14 @@
     vesktop
     vkbasalt
     vlc
+    vulkan-tools
     waybar
     wine
     winetricks
     wget
+    wmctrl
+    xorg.xprop
+    xorg.xwininfo
     zsh
   ];
 }
