@@ -272,7 +272,6 @@
     vkbasalt
     vlc
     vulkan-tools
-    waybar
     wine
     winetricks
     wget
