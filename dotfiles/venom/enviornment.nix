@@ -185,12 +185,21 @@
         freetype
         glib
         krb5
+        libdrm
         libGL
+        libusb1
+        libpulseaudio
+        libva
+        libvdpau
+        mesa
         nspr
         nss
         pipewire
         SDL2
         SDL2_mixer
+        udev
+        vulkan-loader
+        vulkan-tools
         xorg.libX11
         xorg.libXau
         xorg.libXcomposite
@@ -200,13 +209,16 @@
         xorg.libXext
         xorg.libXfixes
         xorg.libXi
+        xorg.libICE
         xorg.libXinerama
         xorg.libXrandr
         xorg.libXrender
+        xorg.libSM
         xorg.libXtst
         xorg.libXt
         xwayland
         wayland
+        zlib
       ];
     };
   };
