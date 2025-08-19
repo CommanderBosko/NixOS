@@ -157,9 +157,6 @@
     # Enable Starship
     starship.enable = true;
 
-    # Enable gamemode
-    gamemode.enable = true;
-
     # Enable appimages
     appimage = {
       enable = true;
@@ -173,6 +170,9 @@
       dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
       localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
     };
+
+    # Enable gamemode
+    gamemode.enable = true;
 
     # Enable shared libraries
     nix-ld = {
@@ -194,12 +194,17 @@
         xorg.libX11
         xorg.libXau
         xorg.libXcomposite
+        xorg.libXcursor
         xorg.libXdamage
         xorg.libXdmcp
+        xorg.libXext
         xorg.libXfixes
+        xorg.libXi
+        xorg.libXinerama
         xorg.libXrandr
         xorg.libXrender
         xorg.libXtst
+        xorg.libXt
         xwayland
         wayland
       ];
@@ -214,6 +219,7 @@
     bottles
     cava
     cmatrix
+    curl
     digikam
     discord
     distrobox
@@ -243,7 +249,6 @@
     pyfa
     pywal
     starship
-    tidal-hifi
     tree
     unzip
     vesktop
