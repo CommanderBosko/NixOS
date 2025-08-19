@@ -179,11 +179,16 @@
       enable = true;
       libraries = with pkgs; [
         alsa-lib
+        atk
+        cairo
         dbus
         expat
         fontconfig
         freetype
+        gdk-pixbuf
         glib
+        gtk2
+        gtk3
         krb5
         libdrm
         libGL
@@ -194,6 +199,7 @@
         mesa
         nspr
         nss
+        pango
         pipewire
         SDL2
         SDL2_mixer
