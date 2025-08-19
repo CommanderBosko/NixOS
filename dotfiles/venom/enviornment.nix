@@ -216,8 +216,11 @@
         xorg.libSM
         xorg.libXtst
         xorg.libXt
+        xorg.xprop
+        xorg.xwininfo
         xwayland
         wayland
+        wmctrl
         zlib
       ];
     };
