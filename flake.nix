@@ -4,21 +4,21 @@
   inputs = {
     nixpkgsStable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgsUnstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    boskoRepo.url = "github:CommanderBosko/NixOS?ref=main";
+    bosko.url = "github:CommanderBosko/NixOS?ref=main";
   };
 
-  outputs = { self, nixpkgsStable, nixpkgsUnstable, boskoRepo, ... }@inputs: {
+  outputs = { self, nixpkgsStable, nixpkgsUnstable, bosko, ... }@inputs: {
     nixosConfigurations.venom = nixpkgsUnstable.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
-        "${boskoRepo}/dotfiles/venom/bootloader.nix"
-        "${boskoRepo}/dotfiles/venom/enviornment.nix"
+        "${bosko}/dotfiles/venom/bootloader.nix"
+        "${bosko}/dotfiles/venom/enviornment.nix"
         "/etc/nixos/hardware-configuration.nix"
-        "${boskoRepo}/dotfiles/venom/networking.nix"
-        "${boskoRepo}/dotfiles/venom/nvidia.nix"
-        "${boskoRepo}/dotfiles/venom/users.nix"
-        "${boskoRepo}/dotfiles/venom/virtualisation.nix"
+        "${bosko}/dotfiles/venom/networking.nix"
+        "${bosko}/dotfiles/venom/nvidia.nix"
+        "${bosko}/dotfiles/venom/users.nix"
+        "${bosko}/dotfiles/venom/virtualisation.nix"
       ];
     };
   };
