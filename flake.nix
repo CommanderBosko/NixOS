@@ -14,22 +14,24 @@
       username = "bosko";
     in
     {
-    nixosConfigurations.host = nixpkgsUnstable.lib.nixosSystem {
-      specialArgs = {
-        inherit inputs;
-        inherit system;
-        inherit username;
-        inherit host;
+    nixosConfigurations = {
+        "${host}" = nixpkgsUnstable.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          inherit system;
+          inherit username;
+          inherit host;
+        };
+        modules = [
+          "${bosko}/dotfiles/${host}/bootloader.nix"
+          "${bosko}/dotfiles/${host}/enviornment.nix"
+#           "/etc/nixos/hardware-configuration.nix"
+          "${bosko}/dotfiles/${host}/networking.nix"
+          "${bosko}/dotfiles/${host}/nvidia.nix"
+          "${bosko}/dotfiles/${host}/users.nix"
+          "${bosko}/dotfiles/${host}/virtualisation.nix"
+        ];
       };
-      modules = [
-        "${bosko}/dotfiles/${host}/bootloader.nix"
-        "${bosko}/dotfiles/${host}/enviornment.nix"
-#         "/etc/nixos/hardware-configuration.nix"
-        "${bosko}/dotfiles/${host}/networking.nix"
-        "${bosko}/dotfiles/${host}/nvidia.nix"
-        "${bosko}/dotfiles/${host}/users.nix"
-        "${bosko}/dotfiles/${host}/virtualisation.nix"
-      ];
     };
   };
 }
