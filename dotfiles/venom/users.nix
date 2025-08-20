@@ -5,7 +5,7 @@
   users.users.bosko = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    description = "bosko";
+    description = "${username}";
     extraGroups = [
       "networkmanager"
       "wheel"
