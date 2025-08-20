@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, host, ... }:
 
 {
   networking.hostName = host; # Define your hostname.

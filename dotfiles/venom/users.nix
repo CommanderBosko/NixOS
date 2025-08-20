@@ -1,11 +1,11 @@
-{ config, pkgs, ... }:
+{ config, pkgs, username, ... }:
 
 {
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.bosko = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    description = "${username}";
+    description = username;
     extraGroups = [
       "networkmanager"
       "wheel"
