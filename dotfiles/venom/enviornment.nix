@@ -265,6 +265,7 @@
     protonup-qt
     pyfa
     pywal
+    starship
     tree
     unzip
     vesktop
@@ -277,5 +278,6 @@
     wmctrl
     xorg.xprop
     xorg.xwininfo
+    zsh
   ];
 }
