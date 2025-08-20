@@ -1,6 +1,9 @@
 { config, pkgs, ... }:
 
 {
+  # Zen kernel
+  boot.kernelPackages = pkgs.linuxPackages_zen;
+
   # System
   system = {
     # Set NixOS Version
