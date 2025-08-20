@@ -143,7 +143,7 @@
       shellAliases = {
         ll = "ls -l";
         edit = "sudo micro";
-        update = "nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#venom --impure";
+        update = "nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#venom --impure && flatpak update";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
@@ -265,7 +265,6 @@
     protonup-qt
     pyfa
     pywal
-    starship
     tree
     unzip
     vesktop
@@ -278,6 +277,5 @@
     wmctrl
     xorg.xprop
     xorg.xwininfo
-    zsh
   ];
 }
