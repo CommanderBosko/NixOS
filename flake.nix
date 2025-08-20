@@ -7,18 +7,28 @@
     bosko.url = "github:CommanderBosko/NixOS?ref=main";
   };
 
-  outputs = { self, nixpkgsStable, nixpkgsUnstable, bosko, ... }@inputs: {
-    nixosConfigurations.venom = nixpkgsUnstable.lib.nixosSystem {
+  outputs = { self, nixpkgsStable, nixpkgsUnstable, bosko, ... }@inputs:
+    let
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
+      host = "venom";
+      username = "bosko";
+    in
+    {
+    nixosConfigurations.host = nixpkgsUnstable.lib.nixosSystem {
+      specialArgs = {
+        inherit inputs;
+        inherit system;
+        inherit username;
+        inherit host;
+      };
       modules = [
-#         "${bosko}/dotfiles/venom/bootloader.nix"
-        "${bosko}/dotfiles/venom/enviornment.nix"
+        "${bosko}/dotfiles/${host}/bootloader.nix"
+        "${bosko}/dotfiles/${host}/enviornment.nix"
 #         "/etc/nixos/hardware-configuration.nix"
-        "${bosko}/dotfiles/venom/networking.nix"
-        "${bosko}/dotfiles/venom/nvidia.nix"
-        "${bosko}/dotfiles/venom/users.nix"
-        "${bosko}/dotfiles/venom/virtualisation.nix"
+        "${bosko}/dotfiles/${host}/networking.nix"
+        "${bosko}/dotfiles/${host}/nvidia.nix"
+        "${bosko}/dotfiles/${host}/users.nix"
+        "${bosko}/dotfiles/${host}/virtualisation.nix"
       ];
     };
   };

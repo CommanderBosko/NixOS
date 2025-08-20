@@ -58,7 +58,7 @@
     # Enable automatic login for the user.
     displayManager = {
       autoLogin.enable = true;
-      autoLogin.user = "bosko";
+      autoLogin.user = ${username};
       sddm.enable = true;
     };
 
