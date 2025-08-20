@@ -25,7 +25,7 @@
         modules = [
           "${bosko}/dotfiles/${host}/bootloader.nix"
           "${bosko}/dotfiles/${host}/enviornment.nix"
-#           "/etc/nixos/hardware-configuration.nix"
+          "/etc/nixos/hardware-configuration.nix"
           "${bosko}/dotfiles/${host}/networking.nix"
           "${bosko}/dotfiles/${host}/nvidia.nix"
           "${bosko}/dotfiles/${host}/users.nix"
