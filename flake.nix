@@ -25,12 +25,12 @@
 
         modules = [
           "/etc/nixos/hardware-configuration.nix"
-          "./dotfiles/common/bootloader.nix"
-          "./dotfiles/common/networking.nix"
-          "./dotfiles/common/nvidia.nix"
-          "./dotfiles/common/virtualisation.nix"
-          "./dotfiles/gaming/enviornment.nix"
-          "./dotfiles/gaming/users.nix"
+          "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/networking.nix"
+          "${self}/dotfiles/common/nvidia.nix"
+          "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/gaming/enviornment.nix"
+          "${self}/dotfiles/gaming/users.nix"
         ];
       };
     };
