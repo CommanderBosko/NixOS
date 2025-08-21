@@ -7,7 +7,7 @@
     boskoRepo.url = "github:CommanderBosko/NixOS?ref=main";
   };
 
-  outputs = { self, nixpkgsStable, nixpkgsUnstable, boskoRepo ... }@inputs:
+  outputs = { self, nixpkgsStable, nixpkgsUnstable, boskoRepo, ... }@inputs:
   let
     system = "x86_64-linux";
     host = "venom";
