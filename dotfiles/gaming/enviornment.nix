@@ -4,7 +4,7 @@
   # System
   system = {
     # Set NixOS Version
-    stateVersion = "25.05";
+#     stateVersion = "25.05";
 
     # Automatic updating
     autoUpgrade = {
