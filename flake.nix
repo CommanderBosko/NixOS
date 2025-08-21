@@ -25,12 +25,12 @@
 
         modules = [
           "/etc/nixos/hardware-configuration.nix"
-          "${boskoRepo}/dotfiles/common/bootloader.nix"
-          "${boskoRepo}/dotfiles/common/networking.nix"
-          "${boskoRepo}/dotfiles/common/nvidia.nix"
-          "${boskoRepo}/dotfiles/common/virtualisation.nix"
-          "${boskoRepo}/dotfiles/gaming/enviornment.nix"
-          "${boskoRepo}/dotfiles/gaming/users.nix"
+          "./dotfiles/common/bootloader.nix"
+          "./dotfiles/common/networking.nix"
+          "./dotfiles/common/nvidia.nix"
+          "./dotfiles/common/virtualisation.nix"
+          "./dotfiles/gaming/enviornment.nix"
+          "./dotfiles/gaming/users.nix"
         ];
       };
     };
