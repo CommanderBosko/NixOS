@@ -3,6 +3,9 @@
 {
   # System
   system = {
+    # Set NixOS Version
+      stateVersion = "25.05";
+
     # Automatic updating
     autoUpgrade = {
       enable = true;
@@ -51,7 +54,7 @@
 
     # Enable automatic login for the user.
     displayManager = {
-      autoLogin.enable = true;
+      autoLogin.enable = false;
       autoLogin.user = username;
       sddm.enable = true;
     };
@@ -63,7 +66,7 @@
   hardware = {
     # Bluetooth
   	bluetooth = {
-      enable = true;
+      enable = false;
 	  powerOnBoot = true;
 	  settings = {
 	    General = {
@@ -140,7 +143,7 @@
       shellAliases = {
         ll = "ls -l";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS#gaming --impure && flatpak update";
+        update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS#laptop --impure && flatpak update";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
@@ -170,59 +173,6 @@
 
     # Enable gamemode
     gamemode.enable = true;
-
-    # Enable shared libraries
-    nix-ld = {
-      enable = true;
-      libraries = with pkgs; [
-        alsa-lib
-        atk
-        cairo
-        dbus
-        expat
-        fontconfig
-        freetype
-        gdk-pixbuf
-        glib
-        gtk2
-        gtk3
-        krb5
-        libdrm
-        libGL
-        libusb1
-        libpulseaudio
-        libva
-        libvdpau
-        mesa
-        nspr
-        nss
-        pango
-        pipewire
-        SDL2
-        SDL2_mixer
-        udev
-        vulkan-loader
-        xorg.libX11
-        xorg.libXau
-        xorg.libXcomposite
-        xorg.libXcursor
-        xorg.libXdamage
-        xorg.libXdmcp
-        xorg.libXext
-        xorg.libXfixes
-        xorg.libXi
-        xorg.libICE
-        xorg.libXinerama
-        xorg.libXrandr
-        xorg.libXrender
-        xorg.libSM
-        xorg.libXtst
-        xorg.libXt
-        xwayland
-        wayland
-        zlib
-      ];
-    };
   };
 
   # System packages to install
@@ -245,21 +195,17 @@
     gamemode
     gearlever
     git
-    heroic
     htop
     kitty
     lutris
     mangohud
     megasync
-    mumble
     micro
     nh
     nix-index
-    obs-studio
-    php
+    openvpn
     protontricks
     protonup-qt
-    pyfa
     pywal
     starship
     tree
@@ -267,13 +213,7 @@
     vesktop
     vkbasalt
     vlc
-    vulkan-tools
-    wine
-    winetricks
     wget
-    wmctrl
-    xorg.xprop
-    xorg.xwininfo
     zsh
   ];
 }
