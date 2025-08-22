@@ -46,11 +46,8 @@
       };
 
       # Enable touchpad support (enabled default in most desktopManager).
-      # libinput.enable = true;
+      libinput.enable = true;
     };
-
-    # Enable the KDE Plasma Desktop Environment.
-    desktopManager.plasma6.enable = true;
 
     # Enable automatic login for the user.
     displayManager = {
@@ -134,6 +131,13 @@
 
   # Programs
   programs = {
+    # Enable and configure Hyprland
+    hyprland = {
+      enable = true;
+      withUWSM = true;
+      xwayland.enable = true;
+    };
+
     # Enable and configure Z shell
     zsh = {
       enable = true;
@@ -196,23 +200,28 @@
     gearlever
     git
     htop
+    hyprland
     kitty
     lutris
     mangohud
     megasync
     micro
     nh
+    nm-tray
     nix-index
     openvpn
     protontricks
     protonup-qt
     pywal
+    rofi
     starship
+    swww
     tree
     unzip
     vesktop
     vkbasalt
     vlc
+    waybar
     wget
     zsh
   ];
