@@ -204,7 +204,7 @@
     kitty
     lutris
     mangohud
-    megasync
+    megacmd
     micro
     nh
     nm-tray

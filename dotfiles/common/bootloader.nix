@@ -1,13 +1,15 @@
 { config, pkgs, ... }:
 
 {
-  # Bootloader.
   boot = {
     kernelPackages = pkgs.linuxPackages_zen;
+
     loader = {
       grub = {
         enable = true;
-        device = "/dev/nvme0n1";
+        device = "nodev";
+        efiSupport = true;
+        efiInstallAsRemovable = true;
         useOSProber = true;
       };
     };
