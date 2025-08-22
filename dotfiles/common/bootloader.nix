@@ -1,12 +1,15 @@
 { config, pkgs, ... }:
 
 {
+  # Bootloader.
   boot = {
     kernelPackages = pkgs.linuxPackages_zen;
-
     loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
+      grub = {
+        enable = true;
+        device = "/dev/nvme0n1";
+        useOSProber = true;
+      };
     };
   };
 }
