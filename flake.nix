@@ -24,7 +24,7 @@
 
         modules = [
           "/etc/nixos/hardware-configuration.nix"
-#           "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/networking.nix"
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/users.nix"
