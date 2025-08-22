@@ -248,7 +248,6 @@
     gamemode
     gearlever
     git
-    gparted
     heroic
     htop
     kitty
