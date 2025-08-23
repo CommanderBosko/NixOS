@@ -143,7 +143,7 @@
       shellAliases = {
         ll = "ls -l";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS#gaming --impure && flatpak update";
+        update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS#gaming --impure && flatpak update -y";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
