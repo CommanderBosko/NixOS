@@ -32,6 +32,25 @@
           "${self}/dotfiles/gaming/networking.nix"
         ];
       };
+
+      laptop = nixpkgsStable.lib.nixosSystem {
+          specialArgs = {
+            inherit inputs;
+            inherit system;
+            inherit username;
+            inherit host;
+          };
+
+        modules = [
+          "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/nvidia.nix"
+          "${self}/dotfiles/common/users.nix"
+          "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/laptop/enviornment.nix"
+          "${self}/dotfiles/laptop/networking.nix"
+        ];
+      };
     };
   };
 }
