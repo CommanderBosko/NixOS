@@ -5,8 +5,13 @@
     kernelPackages = pkgs.linuxPackages_zen;
 
     loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
+      grub = {
+        enable = true;
+        efiSupport = true;
+        efiInstallAsRemovable = true; # fallback EFI boot
+        useOSProber = true;           # detect Windows/Linux
+        device = "nodev";             # don't tie to a specific disk
+      };
     };
   };
 }
