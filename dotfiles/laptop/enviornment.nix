@@ -121,6 +121,7 @@
   system.activationScripts.flatpakApps = {
     text = ''
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub dev.aunetx.deezer
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
     '';
   };
 
@@ -200,6 +201,7 @@
     gamemode
     gearlever
     git
+    gpt4all
     htop
     hyprland
     kitty
