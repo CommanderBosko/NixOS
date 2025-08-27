@@ -9,7 +9,7 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
-  buildInputs = [ pkgs.dpkg pkgs.patchelf ];
+  buildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.openjdk ];
 
   unpackPhase = ''
     mkdir unpacked
@@ -18,19 +18,22 @@ pkgs.stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/bin
+
+    # Find the Rift binary inside the unpacked package
     rift_bin=$(find unpacked -type f -name 'rift' -executable | head -n1)
     if [ -z "$rift_bin" ]; then
       echo "Error: Rift binary not found!"
       exit 1
     fi
 
-    cp "$rift_bin" $out/bin/rift
+    # Wrap the binary so it finds libjvm.so
+    wrapProgram $rift_bin \
+      --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib" \
+      --set EXE $out/bin/rift
+
     chmod +x $out/bin/rift
 
-    # Set RPATH so Rift can find libjvm.so from openjdk
-    patchelf --set-rpath "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib" $out/bin/rift
-
-    # Install .desktop file
+    # Install .desktop file for launcher
     mkdir -p $out/share/applications
     cat > $out/share/applications/rift.desktop <<EOF
 [Desktop Entry]
