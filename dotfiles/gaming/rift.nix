@@ -29,9 +29,11 @@ installPhase = ''
   cp "$rift_bin" $out/bin/rift
   chmod +x $out/bin/rift
 
-  # Wrap Rift to set LD_LIBRARY_PATH so libjvm.so is found
-  wrapProgram $out/bin/rift \
-    --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib"
+  # Compute the JVM library path
+  JAVA_LIB="${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib"
+
+  # Wrap Rift
+  wrapProgram $out/bin/rift --prefix LD_LIBRARY_PATH : "$JAVA_LIB"
 
   # Install .desktop file
   mkdir -p $out/share/applications
@@ -46,8 +48,6 @@ Type=Application
 Categories=Game;
 EOF
 '';
-
-
 
   meta = with pkgs.lib; {
     description = "Rift 5.1.2";
