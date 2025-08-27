@@ -6,7 +6,7 @@ pkgs.stdenv.mkDerivation rec {
 
   src = pkgs.fetchurl {
     url = "https://riftforeve.online/download/debian/rift_5.1.2_amd64.deb";
-    sha256 = "YOUR_HASH_HERE";
+    sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
   buildInputs = [ pkgs.dpkg ];
