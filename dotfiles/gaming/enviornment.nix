@@ -231,56 +231,75 @@
   };
 
   # System packages to install
-  environment.systemPackages = with pkgs; [
-    appimage-run
-    brave
-    btop
-    bottles
-    cava
-    cmatrix
-    curl
-    digikam
-    discord
-    distrobox
-    docker
-    fastfetch
-    firefox
-    flatpak
-    freetube
-    gamemode
-    gearlever
-    git
-    gpt4all
-    heroic
-    htop
-    kitty
-    lutris
-    mangohud
-    megasync
-    mumble
-    micro
-    nh
-    nix-index
-    obs-studio
-    php
-    protontricks
-    protonup-qt
-    pyfa
-    pywal
-    rift
-    starship
-    tree
-    unzip
-    vesktop
-    vkbasalt
-    vlc
-    vulkan-tools
-    wine
-    winetricks
-    wget
-    wmctrl
-    xorg.xprop
-    xorg.xwininfo
-    zsh
+  environment = {
+    # Add custom packages to desktop files to be seen
+    desktopFiles = [
+    {
+      name = "rift";
+      text = ''
+        [Desktop Entry]
+        Name=Rift
+        Comment=Rift 5.1.2
+        Exec=${rift}/bin/rift
+        Icon=rift
+        Terminal=false
+        Type=Application
+        Categories=Game;
+      '';
+    }
   ];
+    # List of packages to install
+    systemPackages = with pkgs; [
+      appimage-run
+      brave
+      btop
+      bottles
+      cava
+      cmatrix
+      curl
+      digikam
+      discord
+      distrobox
+      docker
+      fastfetch
+      firefox
+      flatpak
+      freetube
+      gamemode
+      gearlever
+      git
+      gpt4all
+      heroic
+      htop
+      kitty
+      lutris
+      mangohud
+      megasync
+      mumble
+      micro
+      nh
+      nix-index
+      obs-studio
+      php
+      protontricks
+      protonup-qt
+      pyfa
+      pywal
+      rift
+      starship
+      tree
+      unzip
+      vesktop
+      vkbasalt
+      vlc
+      vulkan-tools
+      wine
+      winetricks
+      wget
+      wmctrl
+      xorg.xprop
+      xorg.xwininfo
+      zsh
+    ];
+  };
 }
