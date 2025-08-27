@@ -50,7 +50,7 @@
     displayManager = {
       sddm.enable = true;
       # Make Hyprland the default session
-      defaultSession = "hyprland";
+      defaultSession = "hyprland-uwsm";
       # Auto login
       # autoLogin.enable = true;
       # autoLogin.user = username;
