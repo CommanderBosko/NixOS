@@ -35,28 +35,28 @@
 
   # Services
   services = {
-    # Enable the X11 windowing system.
+    # Enable the X11 windowing system (for XWayland support)
     xserver = {
       enable = true;
 
-      # Configure keymap in X11
-      xkb = {
-        layout = "us";
-        variant = "";
-      };
+      # Keyboard layout
+      xkb.layout = "us";
 
-      # Enable touchpad support (enabled default in most desktopManager).
+      # Touchpad
       libinput.enable = true;
     };
 
-    # Enable automatic login for the user.
+    # Display Manager (login screen)
     displayManager = {
-      autoLogin.enable = false;
-      autoLogin.user = username;
       sddm.enable = true;
+      # Make Hyprland the default session
+      defaultSession = "hyprland";
+      # Auto login
+      # autoLogin.enable = true;
+      # autoLogin.user = username;
     };
 
-    # Enable CUPS to print documents.
+    # Printing
     printing.enable = true;
   };
 
