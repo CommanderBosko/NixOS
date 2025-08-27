@@ -9,7 +9,7 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
-  buildInputs = [ pkgs.dpkg ];
+  buildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.openjdk ];
 
   unpackPhase = ''
     mkdir unpacked
@@ -23,23 +23,27 @@ pkgs.stdenv.mkDerivation rec {
       echo "Error: Rift binary not found!"
       exit 1
     fi
-    cp "$rift_bin" $out/bin/
+    cp "$rift_bin" $out/bin/rift
+
+    # Wrap the binary to include Java library path
+    wrapProgram $out/bin/rift \
+      --prefix LD_LIBRARY_PATH : ${pkgs.openjdk}/lib/server
+
     chmod +x $out/bin/rift
 
     # Install .desktop file
     mkdir -p $out/share/applications
     cat > $out/share/applications/rift.desktop <<EOF
-  [Desktop Entry]
-  Name=Rift
-  Comment=Rift 5.1.2
-  Exec=$out/bin/rift
-  Icon=rift
-  Terminal=false
-  Type=Application
-  Categories=Game;
-  EOF
+      [Desktop Entry]
+      Name=Rift
+      Comment=Rift 5.1.2
+      Exec=$out/bin/rift
+      Icon=rift
+      Terminal=false
+      Type=Application
+      Categories=Game;
+    EOF
   '';
-
 
   meta = with pkgs.lib; {
     description = "Rift 5.1.2";
