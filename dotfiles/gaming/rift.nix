@@ -9,8 +9,7 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
-  # ONE buildInputs
-  buildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.openjdk ];
+  buildInputs = [ pkgs.dpkg pkgs.patchelf ];
 
   unpackPhase = ''
     mkdir unpacked
@@ -28,9 +27,8 @@ pkgs.stdenv.mkDerivation rec {
     cp "$rift_bin" $out/bin/rift
     chmod +x $out/bin/rift
 
-    # Wrap Rift to set LD_LIBRARY_PATH so libjvm.so is found
-    JAVA_LIB="${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib"
-    wrapProgram $out/bin/rift --prefix LD_LIBRARY_PATH : "$JAVA_LIB"
+    # Set RPATH so Rift can find libjvm.so from openjdk
+    patchelf --set-rpath "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib" $out/bin/rift
 
     # Install .desktop file
     mkdir -p $out/share/applications
