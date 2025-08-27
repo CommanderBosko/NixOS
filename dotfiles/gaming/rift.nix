@@ -26,12 +26,13 @@ pkgs.stdenv.mkDerivation rec {
       exit 1
     fi
 
-    # Wrap the binary so it finds libjvm.so
-    wrapProgram $rift_bin \
-      --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib" \
-      --set EXE $out/bin/rift
-
+    # Copy binary first
+    cp "$rift_bin" $out/bin/rift
     chmod +x $out/bin/rift
+
+    # Wrap the copied binary so it finds libjvm.so
+    wrapProgram $out/bin/rift \
+      --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib"
 
     # Install .desktop file for launcher
     mkdir -p $out/share/applications
