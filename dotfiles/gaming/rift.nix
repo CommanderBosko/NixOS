@@ -28,9 +28,10 @@ pkgs.stdenv.mkDerivation rec {
   cp "$rift_bin" $out/bin/rift
   chmod +x $out/bin/rift
 
-  # Wrap the installed binary, not the unpacked one
+  # Wrap the binary: set LD_LIBRARY_PATH and JAVA_HOME
   wrapProgram $out/bin/rift \
-    --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib:${pkgs.openjdk}/lib/jli"
+    --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib:${pkgs.openjdk}/lib/jli" \
+    --set JAVA_HOME "${pkgs.openjdk}"
 
   # Desktop entry
   mkdir -p $out/share/applications
