@@ -45,7 +45,8 @@ Terminal=false
 Type=Application
 Categories=Game;
 EOF
-  '';
+'';
+
 
 
   meta = with pkgs.lib; {
