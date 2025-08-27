@@ -191,6 +191,7 @@
         glib
         gtk2
         gtk3
+        jdk
         krb5
         libdrm
         libGL
