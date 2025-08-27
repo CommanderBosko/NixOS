@@ -14,7 +14,7 @@
 
     # Import nixpkgs for the package sets
     pkgsStable = import nixpkgsStable { inherit system; config.allowUnfree = true; };
-    pkgsUnstable = import nixpkgsUnstable */{ inherit system; config.allowUnfree = true; };
+    pkgsUnstable = import nixpkgsUnstable { inherit system; config.allowUnfree = true; };
   in
   {
     # Add non-nix packages
