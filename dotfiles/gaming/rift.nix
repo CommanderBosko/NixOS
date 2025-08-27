@@ -16,18 +16,22 @@ pkgs.stdenv.mkDerivation rec {
     dpkg-deb -x $src unpacked
   '';
 
-  installPhase = ''
+  buildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.openjdk ];
+
+installPhase = ''
   mkdir -p $out/bin
   rift_bin=$(find unpacked -type f -name 'rift' -executable | head -n1)
   if [ -z "$rift_bin" ]; then
     echo "Error: Rift binary not found!"
     exit 1
   fi
+
   cp "$rift_bin" $out/bin/rift
   chmod +x $out/bin/rift
 
-  # Use patchelf to set RPATH so Rift finds libjvm.so
-  patchelf --set-rpath "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib" $out/bin/rift
+  # Wrap Rift to set LD_LIBRARY_PATH so libjvm.so is found
+  wrapProgram $out/bin/rift \
+    --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib/server:${pkgs.openjdk}/lib"
 
   # Install .desktop file
   mkdir -p $out/share/applications
