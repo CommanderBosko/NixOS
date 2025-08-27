@@ -267,6 +267,7 @@
     protonup-qt
     pyfa
     pywal
+    rift
     starship
     tree
     unzip
