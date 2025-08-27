@@ -4,25 +4,28 @@ pkgs.stdenv.mkDerivation rec {
   pname = "rift";
   version = "5.1.2";
 
-  # Fetch the .deb from the official URL
   src = pkgs.fetchurl {
     url = "https://riftforeve.online/download/debian/rift_5.1.2_amd64.deb";
-    sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
+    sha256 = "YOUR_HASH_HERE";
   };
 
   buildInputs = [ pkgs.dpkg ];
 
-  unpackPhase = "true";   # .deb will be extracted in installPhase
-  buildPhase = "true";    # nothing to build
+  unpackPhase = ''
+    mkdir -p $out
+    dpkg-deb -x $src $out
+  '';
 
   installPhase = ''
-    mkdir -p $out
-    dpkg -x $src $out
+    mkdir -p $out/bin
+    # Rift's binary path inside the .deb might vary, adjust as needed
+    cp $out/usr/bin/rift $out/bin/
+    chmod +x $out/bin/rift
   '';
 
   meta = with pkgs.lib; {
-    description = "Rift Online Game Client";
+    description = "Rift 5.1.2";
     license = licenses.unfree;
-    maintainers = [ maintainers.commanderbosko ];
+    platforms = platforms.linux;
   };
 }
