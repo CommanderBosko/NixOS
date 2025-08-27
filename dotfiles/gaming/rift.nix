@@ -24,12 +24,11 @@ pkgs.stdenv.mkDerivation rec {
       exit 1
     fi
     cp "$rift_bin" $out/bin/rift
-
-    # Wrap the binary to include Java library path
-    wrapProgram $out/bin/rift \
-      --prefix LD_LIBRARY_PATH : ${pkgs.openjdk}/lib/server
-
     chmod +x $out/bin/rift
+
+    # Wrap the binary to include Java library paths
+    wrapProgram $out/bin/rift \
+      --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib:${pkgs.openjdk}/lib/server"
 
     # Install .desktop file
     mkdir -p $out/share/applications
