@@ -191,7 +191,6 @@
         glib
         gtk2
         gtk3
-        jdk.debug
         krb5
         libdrm
         libGL
@@ -227,64 +226,62 @@
         xwayland
         wayland
         zlib
+        zulu
       ];
     };
   };
 
   # System packages to install
-  environment = {
-    # List of packages to install
-    systemPackages = with pkgs; [
-      appimage-run
-      brave
-      btop
-      bottles
-      cava
-      cmatrix
-      curl
-      digikam
-      discord
-      distrobox
-      docker
-      fastfetch
-      firefox
-      flatpak
-      freetube
-      gamemode
-      gearlever
-      git
-      gpt4all
-      heroic
-      htop
-      kitty
-      lutris
-      mangohud
-      megasync
-      mumble
-      micro
-      nh
-      nix-index
-      obs-studio
-      php
-      protontricks
-      protonup-qt
-      pyfa
-      pywal
-      rift
-      starship
-      tree
-      unzip
-      vesktop
-      vkbasalt
-      vlc
-      vulkan-tools
-      wine
-      winetricks
-      wget
-      wmctrl
-      xorg.xprop
-      xorg.xwininfo
-      zsh
-    ];
-  };
+  environment.systemPackages = with pkgs; [
+    appimage-run
+    brave
+    btop
+    bottles
+    cava
+    cmatrix
+    curl
+    digikam
+    discord
+    distrobox
+    docker
+    fastfetch
+    firefox
+    flatpak
+    freetube
+    gamemode
+    gearlever
+    git
+    gpt4all
+    heroic
+    htop
+    kitty
+    lutris
+    mangohud
+    megasync
+    mumble
+    micro
+    nh
+    nix-index
+    obs-studio
+    php
+    protontricks
+    protonup-qt
+    pyfa
+    pywal
+    rift
+    starship
+    tree
+    unzip
+    vesktop
+    vkbasalt
+    vlc
+    vulkan-tools
+    wine
+    winetricks
+    wget
+    wmctrl
+    xorg.xprop
+    xorg.xwininfo
+    zsh
+  ];
 }
