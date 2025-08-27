@@ -232,22 +232,6 @@
 
   # System packages to install
   environment = {
-    # Add custom packages to desktop files to be seen
-    desktopFiles = [
-    {
-      name = "rift";
-      text = ''
-        [Desktop Entry]
-        Name=Rift
-        Comment=Rift 5.1.2
-        Exec=${rift}/bin/rift
-        Icon=rift
-        Terminal=false
-        Type=Application
-        Categories=Game;
-      '';
-    }
-  ];
     # List of packages to install
     systemPackages = with pkgs; [
       appimage-run
