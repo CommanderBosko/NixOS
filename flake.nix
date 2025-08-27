@@ -8,13 +8,21 @@
 
   outputs = { self, nixPkgsStable, nixPkgsUnstable, ... }@inputs:
   let
+    # Configure system settings
     system = "x86_64-linux";
     host = "venom";
     username = "bosko";
 
     # Import nixpkgs for the package sets
-    pkgsStable = import nixPkgsStable { inherit system; config.allowUnfree = true; };
-    pkgsUnstable = import nixPkgsUnstable { inherit system; config.allowUnfree = true; };
+    pkgsUnstable = import nixPkgsUnstable {
+      inherit system;
+      config.allowUnfree = true;
+      overlays = [
+        (self: super: {
+        rift = import ./dotfiles/gaming/rift.nix { pkgs = super; };
+        })
+      ];
+    };
   in
   {
     # Configure nix configurations
