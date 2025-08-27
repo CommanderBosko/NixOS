@@ -2,35 +2,31 @@
   description = "Bosko's NixOS Flake";
 
   inputs = {
-    nixpkgsStable.url = "github:nixos/nixpkgs/nixos-25.05";
-    nixpkgsUnstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixPkgsStable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixPkgsUnstable.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgsStable, nixpkgsUnstable, ... }@inputs:
+  outputs = { self, nixPkgsStable, nixPkgsUnstable, ... }@inputs:
   let
     system = "x86_64-linux";
     host = "venom";
     username = "bosko";
 
     # Import nixpkgs for the package sets
-    pkgsStable = import nixpkgsStable { inherit system; config.allowUnfree = true; };
-    pkgsUnstable = import nixpkgsUnstable { inherit system; config.allowUnfree = true; };
+#     pkgsStable = import nixPkgsStable { inherit system; config.allowUnfree = true; };
+#     pkgsUnstable = import nixPkgsUnstable { inherit system; config.allowUnfree = true; };
   in
   {
-    # Add non-nix packages
-    packages.${system} = {
-      rift = import ./dotfiles/gaming/rift.nix { pkgs = pkgsUnstable; };
-    };
-
     # Configure nix configurations
     nixosConfigurations = {
       # Gaming with KDE
-      gaming = nixpkgsUnstable.lib.nixosSystem {
+      gaming = nixPkgsUnstable.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
           inherit username;
           inherit host;
+          rift = import ./dotfiles/gaming/rift.nix { pkgs = nixPkgsUnstable; };
         };
 
       modules = [
@@ -45,7 +41,7 @@
     };
 
       # Laptop
-      laptop = nixpkgsStable.lib.nixosSystem {
+      laptop = nixPkgsStable.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
