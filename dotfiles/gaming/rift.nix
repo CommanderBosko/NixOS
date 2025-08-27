@@ -9,7 +9,7 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
-  buildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.openjdk ];
+  buildInputs = [ pkgs.dpkg pkgs.patchelf pkgs.openjdk ];
 
   unpackPhase = ''
     mkdir unpacked
@@ -26,22 +26,21 @@ pkgs.stdenv.mkDerivation rec {
     cp "$rift_bin" $out/bin/rift
     chmod +x $out/bin/rift
 
-    # Wrap the binary to include Java library paths
-    wrapProgram $out/bin/rift \
-      --prefix LD_LIBRARY_PATH : "${pkgs.openjdk}/lib:${pkgs.openjdk}/lib/server"
+    # Use patchelf to set RPATH so Rift finds libjvm.so
+    patchelf --set-rpath "${pkgs.openjdk.lib}/server:${pkgs.openjdk.lib}" $out/bin/rift
 
     # Install .desktop file
     mkdir -p $out/share/applications
     cat > $out/share/applications/rift.desktop <<EOF
-      [Desktop Entry]
-      Name=Rift
-      Comment=Rift 5.1.2
-      Exec=$out/bin/rift
-      Icon=rift
-      Terminal=false
-      Type=Application
-      Categories=Game;
-    EOF
+[Desktop Entry]
+Name=Rift
+Comment=Rift 5.1.2
+Exec=$out/bin/rift
+Icon=rift
+Terminal=false
+Type=Application
+Categories=Game;
+EOF
   '';
 
   meta = with pkgs.lib; {
