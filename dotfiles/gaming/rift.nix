@@ -18,7 +18,6 @@ pkgs.stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/bin
-    # Automatically find the Rift binary inside the unpacked package
     rift_bin=$(find unpacked -type f -name 'rift' -executable | head -n1)
     if [ -z "$rift_bin" ]; then
       echo "Error: Rift binary not found!"
@@ -26,7 +25,21 @@ pkgs.stdenv.mkDerivation rec {
     fi
     cp "$rift_bin" $out/bin/
     chmod +x $out/bin/rift
+
+    # Install .desktop file
+    mkdir -p $out/share/applications
+    cat > $out/share/applications/rift.desktop <<EOF
+  [Desktop Entry]
+  Name=Rift
+  Comment=Rift 5.1.2
+  Exec=$out/bin/rift
+  Icon=rift
+  Terminal=false
+  Type=Application
+  Categories=Game;
+  EOF
   '';
+
 
   meta = with pkgs.lib; {
     description = "Rift 5.1.2";
