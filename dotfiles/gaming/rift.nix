@@ -19,7 +19,7 @@ pkgs.stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/bin
     # Rift's binary path inside the .deb might vary, adjust as needed
-    cp $outusr/lib/nohus/rift $out/bin/
+    cp $out/usr/lib/nohus/rift $out/bin/
     chmod +x $out/bin/rift
   '';
 
