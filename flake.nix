@@ -13,8 +13,8 @@
     username = "bosko";
 
     # Import nixpkgs for the package sets
-#     pkgsStable = import nixPkgsStable { inherit system; config.allowUnfree = true; };
-#     pkgsUnstable = import nixPkgsUnstable { inherit system; config.allowUnfree = true; };
+    pkgsStable = import nixPkgsStable { inherit system; config.allowUnfree = true; };
+    pkgsUnstable = import nixPkgsUnstable { inherit system; config.allowUnfree = true; };
   in
   {
     # Configure nix configurations
@@ -26,7 +26,7 @@
           inherit system;
           inherit username;
           inherit host;
-          rift = import ./dotfiles/gaming/rift.nix { pkgs = nixPkgsUnstable; };
+          rift = import ./dotfiles/gaming/rift.nix { pkgs = pkgsUnstable; };
         };
 
       modules = [
