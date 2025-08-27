@@ -12,14 +12,19 @@ pkgs.stdenv.mkDerivation rec {
   buildInputs = [ pkgs.dpkg ];
 
   unpackPhase = ''
-    mkdir -p $out
-    dpkg-deb -x $src $out
+    mkdir unpacked
+    dpkg-deb -x $src unpacked
   '';
 
   installPhase = ''
     mkdir -p $out/bin
-    # Rift's binary path inside the .deb might vary, adjust as needed
-    cp $out/usr/lib/nohus/rift $out/bin/
+    # Automatically find the Rift binary inside the unpacked package
+    rift_bin=$(find unpacked -type f -name 'rift' -executable | head -n1)
+    if [ -z "$rift_bin" ]; then
+      echo "Error: Rift binary not found!"
+      exit 1
+    fi
+    cp "$rift_bin" $out/bin/
     chmod +x $out/bin/rift
   '';
 
