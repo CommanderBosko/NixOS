@@ -1,4 +1,4 @@
-{ config, pkgs, system, username, ... }:
+{ config, pkgs, system, username, rift, ... }:
 
 {
   # System
