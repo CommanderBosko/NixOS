@@ -41,7 +41,6 @@
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/enviornment.nix"
         "${self}/dotfiles/gaming/networking.nix"
-        "${self}/dotfiles/gaming/rift.nix"
       ];
     };
 
