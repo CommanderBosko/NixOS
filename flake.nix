@@ -13,13 +13,13 @@
     username = "bosko";
 
     # Import nixpkgs for the package sets
-#     pkgsStable = import nixpkgsStable { inherit system; config.allowUnfree = true; };
-#     pkgsUnstable = import nixpkgsUnstable */{ inherit system; config.allowUnfree = true; };
+    pkgsStable = import nixpkgsStable { inherit system; config.allowUnfree = true; };
+    pkgsUnstable = import nixpkgsUnstable */{ inherit system; config.allowUnfree = true; };
   in
   {
     # Add non-nix packages
     packages.${system} = {
-      rift = import ./dotfiles/gaming/rift.nix { pkgs = nixpkgsUnstable; };
+      rift = import ./dotfiles/gaming/rift.nix { pkgs = pkgsUnstable; };
     };
 
     # Configure nix configurations
