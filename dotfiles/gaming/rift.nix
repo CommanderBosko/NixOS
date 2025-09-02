@@ -36,16 +36,16 @@ pkgs.stdenv.mkDerivation rec {
   # Desktop entry
   mkdir -p $out/share/applications
   cat > $out/share/applications/rift.desktop <<EOF
-[Desktop Entry]
-Name=Rift
-Comment=Rift 5.1.2
-Exec=$out/bin/rift
-Icon=rift
-Terminal=false
-Type=Application
-Categories=Game;
-EOF
-'';
+    [Desktop Entry]
+    Name=Rift
+    Comment=Rift 5.1.2
+    Exec=$out/bin/rift
+    Icon=rift
+    Terminal=false
+    Type=Application
+    Categories=Game;
+    EOF
+  '';
 
   meta = with pkgs.lib; {
     description = "Rift 5.1.2";
