@@ -263,6 +263,7 @@
     nh
     nix-index
     obs-studio
+    onlyoffice-bin
     php
     protontricks
     protonup-qt

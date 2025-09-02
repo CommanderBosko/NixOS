@@ -212,6 +212,7 @@
     nh
     nm-tray
     nix-index
+    onlyoffice-bin
     openvpn
     protontricks
     protonup-qt
@@ -224,6 +225,7 @@
     vesktop
     vkbasalt
     vlc
+    vscode
     waybar
     wget
     zsh
