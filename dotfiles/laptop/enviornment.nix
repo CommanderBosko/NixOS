@@ -4,7 +4,7 @@
   # System
   system = {
     # Set NixOS Version
-      stateVersion = "25.05";
+#       stateVersion = "25.05";
 
     # Automatic updating
     autoUpgrade = {
@@ -35,15 +35,15 @@
 
   # Services
   services = {
+    # Touchpad
+      libinput.enable = true;
+
     # Enable the X11 windowing system (for XWayland support)
     xserver = {
       enable = true;
 
       # Keyboard layout
       xkb.layout = "us";
-
-      # Touchpad
-      libinput.enable = true;
     };
 
     # Display Manager (login screen)
