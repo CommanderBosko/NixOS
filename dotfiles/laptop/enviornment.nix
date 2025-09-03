@@ -50,7 +50,7 @@
     displayManager = {
       sddm.enable = true;
       # Make Hyprland the default session
-      defaultSession = "hyprland-uwsm";
+      defaultSession = "hyprland";
       # Auto login
       # autoLogin.enable = true;
       # autoLogin.user = username;
@@ -210,9 +210,9 @@
     megacmd
     micro
     nh
-    nm-tray
+    # nm-tray
     nix-index
-    onlyoffice-bin
+    # onlyoffice-bin
     openvpn
     protontricks
     protonup-qt
