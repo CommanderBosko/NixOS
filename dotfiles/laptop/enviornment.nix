@@ -4,21 +4,6 @@
   # System
   system = {
     # Set NixOS Version
-#       stateVersion = "25.05";
-
-    # Automatic updating
-    autoUpgrade = {
-      enable = true;
-      dates = "daily";
-      persistent = true;
-    };
-  };
-{ config, pkgs, system, username, ... }:
-
-{
-  # System
-  system = {
-    # Set NixOS Version
     stateVersion = "25.05";
 
     # Automatic updating
