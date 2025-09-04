@@ -35,6 +35,9 @@
 
   # Services
   services = {
+    # Enable touchpad support (enabled default in most desktopManager).
+#     libinput.enable = true;
+
     # Enable the X11 windowing system.
     xserver = {
       enable = true;
@@ -44,9 +47,6 @@
         layout = "us";
         variant = "";
       };
-
-      # Enable touchpad support (enabled default in most desktopManager).
-      # libinput.enable = true;
     };
 
     # Enable the KDE Plasma Desktop Environment.
