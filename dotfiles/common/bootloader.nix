@@ -8,9 +8,13 @@
       grub = {
         enable = true;
         efiSupport = true;
-        efiInstallAsRemovable = true; # fallback EFI boot
-        useOSProber = true;           # detect Windows/Linux
-        device = "nodev";             # don't tie to a specific disk
+        useOSProber = true;        # change to false if NixOS-only
+        devices = [ "nodev" ];     # must be a list
+      };
+
+      efi = {
+        canTouchEfiVariables = true;
+        efiSysMountPoint = "/boot";  # or "/boot/efi" if that’s your ESP
       };
     };
   };
