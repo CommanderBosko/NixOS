@@ -1,46 +1,44 @@
 { config, lib, pkgs, ... }:
 
 let
-  # Choose GPU vendor: "nvidia" or "amd"
-  gpuVendor = config.hardware.gpu.vendor or "nvidia";
+  gpuVendor = config.hardware.gpu.vendor or "nvidia"; # "amd" or "nvidia"
 in
 {
-  # Enable graphics stack
-  hardware.graphics.enable = true;
+  options = {
+    hardware.gpu.vendor = lib.mkOption {
+      type = lib.types.enum [ "nvidia" "amd" ];
+      default = "amd";
+    };
+  };
 
-  services.xserver.videoDrivers = if gpuVendor == "nvidia" then
-    [ "nvidia" ]
-  else
-    [ "amdgpu" ];
+  config = {
+    services.xserver.videoDrivers =
+      if gpuVendor == "nvidia" then [ "nvidia" ] else [ "amdgpu" ];
 
-  hardware = lib.mkMerge [
+    # Shared graphics settings
+    hardware.graphics = {
+      enable = true;
+      enable32Bit = true;
+
+      extraPackages = lib.mkIf (gpuVendor == "amd") (with pkgs; [
+        mesa.drivers
+        amdvlk
+      ]);
+
+      extraPackages32 = lib.mkIf (gpuVendor == "amd") (with pkgs; [
+        driversi686Linux.mesa
+        driversi686Linux.amdvlk
+      ]);
+    };
+
     # NVIDIA-specific settings
-    (lib.mkIf (gpuVendor == "nvidia") {
-      nvidia = {
-        modesetting.enable = true;
-        powerManagement.enable = false;
-        powerManagement.finegrained = false;
-        open = false;
-        nvidiaSettings = true;
-        package = config.boot.kernelPackages.nvidiaPackages.stable;
-      };
-    })
-
-    # AMD-specific settings
-    (lib.mkIf (gpuVendor == "amd") {
-      opengl = {
-        enable = true;
-        driSupport = true;
-        driSupport32Bit = true;
-        extraPackages = with pkgs; [
-          mesa.drivers
-          amdvlk
-        ];
-        extraPackages32 = with pkgs; [
-          driversi686Linux.mesa
-          driversi686Linux.amdvlk
-        ];
-      };
-    })
-  ];
+    hardware.nvidia = lib.mkIf (gpuVendor == "nvidia") {
+      modesetting.enable = true;
+      powerManagement.enable = false;
+      powerManagement.finegrained = false;
+      open = false;
+      nvidiaSettings = true;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+    };
+  };
 }
