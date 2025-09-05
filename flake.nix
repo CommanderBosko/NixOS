@@ -39,6 +39,7 @@
 
       modules = [
         "/etc/nixos/hardware-configuration.nix"
+        "${self}/dotfiles/common/amd.nix"
         "${self}/dotfiles/common/bootloader.nix"
         "${self}/dotfiles/common/graphics.nix"
         "${self}/dotfiles/common/users.nix"
