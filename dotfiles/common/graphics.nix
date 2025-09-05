@@ -21,7 +21,7 @@ in
       enable32Bit = true;
 
       extraPackages = lib.mkIf (gpuVendor == "amd") (with pkgs; [
-        mesa.drivers
+        mesa
         amdvlk
       ]);
 

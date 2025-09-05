@@ -40,7 +40,7 @@
       modules = [
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/bootloader.nix"
-        "${self}/dotfiles/common/nvidia.nix"
+        "${self}/dotfiles/common/graphics.nix"
         "${self}/dotfiles/common/users.nix"
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/enviornment.nix"
@@ -60,7 +60,7 @@
         modules = [
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
-          "${self}/dotfiles/common/nvidia.nix"
+          "${self}/dotfiles/common/graphics.nix"
           "${self}/dotfiles/common/users.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/laptop/enviornment.nix"
