@@ -2,7 +2,7 @@
 
 let
   # Choose GPU vendor: "nvidia" or "amd"
-  gpuVendor = config.hardware.gpu.vendor or "amd";
+  gpuVendor = config.hardware.gpu.vendor or "nvidia";
 in
 {
   # Enable graphics stack
