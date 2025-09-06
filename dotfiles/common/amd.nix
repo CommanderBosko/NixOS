@@ -1,6 +1,9 @@
 { config, lib, pkgs, ... }:
 
 {
+  # Load AMDGPU driver at initrd
+  boot.initrd.kernelModules = [ "amdgpu" ];
+
   # Load AMDGPU driver for Xorg and Wayland
   services.xserver.videoDrivers = [ "amdgpu" ];
 
