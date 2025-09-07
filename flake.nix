@@ -12,20 +12,15 @@
     host = "venom";
     username = "bosko";
 
-    # Import nixpkgs with overlays
-    pkgsUnstable = import nixPkgsUnstable {
-      inherit system;
-      config.allowUnfree = true;
-      overlays = [
-        (final: prev: {
-          rift = prev.callPackage ./dotfiles/gaming/rift.nix { };
-        })
-      ];
+    # Overlay definition (reusable for both stable & unstable)
+    riftOverlay = final: prev: {
+      rift = prev.callPackage ./dotfiles/gaming/rift.nix { };
     };
   in {
     nixosConfigurations = {
-      # Gaming with KDE
+      # Gaming
       gaming = nixPkgsUnstable.lib.nixosSystem {
+        system = "x86_64-linux";
         specialArgs = { inherit inputs system username host; };
 
         modules = [
@@ -38,10 +33,17 @@
           ./dotfiles/gaming/environment.nix
           ./dotfiles/gaming/networking.nix
         ];
+
+        pkgs = import nixPkgsUnstable {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [ riftOverlay ];
+        };
       };
 
       # Laptop
       laptop = nixPkgsStable.lib.nixosSystem {
+        system = "x86_64-linux";
         specialArgs = { inherit inputs system username host; };
 
         modules = [
@@ -53,6 +55,12 @@
           ./dotfiles/laptop/environment.nix
           ./dotfiles/laptop/networking.nix
         ];
+
+        pkgs = import nixPkgsStable {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [ riftOverlay ];
+        };
       };
     };
   };
