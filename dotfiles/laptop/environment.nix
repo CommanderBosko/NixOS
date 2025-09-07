@@ -223,6 +223,7 @@
     wmctrl
     xorg.xprop
     xorg.xwininfo
+    zip
     zsh
   ];
 }
