@@ -9,19 +9,54 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
-  buildInputs = [
-    pkgs.dpkg
-    pkgs.makeWrapper
-    pkgs.openjdk
-    pkgs.alsa-lib
-    pkgs.libGL
-    pkgs.SDL2
-    pkgs.zlib
-    pkgs.libpulseaudio
-    pkgs.glib
-    pkgs.libX11
-    pkgs.libXext
-    pkgs.libXrender
+  buildInputs = with pkgs; [
+    alsa-lib
+    atk
+    cairo
+    dbus
+    expat
+    fontconfig
+    freetype
+    gdk-pixbuf
+    glib
+    gtk2
+    gtk3
+    krb5
+    libdrm
+    libGL
+    libusb1
+    libpulseaudio
+    libva
+    libvdpau
+    mesa
+    nspr
+    nss
+    pango
+    pipewire
+    SDL2
+    SDL2_mixer
+    udev
+    vulkan-loader
+    xorg.libX11
+    xorg.libXau
+    xorg.libXcomposite
+    xorg.libXcursor
+    xorg.libXdamage
+    xorg.libXdmcp
+    xorg.libXext
+    xorg.libXfixes
+    xorg.libXi
+    xorg.libICE
+    xorg.libXinerama
+    xorg.libXrandr
+    xorg.libXrender
+    xorg.libSM
+    xorg.libXtst
+    xorg.libXt
+    xwayland
+    wayland
+    zlib
+    zulu
   ];
 
   unpackPhase = ''
