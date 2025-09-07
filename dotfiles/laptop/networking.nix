@@ -1,15 +1,16 @@
 { config, pkgs, host, ... }:
 
 {
+  # Configure networking
   networking = {
     # Set host name
     hostName = host;
 
-    # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+    # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
     # Configure network proxy if necessary
-    # networking.proxy.default = "http://user:password@proxy:port/";
-    # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+    # proxy.default = "http://user:password@proxy:port/";
+    # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
     # Enable network manager
     networkmanager.enable = true;
