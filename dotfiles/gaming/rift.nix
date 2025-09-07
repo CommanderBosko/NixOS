@@ -9,6 +9,8 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "1af54h6j7mpaknyxydqi9aiz6g31kfwcllknhqzpv96bn2ps31lj";
   };
 
+  nativeBuildInputs = [ pkgs.dpkg pkgs.makeWrapper ];
+
   buildInputs = with pkgs; [
     alsa-lib
     atk
@@ -75,12 +77,10 @@ pkgs.stdenv.mkDerivation rec {
     cp "$rift_bin" $out/bin/rift
     chmod +x $out/bin/rift
 
-    # Wrap binary with runtime libraries + Java
     wrapProgram $out/bin/rift \
       --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath buildInputs}" \
-      --set JAVA_HOME "${pkgs.openjdk}"
+      --set JAVA_HOME "${pkgs.zulu}"
 
-    # Desktop entry
     mkdir -p $out/share/applications
     cat > $out/share/applications/rift.desktop <<EOF
     [Desktop Entry]
