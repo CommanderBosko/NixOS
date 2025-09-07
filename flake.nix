@@ -72,8 +72,8 @@
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/users.nix"
           "${self}/dotfiles/common/virtualisation.nix"
-          "${self}/dotfiles/laptop/environment.nix"
-          "${self}/dotfiles/laptop/networking.nix"
+          "${self}/dotfiles/server/environment.nix"
+          "${self}/dotfiles/server/networking.nix"
         ];
       };
     };

@@ -20,17 +20,11 @@
     #   enableSSHSupport = true;
     # };
 
-    # Openvpn setup
-    # services.openvpn.servers = {
-      # homeVPN = { config = '' config ./dotfiles/vpn/us11656.manassas1.nordvpn.conf ''; };
-      # pVPN = { config = '' config ./dotfiles/vpn/us10399.newYork.nordvpn.conf ''; };
-    # };
-
     # Enable the OpenSSH daemon.
     # services.openssh.enable = true;
 
     # Open ports in the firewall.
-    # networking.firewall.allowedTCPPorts = [ ... ];
+    networking.firewall.allowedTCPPorts = [ 22 ];
     # networking.firewall.allowedUDPPorts = [ ... ];
     # Or disable the firewall altogether.
     # networking.firewall.enable = false;
