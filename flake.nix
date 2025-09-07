@@ -23,17 +23,18 @@
           inherit system;
           inherit username;
           inherit host;
+          rift = import ./dotfiles/gaming/rift.nix { pkgs = pkgsUnstable; };
         };
 
       modules = [
         "/etc/nixos/hardware-configuration.nix"
-        "./dotfiles/common/amd.nix"
-        "./dotfiles/common/bootloader.nix"
-        "./dotfiles/common/nvidia.nix"
-        "./dotfiles/common/users.nix"
-        "./dotfiles/common/virtualisation.nix"
-        "./dotfiles/gaming/enviornment.nix"
-        "./dotfiles/gaming/networking.nix"
+        "${self}/dotfiles/common/amd.nix"
+        "${self}/dotfiles/common/bootloader.nix"
+        "${self}/dotfiles/common/nvidia.nix"
+        "${self}/dotfiles/common/users.nix"
+        "${self}/dotfiles/common/virtualisation.nix"
+        "${self}/dotfiles/gaming/enviornment.nix"
+        "${self}/dotfiles/gaming/networking.nix"
       ];
     };
 
@@ -48,13 +49,13 @@
 
         modules = [
           "/etc/nixos/hardware-configuration.nix"
-          "./dotfiles/common/amd.nix"
-          "./dotfiles/common/bootloader.nix"
-          "./dotfiles/common/nvidia.nix"
-          "./dotfiles/common/users.nix"
-          "./dotfiles/common/virtualisation.nix"
-          "./dotfiles/laptop/enviornment.nix"
-          "./dotfiles/laptop/networking.nix"
+          "${self}/dotfiles/common/amd.nix"
+          "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/nvidia.nix"
+          "${self}/dotfiles/common/users.nix"
+          "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/laptop/enviornment.nix"
+          "${self}/dotfiles/laptop/networking.nix"
         ];
       };
     };
