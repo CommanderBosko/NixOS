@@ -23,7 +23,6 @@
           inherit system;
           inherit username;
           inherit host;
-          rift = import ./dotfiles/gaming/rift.nix { pkgs = pkgsUnstable; };
         };
 
       modules = [
