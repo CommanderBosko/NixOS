@@ -1,11 +1,11 @@
-{ config, pkgs, host, ... }:
+{ config, pkgs, ... }:
 
 {
   networking = {
-    hostName = host; # Define your hostname.
-    # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+    # Set host name
+    hostName = "nixos-server";
 
-    # Configure network proxy if necessary
+    # Configure network proxy
     # networking.proxy.default = "http://user:password@proxy:port/";
     # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
@@ -20,13 +20,25 @@
     #   enableSSHSupport = true;
     # };
 
-    # Enable the OpenSSH daemon.
-    # services.openssh.enable = true;
+    # SSH server
+  services = {
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false; # disable if using SSH keys
+        PermitRootLogin = "no";
+      };
+    };
 
-    # Open ports in the firewall.
-    firewall.allowedTCPPorts = [ 22 ];
-    # firewall.allowedUDPPorts = [ ... ];
-    # Or disable the firewall altogether.
-    firewall.enable = true;
+    # Clock sync
+    ntp.enable = true;
+  };
+
+    # Enable and open ports in the firewall
+    firewall = {
+      enable = true;
+      allowedTCPPorts = [ 22 ];
+      # allowedUDPPorts = [ ... ];
+    };
   };
 }
