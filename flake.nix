@@ -75,6 +75,7 @@
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
         ];
+      };
     };
   };
 }
