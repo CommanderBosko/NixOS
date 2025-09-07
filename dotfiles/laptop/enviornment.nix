@@ -35,10 +35,10 @@
 
   # Services
   services = {
-    # Enable touchpad support (enabled default in most desktopManager).
+    # Enable touchpad support
     libinput.enable = true;
 
-    # Enable the X11 windowing system.
+    # Enable X11
     xserver = {
       enable = true;
 
@@ -49,17 +49,17 @@
       };
     };
 
-    # Enable the KDE Plasma Desktop Environment.
+    # Enable KDE Plasma
     desktopManager.plasma6.enable = true;
 
-    # Enable automatic login for the user.
+    # Enable automatic login
     displayManager = {
       autoLogin.enable = false;
       autoLogin.user = username;
       sddm.enable = true;
     };
 
-    # Enable CUPS to print documents.
+    # Enable CUPS
     printing.enable = true;
   };
 
@@ -100,7 +100,7 @@
     settings.auto-optimise-store = true;
   };
 
-  # Enable sound with pipewire.
+  # Enable sound with pipewire
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -120,7 +120,7 @@
       ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
-  # Install scripts at launch
+  # Install scripts for Flatpaks
   system.activationScripts.flatpakApps = {
     text = ''
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
