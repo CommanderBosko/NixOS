@@ -57,6 +57,24 @@
           "${self}/dotfiles/laptop/networking.nix"
         ];
       };
+
+      # Server
+      server = nixPkgsStable.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          inherit system;
+          inherit username;
+          inherit host;
+        };
+
+        modules = [
+          "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/users.nix"
+          "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/laptop/environment.nix"
+          "${self}/dotfiles/laptop/networking.nix"
+        ];
     };
   };
 }
