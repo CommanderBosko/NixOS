@@ -8,55 +8,53 @@
 
   outputs = { self, nixPkgsStable, nixPkgsUnstable, ... }@inputs:
   let
+    # Configure system settings
     system = "x86_64-linux";
     host = "venom";
     username = "bosko";
-
-    # Overlay only for gaming
-    riftOverlay = final: prev: {
-      rift = prev.callPackage ./dotfiles/gaming/rift.nix { };
-    };
-  in {
+  in
+  {
+    # Configure nix configurations
     nixosConfigurations = {
-      # Gaming
+      # Gaming with KDE
       gaming = nixPkgsUnstable.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs system username host; };
+        specialArgs = {
+          inherit inputs;
+          inherit system;
+          inherit username;
+          inherit host;
+        };
 
-        modules = [
-          # Inject pkgs with Rift overlay
-          ({ ... }: {
-            nixpkgs = {
-              inherit system;
-              config.allowUnfree = true;
-              overlays = [ riftOverlay ];
-            };
-          })
-
-          /etc/nixos/hardware-configuration.nix
-          ./dotfiles/common/amd.nix
-          ./dotfiles/common/bootloader.nix
-          ./dotfiles/common/nvidia.nix
-          ./dotfiles/common/users.nix
-          ./dotfiles/common/virtualisation.nix
-          ./dotfiles/gaming/environment.nix
-          ./dotfiles/gaming/networking.nix
-        ];
-      };
+      modules = [
+        "/etc/nixos/hardware-configuration.nix"
+        "./dotfiles/common/amd.nix"
+        "./dotfiles/common/bootloader.nix"
+        "./dotfiles/common/nvidia.nix"
+        "./dotfiles/common/users.nix"
+        "./dotfiles/common/virtualisation.nix"
+        "./dotfiles/gaming/enviornment.nix"
+        "./dotfiles/gaming/networking.nix"
+      ];
+    };
 
       # Laptop
       laptop = nixPkgsStable.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs system username host; };
+        specialArgs = {
+          inherit inputs;
+          inherit system;
+          inherit username;
+          inherit host;
+        };
 
         modules = [
-          /etc/nixos/hardware-configuration.nix
-          ./dotfiles/common/bootloader.nix
-          ./dotfiles/common/nvidia.nix
-          ./dotfiles/common/users.nix
-          ./dotfiles/common/virtualisation.nix
-          ./dotfiles/laptop/environment.nix
-          ./dotfiles/laptop/networking.nix
+          "/etc/nixos/hardware-configuration.nix"
+          "./dotfiles/common/amd.nix"
+          "./dotfiles/common/bootloader.nix"
+          "./dotfiles/common/nvidia.nix"
+          "./dotfiles/common/users.nix"
+          "./dotfiles/common/virtualisation.nix"
+          "./dotfiles/laptop/enviornment.nix"
+          "./dotfiles/laptop/networking.nix"
         ];
       };
     };
