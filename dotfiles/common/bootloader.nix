@@ -8,8 +8,8 @@
       grub = {
         enable = true;
         efiSupport = true;
-        useOSProber = true;        # change to false if NixOS-only
-        devices = [ "nodev" ];     # must be a list
+        useOSProber = true;
+        devices = [ "nodev" ];
       };
 
       efi = {

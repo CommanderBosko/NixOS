@@ -35,9 +35,6 @@
 
   # Services
   services = {
-    # Enable touchpad support (enabled default in most desktopManager).
-#     libinput.enable = true;
-
     # Enable the X11 windowing system.
     xserver = {
       enable = true;
@@ -100,7 +97,7 @@
     settings.auto-optimise-store = true;
   };
 
-  # Enable sound with pipewire.
+  # Enable sound with pipewire
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -108,8 +105,8 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    #jack.enable = true;
-    #media-session.enable = true;
+    # jack.enable = true;
+    # media-session.enable = true;
   };
 
   # Flatpaks
@@ -120,7 +117,7 @@
       ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
-  # Install scripts at launch
+  # Install scripts for Flatpaks
   system.activationScripts.flatpakApps = {
     text = ''
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
@@ -176,7 +173,7 @@
     # Enable gamemode
     gamemode.enable = true;
 
-    # Enable shared libraries
+    # Enable and install shared libraries
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
