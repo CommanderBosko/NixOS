@@ -13,7 +13,7 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.dpkg
     pkgs.makeWrapper
     pkgs.openjdk
-    pkgs.alsaLib
+    pkgs.alsa-lib
     pkgs.libGL
     pkgs.SDL2
     pkgs.zlib
