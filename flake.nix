@@ -12,7 +12,7 @@
     host = "venom";
     username = "bosko";
 
-    # Overlay definition (reusable)
+    # Overlay only for gaming
     riftOverlay = final: prev: {
       rift = prev.callPackage ./dotfiles/gaming/rift.nix { };
     };
@@ -24,7 +24,7 @@
         specialArgs = { inherit inputs system username host; };
 
         modules = [
-          # Inject pkgs with overlay
+          # Inject pkgs with Rift overlay
           ({ ... }: {
             nixpkgs = {
               inherit system;
@@ -50,15 +50,6 @@
         specialArgs = { inherit inputs system username host; };
 
         modules = [
-          # Inject pkgs with overlay (optional — but harmless here)
-          ({ ... }: {
-            nixpkgs = {
-              inherit system;
-              config.allowUnfree = true;
-              overlays = [ riftOverlay ];
-            };
-          })
-
           /etc/nixos/hardware-configuration.nix
           ./dotfiles/common/bootloader.nix
           ./dotfiles/common/nvidia.nix
