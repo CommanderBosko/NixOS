@@ -241,6 +241,7 @@
     discord
     distrobox
     docker
+    dpkg
     fastfetch
     firefox
     flatpak
