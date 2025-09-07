@@ -14,6 +14,11 @@
     };
   };
 
+  # Set max journal entries
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+  '';
+
   # Set your time zone.
   time.timeZone = "America/New_York";
 
@@ -32,6 +37,13 @@
       LC_TIME = "en_US.UTF-8";
     };
   };
+
+  # Enable sudo for wheel group
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = true;
+  };
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -77,7 +89,6 @@
       histSize = 10000;
       histFile = "$HOME/.zsh_history";
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
-      shellInit = "(cat ~/.cache/wal/sequences &)";
     };
 
     # Enable Starship
