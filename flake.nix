@@ -12,7 +12,7 @@
     host = "venom";
     username = "bosko";
 
-    # Overlay definition (reusable for both stable & unstable)
+    # Overlay definition (reusable)
     riftOverlay = final: prev: {
       rift = prev.callPackage ./dotfiles/gaming/rift.nix { };
     };
@@ -24,6 +24,15 @@
         specialArgs = { inherit inputs system username host; };
 
         modules = [
+          # Inject pkgs with overlay
+          ({ ... }: {
+            nixpkgs = {
+              inherit system;
+              config.allowUnfree = true;
+              overlays = [ riftOverlay ];
+            };
+          })
+
           /etc/nixos/hardware-configuration.nix
           ./dotfiles/common/amd.nix
           ./dotfiles/common/bootloader.nix
@@ -33,12 +42,6 @@
           ./dotfiles/gaming/environment.nix
           ./dotfiles/gaming/networking.nix
         ];
-
-        pkgs = import nixPkgsUnstable {
-          inherit system;
-          config.allowUnfree = true;
-          overlays = [ riftOverlay ];
-        };
       };
 
       # Laptop
@@ -47,6 +50,15 @@
         specialArgs = { inherit inputs system username host; };
 
         modules = [
+          # Inject pkgs with overlay (optional — but harmless here)
+          ({ ... }: {
+            nixpkgs = {
+              inherit system;
+              config.allowUnfree = true;
+              overlays = [ riftOverlay ];
+            };
+          })
+
           /etc/nixos/hardware-configuration.nix
           ./dotfiles/common/bootloader.nix
           ./dotfiles/common/nvidia.nix
@@ -55,12 +67,6 @@
           ./dotfiles/laptop/environment.nix
           ./dotfiles/laptop/networking.nix
         ];
-
-        pkgs = import nixPkgsStable {
-          inherit system;
-          config.allowUnfree = true;
-          overlays = [ riftOverlay ];
-        };
       };
     };
   };
