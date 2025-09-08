@@ -1,4 +1,4 @@
-{ config, pkgs, system, username, rift, ... }:
+{ config, pkgs, system, ... }:
 
 {
   # System
@@ -55,7 +55,7 @@
     # Enable automatic login for the user.
     displayManager = {
       autoLogin.enable = true;
-      autoLogin.user = username;
+      autoLogin.user = "bosko";
       sddm.enable = true;
     };
 
