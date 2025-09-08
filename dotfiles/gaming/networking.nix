@@ -1,10 +1,10 @@
-{ config, pkgs, host, ... }:
+{ config, pkgs, ... }:
 
 {
   # Configure networking
   networking = {
     # Set host name
-    hostName = host;
+    hostName = "venom";
 
     # Enable network manager
     networkmanager.enable = true;

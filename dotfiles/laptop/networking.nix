@@ -1,10 +1,10 @@
-{ config, pkgs, host, ... }:
+{ config, pkgs, ... }:
 
 {
   # Configure networking
   networking = {
     # Set host name
-    hostName = host;
+    hostName = "venom";
 
     # wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 

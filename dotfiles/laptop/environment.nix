@@ -1,4 +1,4 @@
-{ config, pkgs, system, username, ... }:
+{ config, pkgs, system, ... }:
 
 {
   # System
@@ -55,7 +55,7 @@
     # Enable automatic login
     displayManager = {
       autoLogin.enable = false;
-      autoLogin.user = username;
+      autoLogin.user = "bosko";
       sddm.enable = true;
     };
 

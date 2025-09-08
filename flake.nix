@@ -10,8 +10,6 @@
   let
     # Configure system settings
     system = "x86_64-linux";
-    host = "venom";
-    username = "bosko";
   in
   {
     # Configure nix configurations
@@ -21,8 +19,6 @@
         specialArgs = {
           inherit inputs;
           inherit system;
-          inherit username;
-          inherit host;
         };
 
       modules = [
@@ -42,8 +38,6 @@
         specialArgs = {
           inherit inputs;
           inherit system;
-          inherit username;
-          inherit host;
         };
 
         modules = [
@@ -63,8 +57,6 @@
         specialArgs = {
           inherit inputs;
           inherit system;
-          inherit username;
-          inherit host;
         };
 
         modules = [
