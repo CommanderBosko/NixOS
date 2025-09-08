@@ -13,7 +13,7 @@
     # Enable networking
     networkmanager = {
       enable = true;
-#       dns = "none";
+      dns = "none";
     };
 
     # Enable custom DNS servers
@@ -29,7 +29,7 @@
 
   # SSH server
   services = {
-    resolved.enable = true;
+#     resolved.enable = true;
     openssh = {
       enable = true;
       settings = {
