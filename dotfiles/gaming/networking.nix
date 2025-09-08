@@ -6,7 +6,11 @@
     # Set host name
     hostName = "venom";
 
-    # Enable network manager
+    # Configure network proxy
+    # proxy.default = "http://user:password@proxy:port/";
+    # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+
+    # Enable networking
     networkmanager = {
       enable = true;
       dns = "none";
@@ -20,6 +24,21 @@
       enable = false;
 #       allowedTCPPorts = [ 22 ];
 #       allowedUDPPorts = [ ... ];
+    };
+  };
+
+  # SSH settings
+  services = {
+    # Network clock sync
+    ntp.enable = true;
+
+    # Enable and configure openssh
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false; # disable if using SSH keys
+        PermitRootLogin = "no";
+      };
     };
   };
 }
