@@ -14,15 +14,10 @@
     };
   };
 
-  services ={
   # Set max journal entries
-    journald.extraConfig = ''
-      SystemMaxUse=500M
-    '';
-
-    # Clock sync
-    ntp.enable = true;
-  };
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+  '';
 
   # Set your time zone.
   time.timeZone = "America/New_York";
