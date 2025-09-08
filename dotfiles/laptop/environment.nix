@@ -210,7 +210,10 @@
     megasync
     micro
     nh
+    nix-health
     nix-index
+    nix-init
+    nix-tree
     onlyoffice-bin
     php
     protontricks
