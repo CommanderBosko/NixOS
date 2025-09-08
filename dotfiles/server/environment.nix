@@ -109,8 +109,9 @@
     micro
     netcat
     nh
+    nix-health
+    nix-tree
     nmap
-    nix-index
     openssl
     starship
     tmux

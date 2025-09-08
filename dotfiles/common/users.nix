@@ -17,4 +17,7 @@
     packages = with pkgs; [
     ];
   };
+
+  # Define trusted users
+  nix.trustedUsers = [ "root" "bosko" ];
 }

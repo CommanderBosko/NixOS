@@ -262,7 +262,10 @@
     mumble
     micro
     nh
+    nix-health
     nix-index
+    nix-init
+    nix-tree
     obs-studio
     onlyoffice-bin
     php
