@@ -19,5 +19,5 @@
   };
 
   # Define trusted users
-  nix.trustedUsers = [ "root" "bosko" ];
+  nix.settings.trusted-users = [ "root" "bosko" ];
 }
