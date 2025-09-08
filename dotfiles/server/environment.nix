@@ -78,6 +78,7 @@
       autosuggestions.enable = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
+        la = "ls -a";
         ll = "ls -l";
         edit = "sudo micro";
         update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#server --impure";

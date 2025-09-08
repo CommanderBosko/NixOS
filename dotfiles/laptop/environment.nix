@@ -142,6 +142,7 @@
       autosuggestions.enable = true;
       syntaxHighlighting.enable = true;
       shellAliases = {
+        la = "ls -a";
         ll = "ls -l";
         edit = "sudo micro";
         update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#laptop --impure && flatpak update -y && flatpak remove --unused --noninteractive";
@@ -153,7 +154,12 @@
       histSize = 10000;
       histFile = "$HOME/.zsh_history";
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
-      shellInit = "(cat ~/.cache/wal/sequences &)";
+      # Enable pywal and ignore non-interactive shells
+      shellInit = ''
+        if [[ $- == *i* ]]; then
+          (cat ~/.cache/wal/sequences &)
+        fi
+      '';
     };
 
     # Enable Starship

@@ -36,8 +36,9 @@
     openssh = {
       enable = true;
       settings = {
-        PasswordAuthentication = false; # disable if using SSH keys
+        PasswordAuthentication = true;
         PermitRootLogin = "no";
+        PrintMotd = false;
       };
     };
   };
