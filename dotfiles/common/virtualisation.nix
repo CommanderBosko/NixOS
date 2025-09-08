@@ -27,6 +27,13 @@
     </network>
   '';
 
+  # Enable avahi
+  services.avahi = {
+    enable = true;
+    nssmdns = true;
+  };
+
+
   # Packages
   environment.systemPackages = with pkgs; [
     virt-manager

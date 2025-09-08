@@ -18,8 +18,8 @@
     # Enable and open ports in the firewall
     firewall = {
       enable = true;
-      # firewall.allowedTCPPorts = [ ... ];
-      # firewall.allowedUDPPorts = [ ... ];
+      allowedTCPPorts = [ 22 ];
+      # allowedUDPPorts = [ ... ];
     };
   };
 
