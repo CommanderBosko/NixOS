@@ -36,8 +36,5 @@
         PermitRootLogin = "no";
       };
     };
-
-    # Clock sync
-    ntp.enable = true;
   };
 }
