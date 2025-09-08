@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+  # Enable virtualisation
   virtualisation.libvirtd = {
     enable = true;
     qemu = {
@@ -12,6 +13,7 @@
     };
   };
 
+  # Configure "default" network
   environment = {
     etc."libvirt/qemu/networks/default.xml".text = ''
       <network>
@@ -25,6 +27,7 @@
       </network>
     '';
 
+    # Virtualisation packages
     systemPackages = with pkgs; [
       virt-manager
       virt-viewer
