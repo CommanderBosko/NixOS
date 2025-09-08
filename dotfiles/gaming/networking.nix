@@ -7,6 +7,12 @@
     hostName = "venom";
 
     # Enable network manager
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      dns = "none";
+    };
+
+    # Ename custom DNS servers
+    nameservers = [ "10.0.0.20" "1.1.1.1" ];
   };
 }
