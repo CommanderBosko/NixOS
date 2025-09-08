@@ -7,9 +7,10 @@
     isNormalUser = true;
     description = "bosko";
     extraGroups = [
+      "kvm"
+      "libvirtd"
       "networkmanager"
       "wheel"
-      "libvirtd"
     ];
 
     # User specific packages
