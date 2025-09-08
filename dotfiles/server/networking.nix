@@ -29,7 +29,6 @@
 
   # SSH server
   services = {
-#     resolved.enable = true;
     openssh = {
       enable = true;
       settings = {
