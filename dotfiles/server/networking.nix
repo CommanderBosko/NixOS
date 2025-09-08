@@ -13,7 +13,7 @@
     # Enable networking
     networkmanager = {
       enable = true;
-      dns = "none";
+#       dns = "none";
     };
 
     # Enable custom DNS servers
