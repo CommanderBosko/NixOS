@@ -16,7 +16,7 @@
       dns = "none";
     };
 
-    # Ename custom DNS servers
+    # Enable custom DNS servers
     nameservers = [ "10.0.0.20" "1.1.1.1" ];
 
     # Enable and open ports in the firewall
@@ -29,6 +29,7 @@
 
   # SSH server
   services = {
+    resolved.enable = true;
     openssh = {
       enable = true;
       settings = {

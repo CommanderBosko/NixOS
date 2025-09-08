@@ -12,7 +12,7 @@
       dns = "none";
     };
 
-    # Ename custom DNS servers
+    # Enable custom DNS servers
     nameservers = [ "10.0.0.20" "1.1.1.1" ];
   };
 }
