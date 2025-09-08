@@ -3,9 +3,6 @@
 {
   # System
   system = {
-    # Set NixOS Version
-#       stateVersion = "25.05";
-
     # Automatic updating
     autoUpgrade = {
       enable = true;
@@ -35,9 +32,6 @@
 
   # Services
   services = {
-    # Enable touchpad support (enabled default in most desktopManager).
-#     libinput.enable = true;
-
     # Enable the X11 windowing system.
     xserver = {
       enable = true;

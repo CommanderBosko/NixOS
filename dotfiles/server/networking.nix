@@ -27,8 +27,12 @@
     };
   };
 
-  # SSH server
+  # SSH settings
   services = {
+    # Network clock sync
+    ntp.enable = true;
+
+    # Enable and configure openssh
     openssh = {
       enable = true;
       settings = {
