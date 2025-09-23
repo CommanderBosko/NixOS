@@ -271,6 +271,7 @@
     nix-tree
     obs-studio
     onlyoffice-bin
+    pipes
     php
     protontricks
     protonup-qt

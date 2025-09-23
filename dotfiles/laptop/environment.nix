@@ -215,6 +215,7 @@
     nix-init
     nix-tree
     onlyoffice-bin
+    pipes
     php
     protontricks
     protonup-qt
