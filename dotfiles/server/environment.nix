@@ -69,6 +69,15 @@
     nerd-fonts.code-new-roman
   ];
 
+  # Enable Starship
+  programs.starship.enable = true;
+  system.activationScripts.starship = {
+    text = ''
+      mkdir -p ~/.config
+      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+    '';
+  };
+
   # Programs
   programs = {
     # Enable and configure Z shell
@@ -91,9 +100,6 @@
       histFile = "$HOME/.zsh_history";
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
     };
-
-    # Enable Starship
-    starship.enable = true;
   };
 
   # System packages to install
