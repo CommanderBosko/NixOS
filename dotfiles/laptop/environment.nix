@@ -2,8 +2,7 @@
 
 {
   # System
-  system = {
-    # Set NixOS Version
+  system = {# Set NixOS Version
     stateVersion = "25.05";
 
     # Automatic updating
@@ -164,6 +163,12 @@
 
     # Enable Starship
     starship.enable = true;
+    system.activationScripts.starship = {
+      ''
+      mkdir ~/.config
+      cp ${self}/dotfiles/common/starship.toml ~/.config/
+      ''
+      };
 
     # Enable appimages
     appimage = {
