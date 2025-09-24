@@ -1,4 +1,4 @@
-{ config, pkgs, system, ... }:
+{ config, pkgs, system, self ... }:
 
 {
   # System
