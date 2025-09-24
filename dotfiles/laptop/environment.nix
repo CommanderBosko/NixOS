@@ -137,7 +137,7 @@
     system.activationScripts.starship = {
       text = ''
         mkdir -p ~/.config
-        cp ~/NixOS/dotfiles/common/starship.toml ~/.config/starship.toml
+        cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
       '';
     };
 
