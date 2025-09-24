@@ -166,7 +166,7 @@
     system.activationScripts.starship = {
       text = ''
         mkdir -p ~/.config
-        cp ${self}/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+        cp /home/bosko/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
       '';
     };
 
