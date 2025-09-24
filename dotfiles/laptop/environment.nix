@@ -132,6 +132,15 @@
     nerd-fonts.code-new-roman
   ];
 
+  # Enable Starship
+    programs.starship.enable = true;
+    system.activationScripts.starship = {
+      text = ''
+        mkdir -p ~/.config
+        cp ~/NixOS/dotfiles/common/starship.toml ~/.config/starship.toml
+      '';
+    };
+
   # Programs
   programs = {
     # Enable and configure Z shell
@@ -158,15 +167,6 @@
         if [[ $- == *i* ]]; then
           (cat ~/.cache/wal/sequences &)
         fi
-      '';
-    };
-
-    # Enable Starship
-    starship.enable = true;
-    system.activationScripts.starship = {
-      text = ''
-        mkdir -p ~/.config
-        cp ~/NixOS/dotfiles/common/starship.toml ~/.config/starship.toml
       '';
     };
 
