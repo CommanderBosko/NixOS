@@ -164,11 +164,11 @@
     # Enable Starship
     starship.enable = true;
     system.activationScripts.starship = {
-      ''
-      mkdir ~/.config
-      cp ${self}/dotfiles/common/starship.toml ~/.config/
-      ''
-      };
+      text = ''
+        mkdir -p ~/.config
+        cp ${self}/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+      '';
+    };
 
     # Enable appimages
     appimage = {
