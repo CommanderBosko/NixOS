@@ -133,13 +133,13 @@
   ];
 
   # Enable Starship
-    programs.starship.enable = true;
-    system.activationScripts.starship = {
-      text = ''
-        mkdir -p ~/.config
-        cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
-      '';
-    };
+  programs.starship.enable = true;
+  system.activationScripts.starship = {
+    text = ''
+      mkdir -p ~/.config
+      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+    '';
+  };
 
   # Programs
   programs = {
