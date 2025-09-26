@@ -49,7 +49,7 @@
     # Enable the KDE Plasma Desktop Environment.
     desktopManager.plasma6.enable = true;
 
-    # Enable automatic login for the user.
+    # Enable automatic login
     displayManager = {
       autoLogin.enable = true;
       autoLogin.user = "bosko";
