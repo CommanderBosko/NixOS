@@ -210,7 +210,6 @@
     git
     gpt4all
     htop
-    kate
     kitty
     mangohud
     megasync
