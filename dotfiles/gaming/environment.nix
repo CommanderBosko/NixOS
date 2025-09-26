@@ -263,7 +263,6 @@
     gpt4all
     heroic
     htop
-    kate
     kitty
     lutris
     mangohud
