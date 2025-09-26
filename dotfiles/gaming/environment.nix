@@ -168,10 +168,6 @@
       '';
     };
 
-
-    # Enable Starship
-    starship.enable = true;
-
     # Enable appimages
     appimage = {
       enable = true;
