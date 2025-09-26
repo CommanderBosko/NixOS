@@ -48,15 +48,11 @@
       };
     };
 
-    # Enable KDE Plasma
+    # Enable Cosmic
     desktopManager.cosmic.enable = true;
 
-    # Enable automatic login
-    displayManager = {
-      autoLogin.enable = false;
-      autoLogin.user = "bosko";
-      sddm.enable = true;
-    };
+    # Display Manager
+    displayManager.sddm.enable = true;
 
     # Enable CUPS
     printing.enable = true;
@@ -134,12 +130,12 @@
 
   # Enable Starship
   programs.starship.enable = true;
-#   system.activationScripts.starship = {
-#     text = ''
-#       mkdir -p ~/.config
-#       cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
-#     '';
-#   };
+  system.activationScripts.starship = {
+    text = ''
+      mkdir -p /home/bosko/.config
+      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+    '';
+  };
 
   # Programs
   programs = {
