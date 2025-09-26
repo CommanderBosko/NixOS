@@ -49,7 +49,7 @@
     };
 
     # Enable KDE Plasma
-    desktopManager.plasma6.enable = true;
+    desktopManager.cosmic.enable = true;
 
     # Enable automatic login
     displayManager = {
@@ -210,6 +210,7 @@
     git
     gpt4all
     htop
+    kate
     kitty
     mangohud
     megasync
