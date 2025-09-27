@@ -49,7 +49,10 @@
     };
 
     # Enable Cosmic
-    desktopManager.cosmic.enable = true;
+    desktopManager.cosmic = {
+      enable = true;
+      xwayland.enable = true;
+    };
 
     # Display Manager
     displayManager.sddm.enable = true;

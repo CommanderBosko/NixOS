@@ -34,7 +34,7 @@
     };
 
       # Laptop
-      laptop = nixPkgsStable.lib.nixosSystem {
+      laptop = nixPkgsUnstable.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
