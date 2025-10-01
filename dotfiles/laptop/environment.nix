@@ -42,7 +42,7 @@
     desktopManager.cosmic.enable = true;
 
     # Display Manager
-    displayManager.sddm.enable = true;
+    displayManager.sddm.wayland.enable = true;
 
     # Enable CUPS
     printing.enable = true;
