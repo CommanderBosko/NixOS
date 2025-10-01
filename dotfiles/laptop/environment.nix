@@ -2,8 +2,9 @@
 
 {
   # System
-  system = {# Set NixOS Version
-    stateVersion = "25.05";
+  system = {
+    # Set NixOS Version
+#     stateVersion = "25.05";
 
     # Automatic updating
     autoUpgrade = {
@@ -37,22 +38,8 @@
     # Enable touchpad support
     libinput.enable = true;
 
-    # Enable X11
-    xserver = {
-      enable = true;
-
-      # Configure keymap in X11
-      xkb = {
-        layout = "us";
-        variant = "";
-      };
-    };
-
-    # Enable Cosmic
-    desktopManager.cosmic = {
-      enable = true;
-      xwayland.enable = true;
-    };
+   # Enable Cosmic
+    desktopManager.cosmic.enable = true;
 
     # Display Manager
     displayManager.sddm.enable = true;
@@ -128,6 +115,9 @@
   # Install fonts
   fonts.packages = with pkgs; [
     nerd-fonts.code-new-roman
+    noto-fonts
+    noto-fonts-cjk-sans
+    font-awesome
   ];
 
   # Enable Starship
@@ -162,7 +152,7 @@
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
       # Enable pywal and ignore non-interactive shells
       shellInit = ''
-        if [[ $- == *i* ]]; then
+        if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
         fi
       '';
@@ -209,6 +199,7 @@
     git
     gpt4all
     htop
+    kdePackages.kate
     kitty
     mangohud
     megasync
