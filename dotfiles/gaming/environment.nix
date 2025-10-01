@@ -1,19 +1,6 @@
 { config, pkgs, system, ... }:
 
 {
-  # System
-  system = {
-    # Set NixOS Version
-#     stateVersion = "25.05";
-
-    # Automatic updating
-    autoUpgrade = {
-      enable = true;
-      dates = "daily";
-      persistent = true;
-    };
-  };
-
   # Set your time zone.
   time.timeZone = "America/New_York";
 
@@ -73,14 +60,6 @@
   nix = {
     # Enable flakes
     settings.experimental-features = [ "nix-command" "flakes" ];
-
-    # Automatic cleanup
-    gc = {
-      automatic = true;
-      dates = "daily";
-      options = "--delete-older-than 7d";
-      persistent = true;
-    };
 
     # Optimise store on rebuild
     settings.auto-optimise-store = true;
