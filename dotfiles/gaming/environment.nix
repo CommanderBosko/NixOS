@@ -4,7 +4,7 @@
   # System
   system = {
     # Set NixOS Version
-    stateVersion = "25.05";
+#     stateVersion = "25.05";
 
     # Automatic updating
     autoUpgrade = {
@@ -35,17 +35,6 @@
 
   # Services
   services = {
-    # Enable the X11 windowing system.
-    xserver = {
-      enable = true;
-
-      # Configure keymap in X11
-      xkb = {
-        layout = "us";
-        variant = "";
-      };
-    };
-
     # Enable the KDE Plasma Desktop Environment.
     desktopManager.plasma6.enable = true;
 
@@ -127,6 +116,9 @@
   # Install fonts
   fonts.packages = with pkgs; [
     nerd-fonts.code-new-roman
+    noto-fonts
+    noto-fonts-cjk-sans
+    font-awesome
   ];
 
   # Enable Starship
@@ -161,7 +153,7 @@
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
       # Enable pywal and ignore non-interactive shells
       shellInit = ''
-        if [[ $- == *i* ]]; then
+        if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
         fi
       '';
@@ -263,6 +255,7 @@
     gpt4all
     heroic
     htop
+    kdePackages.kate
     kitty
     lutris
     mangohud
