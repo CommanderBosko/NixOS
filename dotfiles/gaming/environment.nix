@@ -35,14 +35,14 @@
 
   # Services
   services = {
-    # Enable the KDE Plasma Desktop Environment.
+    # Enable the KDE Plasma
     desktopManager.plasma6.enable = true;
 
     # Enable automatic login
     displayManager = {
       autoLogin.enable = true;
       autoLogin.user = "bosko";
-      sddm.wayland.enable = true;
+      sddm.enable = true;
     };
 
     # Enable CUPS to print documents.
