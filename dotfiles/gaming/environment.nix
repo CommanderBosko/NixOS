@@ -29,7 +29,11 @@
     displayManager = {
       autoLogin.enable = true;
       autoLogin.user = "bosko";
-      sddm.enable = true;
+      sddm = {
+        enable = true;
+        wayland.enable = true;
+        autoNumlock = true;
+      };
     };
 
     # Enable CUPS to print documents.
