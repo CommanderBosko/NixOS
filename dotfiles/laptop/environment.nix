@@ -29,7 +29,11 @@
     desktopManager.cosmic.enable = true;
 
     # Display Manager
-    displayManager.sddm.wayland.enable = true;
+    displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+      autoNumlock = true;
+    };
 
     # Enable CUPS
     printing.enable = true;
