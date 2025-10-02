@@ -235,6 +235,7 @@
     gamemode
     gearlever
     git
+    gparted
     gpt4all
     heroic
     htop
