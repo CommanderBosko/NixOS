@@ -180,6 +180,7 @@
     gamemode
     gearlever
     git
+    gparted
     gpt4all
     htop
     kdePackages.kate
