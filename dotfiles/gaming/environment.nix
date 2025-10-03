@@ -27,8 +27,10 @@
 
     # Display Manager
     displayManager = {
-      autoLogin.enable = true;
-      autoLogin.user = "bosko";
+      autoLogin = {
+        enable = true;
+        user = "bosko";
+      };
       sddm = {
         enable = true;
         wayland.enable = true;
