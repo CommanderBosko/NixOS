@@ -262,7 +262,6 @@
     starship
     tree
     unzip
-    vesktop
     vivaldi
     vkbasalt
     vlc
