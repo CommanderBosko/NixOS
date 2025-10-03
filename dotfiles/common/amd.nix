@@ -13,7 +13,6 @@
 
     extraPackages = with pkgs; [
       mesa
-      amdvlk
     ];
 
     extraPackages32 = with pkgs; [
