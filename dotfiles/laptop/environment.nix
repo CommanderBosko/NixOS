@@ -39,6 +39,7 @@
     printing.enable = true;
   };
 
+  # Configure hardware
   hardware = {
     # Bluetooth
   	bluetooth = {
