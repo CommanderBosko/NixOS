@@ -22,7 +22,7 @@
 
   # Services
   services = {
-    # Enable the KDE Plasma
+    # Enable KDE Plasma
     desktopManager.plasma6.enable = true;
 
     # Display Manager
@@ -31,6 +31,7 @@
         enable = true;
         user = "bosko";
       };
+
       sddm = {
         enable = true;
         wayland.enable = true;
@@ -38,10 +39,11 @@
       };
     };
 
-    # Enable CUPS to print documents.
+    # Enable CUPS
     printing.enable = true;
   };
 
+  # Configure hardware
   hardware = {
     # Bluetooth
   	bluetooth = {
