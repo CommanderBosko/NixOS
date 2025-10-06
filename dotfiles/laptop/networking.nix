@@ -4,7 +4,7 @@
   # Configure networking
   networking = {
     # Set host name
-    hostName = "venom";
+    hostName = "laptop";
 
     # Configure network proxy
     # proxy.default = "http://user:password@proxy:port/";
