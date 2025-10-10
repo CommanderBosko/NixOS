@@ -25,7 +25,7 @@
     # Enable touchpad support
     libinput.enable = true;
 
-   # Enable Cosmic
+   # Enable DE/WM
     desktopManager.cosmic.enable = true;
 
     # Display Manager
@@ -182,7 +182,6 @@
     gearlever
     git
     gparted
-    gpt4all
     htop
     kdePackages.kate
     kitty
