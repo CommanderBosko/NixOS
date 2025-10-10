@@ -22,8 +22,8 @@
 
   # Services
   services = {
-    # Enable KDE Plasma
-    desktopManager.plasma6.enable = true;
+    # Choose DE/WM
+    desktopManager.cosmic.enable = true;
 
     # Display Manager
     displayManager = {
@@ -228,7 +228,7 @@
     cmatrix
     curl
     deezer-enhanced
-    digikam
+#     digikam
     discord
     distrobox
     docker
@@ -240,7 +240,6 @@
     gearlever
     git
     gparted
-    gpt4all
     heroic
     htop
     kdePackages.kate
