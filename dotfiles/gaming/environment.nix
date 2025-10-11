@@ -23,7 +23,7 @@
   # Services
   services = {
     # Choose DE/WM
-    desktopManager.cosmic.enable = true;
+    desktopManager.plasma6.enable = true;
 
     # Display Manager
     displayManager = {
