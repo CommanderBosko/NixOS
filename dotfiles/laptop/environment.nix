@@ -170,7 +170,7 @@
     cmatrix
     curl
     deezer-enhanced
-    digikam
+#     digikam
     discord
     distrobox
     docker
