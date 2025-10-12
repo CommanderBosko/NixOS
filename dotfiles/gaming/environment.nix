@@ -262,6 +262,7 @@
     protonup-qt
     pyfa
     pywal
+    r2modman
     starship
     tree
     unzip
