@@ -201,6 +201,7 @@
     pywal
     starship
     tree
+    tty-clock
     unzip
     vivaldi
     vkbasalt
