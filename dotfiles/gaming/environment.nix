@@ -265,6 +265,7 @@
     r2modman
     starship
     tree
+    tty-clock
     unzip
     vivaldi
     vkbasalt
