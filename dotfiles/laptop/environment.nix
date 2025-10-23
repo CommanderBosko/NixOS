@@ -213,6 +213,7 @@
     wmctrl
     xorg.xprop
     xorg.xwininfo
+    yazi
     zip
     zsh
   ];
