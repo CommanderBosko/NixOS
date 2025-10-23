@@ -125,6 +125,7 @@
     tree
     unzip
     wget
+    yazi
     zip
     zsh
   ];
