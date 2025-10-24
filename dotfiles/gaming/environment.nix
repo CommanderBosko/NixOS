@@ -229,7 +229,7 @@
     cmatrix
     curl
     deezer-enhanced
-    digikam
+#     digikam
     discord
     distrobox
     docker
@@ -257,6 +257,7 @@
     nix-tree
     obs-studio
     onlyoffice-bin
+    p7zip
     pipes
     php
     protontricks
