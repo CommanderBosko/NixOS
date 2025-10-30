@@ -256,7 +256,7 @@
     nix-init
     nix-tree
     obs-studio
-    onlyoffice-bin
+    onlyoffice-desktopeditors
     p7zip
     pipes
     php
