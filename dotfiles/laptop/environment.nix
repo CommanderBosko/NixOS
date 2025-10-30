@@ -193,7 +193,7 @@
     nix-index
     nix-init
     nix-tree
-    onlyoffice-bin
+    onlyoffice-desktopeditors
     p7zip
     pipes
     php
