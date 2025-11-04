@@ -247,6 +247,7 @@
     kitty
     lutris
     mangohud
+    mangojuice
     megasync
     mumble
     micro

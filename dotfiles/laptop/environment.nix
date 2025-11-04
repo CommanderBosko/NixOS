@@ -186,6 +186,7 @@
     kdePackages.kate
     kitty
     mangohud
+    mangojuice
     megasync
     micro
     nh
