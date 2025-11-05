@@ -107,6 +107,12 @@
 
   # Enable Starship
   programs.starship.enable = true;
+  system.activationScripts.starship = {
+    text = ''
+      mkdir -p /home/natty/.config
+      cp /home/natty/NixOS/dotfiles/common/starship.toml /home/natty/.config/starship.toml
+    '';
+  };
 
   # Programs
   programs = {
@@ -120,7 +126,7 @@
         la = "ls -a";
         ll = "ls -l";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && flatpak remove --unused --noninteractive && sudo nixos-rebuild switch --flake ~/NixOS/.#laptop --impure";
+        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && flatpak remove --unused --noninteractive && sudo nixos-rebuild switch --flake ~/NixOS/.#natalie --impure";
         cleanup = "nh clean all --keep 5";
         ".." = "cd ..";
         "/" = "cd /";
