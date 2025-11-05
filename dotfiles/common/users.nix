@@ -1,3 +1,5 @@
+{ config, pkgs, ... }:
+
 {
   users.users.bosko = {
     shell = pkgs.zsh;
