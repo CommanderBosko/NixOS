@@ -93,6 +93,7 @@
   system.activationScripts.flatpakApps = {
     text = ''
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
     '';
   };
 
