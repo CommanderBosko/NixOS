@@ -107,12 +107,6 @@
 
   # Enable Starship
   programs.starship.enable = true;
-  system.activationScripts.starship = {
-    text = ''
-      mkdir -p /home/bosko/.config
-      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
-    '';
-  };
 
   # Programs
   programs = {
@@ -171,7 +165,6 @@
     cmatrix
     curl
     deezer-enhanced
-#     digikam
     distrobox
     docker
     fastfetch
