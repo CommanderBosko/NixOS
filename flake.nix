@@ -52,6 +52,25 @@
         ];
       };
 
+      # Natalie
+      natalie = nixPkgsUnstable.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          inherit system;
+        };
+
+        modules = [
+          "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/amd.nix"
+          "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/nvidia.nix"
+          "${self}/dotfiles/common/users.nix"
+          "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/natalie/environment.nix"
+          "${self}/dotfiles/natalie/networking.nix"
+        ];
+      };
+
       # Server
       server = nixPkgsStable.lib.nixosSystem {
         specialArgs = {
