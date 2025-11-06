@@ -16,5 +16,5 @@
     packages = with pkgs; [ ];
   };
 
-  nix.settings.trusted-users = [ "natty" ];
+  nix.settings.trusted-users = [ "root" "natty" ];
 }
