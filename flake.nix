@@ -29,6 +29,7 @@
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/environment.nix"
         "${self}/dotfiles/gaming/networking.nix"
+        "${self}/dotfiles/gaming/users.nix"
       ];
     };
 
@@ -47,6 +48,7 @@
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
+          "${self}/dotfiles/laptop/users.nix"
         ];
       };
 
@@ -65,6 +67,7 @@
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/natalie/environment.nix"
           "${self}/dotfiles/natalie/networking.nix"
+          "${self}/dotfiles/natalie/users.nix"
         ];
       };
 
@@ -81,6 +84,7 @@
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/server/environment.nix"
           "${self}/dotfiles/server/networking.nix"
+          "${self}/dotfiles/server/users.nix"
         ];
       };
     };

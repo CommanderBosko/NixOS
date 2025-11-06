@@ -1,23 +1,6 @@
 { config, pkgs, system, ... }:
 
 {
-  # Define user
-  users.users.natty = {
-    shell = pkgs.zsh;
-    isNormalUser = true;
-    description = "natty";
-    extraGroups = [
-      "kvm"
-      "libvirtd"
-      "networkmanager"
-      "wheel"
-    ];
-
-    packages = with pkgs; [ ];
-  };
-
-  nix.settings.trusted-users = [ "natty" ];
-
   # Set your time zone.
   time.timeZone = "America/New_York";
 
