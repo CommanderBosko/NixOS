@@ -170,7 +170,6 @@
     cava
     cmatrix
     curl
-    darkroom
     deezer-enhanced
     distrobox
     docker
