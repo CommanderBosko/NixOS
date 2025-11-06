@@ -14,7 +14,6 @@
   {
     # Configure nix configurations
     nixosConfigurations = {
-      # Gaming with KDE
       gaming = nixPkgsUnstable.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
