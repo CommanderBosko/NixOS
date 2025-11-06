@@ -16,5 +16,5 @@
     packages = with pkgs; [ ];
   };
 
-  nix.settings.trusted-users = [ "bosko" ];
+  nix.settings.trusted-users = [ "root" "bosko" ];
 }
