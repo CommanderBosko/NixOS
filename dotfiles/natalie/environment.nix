@@ -170,6 +170,7 @@
     cava
     cmatrix
     curl
+    darkroom
     deezer-enhanced
     distrobox
     docker
@@ -179,10 +180,12 @@
     freetube
     gamemode
     gearlever
+    gimp
     git
     gparted
     htop
     kdePackages.kate
+    kdePackages.kdenlive
     kitty
     mangohud
     mangojuice
