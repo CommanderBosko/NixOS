@@ -154,13 +154,9 @@
     brave
     btop
     bottles
-    cava
-    cmatrix
     curl
     deezer-enhanced
     discord
-    distrobox
-    docker
     fastfetch
     firefox
     flatpak
@@ -169,13 +165,10 @@
     gearlever
     gimp
     git
-    gparted
     htop
     kdePackages.kate
     kdePackages.kdenlive
     kitty
-    mangohud
-    mangojuice
     megasync
     micro
     nh
@@ -185,16 +178,12 @@
     nix-tree
     onlyoffice-desktopeditors
     p7zip
-    pipes
-    php
     protontricks
     protonup-qt
     pywal
     starship
     tree
-    tty-clock
     unzip
-    vivaldi
     vkbasalt
     vlc
     vulkan-tools
@@ -202,8 +191,6 @@
     winetricks
     wget
     wmctrl
-    xorg.xprop
-    xorg.xwininfo
     yazi
     zip
     zsh
