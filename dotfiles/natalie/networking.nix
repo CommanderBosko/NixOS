@@ -38,7 +38,6 @@
       settings = {
         PasswordAuthentication = true;
         PermitRootLogin = "no";
-        PrintMotd = false;
       };
     };
   };
