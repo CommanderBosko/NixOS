@@ -133,6 +133,7 @@
         update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && flatpak remove --unused --noninteractive && sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure";
         cleanup = "nh clean all --keep 5";
         rift = "~/Rift/bin/rift";
+        albion = "~/Games/albion-online/data/Albion-Online";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
