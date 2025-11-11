@@ -61,12 +61,12 @@
   nixpkgs.config.allowUnfree = true;
 
   # Nix settings
-  nix = {
+  nix.settings = {
     # Enable flakes
-    settings.experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [ "nix-command" "flakes" ];
 
     # Optimise store on rebuild
-    settings.auto-optimise-store = true;
+    auto-optimise-store = true;
   };
 
   # Enable sound with pipewire
