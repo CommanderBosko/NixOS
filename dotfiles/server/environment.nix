@@ -49,8 +49,13 @@
 
   # Nix settings
   nix = {
-    # Enable flakes
-    settings.experimental-features = [ "nix-command" "flakes" ];
+    settings = {
+      # Enable flakes
+      experimental-features = [ "nix-command" "flakes" ];
+
+      # Optimise store on rebuild
+      auto-optimise-store = true;
+    };
 
     # Automatic cleanup
     gc = {
@@ -59,9 +64,6 @@
       options = "--delete-older-than 7d";
       persistent = true;
     };
-
-    # Optimise store on rebuild
-    settings.auto-optimise-store = true;
   };
 
   # Install fonts
