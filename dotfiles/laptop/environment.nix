@@ -89,13 +89,6 @@
       ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     '';
   };
-  # Install scripts for Flatpaks
-  system.activationScripts.flatpakApps = {
-    text = ''
-      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
-      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
-    '';
-  };
 
   # Install fonts
   fonts.packages = with pkgs; [
@@ -172,6 +165,7 @@
     curl
     deezer-enhanced
 #     digikam
+    discord
     distrobox
     docker
     fastfetch
