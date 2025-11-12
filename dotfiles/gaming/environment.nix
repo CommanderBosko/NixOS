@@ -98,6 +98,7 @@
     text = ''
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
       ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub org.kde.digikam
     '';
   };
 
@@ -231,7 +232,6 @@
     cmatrix
     curl
     deezer-enhanced
-#     digikam
     distrobox
     docker
     fastfetch
