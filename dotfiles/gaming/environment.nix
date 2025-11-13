@@ -73,7 +73,7 @@
     auto-optimise-store = true;
   };
 
-  # Enable sound with pipewire.
+  # Enable sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -131,8 +131,8 @@
         la = "ls -a";
         ll = "ls -l";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && flatpak remove --unused --noninteractive && sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure";
-        cleanup = "nh clean all --keep 5";
+        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure";
+        cleanup = "nh clean all --keep 5 && flatpak remove --unused --noninteractive";
         rift = "~/Rift/bin/rift";
         albion = "~/Games/albion-online/data/Albion-Online";
         ".." = "cd ..";

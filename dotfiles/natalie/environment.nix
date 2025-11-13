@@ -83,6 +83,12 @@
 
   # Flatpaks
   services.flatpak.enable = true;
+  # Flathub repo
+  system.activationScripts.flathub = {
+    text = ''
+      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    '';
+  };
 
   # Install fonts
   fonts.packages = with pkgs; [
@@ -113,8 +119,8 @@
         la = "ls -a";
         ll = "ls -l";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && flatpak remove --unused --noninteractive && sudo nixos-rebuild switch --flake ~/NixOS/.#natalie --impure";
-        cleanup = "nh clean all --keep 5";
+        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && sudo nixos-rebuild switch --flake ~/NixOS/.#natalie --impure";
+        cleanup = "nh clean all --keep 5 && flatpak remove --unused --noninteractive";
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
