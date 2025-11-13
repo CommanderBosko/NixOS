@@ -91,6 +91,7 @@
       shellAliases = {
         la = "ls -a";
         ll = "ls -l";
+        lla = "ls -la";
         edit = "sudo micro";
         update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#server --impure";
         cleanup = "nh clean all --keep 5";
