@@ -1,10 +1,10 @@
 { config, pkgs, system, ... }:
 
 {
-  # Set your time zone.
+  # Time zone
   time.timeZone = "America/New_York";
 
-  # Select internationalisation properties.
+  # Internationalisation
   i18n = {
     defaultLocale = "en_US.UTF-8";
     extraLocaleSettings = {
@@ -22,7 +22,7 @@
 
   # Services
   services = {
-    # Choose DE/WM
+    # Desktop Environment
     desktopManager.plasma6.enable = true;
 
     # Display Manager
@@ -31,7 +31,6 @@
         enable = true;
         user = "bosko";
       };
-
       sddm = {
         enable = true;
         wayland.enable = true;
@@ -39,97 +38,90 @@
       };
     };
 
-    # Enable CUPS
+    # Printing
     printing.enable = true;
+
+    # Flatpak
+    flatpak.enable = true;
+
+    # Pipewire (replaces PulseAudio)
+    pipewire = {
+      enable = true;
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      pulse.enable = true;
+    };
   };
 
-  # Configure hardware
+  # Hardware
   hardware = {
-    # Bluetooth
-  	bluetooth = {
+    bluetooth = {
       enable = true;
-	  powerOnBoot = true;
-	  settings = {
-	    General = {
-	      Enable = "Source,Sink,Media,Socket";
-	      Experimental = true;
-	    };
+      powerOnBoot = true;
+      settings.General = {
+        Enable = "Source,Sink,Media,Socket";
+        Experimental = true;
       };
     };
-
-    # Enable OpenGL
     graphics.enable = true;
   };
 
-  # Allow unfree packages
+  # Nixpkgs
   nixpkgs.config.allowUnfree = true;
 
   # Nix settings
   nix.settings = {
-    # Enable flakes
     experimental-features = [ "nix-command" "flakes" ];
-
-    # Optimise store on rebuild
     auto-optimise-store = true;
   };
 
-  # Enable sound
+  # Audio
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    #jack.enable = true;
-    #media-session.enable = true;
-  };
 
-  # Flatpaks
-  services.flatpak.enable = true;
-  # Flathub repo
-  system.activationScripts.flathub = {
-    text = ''
-      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-    '';
-  };
-  # Install scripts at launch
-  system.activationScripts.flatpakApps = {
-    text = ''
-      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
-      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
-      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub org.kde.digikam
-    '';
-  };
+  # Flatpak Repositories & Apps (via activation scripts)
+  system.activationScripts.flathub.text = ''
+    ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  '';
 
-  # Install fonts
+  system.activationScripts.flatpakApps.text = ''
+    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
+    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
+    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub org.kde.digikam
+  '';
+
+  # Fonts
   fonts.packages = with pkgs; [
+    font-awesome
     nerd-fonts.code-new-roman
     noto-fonts
     noto-fonts-cjk-sans
-    font-awesome
   ];
 
-  # Enable Starship
+  # Starship
   programs.starship.enable = true;
-  system.activationScripts.starship = {
-    text = ''
-      mkdir -p /home/bosko/.config
-      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
-    '';
-  };
+  system.activationScripts.starship.text = ''
+    mkdir -p /home/bosko/.config
+    cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+  '';
 
   # Programs
   programs = {
-    # Enable and configure Z shell
+    # Zsh
     zsh = {
       enable = true;
       enableCompletion = true;
       autosuggestions.enable = true;
       syntaxHighlighting.enable = true;
+
+      histSize = 10000;
+      histFile = "$HOME/.zsh_history";
+      setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
+
       shellAliases = {
         la = "ls -a";
         ll = "ls -l";
+        lla = "ls -la";
         edit = "sudo micro";
         update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure";
         cleanup = "nh clean all --keep 5 && flatpak remove --unused --noninteractive";
@@ -139,10 +131,7 @@
         "/" = "cd /";
         "~" = "cd ~";
       };
-      histSize = 10000;
-      histFile = "$HOME/.zsh_history";
-      setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
-      # Enable pywal and ignore non-interactive shells
+
       shellInit = ''
         if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
@@ -150,24 +139,24 @@
       '';
     };
 
-    # Enable appimages
+    # AppImage support
     appimage = {
       enable = true;
       binfmt = true;
     };
 
-    # Enable Steam
+    # Steam
     steam = {
       enable = true;
-      remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-      dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
-      localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
+      remotePlay.openFirewall = true;
+      dedicatedServer.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
     };
 
-    # Enable gamemode
+    # Gamemode
     gamemode.enable = true;
 
-    # Enable shared libraries
+    # Dynamic library loader (nix-ld)
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
@@ -185,8 +174,8 @@
         krb5
         libdrm
         libGL
-        libusb1
         libpulseaudio
+        libusb1
         libva
         libvdpau
         mesa
@@ -198,6 +187,7 @@
         SDL2_mixer
         udev
         vulkan-loader
+        wayland
         xorg.libX11
         xorg.libXau
         xorg.libXcomposite
@@ -215,19 +205,18 @@
         xorg.libXtst
         xorg.libXt
         xwayland
-        wayland
         zlib
         zulu
       ];
     };
   };
 
-  # System packages to install
+  # System Packages
   environment.systemPackages = with pkgs; [
     appimage-run
+    bottles
     brave
     btop
-    bottles
     cava
     cmatrix
     curl
@@ -250,8 +239,8 @@
     mangohud
     mangojuice
     megasync
-    mumble
     micro
+    mumble
     nh
     nix-health
     nix-index
@@ -260,8 +249,8 @@
     obs-studio
     onlyoffice-desktopeditors
     p7zip
-    pipes
     php
+    pipes
     protontricks
     protonup-qt
     pyfa
