@@ -80,15 +80,18 @@
   security.rtkit.enable = true;
 
   # Flatpak Repositories & Apps (via activation scripts)
-  system.activationScripts.flathub.text = ''
-    ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-  '';
+  system.activationScripts = {
+    flathub.text = ''
+      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    '';
 
-  system.activationScripts.flatpakApps.text = ''
-    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
-    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
-    ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub org.kde.digikam
-  '';
+    flatpakApps.text = ''
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.github.tchx84.Flatseal
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.discordapp.Discord
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub org.kde.digikam
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub io.github.pyfa_org.Pyfa
+    '';
+  };
 
   # Fonts
   fonts.packages = with pkgs; [
@@ -253,7 +256,6 @@
     pipes
     protontricks
     protonup-qt
-    pyfa
     pywal
     r2modman
     starship
