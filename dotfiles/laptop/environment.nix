@@ -79,11 +79,6 @@
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
 
-  # Flatpak: Flathub Repository
-#   system.activationScripts.flathub.text = ''
-#     ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-#   '';
-
   # Fonts
   fonts.packages = with pkgs; [
     font-awesome
@@ -147,6 +142,9 @@
 
     # Gamemode
     gamemode.enable = true;
+
+    # Niri
+    niri.enable = true;
   };
 
   # System Packages
@@ -166,6 +164,7 @@
     firefox
     flatpak
     freetube
+    fuzzel
     gamemode
     gearlever
     git
@@ -178,6 +177,7 @@
     megasync
     micro
     nh
+    niri
     nix-health
     nix-index
     nix-init
@@ -197,6 +197,7 @@
     vkbasalt
     vlc
     vulkan-tools
+    waybar
     wine
     winetricks
     wget
