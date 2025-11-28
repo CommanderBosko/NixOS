@@ -23,7 +23,10 @@
   # Services
   services = {
     # Desktop Environment
-    desktopManager.cosmic.enable = true;
+    desktopManager = {
+      plasma6.enable = true;
+      cosmic.enable = true;
+    };
 
     # Display Manager
     displayManager.sddm = {
@@ -77,9 +80,9 @@
   security.rtkit.enable = true;
 
   # Flatpak: Flathub Repository
-  system.activationScripts.flathub.text = ''
-    ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-  '';
+#   system.activationScripts.flathub.text = ''
+#     ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+#   '';
 
   # Fonts
   fonts.packages = with pkgs; [
