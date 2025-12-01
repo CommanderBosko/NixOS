@@ -1,22 +1,6 @@
 {
   "nodes": {
-    "nixPkgsStable": {
-      "locked": {
-        "lastModified": 1764316264,
-        "narHash": "sha256-82L+EJU+40+FIdeG4gmUlOF1jeSwlf2AwMarrpdHF6o=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "9a7b80b6f82a71ea04270d7ba11b48855681c4b0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-25.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixPkgsUnstable": {
+    "nixpkgs": {
       "locked": {
         "lastModified": 1764517877,
         "narHash": "sha256-pp3uT4hHijIC8JUK5MEqeAWmParJrgBVzHLNfJDZxg4=",
@@ -34,8 +18,7 @@
     },
     "root": {
       "inputs": {
-        "nixPkgsStable": "nixPkgsStable",
-        "nixPkgsUnstable": "nixPkgsUnstable"
+        "nixpkgs": "nixpkgs"
       }
     }
   },

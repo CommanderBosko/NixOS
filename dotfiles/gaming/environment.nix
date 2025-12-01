@@ -1,9 +1,6 @@
 { config, pkgs, system, ... }:
 
-{
-  # System State Version
-  system.stateVersion = "25.11";
-  
+{  
   # Time zone
   time.timeZone = "America/New_York";
 
@@ -115,8 +112,17 @@
         ll = "ls -l";
         lla = "ls -la";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure";
-        cleanup = "nh clean all --keep 5 && flatpak remove --unused --noninteractive";
+        update = ''
+        sudo nix flake update --flake ~/NixOS/.
+        echo "Updating Flatpaks"
+        flatpak update -y
+        sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure
+        '';
+        cleanup = ''
+        nh clean all --keep 5
+        echo "Removing unused Flatpaks"
+        flatpak remove --unused --noninteractive
+        '';
         rift = "~/Rift/bin/rift";
         albion = "~/Games/albion-online/data/Albion-Online";
         ".." = "cd ..";

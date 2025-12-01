@@ -1,6 +1,9 @@
 { config, pkgs, system, ... }:
 
 {
+  # Time zone
+  time.timeZone = "America/New_York";
+
   # Internationalisation
   i18n = {
     defaultLocale = "en_US.UTF-8";
@@ -109,8 +112,17 @@
         ll = "ls -l";
         lla = "ls -la";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && flatpak update -y && sudo nixos-rebuild switch --flake ~/NixOS/.#laptop --impure";
-        cleanup = "nh clean all --keep 5 && flatpak remove --unused --noninteractive";
+        update = ''
+        sudo nix flake update --flake ~/NixOS/.
+        echo "Updating Flatpaks"
+        flatpak update -y
+        sudo nixos-rebuild switch --flake ~/NixOS/.#laptop --impure
+        '';
+        cleanup = ''
+        nh clean all --keep 5
+		echo "Removing unused Flatpaks"
+        flatpak remove --unused --noninteractive
+        '';
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";

@@ -2,11 +2,10 @@
   description = "Bosko's NixOS Flake";
 
   inputs = {
-    nixPkgsStable.url = "github:nixos/nixpkgs/nixos-25.05";
-    nixPkgsUnstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixPkgsStable, nixPkgsUnstable, ... }@inputs:
+  outputs = { self, nixpkgs, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
@@ -14,7 +13,7 @@
   {
     # Configure nix configurations
     nixosConfigurations = {
-      gaming = nixPkgsUnstable.lib.nixosSystem {
+      gaming = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
@@ -36,7 +35,7 @@
     };
 
       # Laptop
-      laptop = nixPkgsUnstable.lib.nixosSystem {
+      laptop = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
@@ -58,7 +57,7 @@
       };
 
       # Natalie
-      natalie = nixPkgsUnstable.lib.nixosSystem {
+      natalie = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
@@ -80,7 +79,7 @@
       };
 
       # Server
-      server = nixPkgsStable.lib.nixosSystem {
+      server = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           inherit system;
