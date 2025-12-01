@@ -3,9 +3,6 @@
 {
   # System
   system = {
-    # Set NixOS Version
-    stateVersion = "25.05";
-
     # Automatic updating
     autoUpgrade = {
       enable = true;
@@ -93,7 +90,10 @@
         ll = "ls -l";
         lla = "ls -la";
         edit = "sudo micro";
-        update = "sudo nix flake update --flake ~/NixOS/. && sudo nixos-rebuild switch --flake ~/NixOS/.#server --impure";
+        update = ''
+        sudo nix flake update --flake ~/NixOS/.
+        sudo nixos-rebuild switch --flake ~/NixOS/.#server --impure
+        '';
         cleanup = "nh clean all --keep 5";
         ".." = "cd ..";
         "/" = "cd /";
