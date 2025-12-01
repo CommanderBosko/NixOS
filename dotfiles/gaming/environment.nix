@@ -222,7 +222,6 @@
     distrobox
     docker
     fastfetch
-    firefox
     flatpak
     freetube
     gamemode

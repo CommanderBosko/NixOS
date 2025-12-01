@@ -170,7 +170,6 @@
     distrobox
     docker
     fastfetch
-    firefox
     flatpak
     freetube
     fuzzel
