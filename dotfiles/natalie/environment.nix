@@ -160,7 +160,6 @@
     deezer-enhanced
     discord
     fastfetch
-    firefox
     flatpak
     freetube
     gamemode
