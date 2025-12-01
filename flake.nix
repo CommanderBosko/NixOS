@@ -21,6 +21,9 @@
         };
 
       modules = [
+      	{
+          system.stateVersion = "25.11";
+      	}
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/amd.nix"
         "${self}/dotfiles/common/bootloader.nix"
@@ -40,6 +43,9 @@
         };
 
         modules = [
+          {
+          	system.stateVersion = "25.11";
+          }
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/amd.nix"
           "${self}/dotfiles/common/bootloader.nix"
@@ -59,6 +65,9 @@
         };
 
         modules = [
+          {
+          	system.stateVersion = "25.11";
+          }
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/amd.nix"
           "${self}/dotfiles/common/bootloader.nix"
@@ -78,6 +87,9 @@
         };
 
         modules = [
+          {
+          	system.stateVersion = "25.11";
+          }
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/virtualisation.nix"
