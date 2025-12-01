@@ -1,6 +1,9 @@
 { config, pkgs, system, ... }:
 
 {
+  # System State Version
+  system.stateVersion = "25.11";
+  
   # Time zone
   time.timeZone = "America/New_York";
 
