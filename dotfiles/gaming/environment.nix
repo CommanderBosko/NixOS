@@ -257,6 +257,7 @@
     tree
     tty-clock
     unzip
+    vesktop
     vivaldi
     vkbasalt
     vlc
