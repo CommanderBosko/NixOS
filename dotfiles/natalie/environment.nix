@@ -158,7 +158,6 @@
     bottles
     curl
     deezer-enhanced
-    discord
     fastfetch
     flatpak
     freetube
@@ -185,6 +184,7 @@
     starship
     tree
     unzip
+    vesktop
     vkbasalt
     vlc
     vulkan-tools

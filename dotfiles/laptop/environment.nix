@@ -166,7 +166,6 @@
     cmatrix
     curl
     deezer-enhanced
-    discord
     distrobox
     docker
     fastfetch
@@ -201,6 +200,7 @@
     tree
     tty-clock
     unzip
+    vesktop
     vivaldi
     vkbasalt
     vlc
