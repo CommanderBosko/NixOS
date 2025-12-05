@@ -9,6 +9,7 @@
   let
     # Configure system settings
     system = "x86_64-linux";
+    systemState = { system.stateVersion = "25.11"; };
   in
   {
     # Configure nix configurations
@@ -20,9 +21,7 @@
         };
 
       modules = [
-      	{
-          system.stateVersion = "25.11";
-      	}
+      	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/amd.nix"
         "${self}/dotfiles/common/bootloader.nix"
@@ -42,9 +41,7 @@
         };
 
         modules = [
-          {
-          	system.stateVersion = "25.11";
-          }
+          systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/amd.nix"
           "${self}/dotfiles/common/bootloader.nix"
@@ -64,9 +61,7 @@
         };
 
         modules = [
-          {
-          	system.stateVersion = "25.11";
-          }
+          systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/amd.nix"
           "${self}/dotfiles/common/bootloader.nix"
@@ -86,9 +81,7 @@
         };
 
         modules = [
-          {
-          	system.stateVersion = "25.11";
-          }
+          systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/virtualisation.nix"
