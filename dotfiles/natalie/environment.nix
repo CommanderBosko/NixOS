@@ -110,13 +110,19 @@
         lla = "ls -la";
         edit = "sudo micro";
         update = ''
+        echo ""
+        echo "Updating your system"
+        echo ""
         sudo nix flake update --flake ~/NixOS/.
+        echo ""
         echo "Updating Flatpaks"
         flatpak update -y
+        echo ""
         sudo nixos-rebuild switch --flake ~/NixOS/.#natalie --impure
         '';
         cleanup = ''
         nh clean all --keep 5
+        echo ""
         echo "Removing unused Flatpaks"
         flatpak remove --unused --noninteractive
         '';

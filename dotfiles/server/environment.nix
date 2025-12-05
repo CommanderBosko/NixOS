@@ -91,7 +91,11 @@
         lla = "ls -la";
         edit = "sudo micro";
         update = ''
+        echo ""
+        echo "Updating your system"
+        echo ""
         sudo nix flake update --flake ~/NixOS/.
+        echo ""
         sudo nixos-rebuild switch --flake ~/NixOS/.#server --impure
         '';
         cleanup = "nh clean all --keep 5";
