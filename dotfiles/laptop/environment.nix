@@ -24,7 +24,6 @@
   services = {
     # Desktop Environment
     desktopManager = {
-      plasma6.enable = true;
       cosmic.enable = true;
     };
 
@@ -157,9 +156,6 @@
 
     # Gamemode
     gamemode.enable = true;
-
-    # Niri
-    niri.enable = true;
   };
 
   # System Packages
@@ -177,7 +173,6 @@
     fastfetch
     flatpak
     freetube
-    fuzzel
     gamemode
     gearlever
     git
@@ -190,7 +185,6 @@
     megasync
     micro
     nh
-    niri
     nix-health
     nix-index
     nix-init
@@ -207,11 +201,9 @@
     tty-clock
     unzip
     vesktop
-    vivaldi
     vkbasalt
     vlc
     vulkan-tools
-    waybar
     wine
     winetricks
     wget
