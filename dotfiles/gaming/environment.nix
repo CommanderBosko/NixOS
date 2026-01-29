@@ -51,6 +51,14 @@
       alsa.support32Bit = true;
       pulse.enable = true;
     };
+
+    # Firmware updates
+    fwupd = {
+      enable = true;
+      daemonSettings = {
+        EspLocation = "/boot";
+      };
+    };
   };
 
   # Hardware
@@ -228,6 +236,7 @@
     distrobox
     docker
     fastfetch
+    faugus-launcher
     flatpak
     freetube
     gamemode
@@ -257,6 +266,7 @@
     protontricks
     protonup-qt
     pywal
+    qalculate-qt
     r2modman
     starship
     tree
