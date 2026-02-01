@@ -47,11 +47,9 @@
   # Nix settings
   nix = {
     settings = {
-      # Enable flakes
       experimental-features = [ "nix-command" "flakes" ];
-
-      # Optimise store on rebuild
       auto-optimise-store = true;
+      download-buffer-size = 1024 * 1024 * 1024; #1 GB
     };
 
     # Automatic cleanup
