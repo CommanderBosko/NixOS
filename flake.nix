@@ -25,6 +25,7 @@
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/amd.nix"
         "${self}/dotfiles/common/bootloader.nix"
+        "${self}/dotfiles/common/fwupd.nix"
         "${self}/dotfiles/common/nvidia.nix"
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/environment.nix"
@@ -44,6 +45,7 @@
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/fwupd.nix"
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/laptop/environment.nix"
@@ -63,6 +65,7 @@
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/fwupd.nix"
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/natalie/environment.nix"
@@ -82,6 +85,7 @@
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/bootloader.nix"
+          "${self}/dotfiles/common/fwupd.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/server/environment.nix"
           "${self}/dotfiles/server/networking.nix"
