@@ -170,7 +170,6 @@
     git
     htop
     kdePackages.kate
-    kdePackages.kdenlive
     kitty
     megasync
     micro
