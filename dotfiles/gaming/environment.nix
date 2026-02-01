@@ -51,14 +51,6 @@
       alsa.support32Bit = true;
       pulse.enable = true;
     };
-
-    # Firmware updates
-    fwupd = {
-      enable = true;
-      daemonSettings = {
-        EspLocation = "/boot";
-      };
-    };
   };
 
   # Hardware
