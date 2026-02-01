@@ -26,11 +26,7 @@
     desktopManager.cosmic.enable = true;
 
     # Display Manager
-    displayManager.sddm = {
-      enable = true;
-      wayland.enable = true;
-      autoNumlock = true;
-    };
+    displayManager.cosmic-greeter.enable = true;
 
     # Input
     libinput.enable = true;
@@ -188,6 +184,7 @@
     protontricks
     protonup-qt
     pywal
+    qalculate-qt
     starship
     tree
     unzip
