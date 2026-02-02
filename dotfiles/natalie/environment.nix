@@ -26,7 +26,11 @@
     desktopManager.cosmic.enable = true;
 
     # Display Manager
-    displayManager.cosmic-greeter.enable = true;
+    displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+      autoNumlock = true;
+    };
 
     # Input
     libinput.enable = true;
