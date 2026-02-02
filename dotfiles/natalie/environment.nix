@@ -23,7 +23,10 @@
   # Services
   services = {
     # Desktop Environment
-    desktopManager.cosmic.enable = true;
+    desktopManager = {
+      plasma6.enable = true;
+      cosmic.enable = true;
+    };
 
     # Display Manager
     displayManager.sddm = {
