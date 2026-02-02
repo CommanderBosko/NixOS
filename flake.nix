@@ -61,7 +61,6 @@
         modules = [
           systemState
           "/etc/nixos/hardware-configuration.nix"
-          "${self}/dotfiles/common/amd.nix"
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/fwupd.nix"
           "${self}/dotfiles/common/nvidia.nix"
