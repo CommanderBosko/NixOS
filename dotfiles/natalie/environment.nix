@@ -60,7 +60,10 @@
         Experimental = true;
       };
     };
-    graphics.enable = true;
+    graphics = {
+      enable = true;
+      enable32Bit = true;
+    };
   };
 
   # Nixpkgs
