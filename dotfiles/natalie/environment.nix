@@ -10,10 +10,14 @@
     };
 
     # Display Manager
-    displayManager.sddm = {
-      enable = true;
-      wayland.enable = true;
-      autoNumlock = true;
+    displayManager = {
+      sddm = {
+        enable = true;
+        wayland.enable = true;
+        autoNumlock = true;
+      };
+
+      defaultSession = "cosmic";
     };
 
     # Input
