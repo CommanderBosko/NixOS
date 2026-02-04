@@ -29,7 +29,7 @@
     # Flatpak
     flatpak.enable = true;
 
-    # Pipewire (replaces PulseAudio)
+    # Pipewire
     pipewire = {
       enable = true;
       alsa.enable = true;
