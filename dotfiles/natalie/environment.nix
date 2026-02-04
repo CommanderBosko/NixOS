@@ -44,6 +44,7 @@
         Experimental = true;
       };
     };
+
     graphics.enable = true;
   };
 
@@ -116,6 +117,7 @@
         "~" = "cd ~";
       };
 
+      # Pywal initation or not if no pywal cache generated
       shellInit = ''
         if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
