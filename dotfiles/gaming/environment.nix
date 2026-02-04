@@ -26,7 +26,7 @@
     # Flatpak
     flatpak.enable = true;
 
-    # Pipewire (replaces PulseAudio)
+    # Pipewire
     pipewire = {
       enable = true;
       alsa.enable = true;
@@ -37,6 +37,8 @@
 
   # Hardware
   hardware = {
+    cpu.amd.updateMicrocode = true;
+
     bluetooth = {
       enable = true;
       powerOnBoot = true;

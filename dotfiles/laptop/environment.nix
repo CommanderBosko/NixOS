@@ -29,7 +29,7 @@
     # Flatpak
     flatpak.enable = true;
 
-    # Pipewire (replaces PulseAudio)
+    # Pipewire
     pipewire = {
       enable = true;
       alsa.enable = true;
@@ -42,7 +42,7 @@
   hardware = {
     bluetooth = {
       enable = true;
-      powerOnBoot = true;
+      powerOnBoot = false;
       settings.General = {
         Enable = "Source,Sink,Media,Socket";
         Experimental = true;
