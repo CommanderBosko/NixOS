@@ -37,8 +37,6 @@
 
   # Hardware
   hardware = {
-    cpu.amd.updateMicrocode = true;
-
     bluetooth = {
       enable = true;
       powerOnBoot = true;
