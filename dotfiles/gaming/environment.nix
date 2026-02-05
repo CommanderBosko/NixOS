@@ -79,7 +79,7 @@
   '';
 
   # Kitty terminal
-  system.activationScripts.starship.text = ''
+  system.activationScripts.kitty.text = ''
     mkdir -p /home/bosko/.config/kitty
     cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
   '';
