@@ -78,6 +78,12 @@
     cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
   '';
 
+  # Kitty terminal
+  system.activationScripts.starship.text = ''
+    mkdir -p /home/bosko/.config/kitty
+    cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
+  '';
+
   # Programs
   programs = {
     # Zsh
