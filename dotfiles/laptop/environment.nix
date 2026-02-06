@@ -154,9 +154,6 @@
 
     # Gamemode
     gamemode.enable = true;
-
-    # Niri
-    niri.enable = true;
   };
 
   # System Packages
@@ -174,20 +171,15 @@
     fastfetch
     flatpak
     freetube
-    fuzzel
     gamemode
     gearlever
     git
-    gparted
     htop
     kdePackages.kate
     kitty
-    mangohud
-    mangojuice
     megasync
     micro
     nh
-    niri
     nix-health
     nix-index
     nix-init
@@ -205,11 +197,10 @@
     tty-clock
     unzip
     vesktop
-    vivaldi
     vkbasalt
     vlc
     vulkan-tools
-    waybar
+    way-displays
     wine
     winetricks
     wget
