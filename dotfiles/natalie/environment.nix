@@ -29,7 +29,7 @@
     # Flatpak
     flatpak.enable = true;
 
-    # Pipewire
+    # Audio
     pipewire = {
       enable = true;
       alsa.enable = true;

@@ -174,6 +174,7 @@
     gamemode
     gearlever
     git
+    gparted
     htop
     kdePackages.kate
     kitty
