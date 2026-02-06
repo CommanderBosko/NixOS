@@ -200,7 +200,6 @@
     vkbasalt
     vlc
     vulkan-tools
-    way-displays
     wine
     winetricks
     wget
