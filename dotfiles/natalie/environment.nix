@@ -113,17 +113,6 @@
       enable = true;
       binfmt = true;
     };
-
-    # Steam
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-      localNetworkGameTransfers.openFirewall = true;
-    };
-
-    # Gamemode
-    gamemode.enable = true;
   };
 
   # System Packages

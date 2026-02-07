@@ -113,17 +113,6 @@
       binfmt = true;
     };
 
-    # Steam
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-      localNetworkGameTransfers.openFirewall = true;
-    };
-
-    # Gamemode
-    gamemode.enable = true;
-
     # Dynamic library loader (nix-ld)
     nix-ld = {
       enable = true;
