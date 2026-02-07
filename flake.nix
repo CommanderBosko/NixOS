@@ -23,9 +23,12 @@
       	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/amd.nix"
+        "${self}/dotfiles/common/audio.nix"
         "${self}/dotfiles/common/bootloader.nix"
         "${self}/dotfiles/common/firmware.nix"
+        "${self}/dotfiles/common/fonts.nix"
         "${self}/dotfiles/common/localisation.nix"
+        "${self}/dotfiles/common/nix.nix"
         "${self}/dotfiles/common/nvidia.nix"
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/environment.nix"
@@ -43,9 +46,12 @@
         modules = [
           systemState
           "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/audio.nix"
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/firmware.nix"
+          "${self}/dotfiles/common/fonts.nix"
           "${self}/dotfiles/common/localisation.nix"
+          "${self}/dotfiles/common/nix.nix"
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/laptop/environment.nix"
@@ -63,9 +69,12 @@
         modules = [
           systemState
           "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/audio.nix"
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/firmware.nix"
+          "${self}/dotfiles/common/fonts.nix"
           "${self}/dotfiles/common/localisation.nix"
+          "${self}/dotfiles/common/nix.nix"
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/natalie/environment.nix"
@@ -86,6 +95,7 @@
           "${self}/dotfiles/common/bootloader.nix"
           "${self}/dotfiles/common/firmware.nix"
           "${self}/dotfiles/common/localisation.nix"
+          "${self}/dotfiles/common/nix.nix"
           "${self}/dotfiles/common/virtualisation.nix"
           "${self}/dotfiles/server/environment.nix"
           "${self}/dotfiles/server/networking.nix"

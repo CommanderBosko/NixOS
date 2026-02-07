@@ -22,30 +22,13 @@
     wheelNeedsPassword = true;
   };
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
-  # Nix settings
-  nix = {
-    settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      auto-optimise-store = true;
-      download-buffer-size = 1024 * 1024 * 1024; #1 GB
-    };
-
-    # Automatic cleanup
-    gc = {
-      automatic = true;
-      dates = "daily";
-      options = "--delete-older-than 7d";
-      persistent = true;
-    };
+  # Automatic cleanup
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 7d";
+    persistent = true;
   };
-
-  # Install fonts
-  fonts.packages = with pkgs; [
-    nerd-fonts.code-new-roman
-  ];
 
   # Enable Starship
   programs.starship.enable = true;
