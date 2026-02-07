@@ -13,7 +13,6 @@
     };
 
     pulseaudio.enable = false;
-    jack.enable = false;
   };
 
   security.rtkit.enable = true;
