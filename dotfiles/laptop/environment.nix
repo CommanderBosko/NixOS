@@ -28,14 +28,6 @@
 
     # Flatpak
     flatpak.enable = true;
-
-    # Pipewire
-    pipewire = {
-      enable = true;
-      alsa.enable = true;
-      alsa.support32Bit = true;
-      pulse.enable = true;
-    };
   };
 
   # Hardware
@@ -51,28 +43,6 @@
 
     graphics.enable = true;
   };
-
-  # Nixpkgs
-  nixpkgs.config.allowUnfree = true;
-
-  # Nix settings
-  nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    auto-optimise-store = true;
-    download-buffer-size = 1024 * 1024 * 1024; #1 GB
-  };
-
-  # Audio
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-
-  # Fonts
-  fonts.packages = with pkgs; [
-    font-awesome
-    nerd-fonts.code-new-roman
-    noto-fonts
-    noto-fonts-cjk-sans
-  ];
 
   # Starship
   programs.starship.enable = true;
