@@ -3,7 +3,7 @@
 {
   # Services
   services = {
-    # Desktop Environment
+    # Desktop Environments
     desktopManager = {
       plasma6.enable = true;
       cosmic.enable = true;
@@ -17,18 +17,20 @@
         autoNumlock = true;
       };
 
+      # Default DE session
       defaultSession = "cosmic";
     };
 
-    # Input
+    # Enable touchpad
     libinput.enable = true;
 
-    # Printing
+    # Enable printing
     printing.enable = true;
   };
 
   # Hardware
   hardware = {
+    # Bluetooth settings
     bluetooth = {
       enable = true;
       powerOnBoot = false;
@@ -38,6 +40,7 @@
       };
     };
 
+    # Enable graphical interface
     graphics.enable = true;
   };
 
@@ -54,6 +57,7 @@
     cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
   '';
 
+  # System packages
   environment.systemPackages = with pkgs; [
     brave
     deezer-enhanced

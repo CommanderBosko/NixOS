@@ -3,7 +3,7 @@
 {
   # Services
   services = {
-    # Desktop Environment
+    # Desktop Environments
     desktopManager = {
       plasma6.enable = true;
       cosmic.enable = true;
@@ -17,18 +17,20 @@
         autoNumlock = true;
       };
 
+      # Default DE session
       defaultSession = "cosmic";
     };
 
-    # Input
+    # Enable touchpad
     libinput.enable = true;
 
-    # Printing
+    # Enable printing
     printing.enable = true;
   };
 
   # Hardware
   hardware = {
+    # Bluetooth settings
     bluetooth = {
       enable = true;
       powerOnBoot = false;
@@ -38,6 +40,7 @@
       };
     };
 
+    # Enable graphical interface
     graphics.enable = true;
   };
 
@@ -54,7 +57,7 @@
     cp /home/natty/NixOS/dotfiles/common/configs/kitty.conf /home/natty/.config/kitty/kitty.conf
   '';
 
-  # System Packages
+  # System packages
   environment.systemPackages = with pkgs; [
     brave
     chromium

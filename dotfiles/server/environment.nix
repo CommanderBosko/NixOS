@@ -39,7 +39,7 @@
     '';
   };
 
-  # System packages to install
+  # System packages
   environment.systemPackages = with pkgs; [
     gnupg
     netcat
