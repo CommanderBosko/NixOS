@@ -45,33 +45,29 @@
   programs.starship.enable = true;
   system.activationScripts.starship.text = ''
     mkdir -p /home/bosko/.config
-    cp /home/bosko/NixOS/dotfiles/common/configs/starship.toml /home/bosko/.config/starship.toml
+    cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
   '';
 
   # Kitty terminal
   system.activationScripts.kitty.text = ''
     mkdir -p /home/bosko/.config/kitty
-    cp /home/bosko/NixOS/dotfiles/common/configs/kitty.conf /home/bosko/.config/kitty/kitty.conf
+    cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
   '';
 
-  # Programs
-  programs = {
-    # System Packages
-    environment.systemPackages = with pkgs; [
-      brave
-      deezer-enhanced
-      freetube
-      gparted
-      kdePackages.kate
-      kitty
-      megasync
-      onlyoffice-desktopeditors
-      p7zip
-      qalculate-qt
-      starship
-      vesktop
-      vivaldi
-      vlc
-    ];
-  };
+  environment.systemPackages = with pkgs; [
+    brave
+    deezer-enhanced
+    freetube
+    gparted
+    kdePackages.kate
+    kitty
+    megasync
+    onlyoffice-desktopeditors
+    p7zip
+    qalculate-qt
+    starship
+    vesktop
+    vivaldi
+    vlc
+  ];
 }
