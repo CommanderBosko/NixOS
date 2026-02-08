@@ -49,14 +49,14 @@ in
   # Starship
   programs.starship.enable = true;
   system.activationScripts.starship.text = ''
-    mkdir -p ${userHome}.config
-    cp ${userHome}NixOS/dotfiles/common/starship.toml ${userHome}.config/starship.toml
+    mkdir -p /home/bosko/.config
+    cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
   '';
 
   # Kitty terminal
   system.activationScripts.kitty.text = ''
-    mkdir -p ${userHome}.config/kitty
-    cp ${userHome}NixOS/dotfiles/common/kitty.conf ${userHome}.config/kitty/kitty.conf
+    mkdir -p /home/bosko/.config/kitty
+    cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
   '';
 
   # Programs
