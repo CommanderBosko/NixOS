@@ -150,6 +150,7 @@
     tree
     unzip
     vesktop
+    vivaldi
     vkbasalt
     vlc
     vulkan-tools

@@ -157,6 +157,7 @@
     tty-clock
     unzip
     vesktop
+    vivaldi
     vkbasalt
     vlc
     vulkan-tools
