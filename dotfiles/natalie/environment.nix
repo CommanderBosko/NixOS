@@ -45,13 +45,13 @@
   programs.starship.enable = true;
   system.activationScripts.starship.text = ''
     mkdir -p /home/natty/.config
-    cp /home/natty/NixOS/dotfiles/common/starship.toml /home/natty/.config/starship.toml
+    cp /home/natty/NixOS/dotfiles/common/configs/starship.toml /home/natty/.config/starship.toml
   '';
 
   # Kitty terminal
   system.activationScripts.kitty.text = ''
     mkdir -p /home/natty/.config/kitty
-    cp /home/natty/NixOS/dotfiles/common/kitty.conf /home/natty/.config/kitty/kitty.conf
+    cp /home/natty/NixOS/dotfiles/common/configs/kitty.conf /home/natty/.config/kitty/kitty.conf
   '';
 
   # Programs

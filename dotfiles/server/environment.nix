@@ -35,7 +35,7 @@
   system.activationScripts.starship = {
     text = ''
       mkdir -p ~/.config
-      cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
+      cp /home/bosko/NixOS/dotfiles/common/configs/starship.toml /home/bosko/.config/starship.toml
     '';
   };
 
