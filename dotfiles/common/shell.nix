@@ -4,6 +4,7 @@ let
   hostName = config.networking.hostName;
 in
 {
+  # Customize zsh
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -49,6 +50,7 @@ in
     '';
   };
 
+  # Shell packages
   environment.systemPackages = with pkgs; [
     btop
     cava

@@ -13,6 +13,7 @@
         user = "bosko";
       };
 
+      # SDDM
       sddm = {
         enable = true;
         wayland.enable = true;
@@ -22,9 +23,6 @@
 
     # Printing
     printing.enable = true;
-
-    # Flatpak
-    flatpak.enable = true;
   };
 
   # Hardware
@@ -38,6 +36,7 @@
       };
     };
 
+    # Enable grapics
     graphics.enable = true;
   };
 
@@ -58,17 +57,8 @@
   programs = {
     # Shell aliases
     zsh.shellAliases = {
-        rift = "~/Rift/bin/rift";
-        albion = "~/Games/albion-online/data/Albion-Online";
-      };
-
-    # Xwayland
-    xwayland.enable = true;
-
-    # AppImage support
-    appimage = {
-      enable = true;
-      binfmt = true;
+      rift = "~/Rift/bin/rift";
+      albion = "~/Games/albion-online/data/Albion-Online";
     };
 
     # Dynamic library loader (nix-ld)
@@ -128,18 +118,15 @@
 
   # System Packages
   environment.systemPackages = with pkgs; [
-    appimage-run
-    bottles
     brave
     deezer-enhanced
-    flatpak
     freetube
-    gearlever
     gparted
     kdePackages.kate
     kitty
     megasync
     mumble
+    nix-ld
     obs-studio
     onlyoffice-desktopeditors
     p7zip
