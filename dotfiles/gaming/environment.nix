@@ -148,7 +148,5 @@
     vesktop
     vivaldi
     vlc
-    xorg.xprop
-    xorg.xwininfo
   ];
 }

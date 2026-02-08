@@ -85,7 +85,6 @@
     megasync
     onlyoffice-desktopeditors
     p7zip
-    pywal
     qalculate-qt
     starship
     vesktop
