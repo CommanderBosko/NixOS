@@ -61,7 +61,6 @@
         rift = "~/Rift/bin/rift";
         albion = "~/Games/albion-online/data/Albion-Online";
       };
-    };
 
     # Xwayland
     xwayland.enable = true;
