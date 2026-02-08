@@ -25,9 +25,6 @@
 
     # Printing
     printing.enable = true;
-
-    # Flatpak
-    flatpak.enable = true;
   };
 
   # Hardware
@@ -59,25 +56,11 @@
 
   # Programs
   programs = {
-    # Xwayland
-    xwayland.enable = true;
-
-    # AppImage support
-    appimage = {
-      enable = true;
-      binfmt = true;
-    };
-  };
-
   # System Packages
   environment.systemPackages = with pkgs; [
-    appimage-run
-    bottles
     brave
     deezer-enhanced
-    flatpak
     freetube
-    gearlever
     gparted
     kdePackages.kate
     kitty

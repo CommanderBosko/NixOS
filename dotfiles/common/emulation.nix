@@ -1,0 +1,28 @@
+{ config, pkgs, ... }:
+
+{
+  # Flatpak
+  services.flatpak.enable = true;
+
+  programs = {
+    # Xwayland
+    xwayland.enable = true;
+
+    # Appimages
+    appimage = {
+      enable = true;
+      binfmt = true;
+    };
+  };
+
+  # Other emulation packages
+  environment.systemPackages = with pkgs; [
+    appimage-run
+    bottles
+    flatpak
+    gearlever
+    wine
+    winetricks
+    xwayland
+  ];
+}

@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+  # Enable fwupd
   services.fwupd = {
     enable = true;
     daemonSettings = {
@@ -8,6 +9,7 @@
     };
   };
 
+  # Update cpu microcode
   hardware.cpu = {
     amd.updateMicrocode = true;
     intel.updateMicrocode = true;

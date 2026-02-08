@@ -2,6 +2,7 @@
 
 {
   programs = {
+    # Steam
     steam = {
         enable = true;
         remotePlay.openFirewall = true;
@@ -9,9 +10,11 @@
         localNetworkGameTransfers.openFirewall = true;
     };
 
+    # Gamemode
     gamemode.enable = true;
   };
 
+  # Gaming packages
   environment.systemPackages = with pkgs; [
     faugus-launcher
     gamemode
