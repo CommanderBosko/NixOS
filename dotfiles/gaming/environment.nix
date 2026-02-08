@@ -3,17 +3,17 @@
 {
   # Services
   services = {
-    # Desktop Environment
+    # Desktop Environments
     desktopManager.plasma6.enable = true;
 
-    # Display Manager
+    # Display manager settings
     displayManager = {
       autoLogin = {
         enable = true;
         user = "bosko";
       };
 
-      # SDDM
+      # SDDM settings
       sddm = {
         enable = true;
         wayland.enable = true;
@@ -21,12 +21,13 @@
       };
     };
 
-    # Printing
+    # Enable printing
     printing.enable = true;
   };
 
   # Hardware
   hardware = {
+    # Bluetooth settings
     bluetooth = {
       enable = false;
       powerOnBoot = false;
@@ -36,7 +37,7 @@
       };
     };
 
-    # Enable grapics
+    # Enable graphical interface
     graphics.enable = true;
   };
 
@@ -116,7 +117,7 @@
     };
   };
 
-  # System Packages
+  # System packages
   environment.systemPackages = with pkgs; [
     brave
     deezer-enhanced
