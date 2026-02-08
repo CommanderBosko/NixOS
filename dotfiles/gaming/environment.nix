@@ -30,7 +30,7 @@
   # Hardware
   hardware = {
     bluetooth = {
-      enable = true;
+      enable = false;
       powerOnBoot = true;
       settings.General = {
         Enable = "Source,Sink,Media,Socket";
