@@ -4,7 +4,7 @@
   # Configure networking
   networking = {
     # Set host name
-    hostName = "noodle";
+    hostName = "natalie";
 
     # Configure network proxy
     # proxy.default = "http://user:password@proxy:port/";
