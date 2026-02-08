@@ -56,23 +56,24 @@
 
   # Programs
   programs = {
-  # System Packages
-  environment.systemPackages = with pkgs; [
-    brave
-    chromium
-    deezer-enhanced
-    freetube
-    gimp
-    gparted
-    kdePackages.kate
-    kitty
-    megasync
-    onlyoffice-desktopeditors
-    p7zip
-    qalculate-qt
-    starship
-    vesktop
-    vivaldi
-    vlc
-  ];
+    # System Packages
+    environment.systemPackages = with pkgs; [
+      brave
+      chromium
+      deezer-enhanced
+      freetube
+      gimp
+      gparted
+      kdePackages.kate
+      kitty
+      megasync
+      onlyoffice-desktopeditors
+      p7zip
+      qalculate-qt
+      starship
+      vesktop
+      vivaldi
+      vlc
+    ];
+  };
 }
