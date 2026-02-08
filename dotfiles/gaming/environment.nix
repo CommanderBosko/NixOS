@@ -1,4 +1,4 @@
-{ config, pkgs, system, hostName, ... }:
+{ config, pkgs, system, ... }:
 
 {
   # Services
@@ -81,7 +81,7 @@
         echo "Updating Flatpaks"
         flatpak update -y
         echo ""
-        sudo nixos-rebuild switch --flake ~/NixOS/.#${hostname} --impure
+        sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName} --impure
         '';
         cleanup = ''
         nh clean all --keep 5
