@@ -1,5 +1,10 @@
 { config, pkgs, system, ... }:
 
+let
+  hostName = config.networking.hostName;
+  user = config.users.users.bosko;
+  userHome = config.users.users.bosko.home;
+in
 {
   # Services
   services = {
@@ -44,14 +49,14 @@
   # Starship
   programs.starship.enable = true;
   system.activationScripts.starship.text = ''
-    mkdir -p $HOME/.config
-    cp $HOME/NixOS/dotfiles/common/starship.toml $HOME/.config/starship.toml
+    mkdir -p /home/bosko/.config
+    cp /home/bosko/NixOS/dotfiles/common/starship.toml /home/bosko/.config/starship.toml
   '';
 
   # Kitty terminal
   system.activationScripts.kitty.text = ''
-    mkdir -p $HOME/.config/kitty
-    cp $HOME/NixOS/dotfiles/common/kitty.conf $HOME/.config/kitty/kitty.conf
+    mkdir -p /home/bosko/.config/kitty
+    cp /home/bosko/NixOS/dotfiles/common/kitty.conf /home/bosko/.config/kitty/kitty.conf
   '';
 
   # Programs
@@ -81,7 +86,7 @@
         echo "Updating Flatpaks"
         flatpak update -y
         echo ""
-        sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure
+        sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName} --impure
         '';
         cleanup = ''
         nh clean all --keep 5
