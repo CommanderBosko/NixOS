@@ -33,10 +33,10 @@
         "${self}/dotfiles/common/nvidia.nix"
         "${self}/dotfiles/common/shell.nix"
         "${self}/dotfiles/common/virtualisation.nix"
+        "${self}/dotfiles/common/wine.nix"
         "${self}/dotfiles/gaming/environment.nix"
         "${self}/dotfiles/gaming/networking.nix"
         "${self}/dotfiles/gaming/users.nix"
-        "${self}/dotfiles/gaming/wine.nix"
       ];
     };
 
@@ -59,10 +59,10 @@
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/shell.nix"
           "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/common/wine.nix"
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
           "${self}/dotfiles/laptop/users.nix"
-          "${self}/dotfiles/gaming/wine.nix"
         ];
       };
 
@@ -85,10 +85,10 @@
           "${self}/dotfiles/common/nvidia.nix"
           "${self}/dotfiles/common/shell.nix"
           "${self}/dotfiles/common/virtualisation.nix"
+          "${self}/dotfiles/common/wine.nix"
           "${self}/dotfiles/natalie/environment.nix"
           "${self}/dotfiles/natalie/networking.nix"
           "${self}/dotfiles/natalie/users.nix"
-          "${self}/dotfiles/gaming/wine.nix"
         ];
       };
 
