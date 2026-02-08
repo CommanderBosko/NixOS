@@ -61,6 +61,7 @@ in
     fastfetch
     git
     htop
+    lm_sensors
     micro
     nh
     nix-health
