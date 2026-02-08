@@ -31,7 +31,7 @@
   hardware = {
     bluetooth = {
       enable = false;
-      powerOnBoot = true;
+      powerOnBoot = false;
       settings.General = {
         Enable = "Source,Sink,Media,Socket";
         Experimental = true;
@@ -131,63 +131,24 @@
     appimage-run
     bottles
     brave
-    btop
-    cava
-    cmatrix
-    curl
     deezer-enhanced
-    distrobox
-    docker
-    fastfetch
-    faugus-launcher
     flatpak
     freetube
-    gamemode
     gearlever
-    git
     gparted
-    heroic
-    htop
     kdePackages.kate
     kitty
-    lutris
-    mangohud
-    mangojuice
     megasync
-    micro
     mumble
-    nh
-    nix-health
-    nix-index
-    nix-init
-    nix-tree
     obs-studio
     onlyoffice-desktopeditors
     p7zip
-    php
-    pipes
-    protontricks
-    protonup-qt
-    pywal
     qalculate-qt
-    r2modman
     starship
-    tree
-    tty-clock
-    unzip
     vesktop
     vivaldi
-    vkbasalt
     vlc
-    vulkan-tools
-    wine
-    winetricks
-    wget
-    wmctrl
     xorg.xprop
     xorg.xwininfo
-    yazi
-    zip
-    zsh
   ];
 }

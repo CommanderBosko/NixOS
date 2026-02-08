@@ -74,55 +74,22 @@
     appimage-run
     bottles
     brave
-    btop
-    cava
-    cmatrix
-    curl
     deezer-enhanced
-    distrobox
-    docker
-    fastfetch
     flatpak
     freetube
-    gamemode
     gearlever
-    git
     gparted
-    htop
     kdePackages.kate
     kitty
     megasync
-    micro
-    nh
-    nix-health
-    nix-index
-    nix-init
-    nix-tree
     onlyoffice-desktopeditors
     p7zip
-    php
-    pipes
-    protontricks
-    protonup-qt
-    pywal
     qalculate-qt
     starship
-    tree
-    tty-clock
-    unzip
     vesktop
     vivaldi
-    vkbasalt
     vlc
-    vulkan-tools
-    wine
-    winetricks
-    wget
-    wmctrl
     xorg.xprop
     xorg.xwininfo
-    yazi
-    zip
-    zsh
   ];
 }

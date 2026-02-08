@@ -11,4 +11,20 @@
 
     gamemode.enable = true;
   };
+
+  environment.systemPackages = with pkgs; [
+    faugus-launcher
+    gamemode
+    heroic
+    lutris
+    mangohud
+    mangojuice
+    protontricks
+    protonup-qt
+    r2modman
+    vkbasalt
+    vulkan-tools
+    wine
+    winetricks
+  ];
 }

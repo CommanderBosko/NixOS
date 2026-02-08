@@ -34,7 +34,7 @@
   hardware = {
     bluetooth = {
       enable = true;
-      powerOnBoot = true;
+      powerOnBoot = false;
       settings.General = {
         Enable = "Source,Sink,Media,Socket";
         Experimental = true;
@@ -73,47 +73,23 @@
   environment.systemPackages = with pkgs; [
     appimage-run
     brave
-    btop
     bottles
-    curl
+    chromium
     deezer-enhanced
-    fastfetch
     flatpak
     freetube
-    gamemode
     gearlever
     gimp
-    git
-    htop
     kdePackages.kate
     kitty
     megasync
-    micro
-    nh
-    nix-health
-    nix-index
-    nix-init
-    nix-tree
     onlyoffice-desktopeditors
     p7zip
-    protontricks
-    protonup-qt
     pywal
     qalculate-qt
     starship
-    tree
-    unzip
     vesktop
     vivaldi
-    vkbasalt
     vlc
-    vulkan-tools
-    wine
-    winetricks
-    wget
-    wmctrl
-    yazi
-    zip
-    zsh
   ];
 }
