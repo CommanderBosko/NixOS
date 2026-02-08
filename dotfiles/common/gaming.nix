@@ -24,7 +24,5 @@
     r2modman
     vkbasalt
     vulkan-tools
-    wine
-    winetricks
   ];
 }
