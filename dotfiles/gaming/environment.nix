@@ -1,8 +1,5 @@
 { config, pkgs, system, ... }:
 
-let
-  hostname = config.networking.hostName;
-in
 {
   # Services
   services = {
@@ -84,7 +81,7 @@ in
         echo "Updating Flatpaks"
         flatpak update -y
         echo ""
-        sudo nixos-rebuild switch --flake ~/NixOS/.#${hostname} --impure
+        sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure
         '';
         cleanup = ''
         nh clean all --keep 5
