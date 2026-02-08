@@ -81,7 +81,7 @@
         echo "Updating Flatpaks"
         flatpak update -y
         echo ""
-        sudo nixos-rebuild switch --flake ~/NixOS/.#gaming --impure
+        sudo nixos-rebuild switch --flake ~/NixOS/.#${hostname} --impure
         '';
         cleanup = ''
         nh clean all --keep 5
