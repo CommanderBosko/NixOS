@@ -30,6 +30,7 @@
         "${self}/dotfiles/common/localisation.nix"
         "${self}/dotfiles/common/nix.nix"
         "${self}/dotfiles/common/nvidia.nix"
+        "${self}/dotfiles/common/shell.nix"
         "${self}/dotfiles/common/steam.nix"
         "${self}/dotfiles/common/virtualisation.nix"
         "${self}/dotfiles/gaming/environment.nix"
