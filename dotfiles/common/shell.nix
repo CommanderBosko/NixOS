@@ -48,4 +48,32 @@ in
       fi
     '';
   };
+
+  environment.systemPackages = with pkgs; [
+    btop
+    cava
+    cmatrix
+    curl
+    distrobox
+    docker
+    fastfetch
+    git
+    htop
+    micro
+    nh
+    nix-health
+    nix-index
+    nix-init
+    nix-tree
+    php
+    pipes
+    pywal
+    tree
+    tty-clock
+    unzip
+    wget
+    yazi
+    zip
+    zsh
+  ];
 }
