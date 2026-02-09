@@ -69,7 +69,7 @@
     gparted
     kdePackages.kate
     kitty
-    megasync
+#     megasync
     obs-studio
     onlyoffice-desktopeditors
     p7zip
