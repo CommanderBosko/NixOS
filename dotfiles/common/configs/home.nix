@@ -10,6 +10,12 @@
     starship
   ];
 
+  # Kitty
+  programs.kitty = {
+    enable = true;
+  };
+  home.file.".config/kitty/kitty.conf".source = config.lib.file.mkOutOfStoreSymlink "${self}/dotfiles/common/configs/kitty.conf";
+
   # Starship
   programs.starship = {
     enable = true;

@@ -48,13 +48,6 @@
     graphics.enable = true;
   };
 
-  # Starship
-  programs.starship.enable = true;
-  system.activationScripts.starship.text = ''
-    mkdir -p /home/bosko/.config
-    cp /home/bosko/NixOS/dotfiles/common/configs/starship.toml /home/bosko/.config/starship.toml
-  '';
-
   # Kitty terminal
   system.activationScripts.kitty.text = ''
     mkdir -p /home/bosko/.config/kitty
