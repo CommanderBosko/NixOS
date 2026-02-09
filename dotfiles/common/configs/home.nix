@@ -11,7 +11,7 @@
   ];
 
   # Kitty
-  home.file.".config/kitty/kitty.conf".source = "./kitty.conf";
+  home.file.".config/kitty/kitty.conf".source = "../kitty.conf";
 
   # Starship
   programs.starship = {
