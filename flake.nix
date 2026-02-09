@@ -14,6 +14,7 @@
   {
     # Configure nix configurations
     nixosConfigurations = {
+      # Gaming
       gaming = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs system;
