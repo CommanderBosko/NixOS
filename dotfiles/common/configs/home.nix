@@ -15,7 +15,7 @@
     enable = true;
     enableZshIntegration = true;
   };
-  home.file.".config/starship.toml".source = config.lib.file.mkOutOfStoreSymlink "${self}/dotfiles/common/configs/starship.toml";
+  home.file.".config/starship.toml".source = config.lib.file.mkOutOfStoreSymlink "./starship.toml";
 
   # home.file.".config/some-app.conf".source = ./files/some-app.conf;
 
