@@ -48,12 +48,6 @@
     graphics.enable = true;
   };
 
-  # Programs
-  programs = {
-    # Starship
-    starship.enable = true;
-  };
-
   # System packages
   environment.systemPackages = with pkgs; [
     brave
