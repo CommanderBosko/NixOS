@@ -118,7 +118,7 @@
     freetube
     gparted
     kdePackages.kate
-    megasync
+#     megasync
     nix-ld
     obs-studio
     onlyoffice-desktopeditors
