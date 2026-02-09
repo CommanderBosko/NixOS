@@ -1,22 +1,24 @@
 { config, lib, pkgs, self, ... }:
 
 {
-  # Set home-manager state version
-  home.stateVersion = "25.11";   # ← do NOT change this later — read the comment in home-manager release notes
+  home = {
+    # Set home-manager state version
+    stateVersion = "25.11";   # ← do NOT change this later — read the comment in home-manager release notes
 
-  # Packages
-  home.packages = with pkgs; [
-  ];
+    # Packages
+    packages = with pkgs; [
+    ];
 
-  # Kitty
-  home.file.".config/kitty/kitty.conf" = {
-    source = "${self}/dotfiles/common/configs/kitty.conf";
-    force = true;
-  };
+    # Kitty
+    file.".config/kitty/kitty.conf" = {
+      source = "${self}/dotfiles/common/configs/kitty.conf";
+      force = true;
+    };
 
-  # Starship
-  home.file.".config/starship.toml" ={
-    source = "${self}/dotfiles/common/configs/starship.toml";
-    force = true;
+    # Starship
+    file.".config/starship.toml" ={
+      source = "${self}/dotfiles/common/configs/starship.toml";
+      force = true;
+    };
   };
 }
