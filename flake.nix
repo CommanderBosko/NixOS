@@ -93,7 +93,6 @@
           "${self}/dotfiles/common/modules/nix.nix"
           "${self}/dotfiles/common/modules/shell.nix"
           "${self}/dotfiles/common/modules/users.nix"
-          "${self}/dotfiles/common/modules/virtualisation.nix"
           "${self}/dotfiles/server/environment.nix"
           "${self}/dotfiles/server/networking.nix"
         ];
