@@ -55,7 +55,6 @@
 
     # Starship
     starship.enable = true;
-  };
 
     # Dynamic library loader (nix-ld)
     nix-ld = {
