@@ -10,6 +10,9 @@
     starship
   ];
 
+  # Zsh
+  programs.zsh.enable = true;
+
   # Kitty
   home.file.".config/kitty/kitty.conf" = {
     source = "${self}/dotfiles/common/configs/kitty.conf";
