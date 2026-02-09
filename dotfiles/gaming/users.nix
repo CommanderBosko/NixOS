@@ -22,6 +22,7 @@
     packages = with pkgs; [
       mumble
       obs-studio
+      vesktop
     ];
   };
 
@@ -43,6 +44,8 @@
 
     packages = with pkgs; [
       chromium
+      discord
+      firefox
       gimp
     ];
   };

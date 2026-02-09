@@ -9,7 +9,7 @@
     # Display manager settings
     displayManager = {
       autoLogin = {
-        enable = true;
+        enable = false;
         user = "bosko";
       };
 
