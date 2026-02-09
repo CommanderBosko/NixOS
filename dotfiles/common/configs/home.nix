@@ -12,13 +12,13 @@
 
   # Kitty
   home.file.".config/kitty/kitty.conf" = {
-    source = config.lib.file.mkOutOfStoreSymlink "./dotfiles/common/configs/kitty.conf";
+    source = "./dotfiles/common/configs/kitty.conf";
     force = true;
   };
 
   # Starship
   home.file.".config/starship.toml" ={
-    source = config.lib.file.mkOutOfStoreSymlink "./dotfiles/common/configs/starship.toml";
+    source = "./dotfiles/common/configs/starship.toml";
     force = true;
   };
   programs.starship = {
