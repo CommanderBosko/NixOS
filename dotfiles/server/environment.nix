@@ -30,8 +30,11 @@
     persistent = true;
   };
 
-  # Enable Starship
-  programs.starship.enable = true;
+  # Programs
+  programs = {
+    # Starship
+    starship.enable = true;
+  };
 
   # System packages
   environment.systemPackages = with pkgs; [
