@@ -19,7 +19,10 @@
       "wheel"
     ];
 
-    packages = with pkgs; [ ];
+    packages = with pkgs; [
+      mumble
+      obs-studio
+    ];
   };
 
   # Natty
@@ -38,7 +41,10 @@
       "wheel"
     ];
 
-    packages = with pkgs; [ ];
+    packages = with pkgs; [
+      chromium
+      gimp
+    ];
   };
 
   nix.settings.trusted-users = [ "root" "bosko" "natty" ];

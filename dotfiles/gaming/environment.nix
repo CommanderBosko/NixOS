@@ -125,10 +125,8 @@
     gparted
     kdePackages.kate
     kitty
-    megasync
-    mumble
+#     megasync
     nix-ld
-    obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
