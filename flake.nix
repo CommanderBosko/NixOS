@@ -12,7 +12,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
@@ -39,6 +39,7 @@
         "${self}/dotfiles/common/modules/firmware.nix"
         "${self}/dotfiles/common/modules/fonts.nix"
         "${self}/dotfiles/common/modules/gaming.nix"
+        "${self}/dotfiles/common/modules/home-manager.nix"
         "${self}/dotfiles/common/modules/localisation.nix"
         "${self}/dotfiles/common/modules/nix.nix"
         "${self}/dotfiles/common/modules/nvidia.nix"
@@ -66,6 +67,7 @@
           "${self}/dotfiles/common/modules/firmware.nix"
           "${self}/dotfiles/common/modules/fonts.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
+          "${self}/dotfiles/common/modules/home-manager.nix"
           "${self}/dotfiles/common/modules/localisation.nix"
           "${self}/dotfiles/common/modules/nix.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
@@ -90,6 +92,7 @@
           "${self}/dotfiles/common/modules/bootloader.nix"
           "${self}/dotfiles/common/modules/firmware.nix"
           "${self}/dotfiles/common/modules/fonts.nix"
+          "${self}/dotfiles/common/modules/home-manager.nix"
           "${self}/dotfiles/common/modules/localisation.nix"
           "${self}/dotfiles/common/modules/nix.nix"
           "${self}/dotfiles/common/modules/shell.nix"
