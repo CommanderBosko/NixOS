@@ -1,4 +1,4 @@
-{ config, inputs, pkgs, ... }:
+{ config, inputs, pkgs, self, ... }:
 
 {
   imports = [ inputs.home-manager.nixosModules.home-manager ];
@@ -8,7 +8,7 @@
     useUserPackages   = true;
     extraSpecialArgs  = { inherit inputs; };   # optional
 
-    users.bosko = import ../home/default.nix;   # or ./home.nix, whatever structure you like
+    users.bosko = import "${self}/dotfiles/common/configs/home.nix";   # or ./home.nix, whatever structure you like
   };
 
 #   environment.systemPackages = with pkgs; [ home-manager ];

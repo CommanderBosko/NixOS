@@ -17,7 +17,6 @@
     # Configure system settings
     system = "x86_64-linux";
     systemState = { system.stateVersion = "25.11"; };
-    homeState = { option.home.stateVersion = "25.11"; };
   in
   {
     # Configure nix configurations
