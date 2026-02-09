@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   # Set home-manager state version
@@ -12,13 +12,13 @@
 
   # Kitty
   home.file.".config/kitty/kitty.conf" = {
-    source = "./dotfiles/common/configs/kitty.conf";
+    source = "${self}/dotfiles/common/configs/kitty.conf";
     force = true;
   };
 
   # Starship
   home.file.".config/starship.toml" ={
-    source = "./dotfiles/common/configs/starship.toml";
+    source = "${self}/dotfiles/common/configs/starship.toml";
     force = true;
   };
   programs.starship = {
