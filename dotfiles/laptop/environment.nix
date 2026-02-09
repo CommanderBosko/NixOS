@@ -48,6 +48,12 @@
     graphics.enable = true;
   };
 
+  # Programs
+  programs = {
+    # Starship
+    starship.enable = true;
+  };
+
   # System packages
   environment.systemPackages = with pkgs; [
     brave
@@ -55,11 +61,13 @@
     freetube
     gparted
     kdePackages.kate
-#     megasync
+    kitty
+    megasync
     obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
+    starship
     rpi-imager
     vivaldi
     vlc
