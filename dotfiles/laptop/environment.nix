@@ -66,6 +66,7 @@
     kdePackages.kate
     kitty
     megasync
+    obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt

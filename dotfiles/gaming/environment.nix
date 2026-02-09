@@ -9,7 +9,7 @@
     # Display manager settings
     displayManager = {
       autoLogin = {
-        enable = false;
+        enable = true;
         user = "bosko";
       };
 
@@ -84,6 +84,22 @@
         libusb1
         libva
         libvdpau
+        libX11
+        libXau
+        libXcomposite
+        libXcursor
+        libXdamage
+        libXdmcp
+        libXext
+        libXfixes
+        libXi
+        libICE
+        libXinerama
+        libXrandr
+        libXrender
+        libSM
+        libXtst
+        libXt
         mesa
         nspr
         nss
@@ -94,22 +110,6 @@
         udev
         vulkan-loader
         wayland
-        xorg.libX11
-        xorg.libXau
-        xorg.libXcomposite
-        xorg.libXcursor
-        xorg.libXdamage
-        xorg.libXdmcp
-        xorg.libXext
-        xorg.libXfixes
-        xorg.libXi
-        xorg.libICE
-        xorg.libXinerama
-        xorg.libXrandr
-        xorg.libXrender
-        xorg.libSM
-        xorg.libXtst
-        xorg.libXt
         xwayland
         zlib
         zulu
@@ -127,6 +127,7 @@
     kitty
     megasync
     nix-ld
+    obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
