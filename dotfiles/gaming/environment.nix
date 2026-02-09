@@ -118,14 +118,12 @@
     freetube
     gparted
     kdePackages.kate
-    kitty
     megasync
     nix-ld
     obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
-    starship
     vesktop
     vivaldi
     vlc
