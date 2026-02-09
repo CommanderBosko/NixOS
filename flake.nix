@@ -24,7 +24,7 @@
       # Gaming
       gaming = nixpkgs.lib.nixosSystem {
         specialArgs = {
-          inherit inputs system;
+          inherit inputs self system;
         };
 
       modules = [
@@ -52,7 +52,7 @@
       # Laptop
       laptop = nixpkgs.lib.nixosSystem {
         specialArgs = {
-          inherit inputs system;
+          inherit inputs self system;
         };
 
         modules = [
@@ -79,7 +79,7 @@
       # Server
       server = nixpkgs.lib.nixosSystem {
         specialArgs = {
-          inherit inputs system;
+          inherit inputs self system;
         };
 
         modules = [
