@@ -16,6 +16,7 @@
       # SDDM settings
       sddm = {
         enable = true;
+        theme = "breeze";
         wayland.enable = true;
         autoNumlock = true;
       };
@@ -23,6 +24,9 @@
 
     # Enable printing
     printing.enable = true;
+
+    # Enable xserver
+    xserver.enable = true;
   };
 
   # Hardware
