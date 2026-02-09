@@ -125,7 +125,7 @@
     gparted
     kdePackages.kate
     kitty
-#     megasync
+    megasync
     nix-ld
     onlyoffice-desktopeditors
     p7zip
