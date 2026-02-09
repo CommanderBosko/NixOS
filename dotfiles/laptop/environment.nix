@@ -69,8 +69,8 @@
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
+    rpi-imager
     starship
-    vesktop
     vivaldi
     vlc
   ];
