@@ -19,5 +19,5 @@
     source = "${self}/dotfiles/common/configs/starship.toml";
     force = true;
   };
-  programs.programs.starship.enableZshIntegration = true;
+  programs.starship.enableZshIntegration = true;
 }
