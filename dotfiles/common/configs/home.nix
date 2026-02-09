@@ -6,8 +6,6 @@
 
   # Packages
   home.packages = with pkgs; [
-    kitty
-    starship
   ];
 
   # Kitty
@@ -20,5 +18,7 @@
   home.file.".config/starship.toml" ={
     source = "${self}/dotfiles/common/configs/starship.toml";
     force = true;
+  };
+  programs.programs.starship.enableZshIntegration = true;
   };
 }
