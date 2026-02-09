@@ -6,8 +6,6 @@
 
   # Packages
   home.packages = with pkgs; [
-    kitty
-    starship
   ];
 
   # Kitty
