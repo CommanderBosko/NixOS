@@ -32,12 +32,6 @@
 
   # Enable Starship
   programs.starship.enable = true;
-  system.activationScripts.starship = {
-    text = ''
-      mkdir -p ~/.config
-      cp /home/bosko/NixOS/dotfiles/common/configs/starship.toml /home/bosko/.config/starship.toml
-    '';
-  };
 
   # System packages
   environment.systemPackages = with pkgs; [
