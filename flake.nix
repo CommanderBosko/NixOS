@@ -83,7 +83,6 @@
         };
 
         modules = [
-          homeState
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/bootloader.nix"
