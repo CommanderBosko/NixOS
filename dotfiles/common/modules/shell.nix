@@ -61,7 +61,6 @@ in
     fastfetch
     git
     htop
-    kitty
     lm_sensors
     micro
     nh
