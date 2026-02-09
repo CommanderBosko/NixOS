@@ -10,6 +10,7 @@
     description = "bosko";
     password = "password";
     homeMode = "0755";
+    createHome = true;
     extraGroups = [
       "audio"
       "kvm"
@@ -33,6 +34,7 @@
     description = "natty";
     password = "password";
     homeMode = "0755";
+    createHome = true;
     extraGroups = [
       "audio"
       "kvm"
