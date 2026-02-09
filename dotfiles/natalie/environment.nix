@@ -67,7 +67,7 @@
     gparted
     kdePackages.kate
     kitty
-#     megasync
+    megasync
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
