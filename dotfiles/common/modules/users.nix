@@ -21,7 +21,6 @@
 
     packages = with pkgs; [
       mumble
-      obs-studio
       vesktop
     ];
   };
