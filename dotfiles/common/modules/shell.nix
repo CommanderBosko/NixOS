@@ -4,8 +4,9 @@ let
   hostName = config.networking.hostName;
 in
 {
-  # Customize zsh
+  # Configure shell programs
   programs = {
+    # Customize zsh
     zsh = {
       enable = true;
       enableCompletion = true;
