@@ -28,7 +28,6 @@
         };
 
       modules = [
-        homeState
       	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/modules/amd.nix"
@@ -57,7 +56,6 @@
         };
 
         modules = [
-          homeState
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/audio.nix"
