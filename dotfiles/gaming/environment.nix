@@ -118,6 +118,7 @@
     freetube
     gparted
     kdePackages.kate
+    kitty
     megasync
     nix-ld
     obs-studio

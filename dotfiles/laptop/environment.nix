@@ -61,6 +61,7 @@
     freetube
     gparted
     kdePackages.kate
+    kitty
     megasync
     obs-studio
     onlyoffice-desktopeditors
