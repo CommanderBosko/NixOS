@@ -61,6 +61,7 @@ in
     fastfetch
     git
     htop
+    kitty
     lm_sensors
     micro
     nh
@@ -71,6 +72,7 @@ in
     php
     pipes
     pywal
+    starship
     tree
     tty-clock
     unzip
