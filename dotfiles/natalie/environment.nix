@@ -60,10 +60,8 @@
   # System packages
   environment.systemPackages = with pkgs; [
     brave
-    chromium
     deezer-enhanced
     freetube
-    gimp
     gparted
     kdePackages.kate
     kitty
