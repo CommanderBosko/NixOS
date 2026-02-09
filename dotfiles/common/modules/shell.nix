@@ -42,6 +42,9 @@ in
       '';
     };
 
+    # Starship
+    starship.enable = true;
+
     # Pywal initation or not if no pywal cache generated
     shellInit = ''
       if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then

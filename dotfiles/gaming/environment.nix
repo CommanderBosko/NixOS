@@ -53,9 +53,6 @@
       albion = "~/Games/albion-online/data/Albion-Online";
     };
 
-    # Starship
-    starship.enable = true;
-
     # Dynamic library loader (nix-ld)
     nix-ld = {
       enable = true;

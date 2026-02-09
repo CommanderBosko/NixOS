@@ -30,19 +30,12 @@
     persistent = true;
   };
 
-  # Programs
-  programs = {
-    # Starship
-    starship.enable = true;
-  };
-
   # System packages
   environment.systemPackages = with pkgs; [
     gnupg
     netcat
     nmap
     openssl
-    starship
     tmux
     traceroute
   ];
