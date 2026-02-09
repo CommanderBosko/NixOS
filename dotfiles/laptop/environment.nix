@@ -48,12 +48,6 @@
     graphics.enable = true;
   };
 
-  # Kitty terminal
-  system.activationScripts.kitty.text = ''
-    mkdir -p /home/bosko/.config/kitty
-    cp /home/bosko/NixOS/dotfiles/common/configs/kitty.conf /home/bosko/.config/kitty/kitty.conf
-  '';
-
   # System packages
   environment.systemPackages = with pkgs; [
     brave
