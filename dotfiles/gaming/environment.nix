@@ -129,7 +129,7 @@
     gparted
     kdePackages.kate
     kitty
-    megasync
+#     megasync
     nix-ld
     obs-studio
     onlyoffice-desktopeditors
