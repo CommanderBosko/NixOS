@@ -6,9 +6,9 @@
   home-manager = {
     useGlobalPkgs     = true;
     useUserPackages   = true;
-    extraSpecialArgs  = { inherit inputs self; };   # optional
+    extraSpecialArgs  = { inherit inputs self; };
 
-    users.bosko = import "${self}/dotfiles/common/configs/home.nix";   # or ./home.nix, whatever structure you like
+    users.bosko = import "${self}/dotfiles/common/configs/home.nix";
     users.natty = import "${self}/dotfiles/common/configs/home.nix";
   };
 }
