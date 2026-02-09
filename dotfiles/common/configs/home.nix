@@ -11,12 +11,12 @@
   ];
 
   # Kitty
-  home.file.".config/kitty/kitty.conf".source = "./dotfiles/common/configs/kitty.conf";
+  home.file.".config/kitty/kitty.conf".source = config.lib.file.mkOutOfStoreSymlink "./dotfiles/common/configs/kitty.conf";
 
   # Starship
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
   };
-  home.file.".config/starship.toml".source = "./dotfiles/common/configs/starship.toml";
+  home.file.".config/starship.toml".source = config.lib.file.mkOutOfStoreSymlink "./dotfiles/common/configs/starship.toml";
 }
