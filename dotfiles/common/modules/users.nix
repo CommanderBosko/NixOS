@@ -9,6 +9,7 @@
     isNormalUser = true;
     description = "bosko";
     password = "password";
+    homeMode = "0755";
     extraGroups = [
       "audio"
       "kvm"
@@ -31,6 +32,7 @@
     isNormalUser = true;
     description = "natty";
     password = "password";
+    homeMode = "0755";
     extraGroups = [
       "audio"
       "kvm"
