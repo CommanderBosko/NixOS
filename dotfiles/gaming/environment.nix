@@ -53,6 +53,11 @@
       albion = "~/Games/albion-online/data/Albion-Online";
     };
 
+    starship = {
+      enable = true;
+      enableZshIntegration = true;
+  };
+
     # Dynamic library loader (nix-ld)
     nix-ld = {
       enable = true;
@@ -115,12 +120,14 @@
     freetube
     gparted
     kdePackages.kate
+    kitty
 #     megasync
     nix-ld
     obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
+    starship
     vesktop
     vivaldi
     vlc
