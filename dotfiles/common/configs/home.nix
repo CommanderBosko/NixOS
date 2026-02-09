@@ -20,5 +20,4 @@
     force = true;
   };
   programs.programs.starship.enableZshIntegration = true;
-  };
 }
