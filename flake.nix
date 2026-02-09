@@ -2,7 +2,14 @@
   description = "Bosko's NixOS Flake";
 
   inputs = {
+    # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Home manager
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
@@ -10,6 +17,7 @@
     # Configure system settings
     system = "x86_64-linux";
     systemState = { system.stateVersion = "25.11"; };
+    homeState = { home.stateVersion = "25.11"; };
   in
   {
     # Configure nix configurations
@@ -21,6 +29,7 @@
         };
 
       modules = [
+        homeState
       	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/modules/amd.nix"
@@ -48,6 +57,7 @@
         };
 
         modules = [
+          homeState
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/audio.nix"
@@ -74,6 +84,7 @@
         };
 
         modules = [
+          homeState
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/bootloader.nix"
