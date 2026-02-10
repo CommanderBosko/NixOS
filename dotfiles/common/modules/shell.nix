@@ -56,34 +56,42 @@ in
     starship.enable = true;
   };
 
-  # Shell packages
-  environment.systemPackages = with pkgs; [
-    btop
-    cava
-    cmatrix
-    curl
-    distrobox
-    docker
-    fastfetch
-    git
-    htop
-    lm_sensors
-    micro
-    nh
-    nix-health
-    nix-index
-    nix-init
-    nix-tree
-    php
-    pipes
-    pywal
-    starship
-    tree
-    tty-clock
-    unzip
-    wget
-    yazi
-    zip
-    zsh
-  ];
+  environment = {
+    # Set default editor to micro
+    variables = {
+      EDITOR = "micro";
+      VISUAL = "micro";
+    };
+
+    # Shell packages
+    systemPackages = with pkgs; [
+      btop
+      cava
+      cmatrix
+      curl
+      distrobox
+      docker
+      fastfetch
+      git
+      htop
+      lm_sensors
+      micro
+      nh
+      nix-health
+      nix-index
+      nix-init
+      nix-tree
+      php
+      pipes
+      pywal
+      starship
+      tree
+      tty-clock
+      unzip
+      wget
+      yazi
+      zip
+      zsh
+    ];
+  };
 }
