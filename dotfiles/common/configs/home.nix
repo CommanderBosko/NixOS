@@ -19,6 +19,11 @@
       source = "${self}/dotfiles/common/configs/kitty.conf";
     };
 
+    # Plasma
+    file.".config/kdeglobals" = {
+      source = "${self}/dotfiles/common/configs/kdeglobals";
+    };
+
     # Starship
     file.".config/starship.toml" ={
       source = "${self}/dotfiles/common/configs/starship.toml";
