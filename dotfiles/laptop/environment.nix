@@ -13,7 +13,7 @@
     displayManager = {
       sddm = {
         enable = true;
-        theme = "sddm-astronaut";
+        theme = "breeze";
         wayland.enable = true;
         autoNumlock = true;
       };
@@ -62,7 +62,6 @@
     p7zip
     qalculate-qt
     rpi-imager
-    sddm-astronaut
     vivaldi
     vlc
   ];

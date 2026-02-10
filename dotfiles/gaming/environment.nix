@@ -16,7 +16,7 @@
       # SDDM settings
       sddm = {
         enable = true;
-        theme = "sddm-astronaut";
+        theme = "breeze";
         wayland.enable = true;
         autoNumlock = true;
       };
@@ -122,7 +122,6 @@
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
-    sddm-astronaut
     vesktop
     vivaldi
     vlc
