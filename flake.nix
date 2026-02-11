@@ -13,19 +13,19 @@
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
+
   let
     # Configure system settings
     system = "x86_64-linux";
     systemState = { system.stateVersion = "25.11"; };
   in
+
   {
     # Configure nix configurations
     nixosConfigurations = {
       # Gaming
       gaming = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs self system;
-        };
+        specialArgs = { inherit inputs self system; };
 
       modules = [
       	systemState
@@ -51,9 +51,7 @@
 
       # Laptop
       laptop = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs self system;
-        };
+        specialArgs = { inherit inputs self system; };
 
         modules = [
           systemState
@@ -78,9 +76,7 @@
 
       # Server
       server = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs self system;
-        };
+        specialArgs = { inherit inputs self system; };
 
         modules = [
           systemState
