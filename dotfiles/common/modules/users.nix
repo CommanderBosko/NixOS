@@ -23,7 +23,6 @@
 
     packages = with pkgs; [
       mumble
-      vesktop
     ];
   };
 
@@ -46,9 +45,6 @@
     ];
 
     packages = with pkgs; [
-      chromium
-      discord
-      firefox
       gimp
     ];
   };

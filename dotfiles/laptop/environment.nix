@@ -51,7 +51,10 @@
   # System packages
   environment.systemPackages = with pkgs; [
     brave
+    chromium
     deezer-enhanced
+    discord
+    firefox
     freetube
     gparted
     kdePackages.kate
@@ -62,6 +65,7 @@
     p7zip
     qalculate-qt
     rpi-imager
+    vesktop
     vivaldi
     vlc
   ];

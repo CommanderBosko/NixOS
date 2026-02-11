@@ -9,6 +9,9 @@
     packages = with pkgs; [
     ];
 
+
+    # Copy over dotfiles
+
     # Kate
     file.".config/katerc" = {
       source = "${self}/dotfiles/common/configs/katerc";
@@ -25,7 +28,7 @@
     };
 
     # Starship
-    file.".config/starship.toml" ={
+    file.".config/starship.toml" = {
       source = "${self}/dotfiles/common/configs/starship.toml";
     };
   };
