@@ -31,7 +31,7 @@
   };
 
   # Testing console font
-  console.font = "CodeNewRoman Nerd Font Mono";
+  console.font = "CodeNewRoman Nerd Font";
 
   # System packages
   environment.systemPackages = with pkgs; [
