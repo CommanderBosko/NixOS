@@ -30,6 +30,9 @@
     persistent = true;
   };
 
+  # Testing console font
+  option.console.font = "CodeNewRoman Nerd Font Mono";
+
   # System packages
   environment.systemPackages = with pkgs; [
     gnupg
