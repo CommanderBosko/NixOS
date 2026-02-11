@@ -15,21 +15,25 @@
     # Kate
     file.".config/katerc" = {
       source = "${self}/dotfiles/common/configs/katerc";
+      force = true;
     };
 
     # Kitty
     file.".config/kitty/kitty.conf" = {
       source = "${self}/dotfiles/common/configs/kitty.conf";
+      force = true;
     };
 
     # Plasma
     file.".config/kdeglobals" = {
       source = "${self}/dotfiles/common/configs/kdeglobals";
+      force = true;
     };
 
     # Starship
     file.".config/starship.toml" = {
       source = "${self}/dotfiles/common/configs/starship.toml";
+      force = true;
     };
   };
 }
