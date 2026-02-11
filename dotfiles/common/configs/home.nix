@@ -24,12 +24,6 @@
       force = true;
     };
 
-    # Plasma
-    file.".config/kdeglobals" = {
-      source = "${self}/dotfiles/common/configs/kdeglobals";
-      force = true;
-    };
-
     # Starship
     file.".config/starship.toml" = {
       source = "${self}/dotfiles/common/configs/starship.toml";
