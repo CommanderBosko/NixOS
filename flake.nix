@@ -85,7 +85,6 @@
           "${self}/dotfiles/common/modules/bootloader.nix"
           "${self}/dotfiles/common/modules/firmware.nix"
           "${self}/dotfiles/common/modules/fonts.nix"
-          "${self}/dotfiles/common/modules/home-manager.nix"
           "${self}/dotfiles/common/modules/localisation.nix"
           "${self}/dotfiles/common/modules/nix.nix"
           "${self}/dotfiles/common/modules/shell.nix"
