@@ -30,9 +30,6 @@
     persistent = true;
   };
 
-  # Testing console font
-  console.font = "CodeNewRoman Nerd Font";
-
   # System packages
   environment.systemPackages = with pkgs; [
     gnupg
