@@ -31,28 +31,28 @@
       gaming = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs self system; };
 
-      modules = [
-        nix-flatpak.nixosModules.nix-flatpak
-      	systemState
-        "/etc/nixos/hardware-configuration.nix"
-        "${self}/dotfiles/common/modules/amd.nix"
-        "${self}/dotfiles/common/modules/audio.nix"
-        "${self}/dotfiles/common/modules/bootloader.nix"
-        "${self}/dotfiles/common/modules/emulation.nix"
-        "${self}/dotfiles/common/modules/firmware.nix"
-        "${self}/dotfiles/common/modules/fonts.nix"
-        "${self}/dotfiles/common/modules/gaming.nix"
-        "${self}/dotfiles/common/modules/home-manager.nix"
-        "${self}/dotfiles/common/modules/localisation.nix"
-        "${self}/dotfiles/common/modules/nix.nix"
-        "${self}/dotfiles/common/modules/nvidia.nix"
-        "${self}/dotfiles/common/modules/shell.nix"
-        "${self}/dotfiles/common/modules/users.nix"
-        "${self}/dotfiles/common/modules/virtualisation.nix"
-        "${self}/dotfiles/gaming/environment.nix"
-        "${self}/dotfiles/gaming/networking.nix"
-      ];
-    };
+        modules = [
+          nix-flatpak.nixosModules.nix-flatpak
+          systemState
+          "/etc/nixos/hardware-configuration.nix"
+          "${self}/dotfiles/common/modules/amd.nix"
+          "${self}/dotfiles/common/modules/audio.nix"
+          "${self}/dotfiles/common/modules/bootloader.nix"
+          "${self}/dotfiles/common/modules/emulation.nix"
+          "${self}/dotfiles/common/modules/firmware.nix"
+          "${self}/dotfiles/common/modules/fonts.nix"
+          "${self}/dotfiles/common/modules/gaming.nix"
+          "${self}/dotfiles/common/modules/home-manager.nix"
+          "${self}/dotfiles/common/modules/localisation.nix"
+          "${self}/dotfiles/common/modules/nix.nix"
+          "${self}/dotfiles/common/modules/nvidia.nix"
+          "${self}/dotfiles/common/modules/shell.nix"
+          "${self}/dotfiles/common/modules/users.nix"
+          "${self}/dotfiles/common/modules/virtualisation.nix"
+          "${self}/dotfiles/gaming/environment.nix"
+          "${self}/dotfiles/gaming/networking.nix"
+        ];
+      };
 
       # Laptop
       laptop = nixpkgs.lib.nixosSystem {
