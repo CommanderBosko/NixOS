@@ -31,9 +31,6 @@ in
           echo ""
           sudo nix flake update --flake ~/NixOS/.
           echo ""
-          echo "Updating Flatpaks"
-          flatpak update -y
-          echo ""
           sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName} --impure
         '';
         cleanup = ''
