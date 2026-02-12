@@ -1,19 +1,8 @@
-{ config, lib, pkgs, nix-flatpak, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # Flatpak
-  services.flatpak = {
-    enable = true;
-
-#     remotes = [
-#       name = "flathub";
-#       location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
-#     ];
-
-    packages = [
-      "org.kde.digikam"
-    ];
-  };
+  services.flatpak.enable = true;
 
   programs = {
     # Xwayland
