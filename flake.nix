@@ -12,7 +12,7 @@
     };
 
     # Nix-Flatpaks
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
   };
 
   outputs = { self, nixpkgs, home-manager, nix-flatpak, ... }@inputs:
@@ -32,6 +32,7 @@
         specialArgs = { inherit inputs self system; };
 
       modules = [
+        flatpaks.nixosModules.nix-flatpak
       	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/modules/amd.nix"
@@ -58,6 +59,7 @@
         specialArgs = { inherit inputs self system; };
 
         modules = [
+          flatpaks.nixosModules.nix-flatpak
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/audio.nix"
