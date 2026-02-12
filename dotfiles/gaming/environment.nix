@@ -133,6 +133,6 @@
   # Flatpaks
   services.flatpak.packages = [
       "org.kde.digikam" # Digikam
-      "it.mijorus.gearlever" # Gear lever
+      "com.github.tchx84.Flatseal" # Flatseal
     ];
 }
