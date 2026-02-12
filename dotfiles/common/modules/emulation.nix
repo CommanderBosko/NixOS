@@ -10,7 +10,7 @@
 #       location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
 #     ];
 
-    packages = [
+    package = [
       "org.kde.digikam"
     ];
   };
