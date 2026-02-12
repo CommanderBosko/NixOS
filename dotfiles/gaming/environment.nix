@@ -110,7 +110,7 @@
 
   # System packages
   environment.systemPackages = with pkgs; [
-    brave
+#     brave
     chromium
     deezer-enhanced
     discord
