@@ -129,4 +129,9 @@
     vivaldi
     vlc
   ];
+
+  # Flatpaks
+  services.flatpak.packages = [
+      "org.kde.digikam" # Digikam
+    ];
 }
