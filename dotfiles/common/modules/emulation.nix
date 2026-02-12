@@ -4,10 +4,10 @@
   # Flatpak
   services.flatpak = {
     enable = true;
-    remotes = [
+    remotes = {
         name = "flathub";
         location = "https://flathub.org/repo/flathub.flatpakrepo";
-    ];
+    };
   };
 
 
