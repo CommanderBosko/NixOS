@@ -32,7 +32,7 @@
         specialArgs = { inherit inputs self system; };
 
       modules = [
-        flatpaks.nixosModules.nix-flatpak
+        nix-flatpak.nixosModules.nix-flatpak
       	systemState
         "/etc/nixos/hardware-configuration.nix"
         "${self}/dotfiles/common/modules/amd.nix"
@@ -59,7 +59,7 @@
         specialArgs = { inherit inputs self system; };
 
         modules = [
-          flatpaks.nixosModules.nix-flatpak
+          nix-flatpak.nixosModules.nix-flatpak
           systemState
           "/etc/nixos/hardware-configuration.nix"
           "${self}/dotfiles/common/modules/audio.nix"
