@@ -2,7 +2,16 @@
 
 {
   # Flatpak
-  services.flatpak.enable = true;
+  services.flatpak = {
+    enable = true;
+    remotes = [
+      {
+        name = "flathub";
+        location = "https://flathub.org/repo/flathub.flatpakrepo";
+      }
+    ];
+  };
+
 
   programs = {
     # Xwayland
