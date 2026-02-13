@@ -133,6 +133,5 @@
   # Flatpaks
   services.flatpak.packages = [
       "org.kde.digikam" # Digikam
-      "com.github.tchx84.Flatseal" # Flatseal
     ];
 }

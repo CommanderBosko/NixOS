@@ -5,6 +5,11 @@
   services.flatpak = {
     enable = true;
     update.onActivation = true;
+
+    # Flatpak packages
+    packages = [
+      "com.github.tchx84.Flatseal" # Flatseal
+    ];
   };
 
   programs = {
