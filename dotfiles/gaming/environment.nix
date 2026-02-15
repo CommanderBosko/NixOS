@@ -133,6 +133,6 @@
 
   # Flatpaks
   services.flatpak.packages = [
-      "org.kde.digikam" # Digikam
-    ];
+    "org.kde.digikam" # Digikam
+  ];
 }
