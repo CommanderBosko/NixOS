@@ -79,7 +79,7 @@
       # Gaming
       gaming = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self; };
+        specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/gaming/hardware-configuration.nix"
@@ -91,7 +91,7 @@
       # Laptop
       laptop = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self; };
+        specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/laptop/hardware-configuration.nix"
@@ -103,7 +103,7 @@
       # Server
       server = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self; };
+        specialArgs = { inherit inputs self system; };
         modules = serverModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/server/hardware-configuration.nix"
