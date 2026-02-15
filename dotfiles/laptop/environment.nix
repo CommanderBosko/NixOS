@@ -56,6 +56,7 @@
     discord
     firefox
     freetube
+    gemini-cli
     gparted
     kdePackages.kate
     kitty
