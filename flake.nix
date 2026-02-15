@@ -14,16 +14,14 @@
     # Nix-Flatpaks
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
 
-    # Custom library functions
-    lib = {
-      url = "path:./lib";
-      flake = false;
-    };
+
   };
 
-  outputs = { self, nixpkgs, home-manager, nix-flatpak, lib, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, nix-flatpak, ... }@inputs:
 
   let
+
+
     # Configure system settings
     system = "x86_64-linux";
     systemState = { system.stateVersion = "25.11"; };
@@ -59,12 +57,29 @@
   in
 
   {
+    # Custom library functions (moved from lib/default.nix)
+    lib = {
+      mkSystem = { nixpkgs, modules, specialArgs, ... }:
+        nixpkgs.lib.nixosSystem {
+          inherit specialArgs;
+          system = specialArgs.system;
+          modules = modules ++ [
+            # Common modules applied to all systems (copied from original lib/default.nix)
+            "${self}/dotfiles/common/modules/nix.nix"
+            "${self}/dotfiles/common/modules/users.nix"
+            "${self}/dotfiles/common/modules/shell.nix"
+            # You can add more common modules here
+          ];
+        };
+    };
+
     # Configure nix configurations
     nixosConfigurations = {
 
       # Gaming
-      gaming = lib.mkSystem {
-        inherit inputs system;
+      gaming = self.lib.mkSystem {
+        inherit inputs system nixpkgs;
+        specialArgs = { inherit inputs self; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/gaming/hardware-configuration.nix"
@@ -74,8 +89,9 @@
       };
 
       # Laptop
-      laptop = lib.mkSystem {
-        inherit inputs system;
+      laptop = self.lib.mkSystem {
+        inherit inputs system nixpkgs;
+        specialArgs = { inherit inputs self; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/laptop/hardware-configuration.nix"
@@ -85,8 +101,9 @@
       };
 
       # Server
-      server = lib.mkSystem {
-        inherit inputs system;
+      server = self.lib.mkSystem {
+        inherit inputs system nixpkgs;
+        specialArgs = { inherit inputs self; };
         modules = serverModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/server/hardware-configuration.nix"
@@ -99,7 +116,7 @@
     homeConfigurations = {
       # Home Manager for user 'bosko'
       bosko = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
+        pkgs = nixpkgs.legacyPackages.${system};
         modules = [
           "${self}/dotfiles/common/configs/home.nix"
         ];
@@ -108,7 +125,7 @@
 
       # Home Manager for user 'natty'
       natty = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
+        pkgs = nixpkgs.legacyPackages.${system};
         modules = [
           "${self}/dotfiles/common/configs/home.nix"
         ];
