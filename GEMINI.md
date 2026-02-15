@@ -34,3 +34,14 @@ After a system rebuild, Home Manager configurations for users `bosko` and `natty
 *   `dotfiles/common/modules/nix.nix`: Contains global Nix settings, including experimental features, store optimization, and download buffer size.
 *   `dotfiles/common/modules/home-manager.nix`: Configures Home Manager as a NixOS module, enabling it for users `bosko` and `natty` and pointing to their respective home configurations.
 *   `dotfiles/common/configs/home.nix`: Defines user-specific Home Manager configurations, including packages and the management of dotfiles like `katerc`, `kitty.conf`, and `starship.toml`.
+
+## Detailed Architecture Overview
+
+The NixOS configuration is well-structured using the flake paradigm. The `flake.nix` serves as the central orchestrator, defining three distinct machine types: `gaming`, `laptop`, and `server`. It combines shared modules from `dotfiles/common/modules` with specialized configurations from machine-specific directories.
+
+Key architectural points:
+- **Modular Inheritance:** The `desktopModules` list is a good example of composition, where `gaming` and `laptop` systems inherit a base set of common desktop-oriented modules.
+- **System Specialization:** The primary differences between machines are defined in their respective `environment.nix` and `networking.nix` files. The `gaming` machine is configured for running games (using `nix-ld`), the `laptop` is a general-purpose desktop with touchpad support, and the `server` is a headless machine focused on stability and automation.
+- **Home Manager:** Home Manager is used in a standalone mode, defined in `flake.nix` under `homeConfigurations`. This means user-level configuration is decoupled from the main system build and must be applied manually with `home-manager switch`. Both users share the same configuration from `dotfiles/common/configs/home.nix`, which links dotfiles into their home directories.
+- **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
+- **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
