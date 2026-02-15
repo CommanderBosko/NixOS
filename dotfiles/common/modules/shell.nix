@@ -31,7 +31,7 @@ in
           echo ""
           sudo nix flake update --flake ~/NixOS/.
           echo ""
-          sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName} --impure
+          sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName}
         '';
         cleanup = ''
           nh clean all --keep 5
