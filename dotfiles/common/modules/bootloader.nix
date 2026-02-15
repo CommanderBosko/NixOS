@@ -17,7 +17,7 @@
       # Enable UEFI support
       efi = {
         canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot";  # or "/boot/efi" if that’s your ESP
+        efiSysMountPoint = "/boot"; # or "/boot/efi" if that’s your ESP
       };
     };
   };
