@@ -13,8 +13,6 @@
 
     # Nix-Flatpaks
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
-
-
   };
 
   outputs = { self, nixpkgs, home-manager, nix-flatpak, ... }@inputs:
