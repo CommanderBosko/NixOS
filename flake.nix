@@ -18,8 +18,6 @@
   outputs = { self, nixpkgs, home-manager, nix-flatpak, ... }@inputs:
 
   let
-
-
     # Configure system settings
     system = "x86_64-linux";
     systemState = { system.stateVersion = "25.11"; };
@@ -52,8 +50,8 @@
     serverModules = commonModules ++ [
       # Add any server-specific modules here if needed
     ];
+    
   in
-
   {
     # Custom library functions (moved from lib/default.nix)
     lib = {
