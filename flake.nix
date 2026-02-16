@@ -56,17 +56,18 @@
     # Custom library functions (moved from lib/default.nix)
     lib = {
       mkSystem = { nixpkgs, modules, specialArgs, ... }:
-        nixpkgs.lib.nixosSystem {
-          inherit specialArgs;
-          system = specialArgs.system;
-          modules = modules ++ [
-            # Common modules applied to all systems (copied from original lib/default.nix)
-            "${self}/dotfiles/common/modules/nix.nix"
-            "${self}/dotfiles/common/modules/users.nix"
-            "${self}/dotfiles/common/modules/shell.nix"
-            # You can add more common modules here
-          ];
-        };
+
+      nixpkgs.lib.nixosSystem {
+        inherit specialArgs;
+        system = specialArgs.system;
+        modules = modules ++ [
+          # Common modules applied to all systems (copied from original lib/default.nix)
+          "${self}/dotfiles/common/modules/nix.nix"
+          "${self}/dotfiles/common/modules/users.nix"
+          "${self}/dotfiles/common/modules/shell.nix"
+          # You can add more common modules here
+        ];
+      };
     };
 
     # Configure nix configurations
