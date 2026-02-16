@@ -9,7 +9,6 @@
     packages = with pkgs; [
     ];
 
-
     # Copy over dotfiles
 
     # Kate
