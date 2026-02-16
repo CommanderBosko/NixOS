@@ -25,6 +25,5 @@
   	mako
   	swaylock
   	swayidle
-  	waybar
   ];
 }
