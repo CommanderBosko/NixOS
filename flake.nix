@@ -80,6 +80,7 @@
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
+          "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/gaming/hardware-configuration.nix"
           "${self}/dotfiles/gaming/environment.nix"
           "${self}/dotfiles/gaming/networking.nix"
