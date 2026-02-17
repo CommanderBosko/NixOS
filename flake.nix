@@ -94,7 +94,6 @@
           "${self}/dotfiles/laptop/hardware-configuration.nix"
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
-          "${self}/dotfiles/common/modules/desktop-environments/wayfire.nix"
         ];
       };
 
