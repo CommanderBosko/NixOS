@@ -11,7 +11,7 @@
     # Display Manager
     displayManager = {
       sddm = {
-        enable = false;
+        enable = true;
         theme = "breeze";
         wayland.enable = true;
         autoNumlock = true;
