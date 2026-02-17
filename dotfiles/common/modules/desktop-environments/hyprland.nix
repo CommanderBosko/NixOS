@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+
   # Enable Hyprland program
   programs.hyprland = {
     enable = true;
@@ -10,7 +11,6 @@
 
   # Enable the XDG portal for Hyprland
   environment.systemPackages = with pkgs; [
-    sddm # The SDDM display manager
     xdg-desktop-portal-hyprland
     waybar # Customizable Wayland bar
     rofi # Application launcher
@@ -23,8 +23,6 @@
     wlr-randr # RandR utility for Wayland
   ];
 
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.theme = "breeze";
   services.displayManager.defaultSession = "hyprland";
 
   # Configure services for Hyprland

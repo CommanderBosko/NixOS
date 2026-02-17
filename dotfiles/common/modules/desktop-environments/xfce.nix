@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+
   services.xserver = {
     # Enable X11 server (XFCE is X11-native primarily)
     enable = true;
@@ -9,16 +10,11 @@
     desktopManager.xfce.enable = true;
   };
 
-  # Enable SDDM display manager
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.theme = "breeze";
-
   # Set XFCE as the default session if a display manager is enabled
   services.displayManager.defaultSession = "xfce.desktop";
 
   # Add common XFCE applications and utilities
   environment.systemPackages = with pkgs; [
-    sddm # The SDDM display manager
     thunar # File manager
     xfce4-terminal # Terminal emulator
     xfce4-appfinder # Application finder

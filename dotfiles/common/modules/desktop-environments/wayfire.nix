@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+
   # Enable Wayfire compositor
   programs.wayfire = {
     enable = true;
@@ -12,13 +13,12 @@
     ];
   };
 
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.theme = "breeze";
+
   services.displayManager.defaultSession = "wayfire.desktop";
 
   # Enable XDG desktop portal for Wayland (often needed for Flatpaks, etc.)
   environment.systemPackages = with pkgs; [
-    sddm # Add sddm to system packages
+
     xdg-desktop-portal-wlr # Wayland specific XDG portal for wlroots based compositors
     waybar # Customizable Wayland bar
     wofi # Application launcher (alternative to rofi for Wayland)

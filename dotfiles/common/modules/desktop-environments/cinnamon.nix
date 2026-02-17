@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+
   services = {
   	xserver = {
       # Enable X11 server (Cinnamon is X11-native)
@@ -10,17 +11,12 @@
       desktopManager.cinnamon.enable = true;
     };
     
-    # Enable SDDM display manager
-    displayManager.sddm.enable = true;
-    displayManager.sddm.theme = "breeze";
-
     # Set Cinnamon as the default session for the display manager
     displayManager.defaultSession = "cinnamon";
   };
 
   # Add common Cinnamon applications and utilities
   environment.systemPackages = with pkgs; [
-    sddm # The SDDM display manager
     cinnamon-control-center
     nemo # File manager
     gnome-terminal # Often used in Cinnamon, or an alternative
