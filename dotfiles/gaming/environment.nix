@@ -3,30 +3,16 @@
 {
   # Services
   services = {
-    # Desktop Environments
-    desktopManager.plasma6.enable = true;
-
     # Display manager settings
     displayManager = {
       autoLogin = {
         enable = true;
         user = "bosko";
       };
-
-      # SDDM settings
-      sddm = {
-        enable = true;
-        theme = "breeze";
-        wayland.enable = true;
-        autoNumlock = true;
-      };
     };
 
     # Enable printing
     printing.enable = true;
-
-    # Enable xserver
-    xserver.enable = true;
   };
 
   # Hardware

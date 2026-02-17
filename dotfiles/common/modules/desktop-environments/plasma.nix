@@ -9,10 +9,10 @@
       wayland.enable = true;
       defaultSession = "plasmawayland";
     };
-  };
 
-  # Optional: Enable X11 if needed, though Wayland is preferred
-  # services.xserver.enable = true;
+    # Enable x11
+    xserver.enable = true;
+  };
 
   # Add common Plasma utilities and applications
   environment.systemPackages = with pkgs; [
