@@ -10,6 +10,7 @@
 
   # Enable the XDG portal for Hyprland
   environment.systemPackages = with pkgs; [
+    sddm # The SDDM display manager
     xdg-desktop-portal-hyprland
     waybar # Customizable Wayland bar
     rofi # Application launcher
@@ -22,25 +23,10 @@
     wlr-randr # RandR utility for Wayland
   ];
 
+  services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.theme = "breeze";
+  services.displayManager.defaultSession = "hyprland";
+
   # Configure services for Hyprland
-  # displayManager.gdm.enable = true; # Example display manager
-  # desktopManager.gnome.enable = true; # Example desktop environment
-
   # You may need to configure your display manager to start Hyprland
-  # For example, with GDM:
-  services.xserver = {
-    displayManager = {
-      gdm = {
-        enable = true;
-        wayland = true;
-      };
-    };
-
-    desktopManager.session = [ {
-      name = "hyprland";
-      start = ''
-        exec Hyprland
-      '';
-    } ];
-  };
 }

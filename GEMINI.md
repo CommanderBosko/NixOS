@@ -65,6 +65,10 @@ New modules for various desktop environments have been introduced under `dotfile
 *   **`mate.nix`**: Configures the MATE desktop environment. Initially had "attribute 'mate-session' missing" and other package resolution errors (`mate.applets` instead of `mate.mate-panel-with-applets`), which were fixed by correcting the package references to use the appropriate `mate.<package>` or `pkgs.<package>` paths.
 *   **`deepin.nix`**: A module for the Deepin Desktop Environment was created. However, dry-run testing revealed that Deepin DE has been **removed from Nixpkgs due to lack of maintenance**. The module was integrated and tested, but due to its non-functional status, its integration was removed from the laptop configuration, and the `deepin.nix` file itself was subsequently deleted.
 
+### Display Manager Standardization
+
+All desktop environment modules under `dotfiles/common/modules/desktop-environments/` have been standardized to use SDDM (Simple Desktop Display Manager) with the `breeze` theme. For Wayland-native desktop environments or compositors, their respective Wayland sessions are set as the default. For X11-native environments, their X11 sessions are used. `sddm` has been added to `environment.systemPackages` for all relevant modules, and conflicting display manager configurations (e.g., LightDM, GDM) have been removed. This change aims to provide a unified and consistent login experience across all desktop environments.
+
 ### Process for Adding New Desktop Environments
 
 To add a new desktop environment module:

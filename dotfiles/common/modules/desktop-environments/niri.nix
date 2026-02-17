@@ -8,8 +8,15 @@
     # or it might depend on global xserver settings.
   };
 
+  services.displayManager = {
+    sddm.enable = true;
+    sddm.theme = "breeze";
+    defaultSession = "niri.desktop";
+  };
+  
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
+    sddm # Add sddm to system packages
     waybar # Customizable Wayland bar
     rofi # Application launcher
     swaylock # Screen locker
@@ -20,8 +27,4 @@
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
   ];
-
-  # Niri can be started from a display manager or tty.
-  # If using a display manager (like SDDM configured in flake.nix), ensure it supports Wayland
-  # and that Niri is an available session.
 }
