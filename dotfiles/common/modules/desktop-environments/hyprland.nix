@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   # Enable Hyprland program
   programs.hyprland = {
     enable = true;

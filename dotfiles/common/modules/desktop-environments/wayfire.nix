@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   # Enable Wayfire compositor
   programs.wayfire = {
     enable = true;

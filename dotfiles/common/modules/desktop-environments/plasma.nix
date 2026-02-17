@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   services = {
   	# Enable Plasma 6 desktop environment
   	desktopManager.plasma6.enable = true;

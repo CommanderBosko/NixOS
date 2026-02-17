@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   # Enable Niri compositor
   programs.niri = {
     enable = true;
