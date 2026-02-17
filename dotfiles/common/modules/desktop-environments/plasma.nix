@@ -1,13 +1,15 @@
 { config, pkgs, ... }:
 
 {
-  # Enable Plasma 6 desktop environment
-  services.desktopManager.plasma6.enable = true;
-
-  # Enable SDDM display manager with Wayland
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = true;
+  services = {
+  	# Enable Plasma 6 desktop environment
+  	desktopManager.plasma6.enable = true;
+	
+  	# Enable SDDM display manager with Wayland
+  	displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
   };
 
   # Optional: Enable X11 if needed, though Wayland is preferred
@@ -25,5 +27,7 @@
 
   # Additional Plasma specific configurations can go here
   # For example, enabling KScreen for display management:
-  # services.dbus.packages = [ kdePackages.kscreen ];
+  services.dbus.packages = [
+    kdePackages.kscreen
+  ];
 }
