@@ -45,3 +45,31 @@ Key architectural points:
 - **Home Manager:** Home Manager is used in a standalone mode, defined in `flake.nix` under `homeConfigurations`. This means user-level configuration is decoupled from the main system build and must be applied manually with `home-manager switch`. Both users share the same configuration from `dotfiles/common/configs/home.nix`, which links dotfiles into their home directories.
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
+
+## Recent Modifications (as of February 16, 2026)
+
+This section summarizes recent changes made to the NixOS configuration.
+
+### Desktop Environment Modules
+
+New modules for Wayland compositors have been introduced under `dotfiles/common/modules/desktop-environments/`:
+
+*   **`hyprland.nix`**: Configures the Hyprland compositor. It includes basic enablement (`programs.hyprland.enable = true;`) and a set of common Wayland companion packages (waybar, rofi, swaylock, swayidle, mako, grim, slurp, wl-clipboard, wlr-randr).
+*   **`niri.nix`**: Configures the Niri compositor. It includes basic enablement (`programs.niri.enable = true;`) and a set of common Wayland companion packages (waybar, rofi, swaylock, swayidle, mako, grim, slurp, wl-clipboard, wlr-randr).
+
+These modules are designed for *explicit and individual inclusion* in machine-specific configurations (e.g., `gaming/environment.nix`, `laptop/environment.nix`) rather than being automatically applied across all builds.
+
+### Process for Adding New Desktop Environments
+
+To add a new desktop environment module:
+1.  Create a new `.nix` file (e.g., `my-de.nix`) in `dotfiles/common/modules/desktop-environments/`.
+2.  Add the necessary NixOS configuration to enable the desktop environment and include relevant companion packages in `environment.systemPackages`.
+3.  Add the new file to Git (`git add dotfiles/common/modules/desktop-environments/my-de.nix`).
+4.  To enable it for a specific machine (e.g., `laptop`), add an `imports` statement to that machine's `environment.nix` file:
+    ```nix
+    imports = [
+      ../../dotfiles/common/modules/desktop-environments/my-de.nix
+    ];
+    ```
+5.  Perform a `nixos-rebuild dry-run --flake .#<machine-name>` to verify the configuration.
+6.  Once verified, rebuild the system (`sudo nixos-rebuild switch --flake .#<machine-name>`).
