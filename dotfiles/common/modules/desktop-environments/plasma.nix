@@ -1,15 +1,13 @@
 { config, pkgs, ... }:
 
 {
+
   services = {
   	# Enable Plasma 6 desktop environment
   	desktopManager.plasma6.enable = true;
 	
-  	# Enable SDDM display manager with Wayland
   	displayManager.sddm = {
-      enable = true;
       wayland.enable = true;
-      theme = "breeze";
       defaultSession = "plasmawayland";
     };
   };
@@ -19,7 +17,6 @@
 
   # Add common Plasma utilities and applications
   environment.systemPackages = with pkgs; [
-    sddm # The SDDM display manager
     kdePackages.discover # Software center
     kdePackages.dolphin # File manager
     kdePackages.konsole # Terminal emulator

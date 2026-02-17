@@ -44,6 +44,7 @@
       "${self}/dotfiles/common/modules/gaming.nix"
       "${self}/dotfiles/common/modules/nvidia.nix"
       "${self}/dotfiles/common/modules/virtualisation.nix"
+      "${self}/dotfiles/common/modules/sddm.nix"
     ];
 
     # Modules specific to server systems
