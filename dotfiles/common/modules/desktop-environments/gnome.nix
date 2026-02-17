@@ -5,15 +5,18 @@
     # Enable X11 server
     xserver.enable = true;
 
-    # Enable GDM (GNOME Display Manager)
-    displayManager.gdm.enable = true;
-  
+    # Enable SDDM (Simple Desktop Display Manager)
+    displayManager.sddm.enable = true;
+    displayManager.sddm.theme = "breeze";
+    displayManager.defaultSession = "gnome-wayland";
+
     # Enable GNOME desktop environment
     desktopManager.gnome.enable = true;
   };
 
   # Add common GNOME applications and utilities
   environment.systemPackages = with pkgs; [
+    sddm # The SDDM display manager
     gnome-terminal
     nautilus
     gnome-system-monitor
