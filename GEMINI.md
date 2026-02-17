@@ -52,12 +52,18 @@ This section summarizes recent changes made to the NixOS configuration.
 
 ### Desktop Environment Modules
 
-New modules for Wayland compositors have been introduced under `dotfiles/common/modules/desktop-environments/`:
+New modules for various desktop environments have been introduced under `dotfiles/common/modules/desktop-environments/`. For each, a module was created, temporarily integrated into the `laptop` configuration for dry-run testing, and then its integration removed (the module file itself was kept unless noted otherwise).
 
-*   **`hyprland.nix`**: Configures the Hyprland compositor. It includes basic enablement (`programs.hyprland.enable = true;`) and a set of common Wayland companion packages (waybar, rofi, swaylock, swayidle, mako, grim, slurp, wl-clipboard, wlr-randr).
-*   **`niri.nix`**: Configures the Niri compositor. It includes basic enablement (`programs.niri.enable = true;`) and a set of common Wayland companion packages (waybar, rofi, swaylock, swayidle, mako, grim, slurp, wl-clipboard, wlr-randr).
-
-These modules are designed for *explicit and individual inclusion* in machine-specific configurations (e.g., `gaming/environment.nix`, `laptop/environment.nix`) rather than being automatically applied across all builds.
+*   **`hyprland.nix`**: Configures the Hyprland compositor. Includes basic enablement and common Wayland companion packages. A previous change had uncommented GDM configuration within this file.
+*   **`niri.nix`**: Configures the Niri compositor. Includes basic enablement and common Wayland companion packages.
+*   **`plasma.nix`**: Configures the KDE Plasma desktop environment. Initially had a syntax error in `environment.systemPackages` (incorrect `kdePackages = { ... };` syntax), which was corrected.
+*   **`cosmic.nix`**: Configures the Cosmic desktop environment. Initially had an "undefined variable 'cosmic-epoch'" error for a package, which was resolved by removing the `environment.systemPackages` entry entirely, as Cosmic DE is primarily enabled via services.
+*   **`gnome.nix`**: Configures the GNOME desktop environment. Initially caused a conflict with SDDM (`services.displayManager.defaultSession`) and had incorrect package references (`gnome.gnome-terminal` instead of `pkgs.gnome-terminal`). Both were fixed by temporarily commenting out `defaultSession` in `laptop/environment.nix` and correcting package paths.
+*   **`xfce.nix`**: Configures the XFCE desktop environment. Initially had an "option does not exist" error for `services.desktopManager.xfce`, which was fixed by correcting the path to `services.xserver.desktopManager.xfce`. Also had evaluation warnings for `xfce.<package>` references, suggesting direct `pkgs.<package>` usage.
+*   **`wayfire.nix`**: Configures the Wayfire Wayland compositor. Initially had an "attribute 'environment.systemPackages' already defined" error due to duplicate `environment.systemPackages` blocks, which was fixed by combining them into one.
+*   **`cinnamon.nix`**: Configures the Cinnamon desktop environment. Initially caused a conflict with `defaultSession` (defined in `laptop/environment.nix`) and had incorrect package references (`cinnamon.nemo` instead of `pkgs.nemo`). Both were fixed by temporarily commenting out `defaultSession` in `laptop/environment.nix` and correcting package paths.
+*   **`mate.nix`**: Configures the MATE desktop environment. Initially had "attribute 'mate-session' missing" and other package resolution errors (`mate.applets` instead of `mate.mate-panel-with-applets`), which were fixed by correcting the package references to use the appropriate `mate.<package>` or `pkgs.<package>` paths.
+*   **`deepin.nix`**: A module for the Deepin Desktop Environment was created. However, dry-run testing revealed that Deepin DE has been **removed from Nixpkgs due to lack of maintenance**. The module was integrated and tested, but due to its non-functional status, its integration was removed from the laptop configuration, and the `deepin.nix` file itself was subsequently deleted.
 
 ### Process for Adding New Desktop Environments
 
@@ -65,11 +71,23 @@ To add a new desktop environment module:
 1.  Create a new `.nix` file (e.g., `my-de.nix`) in `dotfiles/common/modules/desktop-environments/`.
 2.  Add the necessary NixOS configuration to enable the desktop environment and include relevant companion packages in `environment.systemPackages`.
 3.  Add the new file to Git (`git add dotfiles/common/modules/desktop-environments/my-de.nix`).
-4.  To enable it for a specific machine (e.g., `laptop`), add an `imports` statement to that machine's `environment.nix` file:
+4.  To enable it for a specific machine (e.g., `laptop`), add an `imports` statement to that machine's `flake.nix` for temporary testing, or permanently in `environment.nix`:
     ```nix
+    # Example for flake.nix (temporary testing):
+    modules = desktopModules ++ [
+      # Machine-specific modules
+      "${self}/dotfiles/laptop/hardware-configuration.nix"
+      "${self}/dotfiles/laptop/environment.nix"
+      "${self}/dotfiles/laptop/networking.nix"
+      "${self}/dotfiles/common/modules/desktop-environments/my-de.nix" # Temporary
+    ];
+
+    # Example for environment.nix (permanent integration):
     imports = [
       ../../dotfiles/common/modules/desktop-environments/my-de.nix
     ];
     ```
-5.  Perform a `nixos-rebuild dry-run --flake .#<machine-name>` to verify the configuration.
-6.  Once verified, rebuild the system (`sudo nixos-rebuild switch --flake .#<machine-name>`).
+5.  Perform a `nixos-rebuild dry-run --flake .#<machine-name>` to verify the configuration, debugging any errors.
+6.  If necessary, temporarily comment out conflicting display manager settings (e.g., `services.displayManager.defaultSession`) in the machine's `environment.nix` during testing.
+7.  Once verified, remove the temporary integration from `flake.nix` (or uncomment `defaultSession` in `environment.nix`), and then commit the changes.
+8.  The desktop environment module file (`my-de.nix`) is typically kept after testing for future reference.
