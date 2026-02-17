@@ -22,8 +22,6 @@
     wlr-randr # RandR utility for Wayland
   ];
 
-  services.displayManager.defaultSession = "hyprland";
-
   # Configure services for Hyprland
   # You may need to configure your display manager to start Hyprland
 }

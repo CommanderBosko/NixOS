@@ -5,8 +5,6 @@
     # Enable X11 server
     xserver.enable = true;
 
-    displayManager.defaultSession = "gnome";
-
     # Enable GNOME desktop environment
     desktopManager.gnome.enable = true;
   };

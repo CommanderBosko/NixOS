@@ -9,9 +9,6 @@
     desktopManager.mate.enable = true;
   };
 
-  services.displayManager.defaultSession = "mate";
-
-
   # Add common MATE applications and utilities
   environment.systemPackages = with pkgs; [
     mate.mate-panel-with-applets

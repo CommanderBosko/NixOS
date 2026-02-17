@@ -9,9 +9,6 @@
     desktopManager.xfce.enable = true;
   };
 
-  # Set XFCE as the default session if a display manager is enabled
-  services.displayManager.defaultSession = "xfce";
-
   # Add common XFCE applications and utilities
   environment.systemPackages = with pkgs; [
     thunar # File manager

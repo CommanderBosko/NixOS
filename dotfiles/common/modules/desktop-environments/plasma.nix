@@ -4,13 +4,6 @@
   services = {
   	# Enable Plasma 6 desktop environment
   	desktopManager.plasma6.enable = true;
-	
-  	displayManager = {
-      sddm = {
-        wayland.enable = true;
-      };
-      defaultSession = "plasma";
-    };
 
     # Enable x11
     xserver.enable = true;
