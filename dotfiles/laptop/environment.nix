@@ -3,32 +3,11 @@
 {
   # Services
   services = {
-    # Desktop Environments
-    desktopManager = {
-      cosmic.enable = true;
-    };
-
-    # Display Manager
-    displayManager = {
-      sddm = {
-        enable = true;
-        theme = "breeze";
-        wayland.enable = true;
-        autoNumlock = true;
-      };
-
-      # Default DE session
-      defaultSession = "cosmic";
-    };
-
     # Enable touchpad
     libinput.enable = true;
 
     # Enable printing
     printing.enable = true;
-
-    # Enable xserver
-    xserver.enable = true;
   };
 
   # Hardware

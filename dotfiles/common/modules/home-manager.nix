@@ -8,7 +8,7 @@
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs self; };
 
-#     users.bosko = import "${self}/dotfiles/common/configs/home.nix";
-#     users.natty = import "${self}/dotfiles/common/configs/home.nix";
+    users.bosko = import "${self}/dotfiles/common/configs/home.nix";
+    users.natty = import "${self}/dotfiles/common/configs/home.nix";
   };
 }
