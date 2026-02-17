@@ -93,6 +93,7 @@
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
+          "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
           "${self}/dotfiles/laptop/hardware-configuration.nix"
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
@@ -112,24 +113,24 @@
       };
     };
 
-    homeConfigurations = {
-      # Home Manager for user 'bosko'
-      bosko = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
-        modules = [
-          "${self}/dotfiles/common/configs/home.nix"
-        ];
-        extraSpecialArgs = { inherit inputs self; };
-      };
-
-      # Home Manager for user 'natty'
-      natty = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
-        modules = [
-          "${self}/dotfiles/common/configs/home.nix"
-        ];
-        extraSpecialArgs = { inherit inputs self; };
-      };
-    };
+#     homeConfigurations = {
+#       # Home Manager for user 'bosko'
+#       bosko = home-manager.lib.homeManagerConfiguration {
+#         pkgs = nixpkgs.legacyPackages.${system};
+#         modules = [
+#           "${self}/dotfiles/common/configs/home.nix"
+#         ];
+#         extraSpecialArgs = { inherit inputs self; };
+#       };
+#
+#       # Home Manager for user 'natty'
+#       natty = home-manager.lib.homeManagerConfiguration {
+#         pkgs = nixpkgs.legacyPackages.${system};
+#         modules = [
+#           "${self}/dotfiles/common/configs/home.nix"
+#         ];
+#         extraSpecialArgs = { inherit inputs self; };
+#       };
+#     };
   };
 }
