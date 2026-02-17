@@ -1,22 +1,24 @@
 { config, pkgs, ... }:
 
 {
-  # Enable X11 server
-  services.xserver.enable = true;
+  services = {
+    # Enable X11 server
+    xserver.enable = true;
 
-  # Enable GDM (GNOME Display Manager)
-  services.displayManager.gdm.enable = true;
-
-  # Enable GNOME desktop environment
-  services.desktopManager.gnome.enable = true;
+    # Enable GDM (GNOME Display Manager)
+    displayManager.gdm.enable = true;
+  
+    # Enable GNOME desktop environment
+    desktopManager.gnome.enable = true;
+  };
 
   # Add common GNOME applications and utilities
   environment.systemPackages = with pkgs; [
-    gnome.gnome-terminal
-    gnome.nautilus
-    gnome.gnome-system-monitor
+    gnome-terminal
+    nautilus
+    gnome-system-monitor
     # Add other desired GNOME applications here
-    # For example: gnome.gnome-calculator, gnome.gnome-text-editor
+    # For example: gnome-calculator, gnome-text-editor
   ];
 
   # Optional: Exclude unwanted GNOME packages to minimize footprint

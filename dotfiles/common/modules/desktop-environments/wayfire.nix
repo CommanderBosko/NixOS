@@ -15,10 +15,6 @@
   # Enable XDG desktop portal for Wayland (often needed for Flatpaks, etc.)
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal-wlr # Wayland specific XDG portal for wlroots based compositors
-  ];
-
-  # Companion tools for a full Wayland desktop experience
-  environment.systemPackages = with pkgs; [
     waybar # Customizable Wayland bar
     wofi # Application launcher (alternative to rofi for Wayland)
     mako # Notification daemon

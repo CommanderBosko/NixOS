@@ -28,12 +28,19 @@
 
   # You may need to configure your display manager to start Hyprland
   # For example, with GDM:
-  # services.xserver.displayManager.gdm.enable = true;
-  # services.xserver.displayManager.gdm.wayland = true;
-  # services.xserver.desktopManager.session = [ {
-  #     name = "hyprland";
-  #     start = ''
-  #       exec Hyprland
-  #     '';
-  # } ];
+  services.xserver = {
+    displayManager = {
+      gdm = {
+        enable = true;
+        wayland = true;
+      };
+    };
+
+    desktopManager.session = [ {
+      name = "hyprland";
+      start = ''
+        exec Hyprland
+      '';
+    } ];
+  };
 }
