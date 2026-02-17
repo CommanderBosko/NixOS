@@ -18,7 +18,7 @@
       };
 
       # Default DE session
-      defaultSession = "cosmic";
+      # defaultSession = "cosmic";
     };
 
     # Enable touchpad
