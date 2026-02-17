@@ -7,8 +7,4 @@
       theme = "breeze";
     };
   };
-
-  environment.systemPackages = with pkgs; [
-    sddm # The SDDM display manager
-  ];
 }

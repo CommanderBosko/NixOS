@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   services.xserver = {
     # Enable X11 server (XFCE is X11-native primarily)
     enable = true;

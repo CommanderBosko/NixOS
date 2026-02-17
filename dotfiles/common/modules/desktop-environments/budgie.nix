@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   services = {
     # Enable X11 server (Budgie is X11-native)
     xserver.enable = true;

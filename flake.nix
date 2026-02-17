@@ -43,8 +43,8 @@
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/gaming.nix"
       "${self}/dotfiles/common/modules/nvidia.nix"
-      "${self}/dotfiles/common/modules/virtualisation.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
+      "${self}/dotfiles/common/modules/virtualisation.nix"
     ];
 
     # Modules specific to server systems

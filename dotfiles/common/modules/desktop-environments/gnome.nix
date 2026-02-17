@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   services = {
     # Enable X11 server
     xserver.enable = true;

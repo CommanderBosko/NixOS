@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-
   # Enable X11 server (Pantheon is X11-native)
   services.xserver.enable = true;
 
