@@ -1,17 +1,20 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   services = {
+    # Disable SDDM since cosmic-greeter is used
+    displayManager.sddm.enable = lib.mkForce false;
+
     # Enable Cosmic desktop environment
     desktopManager.cosmic.enable = true;
 
     # Enable Cosmic Greeter (display manager)
-    # displayManager.cosmic-greeter = {
-      # enable = true;
+    displayManager.cosmic-greeter = {
+      enable = true;
       # Optional: Enable autologin for a specific user
       # autologin.enable = true;
       # autologin.user = "your-username";
-    # };
+    };
   };
 
   # Cosmic DE is Wayland-native, no need to enable xserver generally.
