@@ -5,14 +5,13 @@
   services = {
     # Desktop Environments
     desktopManager = {
-      plasma6.enable = true;
       cosmic.enable = true;
     };
 
     # Display Manager
     displayManager = {
       sddm = {
-        enable = true;
+        enable = false;
         theme = "breeze";
         wayland.enable = true;
         autoNumlock = true;
