@@ -26,7 +26,7 @@
 
   # Additional Plasma specific configurations can go here
   # For example, enabling KScreen for display management:
-  services.dbus.packages = [
-    kdePackages.kscreen
-  ];
+#   services.dbus.packages = [
+#     kdePackages.kscreen
+#   ];
 }
