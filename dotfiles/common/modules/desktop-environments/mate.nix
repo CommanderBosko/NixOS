@@ -9,7 +9,7 @@
     desktopManager.mate.enable = true;
   };
 
-  services.displayManager.defaultSession = "mate.desktop";
+  services.displayManager.defaultSession = "mate";
 
 
   # Add common MATE applications and utilities

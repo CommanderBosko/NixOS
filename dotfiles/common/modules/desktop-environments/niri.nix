@@ -8,7 +8,7 @@
     # or it might depend on global xserver settings.
   };
 
-  services.displayManager.defaultSession = "niri.desktop";
+  services.displayManager.defaultSession = "niri";
   
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
