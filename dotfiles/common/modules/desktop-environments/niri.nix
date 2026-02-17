@@ -7,8 +7,6 @@
     # Niri handles xwayland internally, so explicit xwayland.enable might not be needed here
     # or it might depend on global xserver settings.
   };
-
-  services.displayManager.defaultSession = "niri";
   
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [

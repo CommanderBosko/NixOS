@@ -12,9 +12,6 @@
     ];
   };
 
-
-  services.displayManager.defaultSession = "wayfire";
-
   # Enable XDG desktop portal for Wayland (often needed for Flatpaks, etc.)
   environment.systemPackages = with pkgs; [
 

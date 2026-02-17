@@ -9,9 +9,6 @@
       # Enable Cinnamon desktop environment
       desktopManager.cinnamon.enable = true;
     };
-    
-    # Set Cinnamon as the default session for the display manager
-    displayManager.defaultSession = "cinnamon";
   };
 
   # Add common Cinnamon applications and utilities
