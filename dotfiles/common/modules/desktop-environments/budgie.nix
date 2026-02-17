@@ -8,7 +8,7 @@
     # Enable Budgie desktop environment
     desktopManager.budgie.enable = true;
 
-    displayManager.defaultSession = "budgie.desktop";
+    displayManager.defaultSession = "budgie";
   };
 
   # Add common Budgie applications and utilities
