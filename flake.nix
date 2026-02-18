@@ -57,7 +57,7 @@
   {
     # Custom library functions (moved from lib/default.nix)
     lib = {
-      mkSystem = { nixpkgs, home-manager, modules, specialArgs, ... }:
+      mkSystem = { nixpkgs, modules, specialArgs, ... }:
 
       nixpkgs.lib.nixosSystem {
         inherit specialArgs;
@@ -78,7 +78,7 @@
       # Gaming
       gaming = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system; };
+        specialArgs = { inherit inputs self system home-manager; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
@@ -91,7 +91,7 @@
       # Laptop
       laptop = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system; };
+        specialArgs = { inherit inputs self system home-manager; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
