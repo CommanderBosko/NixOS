@@ -37,12 +37,12 @@
 
     # Modules specific to desktop systems (gaming, laptop)
     desktopModules = commonModules ++ [
+      home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
       "${self}/dotfiles/common/modules/amd.nix"
       "${self}/dotfiles/common/modules/audio.nix"
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/gaming.nix"
-      "${self}/dotfiles/common/modules/home-manager.nix"
       "${self}/dotfiles/common/modules/nvidia.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
       "${self}/dotfiles/common/modules/virtualisation.nix"
@@ -78,7 +78,7 @@
       # Gaming
       gaming = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system home-manager; };
+        specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
@@ -91,7 +91,7 @@
       # Laptop
       laptop = self.lib.mkSystem {
         inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system home-manager; };
+        specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
