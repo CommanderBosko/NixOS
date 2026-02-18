@@ -1,8 +1,6 @@
-{ config, inputs, pkgs, self, ... }:
+{ config, home-manager, inputs, self, ... }:
 
 {
-  imports = [ inputs.home-manager.nixosModules.home-manager ];
-
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
