@@ -57,7 +57,7 @@
   {
     # Custom library functions (moved from lib/default.nix)
     lib = {
-      mkSystem = { nixpkgs, modules, specialArgs, ... }:
+      mkSystem = { nixpkgs, home-manager, modules, specialArgs, ... }:
 
       nixpkgs.lib.nixosSystem {
         inherit specialArgs;
