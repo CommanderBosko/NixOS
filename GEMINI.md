@@ -59,7 +59,7 @@ New modules for various desktop environments have been introduced under `dotfile
 *   **`plasma.nix`**: Configures the KDE Plasma desktop environment. Initially had a syntax error in `environment.systemPackages` (incorrect `kdePackages = { ... };` syntax), which was corrected.
 *   **`cosmic.nix`**: Configures the Cosmic desktop environment. Initially had an "undefined variable 'cosmic-epoch'" error for a package, which was resolved by removing the `environment.systemPackages` entry entirely, as Cosmic DE is primarily enabled via services.
 *   **`gnome.nix`**: Configures the GNOME desktop environment. Initially caused a conflict with SDDM (`services.displayManager.defaultSession`) and had incorrect package references (`gnome.gnome-terminal` instead of `pkgs.gnome-terminal`). Both were fixed by temporarily commenting out `defaultSession` in `laptop/environment.nix` and correcting package paths.
-*   **`xfce.nix`**: Configures the XFCE desktop environment. Initially had an "option does not exist" error for `services.desktopManager.xfce`, which was fixed by correcting the path to `services.xserver.desktopManager.xfce`. Also had evaluation warnings for `xfce.<package>` references, suggesting direct `pkgs.<package>` usage.
+*   **`xfce.nix`**: Configures the XFCE desktop environment. Initially had an "option does not exist" error for `services.desktopManager.xfce`, which was fixed by correcting the path to `services.xserver.desktopManager.xfce`. Also had evaluation warnings for `xfce.<package>` references, suggesting direct `pkgs.<package>` usage. **During a dry-run on the `laptop`, an "error: path '/nix/store/.../xfce.nix' does not exist" occurred when importing `xfce.nix` from `laptop/environment.nix`. This was resolved by importing `xfce.nix` directly into the `laptop`'s `modules` list in `flake.nix` using `${self}/dotfiles/common/modules/desktop-environments/xfce.nix`, replacing the previous `cosmic.nix` entry.**
 *   **`wayfire.nix`**: Configures the Wayfire Wayland compositor. Initially had an "attribute 'environment.systemPackages' already defined" error due to duplicate `environment.systemPackages` blocks, which was fixed by combining them into one.
 *   **`cinnamon.nix`**: Configures the Cinnamon desktop environment. Initially caused a conflict with `defaultSession` (defined in `laptop/environment.nix`) and had incorrect package references (`cinnamon.nemo` instead of `pkgs.nemo`). Both were fixed by temporarily commenting out `defaultSession` in `laptop/environment.nix` and correcting package paths.
 *   **`mate.nix`**: Configures the MATE desktop environment. Initially had "attribute 'mate-session' missing" and other package resolution errors (`mate.applets` instead of `mate.mate-panel-with-applets`), which were fixed by correcting the package references to use the appropriate `mate.<package>` or `pkgs.<package>` paths.
@@ -75,7 +75,7 @@ To add a new desktop environment module:
 1.  Create a new `.nix` file (e.g., `my-de.nix`) in `dotfiles/common/modules/desktop-environments/`.
 2.  Add the necessary NixOS configuration to enable the desktop environment and include relevant companion packages in `environment.systemPackages`.
 3.  Add the new file to Git (`git add dotfiles/common/modules/desktop-environments/my-de.nix`).
-4.  To enable it for a specific machine (e.g., `laptop`), add an `imports` statement to that machine's `flake.nix` for temporary testing, or permanently in `environment.nix`:
+4.  To enable it for a specific machine (e.g., `laptop`), add an `imports` statement to that machine's `flake.nix` for temporary testing, or permanently in its `environment.nix`. Always use the `${self}/...` path for modules defined within this flake.
     ```nix
     # Example for flake.nix (temporary testing):
     modules = desktopModules ++ [
@@ -88,10 +88,9 @@ To add a new desktop environment module:
 
     # Example for environment.nix (permanent integration):
     imports = [
-      ../../dotfiles/common/modules/desktop-environments/my-de.nix
+      ../../common/modules/desktop-environments/my-de.nix
     ];
     ```
 5.  Perform a `nixos-rebuild dry-run --flake .#<machine-name>` to verify the configuration, debugging any errors.
 6.  If necessary, temporarily comment out conflicting display manager settings (e.g., `services.displayManager.defaultSession`) in the machine's `environment.nix` during testing.
-7.  Once verified, remove the temporary integration from `flake.nix` (or uncomment `defaultSession` in `environment.nix`), and then commit the changes.
-8.  The desktop environment module file (`my-de.nix`) is typically kept after testing for future reference.
+7.  The desktop environment module file (`my-de.nix`) is typically kept after testing for future reference.
