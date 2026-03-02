@@ -8,6 +8,16 @@
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
       localNetworkGameTransfers.openFirewall = true;
+
+      # Global steam optional launch settings
+      package = pkgs.steam.override {
+        extraEnv = {
+          ENABLE_VKBASALT = "1";
+          GAMEMODERUN = "1";
+          PROTON_ENABLE_WAYLAND = "1";
+          PROTON_FSR4_UPGRADE = "1";
+        };
+      };
     };
 
     # Gamemode
