@@ -9,6 +9,7 @@
     # Flatpak packages
     packages = [
       "com.github.tchx84.Flatseal" # Flatseal
+      "it.mijorus.gearlever" # Gear Lever
     ];
   };
 
@@ -28,7 +29,6 @@
     appimage-run
     bottles
     flatpak
-    gearlever
     wine
     winetricks
     xwayland
