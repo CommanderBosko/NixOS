@@ -46,6 +46,17 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of March 4, 2026)
+
+### Emulation and Gaming Module Updates
+
+*   **`dotfiles/common/modules/emulation.nix`**:
+    *   Added `it.mijorus.gearlever` (Gear Lever) to the list of Flatpak packages.
+*   **`dotfiles/common/modules/gaming.nix`**:
+    *   Added `faugus-launcher` and `r2modman` to the list of gaming packages in `environment.systemPackages`.
+    *   Added `mangojuice` to the list of gaming packages.
+    *   Added `PROTON_FSR4_UPGRADE = "1";` to the `extraEnv` for Steam to enable FSR 4.
+
 ## Recent Modifications (as of February 16, 2026)
 
 This section summarizes recent changes made to the NixOS configuration.
