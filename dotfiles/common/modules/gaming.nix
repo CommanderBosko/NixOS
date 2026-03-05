@@ -14,6 +14,7 @@
         extraEnv = {
           ENABLE_VKBASALT = "1";
           GAMEMODERUN = "1";
+          PROTON_ENABLE_NVAPI = "1";
           PROTON_ENABLE_WAYLAND = "1";
           PROTON_FSR4_UPGRADE = "1";
         };
