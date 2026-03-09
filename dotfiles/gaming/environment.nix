@@ -36,7 +36,6 @@
     # Shell aliases
     zsh.shellAliases = {
       rift = "~/Rift/bin/rift";
-      albion = "~/Games/albion-online/data/Albion-Online";
     };
 
     # Dynamic library loader (nix-ld)
