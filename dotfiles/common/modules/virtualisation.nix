@@ -45,4 +45,12 @@
 
   # Enable dconf for virt-manager settings
   programs.dconf.enable = true;
+
+  # Fix hardcoded path in libvirt secret encryption service
+  systemd.services.virt-secret-init-encryption = {
+    serviceConfig.ExecStart = [
+      "" # Clear existing command
+      "${pkgs.bash}/bin/sh -c 'umask 0077 && (dd if=/dev/random status=none bs=32 count=1 | systemd-creds encrypt --name=secrets-encryption-key - /var/lib/libvirt/secrets/secrets-encryption-key)'"
+    ];
+  };
 }
