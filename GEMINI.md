@@ -46,6 +46,18 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of March 8, 2026)
+
+### Configuration Stabilization and Bug Fixes
+
+*   **`flake.nix` Refactoring**:
+    *   Removed redundant module imports (`nix.nix`, `users.nix`, `shell.nix`) from the `mkSystem` helper function. These are now correctly inherited via `commonModules`.
+    *   Added the missing `dotfiles/common/modules/home-manager.nix` to `desktopModules` to ensure user-level configurations and dotfiles are properly applied during system builds.
+*   **Server Host Stabilization**:
+    *   Created a placeholder `dotfiles/server/hardware-configuration.nix` to resolve flake evaluation errors when performing flake-wide checks.
+*   **Virtualisation Module Fix**:
+    *   **`dotfiles/common/modules/virtualisation.nix`**: Added a systemd service override for `virt-secret-init-encryption.service` to correct a hardcoded `/usr/bin/sh` path, which was causing rebuild failures on NixOS. The service now correctly uses `${pkgs.bash}/bin/sh`.
+
 ## Recent Modifications (as of March 4, 2026)
 
 ### Emulation and Gaming Module Updates

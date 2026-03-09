@@ -20,12 +20,10 @@
   let
     # Configure system settings
     system = "x86_64-linux";
-    systemState = { system.stateVersion = "25.11"; };
-    forAllSystems = nixpkgs.lib.genAttrs [ system ];
-
+    
     # Common modules applied to all systems
     commonModules = [
-      systemState
+      { system.stateVersion = "25.11"; }
       "${self}/dotfiles/common/modules/bootloader.nix"
       "${self}/dotfiles/common/modules/firmware.nix"
       "${self}/dotfiles/common/modules/fonts.nix"
@@ -43,6 +41,7 @@
       "${self}/dotfiles/common/modules/audio.nix"
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/gaming.nix"
+      "${self}/dotfiles/common/modules/home-manager.nix"
       "${self}/dotfiles/common/modules/nvidia.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
       "${self}/dotfiles/common/modules/virtualisation.nix"
@@ -62,13 +61,7 @@
       nixpkgs.lib.nixosSystem {
         inherit specialArgs;
         system = specialArgs.system;
-        modules = modules ++ [
-          # Common modules applied to all systems (copied from original lib/default.nix)
-          "${self}/dotfiles/common/modules/nix.nix"
-          "${self}/dotfiles/common/modules/users.nix"
-          "${self}/dotfiles/common/modules/shell.nix"
-          # You can add more common modules here
-        ];
+        modules = modules;
       };
     };
 
