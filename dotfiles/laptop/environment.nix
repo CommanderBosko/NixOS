@@ -52,5 +52,6 @@
   # Flatpaks
   services.flatpak.packages = [
     "org.kde.digikam" # Digikam
+    "app.zen_browser.zen" # Zen Browser
   ];
 }
