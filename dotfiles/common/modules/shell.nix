@@ -37,6 +37,7 @@ in
           nh clean all --keep 5
           echo ""
           echo "Removing unused Flatpaks"
+          echo ""
           flatpak remove --unused --noninteractive
         '';
       };
