@@ -32,12 +32,14 @@
 
   # Packages
   environment.systemPackages = with pkgs; [
-    virt-manager
-    virt-viewer
+    podman
+    podman-desktop
+    qemu
     spice
     spice-gtk
     spice-protocol
-    qemu
+    virt-manager
+    virt-viewer
   ];
 
   # Required for virt-manager auth
