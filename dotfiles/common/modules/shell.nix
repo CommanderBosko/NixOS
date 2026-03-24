@@ -52,6 +52,12 @@ in
 
     # Starship
     starship.enable = true;
+
+    # Direnv
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
   };
 
   environment = {
