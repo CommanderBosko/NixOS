@@ -44,6 +44,7 @@
     p7zip
     qalculate-qt
     rpi-imager
+    tor-browser
     vesktop
     vivaldi
     vlc
