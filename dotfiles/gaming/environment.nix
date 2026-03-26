@@ -111,6 +111,7 @@
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
+    tor-browser
     vesktop
     vivaldi
     vlc
