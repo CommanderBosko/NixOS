@@ -1,4 +1,4 @@
-{ config, pkgs, self, ... }:
+{ config, pkgs, lib, self, ... }:
 
 {
   home = {
@@ -27,6 +27,32 @@
     file.".config/starship.toml" = {
       source = "${self}/dotfiles/common/configs/starship.toml";
       force = true;
+    };
+  };
+
+  # Customize helix
+  programs.helix = {
+    enable = true;
+    settings = {
+      theme = "autumn_night_transparent";
+      editor.cursor-shape = {
+        normal = "block";
+        insert = "bar";
+        select = "underline";
+      };
+    };
+
+    languages.language = [{
+      name = "nix";
+      auto-format = true;
+      formatter.command = lib.getExe pkgs.nixfmt;
+    }];
+
+    themes = {
+      autumn_night_transparent = {
+        "inherits" = "autumn_night";
+        "ui.background" = { };
+      };
     };
   };
 }
