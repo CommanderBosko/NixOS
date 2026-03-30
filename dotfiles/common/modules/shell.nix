@@ -82,10 +82,13 @@ in
       lm_sensors
       micro
       nh
+      nil
       nix-health
       nix-index
       nix-init
       nix-tree
+      nixd
+      nixfmt
       php
       pipes
       pywal
