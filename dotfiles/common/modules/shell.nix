@@ -77,6 +77,7 @@ in
       docker
       fastfetch
       git
+      helix
       htop
       lm_sensors
       micro
