@@ -1,8 +1,8 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   services = {
-  	xserver = {
+    xserver = {
       # Enable X11 server (Cinnamon is X11-native)
       enable = true;
 

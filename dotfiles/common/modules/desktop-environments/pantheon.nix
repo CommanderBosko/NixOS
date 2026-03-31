@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # Enable X11 server (Pantheon is X11-native)
@@ -9,7 +9,7 @@
 
   # Pantheon installs default applications. If specific ones are needed, they can be added.
   environment.systemPackages = with pkgs; [
-  #   pantheon.elementary-files # Pantheon's file manager
-  #   pantheon.pantheon-terminal # Pantheon's terminal
+    pantheon.elementary-files # Pantheon's file manager
+    pantheon.pantheon-terminal # Pantheon's terminal
   ];
 }

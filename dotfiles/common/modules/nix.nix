@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ ... }:
 
 {
   # Enable unfree packages
@@ -6,8 +6,11 @@
 
   # Nix settings
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     auto-optimise-store = true;
-    download-buffer-size = 1024 * 1024 * 1024; #1 GB
+    download-buffer-size = 1024 * 1024 * 1024; # 1 GB
   };
 }

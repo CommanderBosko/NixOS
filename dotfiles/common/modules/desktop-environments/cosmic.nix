@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ lib, ... }:
 
 {
   services = {
@@ -19,7 +19,6 @@
 
   # Cosmic DE is Wayland-native, no need to enable xserver generally.
   # If XWayland is needed for specific applications, it's usually handled automatically or via other modules.
-
 
   # Optional: Enable System76 scheduler for performance (especially on System76 hardware)
   # services.system76-scheduler.enable = true;

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # Definie users
@@ -49,5 +49,9 @@
     ];
   };
 
-  nix.settings.trusted-users = [ "root" "bosko" "natty" ];
+  nix.settings.trusted-users = [
+    "root"
+    "bosko"
+    "natty"
+  ];
 }

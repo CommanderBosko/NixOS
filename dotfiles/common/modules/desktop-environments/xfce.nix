@@ -1,10 +1,10 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   services.xserver = {
     # Enable X11 server (XFCE is X11-native primarily)
     enable = true;
-  
+
     # Enable XFCE desktop environment
     desktopManager.xfce.enable = true;
   };
