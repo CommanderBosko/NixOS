@@ -24,7 +24,7 @@ in
         la = "ls -a";
         ll = "ls -l";
         lla = "ls -la";
-        edit = "sudo micro";
+        edit = "sudo hx";
         update = ''
           echo ""
           echo "Updating your system"
