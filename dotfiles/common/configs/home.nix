@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  self,
-  ...
-}:
+{ lib, pkgs, self, ... }:
 
 {
   home = {
