@@ -54,6 +54,7 @@
     languages.language = [
       {
         name = "nix";
+        scope = "source.nix";
         auto-format = true;
         formatter.command = lib.getExe pkgs.nixfmt;
         language-servers = [
@@ -63,35 +64,41 @@
       }
       {
         name = "bash";
+        scope = "source.bash";
         auto-format = true;
         formatter = { command = lib.getExe pkgs.shfmt; args = ["-i" "2"]; };
         language-servers = [ "bash-language-server" ];
       }
       {
         name = "zsh";
+        scope = "source.zsh";
         auto-format = true;
         formatter = { command = lib.getExe pkgs.shfmt; args = ["-i" "2"]; };
         language-servers = [ "bash-language-server" ];
       }
       {
         name = "javascript";
+        scope = "source.js";
         auto-format = true;
         formatter = { command = lib.getExe pkgs.nodePackages.prettier; args = ["--parser" "typescript"]; };
         language-servers = [ "typescript-language-server" ];
       }
       {
         name = "java";
+        scope = "source.java";
         auto-format = true;
         language-servers = [ "jdtls" ];
       }
       {
         name = "python";
+        scope = "source.python";
         auto-format = true;
         formatter = { command = lib.getExe pkgs.ruff; args = ["format" "-"]; };
         language-servers = [ "pyright" ];
       }
       {
         name = "lua";
+        scope = "source.lua";
         auto-format = true;
         formatter = { command = lib.getExe pkgs.stylua; args = ["-"]; };
         language-servers = [ "lua-language-server" ];
