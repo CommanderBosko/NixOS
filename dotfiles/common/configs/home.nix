@@ -1,4 +1,4 @@
-{ config, pkgs, lib, self, ... }:
+{ pkgs, lib, self, ... }:
 
 {
   home = {
@@ -7,6 +7,15 @@
 
     # Packages
     packages = with pkgs; [
+      bash-language-server
+      shfmt
+      nodePackages.typescript-language-server
+      nodePackages.prettier
+      jdt-language-server
+      pyright
+      ruff
+      lua-language-server
+      stylua
     ];
 
     # Copy over dotfiles
@@ -42,12 +51,52 @@
       };
     };
 
-    languages.language = [{
-      name = "nix";
-      auto-format = true;
-      formatter.command = lib.getExe pkgs.nixfmt;
-      language-servers = [ "nixd" "nil" ];
-    }];
+    languages.language = [
+      {
+        name = "nix";
+        auto-format = true;
+        formatter.command = lib.getExe pkgs.nixfmt;
+        language-servers = [
+          "nixd"
+          "nil"
+        ];
+      }
+      {
+        name = "bash";
+        auto-format = true;
+        formatter = { command = lib.getExe pkgs.shfmt; args = ["-i" "2"]; };
+        language-servers = [ "bash-language-server" ];
+      }
+      {
+        name = "zsh";
+        auto-format = true;
+        formatter = { command = lib.getExe pkgs.shfmt; args = ["-i" "2"]; };
+        language-servers = [ "bash-language-server" ];
+      }
+      {
+        name = "javascript";
+        auto-format = true;
+        formatter = { command = lib.getExe pkgs.nodePackages.prettier; args = ["--parser" "typescript"]; };
+        language-servers = [ "typescript-language-server" ];
+      }
+      {
+        name = "java";
+        auto-format = true;
+        language-servers = [ "jdtls" ];
+      }
+      {
+        name = "python";
+        auto-format = true;
+        formatter = { command = lib.getExe pkgs.ruff; args = ["format" "-"]; };
+        language-servers = [ "pyright" ];
+      }
+      {
+        name = "lua";
+        auto-format = true;
+        formatter = { command = lib.getExe pkgs.stylua; args = ["-"]; };
+        language-servers = [ "lua-language-server" ];
+      }
+    ];
 
     themes = {
       autumn_night_transparent = {
