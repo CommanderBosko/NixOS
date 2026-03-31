@@ -1,9 +1,9 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   services = {
-  	# Enable Plasma 6 desktop environment
-  	desktopManager.plasma6.enable = true;
+    # Enable Plasma 6 desktop environment
+    desktopManager.plasma6.enable = true;
 
     # Enable x11
     xserver.enable = true;
@@ -21,7 +21,7 @@
 
   # Additional Plasma specific configurations can go here
   # For example, enabling KScreen for display management:
-#   services.dbus.packages = [
-#     kdePackages.kscreen
-#   ];
+  #   services.dbus.packages = [
+  #     kdePackages.kscreen
+  #   ];
 }

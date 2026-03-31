@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ ... }:
 
 {
   # Configure networking
@@ -17,7 +17,10 @@
     };
 
     # Enable custom DNS servers
-    nameservers = [ "10.0.0.20" "1.1.1.1" ];
+    nameservers = [
+      "10.0.0.20"
+      "1.1.1.1"
+    ];
 
     # Enable and open ports in the firewall
     firewall = {

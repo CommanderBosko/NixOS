@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # Enable libvirt with QEMU/KVM
@@ -28,7 +28,6 @@
     enable = true;
     nssmdns4 = true;
   };
-
 
   # Packages
   environment.systemPackages = with pkgs; [

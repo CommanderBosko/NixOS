@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # Enable Niri compositor
@@ -7,7 +7,7 @@
     # Niri handles xwayland internally, so explicit xwayland.enable might not be needed here
     # or it might depend on global xserver settings.
   };
-  
+
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
     waybar # Customizable Wayland bar

@@ -1,10 +1,10 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   services.xserver = {
     # Enable X11 server (MATE is X11-native)
     enable = true;
-    
+
     # Enable MATE desktop environment
     desktopManager.mate.enable = true;
   };

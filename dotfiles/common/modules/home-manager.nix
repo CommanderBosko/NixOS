@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, self, ... }:
+{ inputs, self, ... }:
 
 {
   home-manager.users.bosko = import "${self}/dotfiles/common/configs/home.nix";
