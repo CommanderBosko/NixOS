@@ -63,8 +63,8 @@ in
   environment = {
     # Set default editor to micro
     variables = {
-      EDITOR = "micro";
-      VISUAL = "micro";
+      EDITOR = "hx";
+      VISUAL = "hx";
     };
 
     # Shell packages
