@@ -37,7 +37,7 @@ in
         '';
         dry-run = ''
           echo ""
-          echo "Attempting a dry-run on your system"
+          echo "Attempting a dry-run on your system."
           echo ""
           sudo nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
         '';
