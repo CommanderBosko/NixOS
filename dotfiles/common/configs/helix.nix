@@ -16,6 +16,7 @@
     ];
   };
 
+  # Settings
   programs.helix = {
     enable = true;
     settings = {
@@ -27,6 +28,15 @@
       };
     };
 
+    # Themes
+    themes = {
+      autumn_night_transparent = {
+        "inherits" = "autumn_night";
+        "ui.background" = { };
+      };
+    };
+
+    # Languages and language servers
     languages.language = [
       {
         name = "bash";
@@ -121,12 +131,5 @@
         language-servers = [ "bash-language-server" ];
       }
     ];
-
-    themes = {
-      autumn_night_transparent = {
-        "inherits" = "autumn_night";
-        "ui.background" = { };
-      };
-    };
   };
 }
