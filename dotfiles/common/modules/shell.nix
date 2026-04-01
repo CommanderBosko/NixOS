@@ -25,20 +25,33 @@ in
         ll = "ls -l";
         lla = "ls -la";
         edit = "sudo hx";
-        update = ''
+        cleanup = ''
           echo ""
-          echo "Updating your system"
+          echo "Cleaning up your system."
           echo ""
-          sudo nix flake update --flake ~/NixOS/.
+          nh clean all --keep 5
+          echo ""
+          echo "Removing unused Flatpaks."
+          echo ""
+          flatpak remove --unused --noninteractive
+        '';
+        dry-run = ''
+          echo ""
+          echo "Attempting a dry-run on your system"
+          echo ""
+          sudo nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
+        '';
+        rebuild = ''
+          echo ""
+          echo "Rebuilding your system."
           echo ""
           sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName}
         '';
-        cleanup = ''
-          nh clean all --keep 5
+        update = ''
           echo ""
-          echo "Removing unused Flatpaks"
+          echo "Updating your flake."
           echo ""
-          flatpak remove --unused --noninteractive
+          sudo nix flake update --flake ~/NixOS/.
         '';
       };
 
