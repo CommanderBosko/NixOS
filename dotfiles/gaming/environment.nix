@@ -97,6 +97,7 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
+    claude-code
     deezer-enhanced
     discord
     firefox
