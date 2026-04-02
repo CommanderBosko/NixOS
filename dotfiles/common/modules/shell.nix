@@ -39,7 +39,7 @@ in
           echo ""
           echo "Attempting a dry-run on your system"
           echo ""
-          sudo nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
+          nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
         '';
         rebuild = ''
           echo ""

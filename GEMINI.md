@@ -46,6 +46,34 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 2, 2026)
+
+### Shell, Editor, and UX Refinement
+
+*   **Helix Editor Integration**:
+    *   Switched the default system editor from `micro` to `helix`.
+    *   Modularized Helix configuration into `dotfiles/common/configs/helix.nix`.
+    *   Configured Helix with custom themes, LSP support (`nil`, `nixd`), and improved file type handling.
+    *   Updated `EDITOR` and `VISUAL` environment variables to `hx`.
+*   **Shell and Aliases**:
+    *   **`dotfiles/common/modules/shell.nix`**: Added `direnv` and `nix-direnv` for automatic environment loading.
+    *   Standardized shell aliases (`cleanup`, `dry-run`, `rebuild`, `update`) to include consistent punctuation and clear messaging.
+    *   Added various CLI utilities including `nix-health`, `nix-init`, `nix-tree`, and `yazi`.
+*   **Home Manager Cleanup**:
+    *   Alphabetized package lists in `dotfiles/common/configs/home.nix` for better maintainability.
+    *   Added `claude-code` to the user's package set.
+
+### Application and Virtualization Updates
+
+*   **Browsers and Communication**:
+    *   Added `tor-browser` to the system packages in `laptop/environment.nix`.
+    *   Integrated `zen-browser` as a Flatpak application for the laptop.
+*   **Virtualization and Containers**:
+    *   **`dotfiles/common/modules/virtualisation.nix`**: Enabled `podman` and `podman-desktop` alongside the existing libvirt configuration.
+*   **Flatpak Integration**:
+    *   Added `albion-online` and `zen-browser` to the managed Flatpak packages.
+    *   Removed legacy shell aliases that were previously used to launch these applications before their transition to Flatpak.
+
 ## Recent Modifications (as of March 8, 2026)
 
 ### Configuration Stabilization and Bug Fixes

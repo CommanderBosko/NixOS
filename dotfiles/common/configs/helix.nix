@@ -5,14 +5,25 @@
     # Packages
     packages = with pkgs; [
       bash-language-server
+      clang-tools
+      dockerfile-language-server
+      gofumpt
+      gopls
       jdt-language-server
       lua-language-server
+      marksman
       nodePackages.prettier
       nodePackages.typescript-language-server
       pyright
+      rust-analyzer
+      rustfmt
       ruff
       shfmt
       stylua
+      taplo
+      terraform-ls
+      vscode-langservers-extracted
+      yaml-language-server
     ];
   };
 
@@ -56,6 +67,96 @@
         language-servers = [ "bash-language-server" ];
       }
       {
+        name = "c";
+        scope = "source.c";
+        file-types = [ "c" ];
+        auto-format = true;
+        formatter = {
+          command = "${pkgs.clang-tools}/bin/clang-format";
+        };
+        language-servers = [ "clangd" ];
+      }
+      {
+        name = "cpp";
+        scope = "source.cpp";
+        file-types = [
+          "cpp"
+          "cc"
+          "cxx"
+          "h"
+          "hh"
+          "hpp"
+          "hxx"
+        ];
+        auto-format = true;
+        formatter = {
+          command = "${pkgs.clang-tools}/bin/clang-format";
+        };
+        language-servers = [ "clangd" ];
+      }
+      {
+        name = "css";
+        scope = "source.css";
+        file-types = [ "css" ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.nodePackages.prettier;
+          args = [
+            "--parser"
+            "css"
+          ];
+        };
+        language-servers = [ "vscode-css-language-server" ];
+      }
+      {
+        name = "dockerfile";
+        scope = "source.dockerfile";
+        file-types = [ "dockerfile" ];
+        auto-format = true;
+        language-servers = [ "docker-langserver" ];
+      }
+      {
+        name = "go";
+        scope = "source.go";
+        file-types = [ "go" ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.gofumpt;
+        };
+        language-servers = [ "gopls" ];
+      }
+      {
+        name = "hcl";
+        scope = "source.hcl";
+        file-types = [
+          "tf"
+          "hcl"
+        ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.terraform-ls;
+          args = [
+            "fmt"
+            "-"
+          ];
+        };
+        language-servers = [ "terraform-ls" ];
+      }
+      {
+        name = "html";
+        scope = "text.html.basic";
+        file-types = [ "html" ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.nodePackages.prettier;
+          args = [
+            "--parser"
+            "html"
+          ];
+        };
+        language-servers = [ "vscode-html-language-server" ];
+      }
+      {
         name = "java";
         scope = "source.java";
         file-types = [ "java" ];
@@ -81,6 +182,23 @@
         language-servers = [ "typescript-language-server" ];
       }
       {
+        name = "json";
+        scope = "source.json";
+        file-types = [
+          "json"
+          "jsonc"
+        ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.nodePackages.prettier;
+          args = [
+            "--parser"
+            "json"
+          ];
+        };
+        language-servers = [ "vscode-json-language-server" ];
+      }
+      {
         name = "lua";
         scope = "source.lua";
         file-types = [ "lua" ];
@@ -90,6 +208,23 @@
           args = [ "-" ];
         };
         language-servers = [ "lua-language-server" ];
+      }
+      {
+        name = "markdown";
+        scope = "source.md";
+        file-types = [
+          "md"
+          "markdown"
+        ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.nodePackages.prettier;
+          args = [
+            "--parser"
+            "markdown"
+          ];
+        };
+        language-servers = [ "marksman" ];
       }
       {
         name = "nix";
@@ -115,6 +250,47 @@
           ];
         };
         language-servers = [ "pyright" ];
+      }
+      {
+        name = "rust";
+        scope = "source.rust";
+        file-types = [ "rs" ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.rustfmt;
+        };
+        language-servers = [ "rust-analyzer" ];
+      }
+      {
+        name = "toml";
+        scope = "source.toml";
+        file-types = [ "toml" ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.taplo;
+          args = [
+            "fmt"
+            "-"
+          ];
+        };
+        language-servers = [ "taplo" ];
+      }
+      {
+        name = "yaml";
+        scope = "source.yaml";
+        file-types = [
+          "yaml"
+          "yml"
+        ];
+        auto-format = true;
+        formatter = {
+          command = lib.getExe pkgs.nodePackages.prettier;
+          args = [
+            "--parser"
+            "yaml"
+          ];
+        };
+        language-servers = [ "yaml-language-server" ];
       }
       {
         name = "zsh";
