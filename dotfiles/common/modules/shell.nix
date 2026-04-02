@@ -27,29 +27,29 @@ in
         edit = "sudo hx";
         cleanup = ''
           echo ""
-          echo "Cleaning up your system."
+          echo "Cleaning up your system"
           echo ""
           nh clean all --keep 5
           echo ""
-          echo "Removing unused Flatpaks."
+          echo "Removing unused Flatpaks"
           echo ""
           flatpak remove --unused --noninteractive
         '';
         dry-run = ''
           echo ""
-          echo "Attempting a dry-run on your system."
+          echo "Attempting a dry-run on your system"
           echo ""
           sudo nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
         '';
         rebuild = ''
           echo ""
-          echo "Rebuilding your system."
+          echo "Rebuilding your system"
           echo ""
           sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName}
         '';
         update = ''
           echo ""
-          echo "Updating your flake."
+          echo "Updating your flake"
           echo ""
           sudo nix flake update --flake ~/NixOS/.
         '';
