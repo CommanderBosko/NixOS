@@ -12,8 +12,8 @@
       jdt-language-server
       lua-language-server
       marksman
-      nodePackages.prettier
-      nodePackages.typescript-language-server
+      prettier
+      typescript-language-server
       pyright
       rust-analyzer
       rustfmt
@@ -100,7 +100,7 @@
         file-types = [ "css" ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "css"
@@ -148,7 +148,7 @@
         file-types = [ "html" ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "html"
@@ -173,7 +173,7 @@
         ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "typescript"
@@ -190,7 +190,7 @@
         ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "json"
@@ -218,7 +218,7 @@
         ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "markdown"
@@ -284,7 +284,7 @@
         ];
         auto-format = true;
         formatter = {
-          command = lib.getExe pkgs.nodePackages.prettier;
+          command = lib.getExe pkgs.prettier;
           args = [
             "--parser"
             "yaml"
