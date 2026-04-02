@@ -48,6 +48,11 @@ Key architectural points:
 
 ## Recent Modifications (as of April 2, 2026)
 
+### Configuration Stabilization and Fixes
+
+*   **Helix Configuration Fix**:
+    *   **`dotfiles/common/configs/helix.nix`**: Migrated deprecated `nodePackages` to top-level package names (`prettier`, `typescript-language-server`) to resolve system rebuild and evaluation errors.
+
 ### Shell, Editor, and UX Refinement
 
 *   **Helix Editor Integration**:
