@@ -8,6 +8,9 @@
 
     # Enable printing
     printing.enable = true;
+
+    # Enable Qbittorrent
+    qbittorrent.enable = true;
   };
 
   # Hardware
