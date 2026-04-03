@@ -21,6 +21,7 @@ in
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
+        ls = "eza";
         la = "eza -a";
         ll = "eza -l";
         lla = "eza -la";
