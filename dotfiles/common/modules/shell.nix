@@ -51,7 +51,7 @@ in
           echo ""
           echo "Updating your flake"
           echo ""
-          sudo nix flake update --flake ~/NixOS/.
+          nix flake update --flake ~/NixOS/.
         '';
       };
 
