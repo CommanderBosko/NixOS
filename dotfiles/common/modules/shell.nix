@@ -88,6 +88,7 @@ in
       curl
       distrobox
       docker
+      eza
       fastfetch
       git
       helix
