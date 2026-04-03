@@ -21,9 +21,9 @@ in
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
-        la = "ls -a";
-        ll = "ls -l";
-        lla = "ls -la";
+        la = "eza -a";
+        ll = "eza -l";
+        lla = "eza -la";
         edit = "sudo hx";
         cleanup = ''
           echo ""
