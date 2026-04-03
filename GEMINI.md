@@ -54,7 +54,7 @@ Key architectural points:
     *   **`dotfiles/gaming/environment.nix`**, **`dotfiles/laptop/environment.nix`**: Enabled qBittorrent as a service and added it to the system package set for both gaming and laptop configurations.
 *   **Shell and CLI Improvements**:
     *   **`dotfiles/common/modules/shell.nix`**:
-        *   Added `eza` for better file listing.
+        *   Added `eza` for better file listing and configured shell aliases (`la`, `ll`, `lla`) to use it.
         *   Removed `sudo` from the `update` shell alias for consistent behavior.
         *   Refined the `cleanup` alias output formatting for a cleaner user experience.
 *   **Home Manager and Dependency Fixes**:
@@ -62,6 +62,8 @@ Key architectural points:
 
 ### Configuration Stabilization and Fixes
 
+*   **`flake.nix` Formatting**:
+    *   Reformatted `flake.nix` for improved readability and consistent structural layout.
 *   **Helix Configuration Fix**:
     *   **`dotfiles/common/configs/helix.nix`**: Migrated deprecated `nodePackages` to top-level package names (`prettier`, `typescript-language-server`) to resolve system rebuild and evaluation errors.
 
