@@ -48,6 +48,18 @@ Key architectural points:
 
 ## Recent Modifications (as of April 2, 2026)
 
+### Application and System Configuration Updates
+
+*   **qBittorrent Integration**:
+    *   **`dotfiles/gaming/environment.nix`**, **`dotfiles/laptop/environment.nix`**: Enabled qBittorrent as a service and added it to the system package set for both gaming and laptop configurations.
+*   **Shell and CLI Improvements**:
+    *   **`dotfiles/common/modules/shell.nix`**:
+        *   Added `eza` for better file listing.
+        *   Removed `sudo` from the `update` shell alias for consistent behavior.
+        *   Refined the `cleanup` alias output formatting for a cleaner user experience.
+*   **Home Manager and Dependency Fixes**:
+    *   **`dotfiles/common/configs/home.nix`**: Commented out `claude-code` from the user's package set due to a dependency failure.
+
 ### Configuration Stabilization and Fixes
 
 *   **Helix Configuration Fix**:
@@ -66,7 +78,6 @@ Key architectural points:
     *   Added various CLI utilities including `nix-health`, `nix-init`, `nix-tree`, and `yazi`.
 *   **Home Manager Cleanup**:
     *   Alphabetized package lists in `dotfiles/common/configs/home.nix` for better maintainability.
-    *   Added `claude-code` to the user's package set.
 
 ### Application and Virtualization Updates
 

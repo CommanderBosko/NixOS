@@ -47,6 +47,7 @@
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
+    qbittorrent
     rpi-imager
     tor-browser
     vesktop
