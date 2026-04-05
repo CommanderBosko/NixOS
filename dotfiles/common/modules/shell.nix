@@ -71,6 +71,12 @@ in
       enable = true;
       nix-direnv.enable = true;
     };
+
+    # Zoxide
+    zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+    };
   };
 
   environment = {
@@ -90,6 +96,7 @@ in
       docker
       eza
       fastfetch
+      fzf
       git
       helix
       htop
@@ -113,6 +120,7 @@ in
       wget
       yazi
       zip
+      zoxide
       zsh
     ];
   };
