@@ -39,6 +39,7 @@
     firefox
     freetube
     gemini-cli
+    github-desktop
     gparted
     kdePackages.kate
     kitty
