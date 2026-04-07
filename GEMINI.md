@@ -46,6 +46,28 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 7, 2026)
+
+### Virtualisation and Kubernetes Integration
+
+*   **Kubernetes Support**:
+    *   **`dotfiles/common/modules/virtualisation.nix`**: 
+        *   Implemented a local Kubernetes cluster configuration with both `master` and `node` roles enabled.
+        *   Configured `api.kube` host resolution and automated certificate management via `easyCerts`.
+        *   Enabled CoreDNS as a Kubernetes addon.
+        *   Added `kubernetes` and `kompose` to the system package set.
+*   **Virtualisation Refinement**:
+    *   Restructured the module for better readability and modularity.
+    *   Ensured consistent `podman` and `libvirtd` configurations.
+    *   Added users to the `podman` group in `dotfiles/common/modules/users.nix` for rootless container management.
+
+### Application Updates
+
+*   **Messaging**:
+    *   Added `element-desktop` to the common desktop applications (documented via recent commits).
+*   **System Status**:
+    *   Successfully rebuilt and activated the `gaming` host configuration.
+
 ## Recent Modifications (as of April 6, 2026)
 
 ### Application and Tooling Updates
