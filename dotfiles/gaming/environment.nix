@@ -103,6 +103,7 @@
     # claude-code
     deezer-enhanced
     discord
+    element-desktop
     firefox
     freetube
     gemini-cli
