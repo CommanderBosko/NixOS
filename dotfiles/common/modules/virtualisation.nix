@@ -31,6 +31,7 @@
 
   # Packages
   environment.systemPackages = with pkgs; [
+    kubectl
     podman
     podman-desktop
     qemu
