@@ -29,6 +29,16 @@
     nssmdns4 = true;
   };
 
+  # Enable Podman
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;
+    defaultNetwork.settings.dns_enabled = true;
+  };
+
+  # Podman registries
+  virtualisation.containers.registries.search = [ "docker.io" "quay.io" ];
+
   # Packages
   environment.systemPackages = with pkgs; [
     kubectl

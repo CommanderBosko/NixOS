@@ -46,6 +46,25 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 6, 2026)
+
+### Application and Tooling Updates
+
+*   **Virtualisation and Containers**:
+    *   **`dotfiles/common/modules/virtualisation.nix`**: 
+        *   Added `kubectl` to the system package set for container orchestration.
+        *   Enabled `podman` with `dockerCompat` to provide a Docker-compatible container engine.
+        *   Configured container registry search paths to include `docker.io` and `quay.io`.
+*   **System Packages**:
+    *   **`dotfiles/gaming/environment.nix`**, **`dotfiles/laptop/environment.nix`**: Added `github-desktop` to provide a GUI for Git operations.
+*   **Shell and CLI Improvements**:
+    *   **`dotfiles/common/modules/shell.nix`**:
+        *   Added `fzf` (fuzzy finder) and `zoxide` (smarter cd command) to the system package set.
+        *   Enabled `zoxide` with Zsh integration for faster directory navigation.
+        *   Further standardized shell aliases by adding `ls = "eza"`.
+*   **Flake Maintenance**:
+    *   Updated `flake.lock` to reflect latest upstream changes.
+
 ## Recent Modifications (as of April 2, 2026)
 
 ### Application and System Configuration Updates
