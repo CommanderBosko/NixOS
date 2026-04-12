@@ -46,6 +46,28 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 12, 2026)
+
+### Architectural Refinement and Host Configuration
+
+*   **Module Decoupling**: Moved `dotfiles/common/modules/gaming.nix` from the shared `desktopModules` list to the `gaming` host's specific module list in `flake.nix`. This ensures gaming-related packages (Steam, MangoHud, etc.) are only installed on the gaming machine, keeping the `laptop` configuration leaner.
+*   **Laptop Environment Transition**: Switched the `laptop` host from the Cosmic desktop environment to the Niri compositor by updating the module imports in `flake.nix`.
+*   **Code Quality**: Performed a full reformatting of `flake.nix` for better readability and structural consistency.
+
+## Recent Modifications (as of April 11, 2026)
+
+### Dank Material Shell (DMS) Integration
+
+*   **Flake Inputs**:
+    *   **`flake.nix`**: Added the Dank Material Shell (`dms`) flake input from `github:AvengeMedia/DankMaterialShell`.
+*   **Home Manager Refactoring**:
+    *   **`dotfiles/common/modules/home-manager.nix`**: Refactored `home-manager.users` to use `imports` blocks. This enables other NixOS modules to inject additional Home Manager configurations (like DMS) without modifying the main `home.nix`.
+*   **Niri and DMS Configuration**:
+    *   **`dotfiles/common/modules/desktop-environments/niri.nix`**:
+        *   Imported the DMS Home Manager module (`inputs.dms.homeModules.dank-material-shell`).
+        *   Enabled DMS for users `bosko` and `natty` via `programs.dank-material-shell.enable = true`.
+        *   Cleaned up `environment.systemPackages` by commenting out utilities now provided by DMS (Waybar, Rofi, Swaylock, Mako) and added `fuzzel`.
+
 ## Recent Modifications (as of April 7, 2026)
 
 ### Virtualisation and Kubernetes Integration
