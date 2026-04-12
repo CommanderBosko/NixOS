@@ -8,6 +8,9 @@
     # or it might depend on global xserver settings.
   };
 
+  # Enable x11
+  services.xserver.enable = true;
+
   # Enable Dank Material Shell via Home Manager
   home-manager.users.bosko = {
     imports = [ inputs.dms.homeModules.dank-material-shell ];
