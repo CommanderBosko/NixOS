@@ -50,6 +50,7 @@
     p7zip
     qalculate-qt
     qbittorrent
+    qutebrowser
     rpi-imager
     tor-browser
     vesktop

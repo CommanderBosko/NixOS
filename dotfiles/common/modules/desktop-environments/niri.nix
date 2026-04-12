@@ -1,11 +1,12 @@
 { pkgs, inputs, ... }:
 
 {
-  # Enable Niri compositor
-  programs.niri = {
-    enable = true;
-    # Niri handles xwayland internally, so explicit xwayland.enable might not be needed here
-    # or it might depend on global xserver settings.
+  programs = {
+    # Enable Niri
+    niri.enable = true;
+
+    # Enable xwayland
+    xwayland.enable = true;
   };
 
   # Enable x11
@@ -38,5 +39,6 @@
     swayidle # Idle management daemon
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
+    xwayland
   ];
 }
