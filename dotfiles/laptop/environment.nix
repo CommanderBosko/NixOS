@@ -34,7 +34,6 @@
     brave
     chromium
     # claude-code
-    deezer-enhanced
     discord
     element-desktop
     firefox
@@ -62,5 +61,6 @@
   services.flatpak.packages = [
     "org.kde.digikam" # Digikam
     "app.zen_browser.zen" # Zen Browser
+    "dev.aunetx.deezer" # Deezer
   ];
 }

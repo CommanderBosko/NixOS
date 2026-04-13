@@ -11,5 +11,10 @@
   };
 
   # Enable XDG portals
-  xdg.portal.enable = true;
+  xdg.portal = {
+    enable = true;
+  };
+
+  # Enable dconf for GTK settings
+  programs.dconf.enable = true;
 }
