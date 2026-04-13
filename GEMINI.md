@@ -54,6 +54,16 @@ Key architectural points:
 *   **Laptop Environment Transition**: Switched the `laptop` host from the Cosmic desktop environment to the Niri compositor by updating the module imports in `flake.nix`.
 *   **Code Quality**: Performed a full reformatting of `flake.nix` for better readability and structural consistency.
 
+### Niri, SDDM, and Application Enhancements
+
+*   **Niri Configuration Enhancement**: Enabled `xwayland` and `xserver` (X11) within `dotfiles/common/modules/desktop-environments/niri.nix` to improve application compatibility for Niri.
+*   **SDDM and GTK Support**:
+    *   **`dotfiles/common/modules/sddm.nix`**: Enabled `dconf` to support GTK settings and standardized the `xdg.portal` configuration.
+*   **Application Management (Laptop)**:
+    *   **`dotfiles/laptop/environment.nix`**: Migrated Deezer from a system package (`deezer-enhanced`) to a managed Flatpak application (`dev.aunetx.deezer`) on the laptop.
+*   **Flake Maintenance**:
+    *   Updated `flake.lock` to reflect latest upstream changes.
+
 ## Recent Modifications (as of April 11, 2026)
 
 ### Dank Material Shell (DMS) Integration
