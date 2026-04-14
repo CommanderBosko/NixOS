@@ -50,6 +50,7 @@
         "${self}/dotfiles/common/modules/amd.nix"
         "${self}/dotfiles/common/modules/audio.nix"
         "${self}/dotfiles/common/modules/emulation.nix"
+        "${self}/dotfiles/common/modules/gaming.nix"
         "${self}/dotfiles/common/modules/home-manager.nix"
         "${self}/dotfiles/common/modules/nvidia.nix"
         "${self}/dotfiles/common/modules/sddm.nix"
@@ -85,7 +86,6 @@
           modules = desktopModules ++ [
             # Machine-specific modules
             "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
-            "${self}/dotfiles/common/modules/gaming.nix"
             "${self}/dotfiles/gaming/hardware-configuration.nix"
             "${self}/dotfiles/gaming/environment.nix"
             "${self}/dotfiles/gaming/networking.nix"
