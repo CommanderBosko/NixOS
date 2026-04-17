@@ -33,7 +33,7 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
-    # claude-code
+    claude-code
     discord
     element-desktop
     firefox

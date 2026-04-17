@@ -100,7 +100,7 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
-    # claude-code
+    claude-code
     deezer-enhanced
     discord
     element-desktop
