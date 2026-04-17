@@ -26,6 +26,7 @@ in
         ll = "eza -l";
         lla = "eza -la";
         edit = "sudo hx";
+        shell = "shell -p ";
         cleanup = ''
           echo ""
           echo "Cleaning up your system"
