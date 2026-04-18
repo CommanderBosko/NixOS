@@ -5,6 +5,11 @@
     # Boot with the zen kernel
     kernelPackages = pkgs.linuxPackages_zen;
 
+    # Extra kernel paramaters
+    kernelParams = [
+      "splash"
+    ];
+
     # Enable and configure grub
     loader = {
       grub = {
