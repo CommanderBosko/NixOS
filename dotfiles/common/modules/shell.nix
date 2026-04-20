@@ -92,6 +92,7 @@ in
       btop
       cava
       cmatrix
+      comma
       curl
       eza
       fastfetch
