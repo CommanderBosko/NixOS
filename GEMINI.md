@@ -46,6 +46,38 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 19, 2026)
+
+### Removal of Containerization Stack (Kubernetes, Podman, Docker)
+
+*   **Virtualisation Module Refactoring**:
+    *   **`dotfiles/common/modules/virtualisation.nix`**: Completely removed Kubernetes (master/node roles, CoreDNS, certificates) and Podman (registries, docker compatibility) configurations. The module is now focused exclusively on KVM/libvirt.
+*   **User and Group Management**:
+    *   **`dotfiles/common/modules/users.nix`**: Removed the `podman` group from the `extraGroups` list for users `bosko` and `natty`.
+*   **System Packages and Shell Cleanup**:
+    *   **`dotfiles/common/modules/shell.nix`**: Removed `docker` and `distrobox` from the global system packages.
+*   **Application and Configuration Cleanup**:
+    *   **`dotfiles/common/configs/starship.toml`**: Removed the `docker_context` from the prompt configuration.
+    *   **`dotfiles/common/configs/helix.nix`**: Removed `dockerfile-language-server` and the associated language configuration for Dockerfiles.
+
+## Recent Modifications (as of April 18, 2026)
+
+### Shell and Kernel Enhancements
+
+*   **Shell Aliases**:
+    *   **`dotfiles/common/modules/shell.nix`**: Enhanced `rebuild` and `dry-run` aliases to dynamically use the current host name (`${hostName}`), improving portability across different machines.
+*   **Kernel Testing**:
+    *   Performed testing of kernel parameters on the `gaming` host.
+
+## Recent Modifications (as of April 17, 2026)
+
+### Application and CLI Tooling
+
+*   **Claude Code Integration**:
+    *   **`dotfiles/gaming/environment.nix`**, **`dotfiles/laptop/environment.nix`**: Added `claude-code` to the system packages.
+*   **Rift Launcher**:
+    *   **`dotfiles/gaming/environment.nix`**: Added a shell alias for the `rift` launcher.
+
 ## Recent Modifications (as of April 12, 2026)
 
 ### Architectural Refinement and Host Configuration

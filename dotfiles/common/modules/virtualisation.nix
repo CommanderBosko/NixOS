@@ -1,16 +1,8 @@
 { pkgs, ... }:
 
-let
-  kubeMasterIP = "127.0.0.1";
-  kubeMasterHostname = "api.kube";
-  kubeMasterAPIServerPort = 6443;
-in
 {
   # Set up virtualisation
   virtualisation = {
-    # Enable containers
-    containers.enable = true;
-
     # Enable and configure libvirt with QEMU/KVM
     libvirtd = {
       enable = true;
@@ -19,23 +11,7 @@ in
         runAsRoot = false;
       };
     };
-
-    # Enable and configure podmanpodman
-    podman = {
-      enable = true;
-      dockerCompat = true;
-      defaultNetwork.settings.dns_enabled = true;
-    };
-
-    # Podman registries
-    containers.registries.search = [
-      "docker.io"
-      "quay.io"
-    ];
   };
-
-  # Resolve master hostname
-  networking.extraHosts = "${kubeMasterIP} ${kubeMasterHostname}";
 
   # Set up networking for libvirt
   environment.etc."libvirt/qemu/networks/default.xml".text = ''
@@ -57,33 +33,10 @@ in
       enable = true;
       nssmdns4 = true;
     };
-
-    # Kubernetes
-    kubernetes = {
-      roles = [
-        "master"
-        "node"
-      ];
-      masterAddress = kubeMasterHostname;
-      apiserverAddress = "https://${kubeMasterHostname}:${toString kubeMasterAPIServerPort}";
-      easyCerts = true;
-      apiserver = {
-        securePort = kubeMasterAPIServerPort;
-        advertiseAddress = kubeMasterIP;
-      };
-
-      # Enable coredns
-      addons.dns.enable = true;
-    };
   };
 
   # Packages
   environment.systemPackages = with pkgs; [
-    kompose
-    kubectl
-    kubernetes
-    podman
-    podman-desktop
     qemu
     spice
     spice-gtk

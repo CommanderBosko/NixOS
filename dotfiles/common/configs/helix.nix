@@ -6,7 +6,6 @@
     packages = with pkgs; [
       bash-language-server
       clang-tools
-      dockerfile-language-server
       gofumpt
       gopls
       jdt-language-server
@@ -107,13 +106,6 @@
           ];
         };
         language-servers = [ "vscode-css-language-server" ];
-      }
-      {
-        name = "dockerfile";
-        scope = "source.dockerfile";
-        file-types = [ "dockerfile" ];
-        auto-format = true;
-        language-servers = [ "docker-langserver" ];
       }
       {
         name = "go";

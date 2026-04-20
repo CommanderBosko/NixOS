@@ -93,8 +93,6 @@ in
       cava
       cmatrix
       curl
-      distrobox
-      docker
       eza
       fastfetch
       fzf
