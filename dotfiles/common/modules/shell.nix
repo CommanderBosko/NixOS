@@ -30,6 +30,7 @@ in
         cleanup = ''
           echo ""
           echo "Cleaning up your system"
+          echo ""
           nh clean all --keep 5
           echo ""
           echo "Removing unused Flatpaks"
