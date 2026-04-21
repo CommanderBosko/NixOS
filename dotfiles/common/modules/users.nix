@@ -13,10 +13,12 @@
     createHome = true;
     extraGroups = [
       "audio"
+      "input"
       "kvm"
       "libvirtd"
       "lp"
       "networkmanager"
+      "render"
       "video"
       "wheel"
     ];
@@ -36,10 +38,12 @@
     createHome = true;
     extraGroups = [
       "audio"
+      "input"
       "kvm"
       "libvirtd"
       "lp"
       "networkmanager"
+      "render"
       "video"
       "wheel"
     ];
