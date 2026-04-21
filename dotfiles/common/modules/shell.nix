@@ -46,7 +46,7 @@ in
           echo ""
           echo "Rebuilding your system"
           echo ""
-          sudo nixos-rebuild switch --flake ~/NixOS/.#${hostName}
+          sudo nh os switch ~/NixOS/. -H ${hostName}
         '';
         update = ''
           echo ""
