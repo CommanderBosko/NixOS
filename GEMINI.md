@@ -57,7 +57,7 @@ Key architectural points:
 *   **System Packages and Shell Cleanup**:
     *   **`dotfiles/common/modules/shell.nix`**: Removed `docker` and `distrobox` from the global system packages.
 *   **Application and Configuration Cleanup**:
-    *   **`dotfiles/common/configs/starship.toml`**: Removed the `docker_context` from the prompt configuration.
+    *   **`dotfiles/common/configs/starship.toml`**: Restored the `docker_context` to the prompt configuration.
     *   **`dotfiles/common/configs/helix.nix`**: Removed `dockerfile-language-server` and the associated language configuration for Dockerfiles.
 
 ## Recent Modifications (as of April 18, 2026)
