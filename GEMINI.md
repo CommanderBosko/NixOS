@@ -46,6 +46,15 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 21, 2026)
+
+### Security Module Cleanup
+
+*   **Security Module Removal**:
+    *   **`dotfiles/common/modules/security.nix`**: Deleted the module which previously configured Apparmor and its utilities.
+*   **Flake Configuration Update**:
+    *   **`flake.nix`**: Removed the import of `security.nix` from the `commonModules` list to ensure the system configuration remains clean and evaluates correctly.
+
 ## Recent Modifications (as of April 19, 2026)
 
 ### Removal of Containerization Stack (Kubernetes, Podman, Docker)
