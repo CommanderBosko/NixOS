@@ -66,3 +66,28 @@ dotfiles/
 - `natty` — secondary user, same groups, extra package: gimp
 
 Both users share the same Home Manager config.
+
+### Flake Inputs / specialArgs
+
+Flake inputs (`home-manager`, `nix-flatpak`, `dms`) are defined once in `flake.nix` and passed to modules via `specialArgs`, ensuring consistency across hosts.
+
+### Security Module (`dotfiles/common/modules/security.nix`)
+
+Part of `commonModules` (applies to all hosts). Enables:
+
+- AppArmor MAC enforcement (`security.apparmor.enable`, `killUnconfinedConfinables`)
+- Linux audit daemon + kernel `audit=1` parameter
+- D-Bus AppArmor mediation
+- PAM wheel-group enforcement for sudo
+- Kernel image protection / kexec disabled
+- Full ASLR (`kernel.randomize_va_space = 2`)
+
+**nixpkgs bug workaround:** AppArmor's PAM integration rejects non-absolute module paths. SDDM uses `include` directives (e.g. `include login`) which are service-name references, not `.so` paths. The fix uses `lib.mkForce` to clear the `rules` attrset for `sddm` and `sddm-autologin` and provides `text` overrides that preserve identical PAM behaviour. The `sddm-autologin` auth module paths use `pkgs.linux-pam` to stay correct across updates.
+
+### Adding a New Desktop Environment
+
+1. Create `dotfiles/common/modules/desktop-environments/my-de.nix`
+2. Add it to git: `git add dotfiles/common/modules/desktop-environments/my-de.nix`
+3. Import in the host's flake entry using `"${self}/dotfiles/common/modules/desktop-environments/my-de.nix"`
+4. Test with `nh os switch /home/bosko/NixOS --dry`
+5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`
