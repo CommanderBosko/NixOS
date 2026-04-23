@@ -46,6 +46,28 @@ Key architectural points:
 - **Input Management:** Flake inputs like `home-manager` and `nix-flatpak` are defined once in `flake.nix` and passed down to modules via `specialArgs`, ensuring consistency. `nix-flatpak` is integrated by including its NixOS module in the `desktopModules`.
 - **Minor Redundancy:** There's a harmless redundancy in `flake.nix` where `nix.nix`, `users.nix`, and `shell.nix` are included in both `commonModules` and the custom `lib.mkSystem` function. Nix's declarative nature merges these gracefully.
 
+## Recent Modifications (as of April 23, 2026)
+
+### Security Module (security.nix) — Added to commonModules
+
+A new `dotfiles/common/modules/security.nix` module was created and added to `commonModules` (applies to all hosts).
+
+**What it enables:**
+- AppArmor MAC enforcement (`security.apparmor.enable = true`, `killUnconfinedConfinables = true`)
+- Linux audit daemon (`security.auditd.enable = true`) with kernel audit subsystem (`audit=1` kernel param)
+- D-Bus AppArmor mediation (`services.dbus.apparmor = "enabled"`)
+- PAM-level wheel group enforcement for sudo (`security.pam.services.sudo.requireWheel = true`)
+- Kernel image protection / kexec disabled (`security.protectKernelImage = true`)
+- Full ASLR enforced (`kernel.randomize_va_space = 2`)
+
+**nixpkgs bug workaround:**
+AppArmor's PAM integration rejects non-absolute module paths. SDDM uses PAM `include` directives (e.g. `include login`) which are service-name references, not `.so` paths. The fix clears the `rules` attrset for `sddm` and `sddm-autologin` with `lib.mkForce` and provides `text` overrides that preserve identical PAM behaviour. `sddm-autologin` auth module paths use `pkgs.linux-pam` to stay correct across updates.
+
+### Flake Update (April 23, 2026)
+
+- `dms`: `9139fd2` → `97fa86d` (2026-04-22)
+- `home-manager`: `c555a4a` → `667b3c4` (2026-04-23)
+
 ## Recent Modifications (as of April 21, 2026)
 
 ### Security Module Cleanup

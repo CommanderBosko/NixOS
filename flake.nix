@@ -39,6 +39,7 @@
         "${self}/dotfiles/common/modules/fonts.nix"
         "${self}/dotfiles/common/modules/localisation.nix"
         "${self}/dotfiles/common/modules/nix.nix"
+        "${self}/dotfiles/common/modules/security.nix"
         "${self}/dotfiles/common/modules/shell.nix"
         "${self}/dotfiles/common/modules/users.nix"
       ];
