@@ -113,11 +113,11 @@
     kitty
     megasync
     nix-ld
+    nodejs
     obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
-    qbittorrent
     tor-browser
     vesktop
     vivaldi

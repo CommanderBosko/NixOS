@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
   # Enable fwupd
@@ -9,8 +9,8 @@
     };
   };
 
-  # Update cpu microcode
-  hardware.cpu = {
+  # Update cpu microcode — only available on x86 platforms
+  hardware.cpu = lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
     amd.updateMicrocode = true;
     intel.updateMicrocode = true;
   };

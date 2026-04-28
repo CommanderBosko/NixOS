@@ -44,11 +44,11 @@
     kdePackages.kate
     kitty
     megasync
+    nodejs
     obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
-    qbittorrent
     qutebrowser
     rpi-imager
     tor-browser
