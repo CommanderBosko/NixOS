@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts: `gaming`, `laptop`, `se
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Gaming and laptop are daily-driver hosts. Server is headless. VPN server is defined and ready to deploy.
+Active development — `nixos-unstable` channel, state version `25.11`. Gaming and laptop are daily-driver hosts; the gaming host currently has a switch failure under investigation (dry-run passes). Server is headless. VPN server is defined and awaiting deployment.
 
 ## Features
 
@@ -12,9 +12,9 @@ Active development — `nixos-unstable` channel, state version `25.11`. Gaming a
 - Home Manager integrated as a NixOS module for both users (`bosko` and `natty`)
 - Declarative Flatpak management via `nix-flatpak`
 - Swappable desktop environment modules (11 options under `desktop-environments/`)
-- System-wide security hardening: AppArmor MAC, Linux audit daemon, kernel image protection, full ASLR, PAM wheel enforcement
-- WireGuard VPN infrastructure: hub-and-spoke via Oracle Cloud free ARM VM, client modules on gaming and laptop
 - AMD + NVIDIA GPU support, Pipewire audio, RetroArch emulation, Podman virtualisation
+- WireGuard VPN infrastructure defined (hub-and-spoke via Oracle Cloud free ARM VM) — currently disabled on desktop hosts pending switch fix
+- Security hardening module (`security.nix`) exists in git history — temporarily removed while a switch failure is diagnosed; will be reintroduced incrementally
 
 ## Getting Started
 
@@ -64,8 +64,7 @@ dotfiles/
 ├── common/
 │   ├── modules/                        # System-level NixOS modules
 │   │   ├── desktop-environments/       # 11 swappable DE modules (niri, plasma, …)
-│   │   ├── security.nix                # AppArmor, audit, kernel hardening, PAM
-│   │   ├── vpn.nix                     # WireGuard client config (gaming + laptop)
+│   │   ├── vpn.nix                     # WireGuard client config (currently disabled)
 │   │   ├── amd.nix, nvidia.nix         # GPU drivers
 │   │   ├── audio.nix                   # Pipewire
 │   │   ├── gaming.nix                  # Steam, GameMode, MangoHud
@@ -90,7 +89,7 @@ dotfiles/
 
 `flake.nix` defines a `lib.mkSystem` helper and two module lists:
 
-- **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, security, shell, users
+- **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users
 - **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, amd, nvidia, audio, emulation, gaming, virtualisation, SDDM
 
 The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
@@ -106,16 +105,11 @@ Both share `dotfiles/common/configs/home.nix` via Home Manager.
 
 ## Security
 
-`dotfiles/common/modules/security.nix` applies to all hosts:
+Security hardening is **temporarily inactive** — `security.nix` was removed from `commonModules` while a gaming host switch failure is diagnosed. The module (AppArmor MAC, audit daemon, kernel image protection, ASLR, PAM wheel enforcement) is preserved in git history and will be reintroduced incrementally once the base switch is working.
 
-- AppArmor MAC enforcement (`killUnconfinedConfinables = false` — processes without profiles are allowed, not killed)
-- Linux audit daemon + `audit=1` kernel parameter
-- D-Bus AppArmor mediation
-- PAM wheel-group enforcement for sudo
-- Kernel image protection / kexec disabled
-- Full ASLR (`kernel.randomize_va_space = 2`)
-
-The SDDM PAM bug workaround (nixpkgs: AppArmor rules generator rejects non-absolute PAM include paths) is conditional on `services.displayManager.sddm.enable` and only applies on gaming and laptop.
+Prior design notes for when it returns:
+- AppArmor `killUnconfinedConfinables = false` — processes without profiles are allowed, not killed (appropriate for desktop hosts)
+- The nixpkgs AppArmor/PAM bug workaround (non-absolute include paths rejected by the rules generator) must be gated behind `lib.mkIf config.services.displayManager.sddm.enable`
 
 ## VPN
 
@@ -129,16 +123,20 @@ The server config is at `dotfiles/vpn-server/configuration.nix`. Client config i
 
 ## Recent Changes
 
-**2026-04-27** — AppArmor tuning: `killUnconfinedConfinables` set to `false` to avoid disrupting desktop processes lacking profiles. SDDM PAM workaround made conditional on SDDM being enabled (`lib.mkIf`).
+**2026-04-28** — Removed `security.nix` from `commonModules` and deleted the file while a gaming host switch failure is diagnosed. Commented out `vpn.nix` imports on gaming and laptop as a precautionary measure. Bumped all flake inputs (DankMaterialShell, home-manager, nixpkgs, quickshell).
 
-**Prior sessions** — Added security module with AppArmor, audit daemon, and kernel hardening. Added VPN infrastructure (WireGuard server definition + client module). Restructured flake: bootloader moved out of `commonModules` into per-host composition. Added `vpn-server` as a fourth NixOS configuration targeting Oracle Cloud ARM. Enabled gaming firewall. Swapped `qbittorrent` for `nodejs` on both desktop hosts. Added `nixos-agent` subagent and enforced agent delegation via `CLAUDE.md`.
+**2026-04-27** — AppArmor tuning: `killUnconfinedConfinables` set to `false`. SDDM PAM workaround made conditional on SDDM being enabled.
+
+**Prior sessions** — Added VPN infrastructure (WireGuard server definition + client module). Restructured flake: bootloader moved out of `commonModules` into per-host composition. Added `vpn-server` as a fourth NixOS configuration targeting Oracle Cloud ARM. Enabled gaming firewall. Swapped `qbittorrent` for `nodejs`. Added `nixos-agent` subagent.
 
 ## Roadmap
 
+- Diagnose and fix the gaming host switch failure (error output not yet captured)
+- Reintroduce security hardening incrementally once the base switch is stable
+- Re-enable `vpn.nix` on gaming and laptop
 - Deploy `vpn-server` to Oracle Cloud via `nixos-anywhere`
 - Generate and wire up real WireGuard keypairs on gaming and laptop
-- Audit AppArmor profile coverage; consider `killUnconfinedConfinables = true` for the server
-- Harden server host further (fail2ban, profile-specific AppArmor rules)
+- Harden server host further (fail2ban, AppArmor profiles)
 - Confirm SSH key auth on laptop; revert `PasswordAuthentication` to `false`
 
 ## License

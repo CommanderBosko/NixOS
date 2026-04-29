@@ -2,6 +2,48 @@
 
 ---
 
+## Session: 2026-04-28 — security.nix removal, vpn.nix disabled, flake inputs bumped
+
+**Duration Estimate**: Short (inferred from scope)
+**Session Focus**: Remove the security module entirely after it caused a switch failure on the gaming host; disable the vpn.nix import while debugging continues; bump all flake inputs.
+
+### What Was Accomplished
+
+- Deleted `dotfiles/common/modules/security.nix` — removed from `commonModules` in `flake.nix` and the file itself deleted; the module was causing `nh os switch` to fail on the gaming host
+- Commented out `vpn.nix` import in `flake.nix` for both gaming and laptop — prevents a second potential failure source while the switch issue is investigated
+- Bumped all flake inputs: DankMaterialShell, home-manager, nixpkgs, and quickshell all advanced to newer revisions via `nix flake update`
+- `nh os switch --dry` passes successfully (24 derivations: lutris, bottles, polkit, dbus-broker, etc.) — the flake itself is structurally valid
+- Actual `nh os switch` on the gaming host still fails — error output was not captured before the session ended; root cause is undiagnosed
+
+### Files Changed
+
+- `dotfiles/common/modules/security.nix` — deleted entirely (intentional; de-referenced in flake.nix)
+- `flake.nix` — removed `security.nix` from `commonModules`; commented out `vpn.nix` for gaming and laptop
+- `flake.lock` — bumped DankMaterialShell, home-manager, nixpkgs, and quickshell to newer revisions
+
+### Commits This Session
+
+No new commits before session close — all changes are captured in the session-close commit.
+
+### Decisions Made
+
+- **security.nix removed for now** — The module was blocking the gaming host rebuild. Rather than debug blind, the decision was to strip it out so the host can be brought back to a working state. Security hardening can be reintroduced incrementally once the base switch succeeds.
+- **vpn.nix commented out** — Precautionary: avoids compounding the switch failure with a second untested module. The VPN config stays in the repo but is inactive on both desktop hosts until the switch issue is resolved.
+
+### Issues Encountered
+
+- `nh os switch /home/bosko/NixOS` fails on the gaming host despite the dry-run passing. Error output was not captured. The exact failure point (activation script, service start, derivation build) is unknown and must be diagnosed next session.
+
+### Remaining / Next Session
+
+- Run `nh os switch /home/bosko/NixOS` on gaming with output captured (pipe to a file or scroll buffer); identify the exact error
+- Once the switch works cleanly, reintroduce security hardening incrementally (start with just AppArmor, test, then add audit/kernel params)
+- Re-enable `vpn.nix` after the base switch is stable; verify WireGuard client config
+- Continue VPN server deployment: provision Oracle Cloud ARM VM, run `nixos-anywhere`, replace placeholder peer public keys
+- Revert `PasswordAuthentication = true` in `dotfiles/laptop/networking.nix` once SSH key auth is confirmed on laptop
+
+---
+
 ## Session: 2026-04-27 — AppArmor tuning and security module cleanup
 
 **Duration Estimate**: Short (~1 hour, inferred from scope of changes)

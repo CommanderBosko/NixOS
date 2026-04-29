@@ -30,7 +30,6 @@
       "${self}/dotfiles/common/modules/fonts.nix"
       "${self}/dotfiles/common/modules/localisation.nix"
       "${self}/dotfiles/common/modules/nix.nix"
-      "${self}/dotfiles/common/modules/security.nix"
       "${self}/dotfiles/common/modules/shell.nix"
       "${self}/dotfiles/common/modules/users.nix"
     ];
@@ -71,7 +70,7 @@
           "${self}/dotfiles/gaming/environment.nix"
           "${self}/dotfiles/gaming/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
-          "${self}/dotfiles/common/modules/vpn.nix"
+#           "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 
@@ -85,7 +84,7 @@
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
-          "${self}/dotfiles/common/modules/vpn.nix"
+#           "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 
