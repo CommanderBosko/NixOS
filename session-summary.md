@@ -2,6 +2,60 @@
 
 ---
 
+## Session: 2026-05-03 — Claude agent backup, gaming.nix consolidation, gamescope
+
+**Duration Estimate**: Short (inferred from commit scope)
+**Session Focus**: Back up global Claude agents via Home Manager and consolidate gaming-related system config into `gaming.nix`.
+
+### What Was Accomplished
+
+- Added `dotfiles/common/configs/bosko-claude.nix` — a Home Manager module for `bosko` that symlinks `~/.claude/agents/` from the repo, ensuring Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) are managed declaratively and survive rebuilds
+- Added the two agent definition files under `dotfiles/common/configs/claude/agents/`
+- Updated `dotfiles/common/modules/home-manager.nix` to import `bosko-claude.nix` for `bosko`'s HM config
+- Moved `nix-ld` configuration from `dotfiles/gaming/environment.nix` into `dotfiles/common/modules/gaming.nix` — all gaming-related system config is now colocated in one module
+- Added `programs.gamescope.enable = true` to `gaming.nix`
+- Added `hardware.steam-hardware.enable = true` to `gaming.nix` (controller and Steam hardware support)
+- Removed redundant `gamemode` package from `environment.systemPackages` in `gaming.nix` (it was already enabled via `programs.gamemode.enable`)
+- Bumped flake inputs: DankMaterialShell, home-manager, and nixpkgs advanced to newer revisions
+- Note: switch to the gaming host is still pending — the HM symlink approach requires a `nixpkgs-unstable` fix for an `openldap` regression before it can be applied
+
+### Files Changed
+
+- `dotfiles/common/configs/bosko-claude.nix` — new HM module; symlinks repo Claude agent files into `~/.claude/agents/`
+- `dotfiles/common/configs/claude/agents/repo-creator-agent.md` — new agent definition (backed up from global Claude config)
+- `dotfiles/common/configs/claude/agents/session-closer.md` — new agent definition (backed up from global Claude config)
+- `dotfiles/common/modules/home-manager.nix` — added `bosko-claude.nix` import to `bosko`'s HM config
+- `dotfiles/common/modules/gaming.nix` — moved nix-ld here from environment.nix; added gamescope and steam-hardware; removed redundant gamemode package entry
+- `dotfiles/gaming/environment.nix` — removed nix-ld block (consolidated into gaming.nix)
+- `flake.lock` — bumped DankMaterialShell, home-manager, nixpkgs to newer revisions
+
+### Commits This Session
+
+- `46014da` — feat(claude): back up global Claude agents via Home Manager
+- `89d79df` — refactor(gaming): consolidate nix-ld into gaming.nix; add gamescope and steam-hardware
+
+### Decisions Made
+
+- **HM symlink for Claude agents** — Agent definitions are version-controlled and deployed declaratively. Using `source = "${self}/..."` with `force = true` keeps the live files in sync with the repo on every rebuild.
+- **nix-ld moved to gaming.nix** — All gaming-specific system configuration (Steam, GameMode, MangoHud, Gamescope, nix-ld, steam-hardware) now lives in one module. The `environment.nix` for gaming is cleaner and gaming.nix is self-contained.
+- **Switch deferred** — The gaming host switch is blocked by an `openldap` regression in `nixpkgs-unstable`. Will apply once upstream fixes the issue.
+
+### Issues Encountered
+
+- `nixpkgs-unstable` has an `openldap` regression that prevents `nh os switch` from completing on the gaming host. The flake builds and dry-run passes; the activation script or a package build is failing due to this regression.
+
+### Remaining / Next Session
+
+- Monitor nixpkgs-unstable for the openldap regression fix; re-run `nh os switch /home/bosko/NixOS` once resolved
+- Diagnose and confirm the gaming host switch failure root cause (capture full output)
+- Re-enable `vpn.nix` on gaming and laptop once the switch is stable
+- Provision Oracle Cloud ARM VM and deploy `vpn-server` via `nixos-anywhere`
+- Generate WireGuard keypairs on gaming and laptop; replace placeholders in `dotfiles/vpn-server/configuration.nix`
+- Reintroduce security hardening incrementally (AppArmor first, then audit + kernel params)
+- Revert `PasswordAuthentication = true` in `dotfiles/laptop/networking.nix` once SSH key auth is confirmed
+
+---
+
 ## Session: 2026-04-28 — security.nix removal, vpn.nix disabled, flake inputs bumped
 
 **Duration Estimate**: Short (inferred from scope)

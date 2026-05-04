@@ -13,6 +13,8 @@ Active development — `nixos-unstable` channel, state version `25.11`. Gaming a
 - Declarative Flatpak management via `nix-flatpak`
 - Swappable desktop environment modules (11 options under `desktop-environments/`)
 - AMD + NVIDIA GPU support, Pipewire audio, RetroArch emulation, Podman virtualisation
+- Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
+- Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
 - WireGuard VPN infrastructure defined (hub-and-spoke via Oracle Cloud free ARM VM) — currently disabled on desktop hosts pending switch fix
 - Security hardening module (`security.nix`) exists in git history — temporarily removed while a switch failure is diagnosed; will be reintroduced incrementally
 
@@ -67,7 +69,7 @@ dotfiles/
 │   │   ├── vpn.nix                     # WireGuard client config (currently disabled)
 │   │   ├── amd.nix, nvidia.nix         # GPU drivers
 │   │   ├── audio.nix                   # Pipewire
-│   │   ├── gaming.nix                  # Steam, GameMode, MangoHud
+│   │   ├── gaming.nix                  # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware
 │   │   ├── emulation.nix               # RetroArch
 │   │   ├── virtualisation.nix          # Podman
 │   │   ├── sddm.nix                    # Display manager
@@ -77,7 +79,9 @@ dotfiles/
 │   │   └── home-manager.nix            # HM module entrypoint
 │   └── configs/                        # Home Manager configs (shared by both users)
 │       ├── home.nix                    # HM root
+│       ├── bosko-claude.nix            # Symlinks Claude agent definitions into ~/.claude/agents/
 │       ├── helix.nix
+│       ├── claude/agents/              # Claude agent definitions (repo-creator-agent.md, session-closer.md)
 │       └── dotfiles (katerc, kitty.conf, starship.toml)
 ├── gaming/                             # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/                             # same three files
@@ -123,15 +127,16 @@ The server config is at `dotfiles/vpn-server/configuration.nix`. Client config i
 
 ## Recent Changes
 
+**2026-05-03** — Added `bosko-claude.nix` HM module to back up Claude agent definitions declaratively (symlinked from the repo into `~/.claude/agents/`). Consolidated all gaming-specific system config into `gaming.nix` (moved nix-ld from `gaming/environment.nix`; added Gamescope and `hardware.steam-hardware`). Bumped DankMaterialShell, home-manager, and nixpkgs flake inputs.
+
 **2026-04-28** — Removed `security.nix` from `commonModules` and deleted the file while a gaming host switch failure is diagnosed. Commented out `vpn.nix` imports on gaming and laptop as a precautionary measure. Bumped all flake inputs (DankMaterialShell, home-manager, nixpkgs, quickshell).
 
 **2026-04-27** — AppArmor tuning: `killUnconfinedConfinables` set to `false`. SDDM PAM workaround made conditional on SDDM being enabled.
 
-**Prior sessions** — Added VPN infrastructure (WireGuard server definition + client module). Restructured flake: bootloader moved out of `commonModules` into per-host composition. Added `vpn-server` as a fourth NixOS configuration targeting Oracle Cloud ARM. Enabled gaming firewall. Swapped `qbittorrent` for `nodejs`. Added `nixos-agent` subagent.
-
 ## Roadmap
 
-- Diagnose and fix the gaming host switch failure (error output not yet captured)
+- Unblock the gaming host switch (monitor nixpkgs-unstable for the openldap regression fix)
+- Confirm `bosko-claude.nix` HM symlinks deploy correctly after the first successful switch
 - Reintroduce security hardening incrementally once the base switch is stable
 - Re-enable `vpn.nix` on gaming and laptop
 - Deploy `vpn-server` to Oracle Cloud via `nixos-anywhere`
