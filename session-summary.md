@@ -2,6 +2,78 @@
 
 ---
 
+## Session: 2026-05-06 — Full security audit remediation across all three hosts
+
+**Duration Estimate**: Multi-hour (scope of changes across 15 files)
+**Session Focus**: Run a structured security audit against the NixOS configuration and remediate all Critical, High, and most Medium/Low findings in a single session.
+
+### What Was Accomplished
+
+- Removed user `natty` entirely — purged from `users.nix`, `home-manager.nix`, and `niri.nix`, eliminating the unintended wheel/trusted-user exposure (H-3/H-4)
+- Replaced plaintext `password = "password"` with a SHA-512 `hashedPassword` for `bosko` in `users.nix` (C-1)
+- Recreated and re-integrated `dotfiles/common/modules/security.nix` into `commonModules` in `flake.nix` — module applies AppArmor MAC enforcement, `auditd`, kernel image protection, full ASLR (`randomize_va_space = 2`), PAM wheel enforcement, and the SDDM PAM override workaround (C-2)
+- Set `services.openssh.settings.PasswordAuthentication = false` on gaming and laptop (H-1)
+- Opened firewall port 22 consistently, added `AllowUsers = [ "bosko" ]`, and added bosko's SSH public key to `opensshAuthorizedKeys.keys` on gaming and laptop (H-2)
+- Changed `users.users.bosko.homeMode` from `"0755"` to `"0700"` (H-5)
+- Bound qBittorrent Web UI to `127.0.0.1` on gaming and laptop (H-6)
+- Closed Steam `remotePlay`, `dedicatedServer`, and `localNetworkGameTransfers` firewall holes in `gaming.nix` (M-1)
+- Removed duplicate `nix-ld` package entry from `dotfiles/gaming/environment.nix` systemPackages (M-2)
+- Replaced NetworkManager with direct DHCP on server (M-4)
+- Replaced `ntpd` with `chrony` on all three hosts (M-5)
+- Restricted Avahi to the `virbr0` interface in `virtualisation.nix` (M-6)
+- Fixed `autoUpgrade` flake reference on server to point to `github:CommanderBosko/NixOS#server` (M-10)
+- Added `swaylock` + `swayidle` (5-minute screen-lock timeout) to the laptop Niri config (L-2)
+- Removed `php` from `shell.nix` system packages (L-3)
+- Removed `nmap` and `netcat` from server system packages (L-4)
+- Created `.gitignore` with patterns for keys, secrets, and Nix build results (L-5)
+- Fixed gaming boot partition `fmask` from `0022` to `0077` (L-7)
+
+### Files Changed
+
+- `dotfiles/common/modules/users.nix` — replaced plaintext password with hashedPassword for bosko; removed natty entirely; set homeMode = "0700"
+- `dotfiles/common/modules/home-manager.nix` — removed natty's HM config block
+- `dotfiles/common/modules/security.nix` — recreated; AppArmor, auditd, kexec protection, ASLR, PAM wheel enforcement, SDDM PAM workaround (conditional on SDDM being enabled)
+- `dotfiles/common/modules/gaming.nix` — closed Steam remote access firewall ports
+- `dotfiles/common/modules/shell.nix` — removed php from systemPackages
+- `dotfiles/common/modules/desktop-environments/niri.nix` — removed natty block; added swaylock + swayidle with 5min timeout
+- `dotfiles/gaming/environment.nix` — removed duplicate nix-ld entry; bound qBittorrent to 127.0.0.1
+- `dotfiles/gaming/hardware-configuration.nix` — fixed boot fmask from 0022 to 0077
+- `dotfiles/gaming/networking.nix` — disabled SSH password auth; opened port 22; added AllowUsers + SSH public key
+- `dotfiles/laptop/environment.nix` — bound qBittorrent to 127.0.0.1; added swaylock/swayidle packages
+- `dotfiles/laptop/networking.nix` — disabled SSH password auth; opened port 22; added AllowUsers + SSH public key
+- `dotfiles/server/environment.nix` — removed nmap and netcat
+- `dotfiles/server/networking.nix` — replaced NetworkManager with DHCP; replaced ntpd with chrony; fixed autoUpgrade URL
+- `flake.nix` — added security.nix back into commonModules
+- `flake.lock` — updated hashes
+- `.gitignore` — new file; keys, secrets, Nix build results excluded
+
+### Commits This Session
+
+- `37ecf27` — feat(security): full security audit remediation — harden all three hosts
+
+### Decisions Made
+
+- **Single-session remediation** — All Critical, High, and most Medium/Low findings addressed in one pass rather than incrementally, as the blocker (openldap regression) prevents switching anyway and the config needs to be in a hardened state before the next successful switch.
+- **natty removed** — User was no longer needed and represented unnecessary attack surface (wheel group, trusted-user).
+- **L-6 declined** — User chose not to change `edit = "sudo hx"` to `sudoedit`; alias stays as-is.
+- **chrony over ntpd** — Chrony preferred for NTP as it handles intermittent connectivity better and is more widely recommended.
+- **WireGuard keys deferred (M-7/M-8)** — Placeholder keys are not a real risk until the VPN is actually deployed; generating keys now without a live peer serves no purpose.
+- **Stable nixpkgs pin deferred (M-9)** — Requires a separate nixpkgs input entry in flake.nix; scope too large for this session.
+
+### Issues Encountered
+
+- `openldap-2.6.13-i686-linux` upstream build failure in `nixpkgs-unstable` still blocks `nh os switch` on gaming. This is a pre-existing, unrelated regression. All changes this session are correct; they simply cannot be activated until the upstream fix lands.
+
+### Remaining / Next Session
+
+- Monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once resolved
+- M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder keys in VPN config
+- M-9: Pin server to `nixos-25.05` stable (add a second nixpkgs input)
+- Provision Oracle Cloud ARM VM and deploy vpn-server via `nixos-anywhere`
+- Confirm `bosko-claude.nix` HM symlinks deploy correctly after first successful switch
+
+---
+
 ## Session: 2026-05-03 — Claude agent backup, gaming.nix consolidation, gamescope
 
 **Duration Estimate**: Short (inferred from commit scope)

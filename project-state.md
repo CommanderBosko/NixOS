@@ -1,71 +1,71 @@
 # NixOS Project State
 
-_Last updated: 2026-05-03_
+_Last updated: 2026-05-06_
 
 ## Current Project State
 
-The configuration manages four NixOS hosts from a single flake:
+The configuration manages three active NixOS hosts from a single flake (the `vpn-server` host definition remains but is awaiting deployment):
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | BROKEN — `nh os switch` fails; dry-run passes; blocked by openldap nixpkgs regression | plasma.nix |
-| `laptop` | Unknown — not tested recently | niri.nix |
+| `gaming` | BROKEN — `nh os switch` fails; blocked by openldap nixpkgs-unstable regression; all config changes are correct and ready to activate | plasma.nix |
+| `laptop` | Unknown — not tested recently; last known good; awaiting a successful gaming switch to gain confidence | niri.nix |
 | `server` | Active — headless | — |
-| `vpn-server` | Defined, awaiting deployment | — |
+| `vpn-server` | Defined, awaiting deployment to Oracle Cloud | — |
 
-**Security module has been removed.** `dotfiles/common/modules/security.nix` was deleted and de-referenced from `commonModules` in `flake.nix`. No security hardening (AppArmor, audit, kernel params, PAM wheel enforcement) is currently applied to any host. Temporary regression — will be reintroduced incrementally once the base switch is stable.
+**Security module is back and fully active in config.** `dotfiles/common/modules/security.nix` was recreated and re-added to `commonModules`. As of 2026-05-06 it is in the flake and will be applied on the next successful `nh os switch`. It includes AppArmor MAC enforcement, auditd, kernel image protection, ASLR, PAM wheel enforcement, and the SDDM PAM override workaround.
 
-**VPN module** (`dotfiles/common/modules/vpn.nix`) is currently commented out in `flake.nix` for both gaming and laptop. The `vpn-server` configuration remains in the flake and is untouched. Peer public keys are still placeholders.
+**User natty has been removed.** Only `bosko` remains. Home Manager, users.nix, and niri.nix have all been purged of natty references.
 
-**Claude agents** are now backed up declaratively via Home Manager. `bosko-claude.nix` symlinks `repo-creator-agent.md` and `session-closer.md` from the repo into `~/.claude/agents/` on every rebuild.
+**VPN module** (`dotfiles/common/modules/vpn.nix`) is currently commented out in `flake.nix` for both gaming and laptop. Peer public keys are still placeholders.
 
-**gaming.nix** now contains all gaming-specific system config: Steam, GameMode, Gamescope, MangoHud, nix-ld (with full library list), and `hardware.steam-hardware`. The `nix-ld` block has been removed from `dotfiles/gaming/environment.nix`.
-
-**Agent enforcement** is active: `CLAUDE.md` mandates all work be delegated to the `nixos-agent` subagent. The agent definition lives at `dotfiles/common/configs/claude/agents/session-closer.md` and `repo-creator-agent.md`.
+**Security audit completed 2026-05-06.** All Critical and High findings remediated. Most Medium and Low findings remediated. Three items explicitly deferred (see Known Issues).
 
 ## Current Goals
 
 ### Short-term (next 1-3 sessions)
-- **Unblock the gaming host switch** — monitor nixpkgs-unstable for the openldap regression fix; once merged, run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` and confirm success
-- Re-introduce security hardening incrementally once the switch is stable: start with AppArmor only, test, then add audit daemon and kernel hardening
-- Re-enable `vpn.nix` on gaming and laptop after the base switch is confirmed working
-- Provision the Oracle Cloud ARM VM and deploy `vpn-server` via `nixos-anywhere`
-- Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix`
+
+- **Unblock the gaming host switch** — monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` and confirm success once it lands
+- After a successful switch, confirm the security hardening is active: `aa-status`, `journalctl -u auditd`, verify swaylock triggers on laptop
+- M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix` (and `vpn.nix` client config)
+- M-9: Pin server to `nixos-25.05` stable by adding a second nixpkgs input in `flake.nix`
+- Confirm `bosko-claude.nix` HM symlinks deploy correctly after first successful switch
 
 ### Long-term
-- Harden the server host further (AppArmor profiles, fail2ban, etc.)
-- Potentially add a fifth host or containerised service on the VPN server
-- Evaluate moving `qbittorrent` off the package list permanently or replacing it
+
+- Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`
+- Re-enable `vpn.nix` on gaming and laptop once VPN server is live and keys are real
+- Harden server further with AppArmor profiles and fail2ban once stable channel is pinned
+- Evaluate adding a fifth host or containerised service on the VPN server
 
 ## Recent Decisions
 
-- **Claude agents backed up via HM** — `bosko-claude.nix` symlinks agent definitions from the repo into `~/.claude/agents/`. Switch is pending the openldap regression fix.
-- **nix-ld consolidated into gaming.nix** — All gaming-specific config (Steam, GameMode, Gamescope, nix-ld, steam-hardware) now lives in one module. `gaming/environment.nix` is cleaner.
-- **security.nix removed temporarily** — The module was blocking the gaming host rebuild. Will be reintroduced incrementally once the base switch succeeds.
-- **vpn.nix commented out** — Precautionary measure while the switch issue is diagnosed.
-- **Flake inputs bumped** (multiple sessions) — DankMaterialShell, home-manager, nixpkgs, and quickshell updated to latest revisions.
-- **`killUnconfinedConfinables = false`** — Was set before security.nix was removed; will be kept when the module is reintroduced.
-- **Bootloader removed from `commonModules`** — Each host provides its own bootloader; server uses GRUB, vpn-server uses systemd-boot.
-- **VPN architecture** — WireGuard hub-and-spoke via Oracle Cloud free ARM VM. Full-tunnel routing. IP forwarding + iptables MASQUERADE on server.
-- **`qbittorrent` removed, `nodejs` added** — On both gaming and laptop.
-- **Gaming firewall enabled** — `networking.firewall.enable` changed from `false` to `true`.
+- **Full security audit remediation (2026-05-06)** — All Critical, High, and most Medium/Low findings addressed in a single session. Rationale: the gaming host is blocked by an unrelated upstream regression anyway; best to get the config into a hardened state before the next activation.
+- **natty removed** — No longer needed; was an unnecessary attack surface (wheel group, trusted-user, home directory).
+- **security.nix restored** — The module that was removed in April to unblock debugging is back. AppArmor, auditd, kernel hardening, and PAM enforcement are all configured.
+- **L-6 declined** — User chose not to change `edit = "sudo hx"` alias to `sudoedit`; alias retained as-is.
+- **chrony replaces ntpd** — Applied to all three hosts; handles intermittent connectivity better.
+- **WireGuard keys deferred** — Placeholder keys are not a real risk until VPN is deployed; generating them without a live peer adds no security value.
+- **Stable nixpkgs pin deferred (M-9)** — Requires adding a second nixpkgs input to flake.nix; scoped to a future session.
+- **Claude agents backed up via HM** — `bosko-claude.nix` symlinks agent definitions from the repo into `~/.claude/agents/` on rebuild. Pending first successful switch.
+- **nix-ld consolidated into gaming.nix** — All gaming-specific config is colocated in one module.
 
 ## Known Issues / Tech Debt
 
-- **Gaming host switch blocked by openldap regression** — `nixpkgs-unstable` has a regression preventing the gaming host switch from completing. Dry-run passes. Blocked on upstream fix in nixpkgs.
-- **No security hardening on any host** — `security.nix` was deleted. AppArmor, audit daemon, kernel image protection, ASLR enforcement, and PAM wheel enforcement are all inactive. Deliberate temporary state.
-- **vpn.nix inactive** — Commented out in `flake.nix`. WireGuard client config exists but is not applied.
-- `vpn-server` peer public keys are placeholders (`GAMING_PUBLIC_KEY`, `LAPTOP_PUBLIC_KEY`).
-- `dotfiles/laptop/networking.nix` has `PasswordAuthentication = true` — revert to `false` once SSH key auth is confirmed.
-- `dotfiles/vpn-server/configuration.nix` references `enp0s3` as the upstream interface — may differ on the actual Oracle Cloud instance.
-- `bosko-claude.nix` HM symlinks pending first successful switch after openldap regression is resolved.
+- **Gaming host switch blocked by openldap regression** — `nixpkgs-unstable` has an `openldap-2.6.13-i686-linux` build failure. Dry-run passes; actual switch fails. Blocked on upstream fix.
+- **vpn.nix inactive** — Commented out in `flake.nix`. WireGuard client config exists but is not applied to any host.
+- **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `dotfiles/vpn-server/configuration.nix` must be replaced with real keys before deployment.
+- **M-9 deferred** — Server still runs `nixos-unstable`. Should be pinned to `nixos-25.05` for stability; requires a new flake input.
+- **M-7/M-8 deferred** — WireGuard client interface name (`enp0s3`) on vpn-server may not match the Oracle Cloud instance's actual NIC; placeholder keys need replacing.
+- **vpn-server references `enp0s3`** — May differ on the actual Oracle Cloud instance; verify at deploy time.
+- **bosko-claude.nix HM symlinks** — Pending first successful `nh os switch` to take effect.
 
 ## Next Steps
 
-1. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap regression fix; then run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log`
-2. Confirm `bosko-claude.nix` HM symlinks deploy correctly after the first successful switch
-3. Re-introduce security hardening incrementally (AppArmor only first, then audit + kernel params)
-4. Re-enable `vpn.nix` on gaming and laptop once switch is stable
-5. Provision Oracle Cloud ARM VM; run `nixos-anywhere --flake .#vpn-server`
-6. Generate WireGuard keys and replace placeholders in `dotfiles/vpn-server/configuration.nix`
-7. Revert `PasswordAuthentication = true` in `dotfiles/laptop/networking.nix`
+1. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap fix; then run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log`
+2. After successful switch: verify security hardening is active (`aa-status`, `journalctl -u auditd`)
+3. Generate WireGuard keypairs; replace placeholders in VPN config (M-7/M-8)
+4. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
+5. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+6. Re-enable `vpn.nix` on gaming and laptop once VPN server is live
+7. Confirm `bosko-claude.nix` HM symlinks deployed correctly

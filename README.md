@@ -1,22 +1,22 @@
 # NixOS Configuration
 
-Bosko's single-flake NixOS configuration for four hosts: `gaming`, `laptop`, `server`, and `vpn-server`. All configuration lives under `dotfiles/`.
+Bosko's single-flake NixOS configuration for three active hosts (`gaming`, `laptop`, `server`) and one pending deployment (`vpn-server`). All configuration lives under `dotfiles/`.
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Gaming and laptop are daily-driver hosts; the gaming host currently has a switch failure under investigation (dry-run passes). Server is headless. VPN server is defined and awaiting deployment.
+Active development — `nixos-unstable` channel, state version `25.11`. Gaming and laptop are daily-driver hosts; the gaming host is currently blocked from switching by an `openldap` regression in nixpkgs-unstable (unrelated to this repo — dry-run passes). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are in the config and will activate on the next successful switch.
 
 ## Features
 
-- Single flake managing four hosts with shared module composition
-- Home Manager integrated as a NixOS module for both users (`bosko` and `natty`)
+- Single flake managing three active hosts with shared module composition
+- Home Manager integrated as a NixOS module for `bosko`
 - Declarative Flatpak management via `nix-flatpak`
 - Swappable desktop environment modules (11 options under `desktop-environments/`)
 - AMD + NVIDIA GPU support, Pipewire audio, RetroArch emulation, Podman virtualisation
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
-- WireGuard VPN infrastructure defined (hub-and-spoke via Oracle Cloud free ARM VM) — currently disabled on desktop hosts pending switch fix
-- Security hardening module (`security.nix`) exists in git history — temporarily removed while a switch failure is diagnosed; will be reintroduced incrementally
+- WireGuard VPN infrastructure defined (hub-and-spoke via Oracle Cloud free ARM VM) — client config inactive pending VPN server deployment
+- Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd, kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround
 
 ## Getting Started
 
@@ -67,17 +67,18 @@ dotfiles/
 │   ├── modules/                        # System-level NixOS modules
 │   │   ├── desktop-environments/       # 11 swappable DE modules (niri, plasma, …)
 │   │   ├── vpn.nix                     # WireGuard client config (currently disabled)
+│   │   ├── security.nix                # AppArmor, auditd, kernel hardening, PAM enforcement
 │   │   ├── amd.nix, nvidia.nix         # GPU drivers
 │   │   ├── audio.nix                   # Pipewire
 │   │   ├── gaming.nix                  # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware
 │   │   ├── emulation.nix               # RetroArch
-│   │   ├── virtualisation.nix          # Podman
+│   │   ├── virtualisation.nix          # Podman (Avahi restricted to virbr0)
 │   │   ├── sddm.nix                    # Display manager
 │   │   ├── bootloader.nix              # GRUB + zen kernel (desktop hosts)
 │   │   ├── firmware.nix                # fwupd
 │   │   ├── fonts.nix, localisation.nix, nix.nix, shell.nix, users.nix
 │   │   └── home-manager.nix            # HM module entrypoint
-│   └── configs/                        # Home Manager configs (shared by both users)
+│   └── configs/                        # Home Manager configs (bosko)
 │       ├── home.nix                    # HM root
 │       ├── bosko-claude.nix            # Symlinks Claude agent definitions into ~/.claude/agents/
 │       ├── helix.nix
@@ -86,14 +87,14 @@ dotfiles/
 ├── gaming/                             # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/                             # same three files
 ├── server/                             # same three files
-└── vpn-server/                         # configuration.nix, hardware-configuration.nix
+└── vpn-server/                         # configuration.nix, hardware-configuration.nix (awaiting deployment)
 ```
 
 ### Module Composition
 
 `flake.nix` defines a `lib.mkSystem` helper and two module lists:
 
-- **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users
+- **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users, security
 - **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, amd, nvidia, audio, emulation, gaming, virtualisation, SDDM
 
 The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
@@ -103,46 +104,53 @@ The server uses `commonModules` plus its own bootloader. The vpn-server uses `co
 | User | Groups | Extra packages |
 |------|--------|----------------|
 | `bosko` | wheel, networkmanager, audio, video, input, gamemode, libvirtd, docker, plugdev | mumble |
-| `natty` | same | gimp |
 
-Both share `dotfiles/common/configs/home.nix` via Home Manager.
+Only `bosko` is configured. `homeMode` is `"0700"`.
 
 ## Security
 
-Security hardening is **temporarily inactive** — `security.nix` was removed from `commonModules` while a gaming host switch failure is diagnosed. The module (AppArmor MAC, audit daemon, kernel image protection, ASLR, PAM wheel enforcement) is preserved in git history and will be reintroduced incrementally once the base switch is working.
+Security hardening is applied via `dotfiles/common/modules/security.nix`, which is part of `commonModules` and applies to all hosts.
 
-Prior design notes for when it returns:
-- AppArmor `killUnconfinedConfinables = false` — processes without profiles are allowed, not killed (appropriate for desktop hosts)
-- The nixpkgs AppArmor/PAM bug workaround (non-absolute include paths rejected by the rules generator) must be gated behind `lib.mkIf config.services.displayManager.sddm.enable`
+Enabled hardening:
+
+- **AppArmor** MAC enforcement (`security.apparmor.enable = true`, `killUnconfinedConfinables = false`) — processes without profiles are allowed, not killed (appropriate for desktop workloads)
+- **auditd** — Linux audit daemon + `audit=1` kernel parameter
+- **D-Bus AppArmor mediation**
+- **PAM wheel-group enforcement** for sudo
+- **Kernel image protection** — kexec disabled
+- **Full ASLR** (`kernel.randomize_va_space = 2`)
+- **SDDM PAM workaround** — gated behind `lib.mkIf config.services.displayManager.sddm.enable`; overrides the non-absolute module path that AppArmor's PAM integration rejects
+
+SSH is hardened on gaming and laptop: `PasswordAuthentication = false`, `AllowUsers = [ "bosko" ]`, public key installed.
 
 ## VPN
 
-WireGuard hub-and-spoke topology:
+WireGuard hub-and-spoke topology (client config present, server not yet deployed):
 
 - **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`), `10.0.0.1/24`, port 51820
-- **gaming**: `10.0.0.2/32` (peer key: placeholder — generate and fill in at deploy time)
+- **gaming**: `10.0.0.2/32` (peer key: placeholder — generate at deploy time)
 - **laptop**: `10.0.0.3/32` (peer key: placeholder)
 
-The server config is at `dotfiles/vpn-server/configuration.nix`. Client config is at `dotfiles/common/modules/vpn.nix`.
+Client config: `dotfiles/common/modules/vpn.nix` (currently commented out in `flake.nix`).
+Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
 
-**2026-05-03** — Added `bosko-claude.nix` HM module to back up Claude agent definitions declaratively (symlinked from the repo into `~/.claude/agents/`). Consolidated all gaming-specific system config into `gaming.nix` (moved nix-ld from `gaming/environment.nix`; added Gamescope and `hardware.steam-hardware`). Bumped DankMaterialShell, home-manager, and nixpkgs flake inputs.
+**2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
 
-**2026-04-28** — Removed `security.nix` from `commonModules` and deleted the file while a gaming host switch failure is diagnosed. Commented out `vpn.nix` imports on gaming and laptop as a precautionary measure. Bumped all flake inputs (DankMaterialShell, home-manager, nixpkgs, quickshell).
+**2026-05-03** — Added `bosko-claude.nix` HM module to back up Claude agent definitions declaratively. Consolidated all gaming-specific system config into `gaming.nix` (nix-ld, Gamescope, steam-hardware). Bumped flake inputs.
 
-**2026-04-27** — AppArmor tuning: `killUnconfinedConfinables` set to `false`. SDDM PAM workaround made conditional on SDDM being enabled.
+**2026-04-28** — Temporarily removed `security.nix` and disabled `vpn.nix` while a gaming host switch failure was diagnosed. Bumped all flake inputs.
 
 ## Roadmap
 
 - Unblock the gaming host switch (monitor nixpkgs-unstable for the openldap regression fix)
-- Confirm `bosko-claude.nix` HM symlinks deploy correctly after the first successful switch
-- Reintroduce security hardening incrementally once the base switch is stable
-- Re-enable `vpn.nix` on gaming and laptop
-- Deploy `vpn-server` to Oracle Cloud via `nixos-anywhere`
-- Generate and wire up real WireGuard keypairs on gaming and laptop
-- Harden server host further (fail2ban, AppArmor profiles)
-- Confirm SSH key auth on laptop; revert `PasswordAuthentication` to `false`
+- Verify security hardening is active post-switch (`aa-status`, `journalctl -u auditd`)
+- Generate WireGuard keypairs; replace placeholder keys in VPN config
+- Pin server to `nixos-25.05` stable (add second nixpkgs input)
+- Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`
+- Re-enable `vpn.nix` on gaming and laptop once VPN server is live
+- Harden server further (AppArmor profiles, fail2ban)
 
 ## License
 
