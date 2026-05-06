@@ -1,0 +1,9 @@
+*.key
+*.pem
+*.secret
+*.age
+secrets.yaml
+.env
+.envrc
+result
+result-*

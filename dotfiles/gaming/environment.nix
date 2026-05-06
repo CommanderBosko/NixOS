@@ -14,8 +14,17 @@
     # Enable printing
     printing.enable = true;
 
-    # Enable Qbittorrent
-    qbittorrent.enable = true;
+    # Enable Qbittorrent (Web UI bound to localhost only — H-6)
+    qbittorrent = {
+      enable = true;
+      serverConfig = {
+        Preferences = {
+          WebUI = {
+            Address = "127.0.0.1";
+          };
+        };
+      };
+    };
   };
 
   # Hardware
@@ -58,7 +67,6 @@
     kdePackages.kate
     kitty
     megasync
-    nix-ld
     nodejs
     obs-studio
     onlyoffice-desktopeditors

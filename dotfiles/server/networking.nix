@@ -10,11 +10,9 @@
     # proxy.default = "http://user:password@proxy:port/";
     # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
-    # Enable networking
-    networkmanager = {
-      enable = true;
-      dns = "none";
-    };
+    # Use DHCP; NetworkManager is unnecessary on a headless server
+    networkmanager.enable = false;
+    useDHCP = true;
 
     # Enable custom DNS servers
     nameservers = [
@@ -33,7 +31,7 @@
   # SSH settings
   services = {
     # Network clock sync
-    ntp.enable = true;
+    chrony.enable = true;
 
     # Enable and configure openssh
     openssh = {

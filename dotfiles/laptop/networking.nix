@@ -25,22 +25,23 @@
     # Enable and open ports in the firewall
     firewall = {
       enable = true;
-      #       allowedTCPPorts = [ 22 ];
-      #       allowedUDPPorts = [ ... ];
+      allowedTCPPorts = [ 22 ];
     };
   };
 
   # SSH settings
   services = {
     # Network clock sync
-    ntp.enable = true;
+    chrony.enable = true;
 
     # Enable and configure openssh
     openssh = {
       enable = true;
       settings = {
-        PasswordAuthentication = true;
+        PasswordAuthentication = false;
         PermitRootLogin = "no";
+        PrintMotd = false;
+        AllowUsers = [ "bosko" ];
       };
     };
   };

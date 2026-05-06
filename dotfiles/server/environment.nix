@@ -33,8 +33,6 @@
   # System packages
   environment.systemPackages = with pkgs; [
     gnupg
-    netcat
-    nmap
     openssl
     tmux
     traceroute

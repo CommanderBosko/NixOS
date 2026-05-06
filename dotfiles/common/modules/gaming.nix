@@ -9,9 +9,9 @@
     # Steam
     steam = {
       enable = true;
-      remotePlay.openFirewall = true;
-      dedicatedServer.openFirewall = true;
-      localNetworkGameTransfers.openFirewall = true;
+      remotePlay.openFirewall = false;
+      dedicatedServer.openFirewall = false;
+      localNetworkGameTransfers.openFirewall = false;
 
       # Global steam optional launch settings
       package = pkgs.steam.override {

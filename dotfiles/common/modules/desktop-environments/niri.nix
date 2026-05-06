@@ -7,6 +7,17 @@
 
     # Enable xwayland
     xwayland.enable = true;
+
+    # Screen locker
+    swaylock.enable = true;
+  };
+
+  # Idle management: lock screen after 5 minutes
+  services.swayidle = {
+    enable = true;
+    timeouts = [
+      { timeout = 300; command = "${pkgs.swaylock}/bin/swaylock -f"; }
+    ];
   };
 
   # Enable x11
@@ -14,12 +25,6 @@
 
   # Enable Dank Material Shell via Home Manager
   home-manager.users.bosko = {
-    imports = [ inputs.dms.homeModules.dank-material-shell ];
-    programs.dank-material-shell.enable = true;
-    programs.dank-material-shell.systemd.enable = true;
-  };
-
-  home-manager.users.natty = {
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
@@ -36,7 +41,6 @@
     fuzzel # Application launcher
     grim # Screenshot utility
     slurp # Region selection for grim
-    swayidle # Idle management daemon
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
     xwayland

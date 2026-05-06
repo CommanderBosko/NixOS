@@ -111,7 +111,6 @@ in
       nix-tree
       nixd
       nixfmt
-      php
       pipes
       pywal
       starship
