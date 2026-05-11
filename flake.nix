@@ -103,6 +103,19 @@
           ];
         };
 
+        # Natalie's Laptop
+        natalie-laptop = self.lib.mkSystem {
+          inherit inputs system nixpkgs;
+          specialArgs = { inherit inputs self system; };
+          modules = desktopModules ++ [
+            # Machine-specific modules
+            "${self}/dotfiles/natalie-laptop/hardware-configuration.nix"
+            "${self}/dotfiles/natalie-laptop/environment.nix"
+            "${self}/dotfiles/natalie-laptop/networking.nix"
+            "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
+          ];
+        };
+
         # Server
         server = self.lib.mkSystem {
           inherit inputs system nixpkgs;
