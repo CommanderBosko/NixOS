@@ -73,6 +73,10 @@
   # Enable audit logging in the kernel
   boot.kernelParams = [ "audit=1" ];
 
+  # nixpkgs-unstable changed the default to "broker" in 2026-04; pin back to
+  # classic dbus until broker is validated with this AppArmor configuration.
+  services.dbus.implementation = lib.mkDefault "dbus";
+
   # Enable AppArmor mediation for D-Bus
   services.dbus.apparmor = "enabled";
 }
