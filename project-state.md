@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-06_
+_Last updated: 2026-05-10_
 
 ## Current Project State
 
@@ -9,7 +9,7 @@ The configuration manages three active NixOS hosts from a single flake (the `vpn
 | Host | Status | DE |
 |------|--------|----|
 | `gaming` | BROKEN — `nh os switch` fails; blocked by openldap nixpkgs-unstable regression; all config changes are correct and ready to activate | plasma.nix |
-| `laptop` | Unknown — not tested recently; last known good; awaiting a successful gaming switch to gain confidence | niri.nix |
+| `laptop` | Config verified clean — `nixos-rebuild dry-run --flake .#laptop` passes as of 2026-05-10 | niri.nix |
 | `server` | Active — headless | — |
 | `vpn-server` | Defined, awaiting deployment to Oracle Cloud | — |
 
@@ -40,6 +40,9 @@ The configuration manages three active NixOS hosts from a single flake (the `vpn
 
 ## Recent Decisions
 
+- **bottles removed (2026-05-10)** — Package was never used; removed from emulation.nix to reduce closure size.
+- **gaming.nix scoped to gaming host only (2026-05-10)** — The module (Steam, GameMode, Gamescope, nix-ld, steam-hardware) was incorrectly placed in `desktopModules` (shared with laptop). Moved to the gaming host's own module list in `flake.nix`.
+- **swaylock/swayidle moved to HM (2026-05-10)** — nixpkgs-unstable dropped `programs.swaylock` and `services.swayidle` as NixOS system modules. Both now live in `home-manager.users.bosko` inside `niri.nix`.
 - **Full security audit remediation (2026-05-06)** — All Critical, High, and most Medium/Low findings addressed in a single session. Rationale: the gaming host is blocked by an unrelated upstream regression anyway; best to get the config into a hardened state before the next activation.
 - **natty removed** — No longer needed; was an unnecessary attack surface (wheel group, trusted-user, home directory).
 - **security.nix restored** — The module that was removed in April to unblock debugging is back. AppArmor, auditd, kernel hardening, and PAM enforcement are all configured.

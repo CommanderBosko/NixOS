@@ -2,6 +2,51 @@
 
 ---
 
+## Session: 2026-05-10 — Cleanup and upstream breakage fix (bottles, gaming.nix scope, swaylock/swayidle)
+
+**Duration Estimate**: Short (inferred from scope)
+**Session Focus**: Remove unused packages, correct module scoping, and fix a nixpkgs-unstable breaking change that dropped two NixOS system modules.
+
+### What Was Accomplished
+
+- Removed `bottles` from `dotfiles/common/modules/emulation.nix` system packages — the package was never used and added unnecessary closure weight
+- Moved `gaming.nix` out of `desktopModules` (shared by gaming and laptop) into the gaming host's own module list in `flake.nix` — `gaming.nix` contains Steam, GameMode, Gamescope, nix-ld, and steam-hardware, none of which belong on the laptop
+- Fixed a nixpkgs-unstable breaking change in `dotfiles/common/modules/desktop-environments/niri.nix`: `programs.swaylock` and `services.swayidle` were removed as system-level NixOS modules upstream; both were migrated into `home-manager.users.bosko` where they belong as user-session tools
+- Verified the laptop config builds cleanly: `nixos-rebuild dry-run --flake .#laptop` passes
+
+### Files Changed
+
+- `dotfiles/common/modules/emulation.nix` — removed `bottles` from `environment.systemPackages`
+- `dotfiles/common/modules/desktop-environments/niri.nix` — moved `programs.swaylock` and `services.swayidle` from top-level NixOS scope into `home-manager.users.bosko`; added comments explaining the upstream removal
+- `flake.nix` — removed `gaming.nix` from `desktopModules`; added it to the gaming host's module list only; reformatted outputs attrset to nixfmt style
+- `flake.lock` — updated input hashes
+
+### Commits This Session
+
+- `50490ef` — refactor: remove bottles, scope gaming.nix to gaming host, fix swaylock/swayidle upstream removal
+
+### Decisions Made
+
+- **`bottles` removed** — User confirmed it is never used; no reason to keep it in the closure.
+- **`gaming.nix` scoped to gaming host** — The module is explicitly gaming-only (Steam, GameMode, Gamescope, nix-ld, steam-hardware). Having it in `desktopModules` was incorrect; the laptop should not receive those packages.
+- **swaylock/swayidle moved to HM** — nixpkgs-unstable removed these as NixOS system modules. Moving them to Home Manager is the correct long-term home for user-session screen-lock tooling.
+
+### Issues Encountered
+
+- nixpkgs-unstable broke `programs.swaylock` and `services.swayidle` as system-level NixOS options. The fix (move to HM) is straightforward and was validated by dry-run.
+- Gaming host switch is still pending (openldap regression remains unresolved upstream).
+
+### Remaining / Next Session
+
+- Monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once resolved
+- After successful switch: verify security hardening is active (`aa-status`, `journalctl -u auditd`), confirm swaylock triggers on laptop
+- Generate WireGuard keypairs on gaming and laptop; replace placeholders in VPN config (M-7/M-8)
+- Pin server to `nixos-25.05` stable (add second nixpkgs input — M-9)
+- Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+- Confirm `bosko-claude.nix` HM symlinks deployed correctly after first successful switch
+
+---
+
 ## Session: 2026-05-06 — Full security audit remediation across all three hosts
 
 **Duration Estimate**: Multi-hour (scope of changes across 15 files)

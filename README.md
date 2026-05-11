@@ -95,9 +95,9 @@ dotfiles/
 `flake.nix` defines a `lib.mkSystem` helper and two module lists:
 
 - **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, amd, nvidia, audio, emulation, gaming, virtualisation, SDDM
+- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, amd, nvidia, audio, emulation, virtualisation, SDDM
 
-The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
+The gaming host additionally imports `gaming.nix` directly in its own module list (not shared with laptop — it is gaming-only). The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
 
 ### Users
 
@@ -136,11 +136,11 @@ Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
 
+**2026-05-10** — Removed `bottles` from emulation.nix (unused). Moved `gaming.nix` out of `desktopModules` into the gaming host's own module list (it is gaming-only, not shared with laptop). Fixed nixpkgs-unstable breaking change: `programs.swaylock` and `services.swayidle` were removed as NixOS system modules upstream — both migrated into `home-manager.users.bosko` in `niri.nix`. Laptop dry-run verified clean.
+
 **2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
 
 **2026-05-03** — Added `bosko-claude.nix` HM module to back up Claude agent definitions declaratively. Consolidated all gaming-specific system config into `gaming.nix` (nix-ld, Gamescope, steam-hardware). Bumped flake inputs.
-
-**2026-04-28** — Temporarily removed `security.nix` and disabled `vpn.nix` while a gaming host switch failure was diagnosed. Bumped all flake inputs.
 
 ## Roadmap
 
