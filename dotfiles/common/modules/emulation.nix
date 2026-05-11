@@ -27,7 +27,6 @@
   # Other emulation packages
   environment.systemPackages = with pkgs; [
     appimage-run
-    bottles
     flatpak
     wine
     winetricks

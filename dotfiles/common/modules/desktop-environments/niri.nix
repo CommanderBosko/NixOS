@@ -7,17 +7,6 @@
 
     # Enable xwayland
     xwayland.enable = true;
-
-    # Screen locker
-    swaylock.enable = true;
-  };
-
-  # Idle management: lock screen after 5 minutes
-  services.swayidle = {
-    enable = true;
-    timeouts = [
-      { timeout = 300; command = "${pkgs.swaylock}/bin/swaylock -f"; }
-    ];
   };
 
   # Enable x11
@@ -28,6 +17,17 @@
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
+
+    # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
+    programs.swaylock.enable = true;
+
+    # Idle management: lock screen after 5 minutes (services.swayidle NixOS module removed upstream; use HM)
+    services.swayidle = {
+      enable = true;
+      timeouts = [
+        { timeout = 300; command = "${pkgs.swaylock}/bin/swaylock -f"; }
+      ];
+    };
   };
 
   # Common Wayland utilities that are generally useful with any Wayland compositor
