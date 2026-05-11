@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for three active hosts (`gaming`, `lapt
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Gaming and laptop are daily-driver hosts; the gaming host is currently blocked from switching by an `openldap` regression in nixpkgs-unstable (unrelated to this repo — dry-run passes). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are in the config and will activate on the next successful switch.
+Active development — `nixos-unstable` channel, state version `25.11`. Laptop is the current daily-driver host — last successful `nh os switch` completed 2026-05-10 with all security hardening live. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (unrelated to this repo — dry-run passes). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
 
 ## Features
 
@@ -116,6 +116,7 @@ Enabled hardening:
 - **AppArmor** MAC enforcement (`security.apparmor.enable = true`, `killUnconfinedConfinables = false`) — processes without profiles are allowed, not killed (appropriate for desktop workloads)
 - **auditd** — Linux audit daemon + `audit=1` kernel parameter
 - **D-Bus AppArmor mediation**
+- **Classic dbus pinned** — `services.dbus.implementation = lib.mkDefault "dbus"` guards against the nixpkgs-unstable default change to dbus-broker, which conflicts with this AppArmor configuration (see nixpkgs rev `4bd9165`, 2026-04-14)
 - **PAM wheel-group enforcement** for sudo
 - **Kernel image protection** — kexec disabled
 - **Full ASLR** (`kernel.randomize_va_space = 2`)
@@ -136,7 +137,11 @@ Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
 
+**2026-05-10 (evening)** — Pinned `services.dbus.implementation = lib.mkDefault "dbus"` in `security.nix` to prevent boot failure from nixpkgs-unstable's silent default change to dbus-broker (rev `4bd9165`, 2026-04-14). dbus-broker's AppArmor profile conflicts with this repo's setup. Laptop `nh os switch` completed successfully — first live switch since the 2026-05-06 security audit.
+
 **2026-05-10** — Removed `bottles` from emulation.nix (unused). Moved `gaming.nix` out of `desktopModules` into the gaming host's own module list (it is gaming-only, not shared with laptop). Fixed nixpkgs-unstable breaking change: `programs.swaylock` and `services.swayidle` were removed as NixOS system modules upstream — both migrated into `home-manager.users.bosko` in `niri.nix`. Laptop dry-run verified clean.
+
+**2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
 
 **2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
 
@@ -144,10 +149,10 @@ Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Roadmap
 
+- Verify laptop post-switch state: `aa-status`, `journalctl -u auditd`, swaylock idle trigger, `~/.claude/agents/` symlinks
 - Unblock the gaming host switch (monitor nixpkgs-unstable for the openldap regression fix)
-- Verify security hardening is active post-switch (`aa-status`, `journalctl -u auditd`)
-- Generate WireGuard keypairs; replace placeholder keys in VPN config
-- Pin server to `nixos-25.05` stable (add second nixpkgs input)
+- Generate WireGuard keypairs; replace placeholder keys in VPN config (M-7/M-8)
+- Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
 - Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`
 - Re-enable `vpn.nix` on gaming and laptop once VPN server is live
 - Harden server further (AppArmor profiles, fail2ban)

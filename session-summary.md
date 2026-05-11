@@ -2,6 +2,49 @@
 
 ---
 
+## Session: 2026-05-10 (evening) — dbus-broker regression fix; laptop rebuild successful
+
+**Duration Estimate**: Short (single-issue diagnosis and fix)
+**Session Focus**: Diagnose and resolve a boot failure caused by a silent nixpkgs-unstable default change to `services.dbus.implementation`; verify the fix on the laptop host with a live `nh os switch`.
+
+### What Was Accomplished
+
+- Identified that nixpkgs-unstable rev `4bd9165` (2026-04-14) silently changed `services.dbus.implementation` from `"dbus"` to `"broker"`. Without an explicit pin, this caused `nh os switch` to fire its `switchInhibitors` check and produce a boot failure on the laptop — dbus-broker's AppArmor profile conflicted with the existing `security.nix` setup.
+- Added `services.dbus.implementation = lib.mkDefault "dbus";` to `dotfiles/common/modules/security.nix`, pinning the classic dbus implementation on all hosts until dbus-broker is validated against this AppArmor configuration.
+- Added a memory file `project_dbus_broker_default.md` to the nixos-agent memory system documenting the root cause, which nixpkgs rev triggered it, and the recovery procedure (boot previous GRUB generation).
+- Ran `nh os switch /home/bosko/NixOS` on the laptop — **rebuild succeeded**. This is the first successful live switch on the laptop after the security audit changes on 2026-05-06.
+
+### Files Changed
+
+- `dotfiles/common/modules/security.nix` — added `services.dbus.implementation = lib.mkDefault "dbus";` with explanatory comment
+- `.claude/agent-memory/nixos-agent/MEMORY.md` — added pointer to the new dbus-broker memory file
+- `.claude/agent-memory/nixos-agent/project_dbus_broker_default.md` — new; documents the nixpkgs default change, why it caused boot failure, and recovery steps
+
+### Commits This Session
+
+- `1c7d62a` — fix(security): pin dbus to classic implementation to prevent boot failure
+
+### Decisions Made
+
+- **Pin to classic dbus via `lib.mkDefault`** — Using `mkDefault` rather than `mkForce` allows per-host overrides if dbus-broker is later validated on a specific host. The classical dbus implementation is kept until broker is explicitly tested with this repo's AppArmor configuration.
+- **Document in agent memory** — The dbus-broker default change is a subtle nixpkgs-unstable gotcha that could recur on future flake lock bumps. Recorded in the nixos-agent memory system so future sessions have the context and recovery procedure.
+
+### Issues Encountered
+
+- The dbus implementation change in nixpkgs-unstable is a silent default change — nothing in the flake diff makes it obvious. The `switchInhibitors` guard in `nh os switch` is what surfaced it (the systemd unit transition from `dbus.service` to `dbus-broker.service` is live-system-incompatible and requires a reboot).
+- Note: the gaming host switch remains blocked by the openldap regression (unrelated to this fix).
+
+### Remaining / Next Session
+
+- Gaming host switch: still blocked by openldap nixpkgs-unstable regression; monitor upstream for fix
+- After gaming switch succeeds: verify AppArmor and auditd are active on gaming (`aa-status`, `journalctl -u auditd`)
+- Consider verifying swaylock triggers correctly on laptop now that the switch succeeded
+- Generate WireGuard keypairs on gaming and laptop; replace placeholders in VPN config (M-7/M-8)
+- Pin server to `nixos-25.05` stable (M-9)
+- Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+
+---
+
 ## Session: 2026-05-10 — Cleanup and upstream breakage fix (bottles, gaming.nix scope, swaylock/swayidle)
 
 **Duration Estimate**: Short (inferred from scope)

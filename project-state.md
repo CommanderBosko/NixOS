@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-10_
+_Last updated: 2026-05-10 (evening)_
 
 ## Current Project State
 
@@ -9,11 +9,13 @@ The configuration manages three active NixOS hosts from a single flake (the `vpn
 | Host | Status | DE |
 |------|--------|----|
 | `gaming` | BROKEN — `nh os switch` fails; blocked by openldap nixpkgs-unstable regression; all config changes are correct and ready to activate | plasma.nix |
-| `laptop` | Config verified clean — `nixos-rebuild dry-run --flake .#laptop` passes as of 2026-05-10 | niri.nix |
+| `laptop` | **LIVE** — `nh os switch` completed successfully 2026-05-10 evening; security hardening is active | niri.nix |
 | `server` | Active — headless | — |
 | `vpn-server` | Defined, awaiting deployment to Oracle Cloud | — |
 
-**Security module is back and fully active in config.** `dotfiles/common/modules/security.nix` was recreated and re-added to `commonModules`. As of 2026-05-06 it is in the flake and will be applied on the next successful `nh os switch`. It includes AppArmor MAC enforcement, auditd, kernel image protection, ASLR, PAM wheel enforcement, and the SDDM PAM override workaround.
+**Laptop has been successfully switched.** The dbus-broker regression in nixpkgs-unstable was identified and fixed (see Recent Decisions below), and `nh os switch` on the laptop completed without errors. All security hardening from 2026-05-06 is now live on laptop.
+
+**Security module is active.** `dotfiles/common/modules/security.nix` is in `commonModules` and applied on all hosts. It includes AppArmor MAC enforcement, auditd, kernel image protection, ASLR, PAM wheel enforcement, SDDM PAM override workaround, and a pin for classic dbus implementation.
 
 **User natty has been removed.** Only `bosko` remains. Home Manager, users.nix, and niri.nix have all been purged of natty references.
 
@@ -40,6 +42,7 @@ The configuration manages three active NixOS hosts from a single flake (the `vpn
 
 ## Recent Decisions
 
+- **dbus pinned to classic implementation (2026-05-10)** — nixpkgs-unstable rev `4bd9165` silently changed `services.dbus.implementation` default to `"broker"`. This triggered a `switchInhibitors` boot failure because dbus-broker's AppArmor profile conflicts with the existing `security.nix` setup. Fix: `services.dbus.implementation = lib.mkDefault "dbus";` in `security.nix`. Using `mkDefault` allows future per-host overrides. Broker should not be re-enabled until validated against this AppArmor configuration.
 - **bottles removed (2026-05-10)** — Package was never used; removed from emulation.nix to reduce closure size.
 - **gaming.nix scoped to gaming host only (2026-05-10)** — The module (Steam, GameMode, Gamescope, nix-ld, steam-hardware) was incorrectly placed in `desktopModules` (shared with laptop). Moved to the gaming host's own module list in `flake.nix`.
 - **swaylock/swayidle moved to HM (2026-05-10)** — nixpkgs-unstable dropped `programs.swaylock` and `services.swayidle` as NixOS system modules. Both now live in `home-manager.users.bosko` inside `niri.nix`.
@@ -56,19 +59,20 @@ The configuration manages three active NixOS hosts from a single flake (the `vpn
 ## Known Issues / Tech Debt
 
 - **Gaming host switch blocked by openldap regression** — `nixpkgs-unstable` has an `openldap-2.6.13-i686-linux` build failure. Dry-run passes; actual switch fails. Blocked on upstream fix.
+- **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config. Safe to revisit once gaming host is switched and AppArmor state is confirmed.
 - **vpn.nix inactive** — Commented out in `flake.nix`. WireGuard client config exists but is not applied to any host.
 - **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `dotfiles/vpn-server/configuration.nix` must be replaced with real keys before deployment.
 - **M-9 deferred** — Server still runs `nixos-unstable`. Should be pinned to `nixos-25.05` for stability; requires a new flake input.
 - **M-7/M-8 deferred** — WireGuard client interface name (`enp0s3`) on vpn-server may not match the Oracle Cloud instance's actual NIC; placeholder keys need replacing.
 - **vpn-server references `enp0s3`** — May differ on the actual Oracle Cloud instance; verify at deploy time.
-- **bosko-claude.nix HM symlinks** — Pending first successful `nh os switch` to take effect.
+- **bosko-claude.nix HM symlinks** — Laptop switch succeeded; confirm `~/.claude/agents/` symlinks are correct on laptop. Gaming still pending its switch.
 
 ## Next Steps
 
-1. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap fix; then run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log`
-2. After successful switch: verify security hardening is active (`aa-status`, `journalctl -u auditd`)
-3. Generate WireGuard keypairs; replace placeholders in VPN config (M-7/M-8)
-4. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
-5. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
-6. Re-enable `vpn.nix` on gaming and laptop once VPN server is live
-7. Confirm `bosko-claude.nix` HM symlinks deployed correctly
+1. **Verify laptop post-switch state**: confirm `aa-status` and `journalctl -u auditd` show hardening active; verify swaylock triggers on idle; confirm `~/.claude/agents/` symlinks are correct
+2. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap fix; then run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log`
+3. After gaming switch succeeds: verify security hardening active on gaming (`aa-status`, `journalctl -u auditd`)
+4. Generate WireGuard keypairs; replace placeholders in VPN config (M-7/M-8)
+5. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
+6. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+7. Re-enable `vpn.nix` on gaming and laptop once VPN server is live
