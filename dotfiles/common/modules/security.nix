@@ -11,21 +11,18 @@
       killUnconfinedConfinables = false;
     };
 
-    # Required for AppArmor profile loading at boot. Enabling auditd also
-    # implicitly sets security.audit.enable = true via auditd.nix. The
-    # audit.rules list must be non-empty — see the sentinel comment below.
+    # Required for AppArmor profile loading at boot.
     auditd.enable = true;
 
     # Require wheel group membership at the PAM level for sudo
     pam.services.sudo.requireWheel = true;
   };
 
-  # audit-4.1.2-unstable treats blank lines in audit.rules as parse errors,
-  # causing audit-rules-nixos.service to fail on every activation. When
-  # security.audit.rules = [], lib.concatLines [] produces "" which leaves a
-  # blank line between the -r 0 and -e 1 directives. A bare comment is a
-  # valid no-op auditctl rule that prevents the empty-list code path.
-  security.audit.rules = [ "# NixOS managed audit configuration" ];
+  # audit-4.1.2-unstable rejects blank lines in audit.rules, but nixpkgs
+  # hard-codes a blank line before -e 1 in the generated file. Disabling
+  # the rules-loader service avoids the parse error; auditd still runs for
+  # AppArmor logging.
+  systemd.services.audit-rules-nixos.enable = lib.mkForce false;
 
   # nixpkgs bug workaround: the AppArmor rules generator rejects non-absolute
   # PAM module paths, but PAM include directives (e.g. "include login") are
