@@ -48,7 +48,6 @@
         "${self}/dotfiles/common/modules/bootloader.nix"
         home-manager.nixosModules.home-manager
         nix-flatpak.nixosModules.nix-flatpak
-        "${self}/dotfiles/common/modules/amd.nix"
         "${self}/dotfiles/common/modules/audio.nix"
         "${self}/dotfiles/common/modules/emulation.nix"
         "${self}/dotfiles/common/modules/home-manager.nix"
@@ -79,6 +78,8 @@
           inherit inputs system nixpkgs;
           specialArgs = { inherit inputs self system; };
           modules = desktopModules ++ [
+            # Gaming-only: AMD required for KVM/Virt-Manager
+            "${self}/dotfiles/common/modules/amd.nix"
             # Machine-specific modules
             "${self}/dotfiles/gaming/hardware-configuration.nix"
             "${self}/dotfiles/gaming/environment.nix"
