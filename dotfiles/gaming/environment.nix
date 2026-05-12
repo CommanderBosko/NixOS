@@ -56,7 +56,6 @@
     brave
     chromium
     claude-code
-    deezer-enhanced
     discord
     element-desktop
     firefox
@@ -81,6 +80,7 @@
   # Flatpaks
   services.flatpak.packages = [
     "com.albiononline.AlbionOnline" # Albion Online
+    "dev.aunetx.deezer" # Deezer
     "org.kde.digikam" # Digikam
     "app.zen_browser.zen" # Zen Browser
   ];

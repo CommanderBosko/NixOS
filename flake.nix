@@ -85,7 +85,6 @@
             "${self}/dotfiles/common/modules/gaming.nix"
             "${self}/dotfiles/gaming/networking.nix"
             "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
-            #           "${self}/dotfiles/common/modules/vpn.nix"
           ];
         };
 
@@ -99,7 +98,6 @@
             "${self}/dotfiles/laptop/environment.nix"
             "${self}/dotfiles/laptop/networking.nix"
             "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
-            #           "${self}/dotfiles/common/modules/vpn.nix"
           ];
         };
 

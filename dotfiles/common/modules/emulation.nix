@@ -30,6 +30,5 @@
     flatpak
     wine
     winetricks
-    xwayland
   ];
 }

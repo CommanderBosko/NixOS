@@ -41,7 +41,7 @@ in
           echo ""
           echo "Attempting a dry-run on your system"
           echo ""
-          nixos-rebuild dry-run --flake ~/NixOS/.#${hostName}
+          nh os switch ~/NixOS/. -H ${hostName} --dry
         '';
         rebuild = ''
           echo ""

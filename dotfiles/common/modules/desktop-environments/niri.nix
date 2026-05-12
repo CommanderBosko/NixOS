@@ -43,6 +43,5 @@
     slurp # Region selection for grim
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
-    xwayland
   ];
 }
