@@ -4,19 +4,19 @@ Bosko's single-flake NixOS configuration for three active hosts (`gaming`, `lapt
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Laptop is the current daily-driver host — last successful `nh os switch` completed 2026-05-10 with all security hardening live. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (unrelated to this repo — dry-run passes). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
+Active development — `nixos-unstable` channel, state version `25.11`. Four hosts are defined: `gaming`, `laptop`, `server`, and `natalie-laptop` (new, awaiting hardware config and install), plus `vpn-server` (awaiting deployment). The laptop is the current daily-driver; last successful `nh os switch` was 2026-05-10 — a fix for an `audit-rules-nixos.service` activation failure was committed 2026-05-11 and needs to be applied with the next switch. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (dry-run passes; unrelated to this repo). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
 
 ## Features
 
-- Single flake managing three active hosts with shared module composition
-- Home Manager integrated as a NixOS module for `bosko`
+- Single flake managing four hosts (`gaming`, `laptop`, `server`, `natalie-laptop`) with shared module composition
+- Home Manager integrated as a NixOS module for both users (`bosko` and `natty`)
 - Declarative Flatpak management via `nix-flatpak`
 - Swappable desktop environment modules (11 options under `desktop-environments/`)
-- AMD + NVIDIA GPU support, Pipewire audio, RetroArch emulation, Podman virtualisation
-- Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
+- GPU modules correctly scoped: `amd.nix` gaming-only, `nvidia.nix` shared across desktop hosts; Pipewire audio, RetroArch emulation, Podman virtualisation
+- Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`, not shared with laptop
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
-- WireGuard VPN infrastructure defined (hub-and-spoke via Oracle Cloud free ARM VM) — client config inactive pending VPN server deployment
-- Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd, kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround
+- WireGuard VPN infrastructure partially defined (hub-and-spoke via Oracle Cloud free ARM VM) — server config in `dotfiles/vpn-server/`; client module not yet written
+- Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, classic dbus pinned
 
 ## Getting Started
 
@@ -65,27 +65,28 @@ Host-specific changes go in those files. Shared changes go in `dotfiles/common/m
 dotfiles/
 ├── common/
 │   ├── modules/                        # System-level NixOS modules
-│   │   ├── desktop-environments/       # 11 swappable DE modules (niri, plasma, …)
-│   │   ├── vpn.nix                     # WireGuard client config (currently disabled)
+│   │   ├── desktop-environments/       # 11 swappable DE modules (niri, plasma, cosmic, …)
 │   │   ├── security.nix                # AppArmor, auditd, kernel hardening, PAM enforcement
-│   │   ├── amd.nix, nvidia.nix         # GPU drivers
+│   │   ├── amd.nix                     # AMD GPU drivers (gaming host only)
+│   │   ├── nvidia.nix                  # NVIDIA GPU drivers (all desktop hosts)
 │   │   ├── audio.nix                   # Pipewire
-│   │   ├── gaming.nix                  # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware
+│   │   ├── gaming.nix                  # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware (gaming only)
 │   │   ├── emulation.nix               # RetroArch
 │   │   ├── virtualisation.nix          # Podman (Avahi restricted to virbr0)
 │   │   ├── sddm.nix                    # Display manager
 │   │   ├── bootloader.nix              # GRUB + zen kernel (desktop hosts)
 │   │   ├── firmware.nix                # fwupd
 │   │   ├── fonts.nix, localisation.nix, nix.nix, shell.nix, users.nix
-│   │   └── home-manager.nix            # HM module entrypoint
-│   └── configs/                        # Home Manager configs (bosko)
-│       ├── home.nix                    # HM root
+│   │   └── home-manager.nix            # HM module entrypoint for bosko and natty
+│   └── configs/                        # Home Manager configs (bosko and natty)
+│       ├── home.nix                    # HM root — imported by both users
 │       ├── bosko-claude.nix            # Symlinks Claude agent definitions into ~/.claude/agents/
 │       ├── helix.nix
 │       ├── claude/agents/              # Claude agent definitions (repo-creator-agent.md, session-closer.md)
 │       └── dotfiles (katerc, kitty.conf, starship.toml)
 ├── gaming/                             # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/                             # same three files
+├── natalie-laptop/                     # same three files (hardware-configuration.nix is a placeholder)
 ├── server/                             # same three files
 └── vpn-server/                         # configuration.nix, hardware-configuration.nix (awaiting deployment)
 ```
@@ -95,17 +96,18 @@ dotfiles/
 `flake.nix` defines a `lib.mkSystem` helper and two module lists:
 
 - **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, amd, nvidia, audio, emulation, virtualisation, SDDM
+- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, nvidia, audio, emulation, virtualisation, SDDM
 
-The gaming host additionally imports `gaming.nix` directly in its own module list (not shared with laptop — it is gaming-only). The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
+The gaming host additionally imports `amd.nix` and `gaming.nix` in its own module list (not shared — gaming-only). The natalie-laptop host uses `desktopModules` plus Cosmic DE. The server uses `commonModules` plus its own bootloader. The vpn-server uses `commonModules` only (headless, `aarch64-linux`, systemd-boot).
 
 ### Users
 
 | User | Groups | Extra packages |
 |------|--------|----------------|
 | `bosko` | wheel, networkmanager, audio, video, input, gamemode, libvirtd, docker, plugdev | mumble |
+| `natty` | networkmanager, audio, video, input | *(none)* |
 
-Only `bosko` is configured. `homeMode` is `"0700"`.
+Both users share the same Home Manager config. `homeMode` is `"0700"` for both. `natty` has no wheel group or trusted-user privileges.
 
 ## Security
 
@@ -114,9 +116,9 @@ Security hardening is applied via `dotfiles/common/modules/security.nix`, which 
 Enabled hardening:
 
 - **AppArmor** MAC enforcement (`security.apparmor.enable = true`, `killUnconfinedConfinables = false`) — processes without profiles are allowed, not killed (appropriate for desktop workloads)
-- **auditd** — Linux audit daemon + `audit=1` kernel parameter
+- **auditd** — Linux audit daemon + `audit=1` kernel parameter; `audit-rules-nixos.service` is disabled via `lib.mkForce false` because `auditctl` 4.1.2-unstable rejects the blank line nixpkgs hard-codes in the generated `audit.rules`
 - **D-Bus AppArmor mediation**
-- **Classic dbus pinned** — `services.dbus.implementation = lib.mkDefault "dbus"` guards against the nixpkgs-unstable default change to dbus-broker, which conflicts with this AppArmor configuration (see nixpkgs rev `4bd9165`, 2026-04-14)
+- **Classic dbus pinned** — `services.dbus.implementation = lib.mkDefault "dbus"` guards against the nixpkgs-unstable default change to dbus-broker (rev `4bd9165`, 2026-04-14), which conflicts with this AppArmor configuration
 - **PAM wheel-group enforcement** for sudo
 - **Kernel image protection** — kexec disabled
 - **Full ASLR** (`kernel.randomize_va_space = 2`)
@@ -126,35 +128,34 @@ SSH is hardened on gaming and laptop: `PasswordAuthentication = false`, `AllowUs
 
 ## VPN
 
-WireGuard hub-and-spoke topology (client config present, server not yet deployed):
+WireGuard hub-and-spoke topology (server config defined, client module not yet written):
 
 - **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`), `10.0.0.1/24`, port 51820
 - **gaming**: `10.0.0.2/32` (peer key: placeholder — generate at deploy time)
 - **laptop**: `10.0.0.3/32` (peer key: placeholder)
 
-Client config: `dotfiles/common/modules/vpn.nix` (currently commented out in `flake.nix`).
+The client `vpn.nix` module was deleted on 2026-05-11 (it was unused and commented out). It will be rewritten when VPN deployment is imminent.
 Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
 
-**2026-05-10 (evening)** — Pinned `services.dbus.implementation = lib.mkDefault "dbus"` in `security.nix` to prevent boot failure from nixpkgs-unstable's silent default change to dbus-broker (rev `4bd9165`, 2026-04-14). dbus-broker's AppArmor profile conflicts with this repo's setup. Laptop `nh os switch` completed successfully — first live switch since the 2026-05-06 security audit.
+**2026-05-11** — Added `natalie-laptop` host (Cosmic DE, `natty` user restored without elevated privileges). Deleted `vpn.nix` (unused since April; to be rewritten when VPN deployment is imminent). Fixed `audit-rules-nixos.service` activation failure: `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`; nixpkgs hard-codes one — disabled the service via `systemd.services.audit-rules-nixos.enable = lib.mkForce false` while keeping `auditd` running. Scoped `amd.nix` to gaming host only (laptop has no AMD GPU). Fixed xwayland option duplication in `niri.nix`. Removed Deezer Flatpak from gaming. Added `dry-run` shell alias.
 
-**2026-05-10** — Removed `bottles` from emulation.nix (unused). Moved `gaming.nix` out of `desktopModules` into the gaming host's own module list (it is gaming-only, not shared with laptop). Fixed nixpkgs-unstable breaking change: `programs.swaylock` and `services.swayidle` were removed as NixOS system modules upstream — both migrated into `home-manager.users.bosko` in `niri.nix`. Laptop dry-run verified clean.
+**2026-05-10 (evening)** — Pinned `services.dbus.implementation = lib.mkDefault "dbus"` in `security.nix` to prevent boot failure from nixpkgs-unstable's silent default change to dbus-broker (rev `4bd9165`, 2026-04-14). Laptop `nh os switch` completed successfully — first live switch since the 2026-05-06 security audit.
+
+**2026-05-10** — Removed `bottles` from emulation.nix (unused). Moved `gaming.nix` out of `desktopModules` into the gaming host's own module list. Fixed nixpkgs-unstable breaking change: `programs.swaylock` and `services.swayidle` migrated from system scope to `home-manager.users.bosko` in `niri.nix`.
 
 **2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
-
-**2026-05-06** — Full security audit remediation. Replaced plaintext password with SHA-512 hash; recreated `security.nix` in `commonModules`; removed user `natty`; disabled SSH password auth on gaming and laptop; set `homeMode = "0700"`; bound qBittorrent to `127.0.0.1`; closed Steam remote-access firewall ports; replaced ntpd with chrony on all hosts; replaced NetworkManager with DHCP on server; restricted Avahi to virbr0; added swaylock/swayidle to laptop; removed php, nmap, and netcat; added `.gitignore`; fixed gaming boot `fmask`.
-
-**2026-05-03** — Added `bosko-claude.nix` HM module to back up Claude agent definitions declaratively. Consolidated all gaming-specific system config into `gaming.nix` (nix-ld, Gamescope, steam-hardware). Bumped flake inputs.
 
 ## Roadmap
 
-- Verify laptop post-switch state: `aa-status`, `journalctl -u auditd`, swaylock idle trigger, `~/.claude/agents/` symlinks
+- Apply `audit-rules-nixos.service` fix on laptop via `nh os switch`; confirm `auditd` is active
+- Complete Natalie laptop install: commit real `hardware-configuration.nix`; run `nixos-anywhere`
 - Unblock the gaming host switch (monitor nixpkgs-unstable for the openldap regression fix)
-- Generate WireGuard keypairs; replace placeholder keys in VPN config (M-7/M-8)
+- Generate WireGuard keypairs; write new `vpn.nix` client module; replace placeholder keys in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
 - Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
 - Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`
-- Re-enable `vpn.nix` on gaming and laptop once VPN server is live
+- Enable VPN on gaming and laptop once server is live and keys are real
 - Harden server further (AppArmor profiles, fail2ban)
 
 ## License

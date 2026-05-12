@@ -2,6 +2,69 @@
 
 ---
 
+## Session: 2026-05-11 — audit-rules-nixos.service fix, natalie-laptop host, GPU refactor, config cleanup
+
+**Duration Estimate**: ~7 hours (16:59 – 23:29 based on commit timestamps)
+**Session Focus**: Add a new host for Natalie's laptop, fix the audit-rules-nixos activation failure that was blocking the laptop rebuild, refactor GPU modules, and clean up accumulated config cruft.
+
+### What Was Accomplished
+
+- Diagnosed `audit-rules-nixos.service` activation failure on the laptop — `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`, but nixpkgs hard-codes a blank line before `-e 1` in the generated file. The previous comment-sentinel workaround (adding a dummy `# NixOS managed audit configuration` rule) only moved the blank line; it did not eliminate it.
+- Fixed `dotfiles/common/modules/security.nix` — replaced `security.audit.rules` sentinel with `systemd.services.audit-rules-nixos.enable = lib.mkForce false`. This disables the broken rules-loader service while keeping `auditd` running for AppArmor logging.
+- Added `dotfiles/natalie-laptop/` host — Cosmic DE, same base package set as the main laptop plus `okular`, no gaming modules. `natty` user restored to `users.nix` with no extra packages. Placeholder `hardware-configuration.nix` (to be replaced with `nixos-generate-config` output during install).
+- Removed `vpn.nix` entirely from the repo — the file was commented out in `flake.nix` and unused; deleted to reduce dead code.
+- Fixed xwayland option duplication that was present in the Niri DE module.
+- Removed Deezer Flatpak from gaming (unused).
+- Added `natty` back to Home Manager configuration after restoring the user.
+- Added `dry-run` shell alias (`nh os switch /home/bosko/NixOS --dry`).
+- Refactored GPU modules in `flake.nix` — `amd.nix` is now scoped to the gaming host only; `nvidia.nix` is shared across all desktop hosts (gaming and laptop). This corrects the previous over-broad inclusion of `amd.nix` in `desktopModules`.
+
+### Files Changed
+
+- `dotfiles/common/modules/security.nix` — replaced `security.audit.rules` sentinel with `systemd.services.audit-rules-nixos.enable = lib.mkForce false`; removed `security.audit.enable` option
+- `dotfiles/common/modules/users.nix` — restored `natty` user entry
+- `dotfiles/common/modules/home-manager.nix` — restored natty HM config block; added `dry-run` alias
+- `dotfiles/common/modules/shell.nix` — added `dry-run` alias
+- `dotfiles/common/modules/emulation.nix` — removed unused Deezer Flatpak reference
+- `dotfiles/common/modules/desktop-environments/niri.nix` — fixed xwayland option duplication
+- `dotfiles/common/modules/vpn.nix` — deleted entirely (was already commented out in flake.nix)
+- `dotfiles/natalie-laptop/environment.nix` — new; Cosmic DE, okular, base laptop packages
+- `dotfiles/natalie-laptop/hardware-configuration.nix` — new; placeholder, must be replaced with `nixos-generate-config` output
+- `dotfiles/natalie-laptop/networking.nix` — new; hostname `natalie-laptop`, standard networking setup
+- `dotfiles/gaming/environment.nix` — removed Deezer Flatpak
+- `flake.nix` — added `natalie-laptop` host entry; scoped `amd.nix` to gaming only; removed `vpn.nix` reference; bumped module composition
+
+### Commits This Session
+
+- `09c9def` — feat: add natalie-laptop host and restore natty user
+- `8e0e8b4` — refactor: clean up config — deezer flatpak, natty HM, dry-run alias, remove vpn.nix, fix xwayland duplication
+- `86b3d08` — refactor: scope amd.nix to gaming only, nvidia.nix shared across all desktop hosts
+- `0f42964` — fix(security): disable audit-rules-nixos.service to fix activation failure
+
+### Decisions Made
+
+- **Disable `audit-rules-nixos.service` rather than work around the blank-line bug** — The rules-sentinel approach only moved the blank line; eliminating it would require patching nixpkgs. Disabling the loader service is cleaner: `auditd` continues to run (required for AppArmor logging) and no custom audit rules were in use anyway. Revisit if custom rules are ever needed — at that point, load them via a separate systemd unit.
+- **`natty` restored as non-wheel user** — The 2026-05-06 audit removed `natty` for being in the wheel group. She is back now with no elevated privileges (no wheel, no trusted-user).
+- **`vpn.nix` deleted** — File was commented out in `flake.nix` since April 2026 and served no purpose. WireGuard VPN remains a long-term goal; the module will be rewritten when deployment is imminent.
+- **`amd.nix` scoped to gaming only** — The laptop uses NVIDIA only; there is no AMD GPU on the laptop host. Including `amd.nix` in `desktopModules` was incorrect.
+
+### Issues Encountered
+
+- The `audit-rules-nixos.service` failure was a nixpkgs upstream bug (blank line hard-coded in the generated `audit.rules`), not a config error. The workaround in the previous session (adding a sentinel comment rule) was insufficient.
+- `natalie-laptop` has a placeholder `hardware-configuration.nix` — the host cannot actually be built until `nixos-generate-config` is run on the target machine and the real hardware config is committed.
+
+### Remaining / Next Session
+
+- **Verify the laptop rebuilds cleanly** with the `audit-rules-nixos.service` fix applied (run `nh os switch /home/bosko/NixOS` and confirm `auditd` is running; `audit-rules-nixos.service` should be absent/disabled)
+- **Gaming host switch**: still blocked by openldap nixpkgs-unstable regression; monitor upstream for fix
+- After gaming switch succeeds: verify AppArmor and auditd are active (`aa-status`, `journalctl -u auditd`); confirm `~/.claude/agents/` symlinks are correct
+- **Natalie's laptop install**: run `nixos-generate-config` on the target machine, commit the real `hardware-configuration.nix` to `dotfiles/natalie-laptop/`, and perform the initial install via `nixos-anywhere` or manual install
+- Generate WireGuard keypairs on gaming and laptop; replace placeholders in VPN config (M-7/M-8) — prerequisite for VPN server deployment
+- Pin server to `nixos-25.05` stable — add second nixpkgs input in `flake.nix` (M-9)
+- Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+
+---
+
 ## Session: 2026-05-10 (evening) — dbus-broker regression fix; laptop rebuild successful
 
 **Duration Estimate**: Short (single-issue diagnosis and fix)
