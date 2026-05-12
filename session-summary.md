@@ -2,6 +2,44 @@
 
 ---
 
+## Session: 2026-05-12 — natalie-laptop hardware-configuration.nix populated with real hardware data
+
+**Duration Estimate**: Short (single-file change)
+**Session Focus**: Replace the placeholder `hardware-configuration.nix` for the `natalie-laptop` host with the real output of `nixos-generate-config` run on the target machine.
+
+### What Was Accomplished
+
+- Committed the real `hardware-configuration.nix` for the `natalie-laptop` host, replacing the two-line stub that was added 2026-05-11.
+- Hardware details: Intel CPU (kvm-intel), NVMe root partition ext4 (UUID `d6f891ea-efeb-4d79-97cd-ea6d8966e0ad`), vfat /boot partition (UUID `229A-8574`, fmask/dmask `0077`), Thunderbolt and VMD kernel module support, `hardware.cpu.intel.updateMicrocode` gated on `hardware.enableRedistributableFirmware`.
+- The `natalie-laptop` host config is now complete — all three host files (`environment.nix`, `networking.nix`, `hardware-configuration.nix`) contain real values. The host is ready for its initial install.
+
+### Files Changed
+
+- `dotfiles/natalie-laptop/hardware-configuration.nix` — replaced two-line placeholder with full `nixos-generate-config` output; Intel/NVMe/vfat hardware, Thunderbolt and VMD modules, Intel microcode update
+
+### Commits This Session
+
+- `691999b` — feat(natalie-laptop): populate hardware-configuration.nix with real hardware data
+
+### Decisions Made
+
+- No architectural decisions. The file content is the direct output of `nixos-generate-config` on the target machine with no modifications.
+
+### Issues Encountered
+
+- None. Straightforward file replacement.
+
+### Remaining / Next Session
+
+- **Natalie laptop install**: hardware config is ready — perform the initial install via `nixos-anywhere` from the gaming host or manual install from a NixOS ISO on the target machine
+- Verify the Cosmic DE boots correctly on first switch
+- **Apply audit fix on laptop**: run `nh os switch /home/bosko/NixOS` on the laptop host and confirm `auditd` is running with `audit-rules-nixos.service` disabled
+- **Unblock gaming switch**: monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch` once resolved
+- Generate WireGuard keypairs on gaming and laptop; write new `vpn.nix` module; replace placeholder keys in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
+- Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
+
+---
+
 ## Session: 2026-05-11 — audit-rules-nixos.service fix, natalie-laptop host, GPU refactor, config cleanup
 
 **Duration Estimate**: ~7 hours (16:59 – 23:29 based on commit timestamps)

@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for three active hosts (`gaming`, `lapt
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Four hosts are defined: `gaming`, `laptop`, `server`, and `natalie-laptop` (new, awaiting hardware config and install), plus `vpn-server` (awaiting deployment). The laptop is the current daily-driver; last successful `nh os switch` was 2026-05-10 — a fix for an `audit-rules-nixos.service` activation failure was committed 2026-05-11 and needs to be applied with the next switch. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (dry-run passes; unrelated to this repo). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
+Active development — `nixos-unstable` channel, state version `25.11`. Four hosts are defined: `gaming`, `laptop`, `server`, and `natalie-laptop` (config complete as of 2026-05-12, awaiting initial install), plus `vpn-server` (awaiting deployment). The laptop is the current daily-driver; last successful `nh os switch` was 2026-05-10 — a fix for an `audit-rules-nixos.service` activation failure was committed 2026-05-11 and needs to be applied with the next switch. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (dry-run passes; unrelated to this repo). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
 
 ## Features
 
@@ -86,7 +86,7 @@ dotfiles/
 │       └── dotfiles (katerc, kitty.conf, starship.toml)
 ├── gaming/                             # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/                             # same three files
-├── natalie-laptop/                     # same three files (hardware-configuration.nix is a placeholder)
+├── natalie-laptop/                     # same three files (hardware-configuration.nix has real hardware data as of 2026-05-12)
 ├── server/                             # same three files
 └── vpn-server/                         # configuration.nix, hardware-configuration.nix (awaiting deployment)
 ```
@@ -138,6 +138,8 @@ The client `vpn.nix` module was deleted on 2026-05-11 (it was unused and comment
 Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
+
+**2026-05-12** — Populated `dotfiles/natalie-laptop/hardware-configuration.nix` with real `nixos-generate-config` output from the target machine (Intel CPU, NVMe root ext4, vfat /boot, Thunderbolt/VMD support). The `natalie-laptop` host config is now complete and ready for initial install.
 
 **2026-05-11** — Added `natalie-laptop` host (Cosmic DE, `natty` user restored without elevated privileges). Deleted `vpn.nix` (unused since April; to be rewritten when VPN deployment is imminent). Fixed `audit-rules-nixos.service` activation failure: `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`; nixpkgs hard-codes one — disabled the service via `systemd.services.audit-rules-nixos.enable = lib.mkForce false` while keeping `auditd` running. Scoped `amd.nix` to gaming host only (laptop has no AMD GPU). Fixed xwayland option duplication in `niri.nix`. Removed Deezer Flatpak from gaming. Added `dry-run` shell alias.
 

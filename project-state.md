@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-11_
+_Last updated: 2026-05-12_
 
 ## Current Project State
 
@@ -11,7 +11,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 | `gaming` | BROKEN — `nh os switch` fails; blocked by openldap nixpkgs-unstable regression; all config is correct and ready to activate once upstream fixes it | plasma.nix |
 | `laptop` | **LIVE** — last successful `nh os switch` 2026-05-10; security hardening active; `audit-rules-nixos.service` fix committed 2026-05-11 (not yet re-applied, needs a switch) | niri.nix |
 | `server` | Active — headless | — |
-| `natalie-laptop` | **New** — host defined 2026-05-11; placeholder `hardware-configuration.nix`; cannot be built until replaced with real `nixos-generate-config` output | cosmic.nix |
+| `natalie-laptop` | **Ready to install** — host defined 2026-05-11; real `hardware-configuration.nix` committed 2026-05-12 (Intel CPU, NVMe root, vfat /boot); ready for initial install via `nixos-anywhere` or manual install | cosmic.nix |
 | `vpn-server` | Defined, awaiting deployment to Oracle Cloud | — |
 
 **Laptop has an unverified fix pending.** The `audit-rules-nixos.service` was failing during activation because `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules` and nixpkgs hard-codes one. The service is now disabled via `systemd.services.audit-rules-nixos.enable = lib.mkForce false`. This needs to be activated via `nh os switch` to confirm.
@@ -29,7 +29,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 ### Short-term (next 1-3 sessions)
 
 - **Apply the audit-rules-nixos fix on laptop** — run `nh os switch /home/bosko/NixOS` and confirm `auditd` is running while `audit-rules-nixos.service` is inactive/disabled
-- **Natalie laptop install** — run `nixos-generate-config` on the target machine, commit the real hardware config to `dotfiles/natalie-laptop/hardware-configuration.nix`, perform the initial install
+- **Natalie laptop install** — `hardware-configuration.nix` is now real (committed 2026-05-12); next step is the initial install via `nixos-anywhere` or manual install
 - **Unblock the gaming host switch** — monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once it lands
 - After gaming switch succeeds: verify `aa-status`, `journalctl -u auditd`, and confirm `~/.claude/agents/` symlinks are correct
 - M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix`; write the new `vpn.nix` module
@@ -61,7 +61,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 - **Laptop switch needed to apply audit fix** — `systemd.services.audit-rules-nixos.enable = lib.mkForce false` is committed but not yet activated on laptop. Run `nh os switch` to apply.
 - **Gaming host switch blocked by openldap regression** — `nixpkgs-unstable` has an `openldap-2.6.13-i686-linux` build failure. Dry-run passes; actual switch fails. Blocked on upstream fix.
-- **natalie-laptop has placeholder hardware config** — `dotfiles/natalie-laptop/hardware-configuration.nix` is a two-line stub. The host cannot be built until replaced with real `nixos-generate-config` output from the target machine.
+- **natalie-laptop install pending** — `hardware-configuration.nix` now contains real hardware data (Intel CPU, NVMe root UUID `d6f891ea-efeb-4d79-97cd-ea6d8966e0ad`, vfat /boot UUID `229A-8574`). Config is complete; host needs its initial install.
 - **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config. Safe to revisit once gaming host is switched and AppArmor state is confirmed.
 - **vpn.nix does not exist** — Deleted 2026-05-11. WireGuard VPN remains a goal; the module needs to be written from scratch before VPN deployment can proceed.
 - **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `dotfiles/vpn-server/configuration.nix` must be replaced with real keys before deployment.
@@ -72,7 +72,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 ## Next Steps
 
 1. **Apply audit fix on laptop**: run `nh os switch /home/bosko/NixOS`; confirm `auditd` is running and `audit-rules-nixos.service` is disabled; verify swaylock idle trigger still works
-2. **Natalie laptop install**: run `nixos-generate-config` on the target machine; commit real `hardware-configuration.nix` to `dotfiles/natalie-laptop/`; perform initial install via `nixos-anywhere` or manual install
+2. **Natalie laptop install**: `hardware-configuration.nix` is committed — perform initial install via `nixos-anywhere` or manual install from NixOS ISO
 3. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once resolved
 4. After gaming switch succeeds: verify `aa-status`, `journalctl -u auditd`; confirm `~/.claude/agents/` symlinks are correct
 5. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
