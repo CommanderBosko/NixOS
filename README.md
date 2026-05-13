@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for three active hosts (`gaming`, `lapt
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Four hosts are defined: `gaming`, `laptop`, `server`, and `natalie-laptop` (config complete as of 2026-05-12, awaiting initial install), plus `vpn-server` (awaiting deployment). The laptop is the current daily-driver; last successful `nh os switch` was 2026-05-10 — a fix for an `audit-rules-nixos.service` activation failure was committed 2026-05-11 and needs to be applied with the next switch. The gaming host is still blocked from switching by an `openldap` regression in nixpkgs-unstable (dry-run passes; unrelated to this repo). Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active on laptop and will activate on gaming once the upstream regression is resolved. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
+Active development — `nixos-unstable` channel, state version `25.11`. Four hosts are defined: `gaming`, `laptop`, `server`, and `natalie-laptop` (config complete, awaiting initial install), plus `vpn-server` (awaiting deployment). The gaming host switch was unblocked on 2026-05-12 by commenting out `lutris` (which pulled in `openldap-2.6.13/i686-linux` with no binary cache entry). The laptop is the current daily-driver; a fix for an `audit-rules-nixos.service` activation failure was committed 2026-05-11 and is pending its next switch. Server is headless. A full security audit was completed 2026-05-06; all hardening changes are active. Classic dbus is pinned in `security.nix` after nixpkgs-unstable changed the default to dbus-broker, which conflicted with AppArmor configuration.
 
 ## Features
 
@@ -139,6 +139,8 @@ Server config: `dotfiles/vpn-server/configuration.nix`.
 
 ## Recent Changes
 
+**2026-05-12 (evening)** — Commented out `lutris` in `gaming.nix` to unblock `nh os switch` on the gaming host. `lutris` transitively requires `openldap-2.6.13` for `i686-linux`, which has no binary cache entry in nixpkgs-unstable; attempting the switch triggered an hours-long source build. `faugus-launcher` (already in `gaming.nix`) replaces it. Also added `pnpm` to the gaming host's system packages and bumped flake inputs.
+
 **2026-05-12** — Populated `dotfiles/natalie-laptop/hardware-configuration.nix` with real `nixos-generate-config` output from the target machine (Intel CPU, NVMe root ext4, vfat /boot, Thunderbolt/VMD support). The `natalie-laptop` host config is now complete and ready for initial install.
 
 **2026-05-11** — Added `natalie-laptop` host (Cosmic DE, `natty` user restored without elevated privileges). Deleted `vpn.nix` (unused since April; to be rewritten when VPN deployment is imminent). Fixed `audit-rules-nixos.service` activation failure: `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`; nixpkgs hard-codes one — disabled the service via `systemd.services.audit-rules-nixos.enable = lib.mkForce false` while keeping `auditd` running. Scoped `amd.nix` to gaming host only (laptop has no AMD GPU). Fixed xwayland option duplication in `niri.nix`. Removed Deezer Flatpak from gaming. Added `dry-run` shell alias.
@@ -152,8 +154,9 @@ Server config: `dotfiles/vpn-server/configuration.nix`.
 ## Roadmap
 
 - Apply `audit-rules-nixos.service` fix on laptop via `nh os switch`; confirm `auditd` is active
-- Complete Natalie laptop install: commit real `hardware-configuration.nix`; run `nixos-anywhere`
-- Unblock the gaming host switch (monitor nixpkgs-unstable for the openldap regression fix)
+- Verify gaming post-switch: `aa-status`, `auditd`, `~/.claude/agents/` symlinks, GameMode and Steam hardware support
+- Complete Natalie laptop install: real `hardware-configuration.nix` is committed; run `nixos-anywhere` from gaming or boot a NixOS ISO
+- Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
 - Generate WireGuard keypairs; write new `vpn.nix` client module; replace placeholder keys in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
 - Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
 - Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`

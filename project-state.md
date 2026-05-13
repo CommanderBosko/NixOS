@@ -4,11 +4,11 @@ _Last updated: 2026-05-12_
 
 ## Current Project State
 
-The configuration manages four defined NixOS hosts from a single flake (`vpn-server` awaiting deployment; `natalie-laptop` awaiting hardware config and install):
+The configuration manages four defined NixOS hosts from a single flake (`vpn-server` awaiting deployment; `natalie-laptop` awaiting initial install):
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | BROKEN — `nh os switch` fails; blocked by openldap nixpkgs-unstable regression; all config is correct and ready to activate once upstream fixes it | plasma.nix |
+| `gaming` | **LIVE** — `nh os switch` unblocked 2026-05-12 after commenting out `lutris` (openldap-2.6.13/i686 build failure); switch now succeeds; faugus-launcher in use as replacement | plasma.nix |
 | `laptop` | **LIVE** — last successful `nh os switch` 2026-05-10; security hardening active; `audit-rules-nixos.service` fix committed 2026-05-11 (not yet re-applied, needs a switch) | niri.nix |
 | `server` | Active — headless | — |
 | `natalie-laptop` | **Ready to install** — host defined 2026-05-11; real `hardware-configuration.nix` committed 2026-05-12 (Intel CPU, NVMe root, vfat /boot); ready for initial install via `nixos-anywhere` or manual install | cosmic.nix |
@@ -30,8 +30,8 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 - **Apply the audit-rules-nixos fix on laptop** — run `nh os switch /home/bosko/NixOS` and confirm `auditd` is running while `audit-rules-nixos.service` is inactive/disabled
 - **Natalie laptop install** — `hardware-configuration.nix` is now real (committed 2026-05-12); next step is the initial install via `nixos-anywhere` or manual install
-- **Unblock the gaming host switch** — monitor nixpkgs-unstable for the openldap regression fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once it lands
-- After gaming switch succeeds: verify `aa-status`, `journalctl -u auditd`, and confirm `~/.claude/agents/` symlinks are correct
+- **Verify gaming host post-switch** — switch succeeded 2026-05-12; run `aa-status`, `journalctl -u auditd`, and confirm `~/.claude/agents/` symlinks are correct on gaming
+- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix` and remove the workaround comment
 - M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix`; write the new `vpn.nix` module
 - M-9: Pin server to `nixos-25.05` stable by adding a second nixpkgs input in `flake.nix`
 
@@ -44,6 +44,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 ## Recent Decisions
 
+- **`lutris` commented out in gaming.nix (2026-05-12)** — `lutris` transitively depends on `openldap-2.6.13` for `i686-linux`; that derivation has no binary cache entry and attempting to build it from source blocks `nh os switch` for hours. Workaround: `# lutris` comment in `gaming.nix`; `faugus-launcher` (already in the list) covers the use-case. Restore once a binary cache entry exists.
 - **`audit-rules-nixos.service` disabled (2026-05-11)** — `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`; nixpkgs hard-codes one before `-e 1`. Disabling the service via `systemd.services.audit-rules-nixos.enable = lib.mkForce false` is cleaner than patching nixpkgs. `auditd` continues running (required for AppArmor). If custom audit rules are needed in future, load them via a separate unit.
 - **`natty` restored as non-wheel user (2026-05-11)** — Removed in the 2026-05-06 audit for being in the wheel group. Now back with no elevated privileges (no wheel, no trusted-user) for the Natalie laptop host.
 - **`vpn.nix` deleted (2026-05-11)** — File had been commented out in `flake.nix` since April; deleted to reduce dead code. Will be rewritten from scratch when VPN deployment is imminent.
@@ -60,7 +61,7 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 ## Known Issues / Tech Debt
 
 - **Laptop switch needed to apply audit fix** — `systemd.services.audit-rules-nixos.enable = lib.mkForce false` is committed but not yet activated on laptop. Run `nh os switch` to apply.
-- **Gaming host switch blocked by openldap regression** — `nixpkgs-unstable` has an `openldap-2.6.13-i686-linux` build failure. Dry-run passes; actual switch fails. Blocked on upstream fix.
+- **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
 - **natalie-laptop install pending** — `hardware-configuration.nix` now contains real hardware data (Intel CPU, NVMe root UUID `d6f891ea-efeb-4d79-97cd-ea6d8966e0ad`, vfat /boot UUID `229A-8574`). Config is complete; host needs its initial install.
 - **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config. Safe to revisit once gaming host is switched and AppArmor state is confirmed.
 - **vpn.nix does not exist** — Deleted 2026-05-11. WireGuard VPN remains a goal; the module needs to be written from scratch before VPN deployment can proceed.
@@ -71,10 +72,10 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 ## Next Steps
 
-1. **Apply audit fix on laptop**: run `nh os switch /home/bosko/NixOS`; confirm `auditd` is running and `audit-rules-nixos.service` is disabled; verify swaylock idle trigger still works
-2. **Natalie laptop install**: `hardware-configuration.nix` is committed — perform initial install via `nixos-anywhere` or manual install from NixOS ISO
-3. **Unblock gaming switch**: monitor nixpkgs-unstable for openldap fix; run `nh os switch /home/bosko/NixOS 2>&1 | tee /tmp/switch.log` once resolved
-4. After gaming switch succeeds: verify `aa-status`, `journalctl -u auditd`; confirm `~/.claude/agents/` symlinks are correct
+1. **Apply audit fix on laptop**: run `nh os switch /home/bosko/NixOS` on the laptop host; confirm `auditd` is running and `audit-rules-nixos.service` is disabled; verify swaylock idle trigger still works
+2. **Verify gaming post-switch**: run `aa-status`, `journalctl -u auditd`; confirm `~/.claude/agents/` symlinks are correct; check GameMode and Steam hardware support
+3. **Natalie laptop install**: perform initial install via `nixos-anywhere` from gaming host or manual install from NixOS ISO; verify Cosmic DE boots correctly
+4. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
 5. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
 6. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
 7. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
