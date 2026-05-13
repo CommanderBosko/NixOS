@@ -70,6 +70,7 @@
     obs-studio
     onlyoffice-desktopeditors
     p7zip
+    pnpm
     qalculate-qt
     tor-browser
     vesktop

@@ -90,7 +90,7 @@
   environment.systemPackages = with pkgs; [
     faugus-launcher
     heroic
-    lutris
+    # lutris
     mangohud
     mangojuice
     protontricks
