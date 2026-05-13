@@ -113,6 +113,7 @@ in
       nixfmt
       pipes
       pywal
+      qdirstat
       starship
       tree
       tty-clock
