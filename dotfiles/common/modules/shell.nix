@@ -41,7 +41,7 @@ in
           echo ""
           echo "Attempting a dry-run on your system"
           echo ""
-          nh os switch ~/NixOS/. -H ${hostName} --dry
+          nh os boot ~/NixOS/. -H ${hostName} --dry
         '';
         rebuild = ''
           echo ""
