@@ -51,11 +51,11 @@
     github-desktop
     gparted
     kdePackages.kate
+    kdePackages.okular
     kitty
     megasync
     nodejs
     obs-studio
-    okular
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt
