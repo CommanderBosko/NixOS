@@ -1,5 +1,8 @@
 { inputs, self, ... }:
 
+let
+  stateVersion = "25.11";
+in
 {
   home-manager = {
     users = {
@@ -7,7 +10,7 @@
         home = {
           username = "bosko";
           homeDirectory = "/home/bosko";
-          stateVersion = "25.11";
+          stateVersion = stateVersion;
         };
 
         imports = [
@@ -20,7 +23,7 @@
         home = {
           username = "natty";
           homeDirectory = "/home/natty";
-          stateVersion = "25.11";
+          stateVersion = stateVersion;
         };
 
         imports = [
