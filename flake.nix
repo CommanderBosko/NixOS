@@ -43,7 +43,6 @@
       "${self}/dotfiles/common/modules/audio.nix"
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/home-manager.nix"
-      "${self}/dotfiles/common/modules/nvidia.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
     ];
   in
@@ -63,14 +62,14 @@
         inherit inputs system nixpkgs;
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
-          # Gaming-only: AMD required for KVM/Virt-Manager
-          "${self}/dotfiles/common/modules/amd.nix"
           # Machine-specific modules
           "${self}/dotfiles/gaming/hardware-configuration.nix"
           "${self}/dotfiles/gaming/environment.nix"
           "${self}/dotfiles/gaming/networking.nix"
+          "${self}/dotfiles/common/modules/amd.nix"
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
+          "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/dotfiles/common/modules/virtualisation.nix"
         ];
       };
@@ -85,6 +84,7 @@
           "${self}/dotfiles/laptop/environment.nix"
           "${self}/dotfiles/laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
+          "${self}/dotfiles/common/modules/nvidia.nix"
         ];
       };
 
@@ -98,6 +98,7 @@
           "${self}/dotfiles/natalie-laptop/environment.nix"
           "${self}/dotfiles/natalie-laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
+          "${self}/dotfiles/common/modules/nvidia.nix"
         ];
       };
 
