@@ -55,7 +55,7 @@
           "sh"
           "bash"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.shfmt;
           args = [
@@ -69,7 +69,7 @@
         name = "c";
         scope = "source.c";
         file-types = [ "c" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = "${pkgs.clang-tools}/bin/clang-format";
         };
@@ -87,7 +87,7 @@
           "hpp"
           "hxx"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = "${pkgs.clang-tools}/bin/clang-format";
         };
@@ -97,7 +97,7 @@
         name = "css";
         scope = "source.css";
         file-types = [ "css" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -111,7 +111,7 @@
         name = "go";
         scope = "source.go";
         file-types = [ "go" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.gofumpt;
         };
@@ -124,7 +124,7 @@
           "tf"
           "hcl"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.terraform-ls;
           args = [
@@ -138,7 +138,7 @@
         name = "html";
         scope = "text.html.basic";
         file-types = [ "html" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -152,7 +152,7 @@
         name = "java";
         scope = "source.java";
         file-types = [ "java" ];
-        auto-format = true;
+        auto-format = false;
         language-servers = [ "jdtls" ];
       }
       {
@@ -163,7 +163,7 @@
           "mjs"
           "cjs"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -180,7 +180,7 @@
           "json"
           "jsonc"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -194,7 +194,7 @@
         name = "lua";
         scope = "source.lua";
         file-types = [ "lua" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.stylua;
           args = [ "-" ];
@@ -208,7 +208,7 @@
           "md"
           "markdown"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -222,7 +222,7 @@
         name = "nix";
         scope = "source.nix";
         file-types = [ "nix" ];
-        auto-format = true;
+        auto-format = false;
         formatter.command = lib.getExe pkgs.nixfmt;
         language-servers = [
           "nixd"
@@ -233,7 +233,7 @@
         name = "python";
         scope = "source.python";
         file-types = [ "py" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.ruff;
           args = [
@@ -247,7 +247,7 @@
         name = "rust";
         scope = "source.rust";
         file-types = [ "rs" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.rustfmt;
         };
@@ -257,7 +257,7 @@
         name = "toml";
         scope = "source.toml";
         file-types = [ "toml" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.taplo;
           args = [
@@ -274,7 +274,7 @@
           "yaml"
           "yml"
         ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
           args = [
@@ -288,7 +288,7 @@
         name = "zsh";
         scope = "source.zsh";
         file-types = [ "zsh" ];
-        auto-format = true;
+        auto-format = false;
         formatter = {
           command = lib.getExe pkgs.shfmt;
           args = [
