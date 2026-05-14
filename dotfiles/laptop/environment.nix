@@ -42,19 +42,15 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
-    claude-code
-    discord
     element-desktop
     firefox
     freetube
-    gemini-cli
     github-desktop
     gparted
     kdePackages.kate
     kitty
     megasync
     nodejs
-    obs-studio
     onlyoffice-desktopeditors
     p7zip
     qalculate-qt

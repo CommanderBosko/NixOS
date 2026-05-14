@@ -55,12 +55,9 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
-    claude-code
-    discord
     element-desktop
     firefox
     freetube
-    gemini-cli
     github-desktop
     gparted
     kdePackages.kate
