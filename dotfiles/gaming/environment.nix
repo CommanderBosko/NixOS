@@ -66,6 +66,7 @@
     kdePackages.kate
     kitty
     megasync
+    mumble
     nodejs
     obs-studio
     onlyoffice-desktopeditors
