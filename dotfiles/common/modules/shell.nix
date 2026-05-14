@@ -31,7 +31,7 @@ in
           echo ""
           echo "Cleaning up your system"
           echo ""
-          nh clean all --keep 5
+          nh clean all --keep 3
           echo ""
           echo "Removing unused Flatpaks"
           echo ""
