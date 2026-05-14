@@ -6,9 +6,6 @@
   ];
 
   home = {
-    # Set home-manager state version
-    stateVersion = "25.11"; # ← do NOT change this later — read the comment in home-manager release notes
-
     # Copy over dotfiles
     # Kate
     file.".config/katerc" = {
