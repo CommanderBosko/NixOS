@@ -26,7 +26,7 @@ These are also available as shell aliases when running as bosko: `rebuild`, `dry
 
 ## Architecture Overview
 
-Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie-laptop`, `vpn-server`. All configuration lives under `dotfiles/`.
+Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie-laptop`, `vpn-server`. Shared modules live under `dotfiles/common/`; host-specific files live under `hosts/<hostname>/`.
 
 ### Module Composition
 
@@ -44,15 +44,19 @@ The server host uses only `commonModules` (headless, no flatpaks, no DE). The vp
 
 ```
 dotfiles/
-├── common/
-│   ├── modules/          # System-level NixOS modules
-│   │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
-│   │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
-│   └── configs/          # Home Manager configs shared by both users
-│       ├── home.nix      # HM root — imported by both bosko and natty
-│       ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
-│       ├── helix.nix
-│       └── dotfiles (katerc, kitty.conf, starship.toml)
+└── common/
+    ├── modules/          # System-level NixOS modules
+    │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
+    │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
+    └── configs/          # Home Manager configs shared by both users
+        ├── home.nix      # HM root — imported by both bosko and natty
+        ├── helix.nix
+        └── dotfiles (katerc, kitty.conf, starship.toml)
+├── bosko/                # bosko-specific HM configs (not shared with natty)
+│   ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
+│   └── claude/agents/    # Agent definition files (repo-creator-agent.md, session-closer.md)
+
+hosts/
 ├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/               # same three files
 ├── natalie-laptop/       # same three files
@@ -97,6 +101,6 @@ Part of `commonModules` (applies to all hosts). Enables:
 
 1. Create `dotfiles/common/modules/desktop-environments/my-de.nix`
 2. Add it to git: `git add dotfiles/common/modules/desktop-environments/my-de.nix`
-3. Import in the host's flake entry using `"${self}/dotfiles/common/modules/desktop-environments/my-de.nix"`
+3. Import in the host's flake entry using `"${self}/dotfiles/common/modules/desktop-environments/my-de.nix"` (note: DE modules stay under `dotfiles/common/`, only host-specific files are under `hosts/`)
 4. Test with `nh os boot /home/bosko/NixOS --dry`
 5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`

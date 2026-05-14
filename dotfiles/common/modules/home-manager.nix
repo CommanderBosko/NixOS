@@ -15,7 +15,7 @@ in
 
         imports = [
           (import "${self}/dotfiles/common/configs/home.nix")
-          (import "${self}/dotfiles/common/configs/bosko-claude.nix")
+          (import "${self}/dotfiles/bosko/bosko-claude.nix")
         ];
       };
 

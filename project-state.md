@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-14_
+_Last updated: 2026-05-15_
 
 ## Current Project State
 
@@ -13,6 +13,8 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 | `server` | Active — headless | — |
 | `natalie-laptop` | **LIVE** — installed and running; Cosmic DE verified. | cosmic.nix |
 | `vpn-server` | Defined, awaiting deployment to Oracle Cloud (`aarch64-linux`) | — |
+
+**Repository restructured (2026-05-15).** Host-specific files moved from `dotfiles/<hostname>/` into a new top-level `hosts/<hostname>/` directory. Bosko-specific Home Manager configs (`bosko-claude.nix` and `claude/agents/`) moved from `dotfiles/common/configs/` into `dotfiles/bosko/`. All `flake.nix` paths updated; dry-run passed cleanly after both moves.
 
 **`rebuild` alias now uses `nh os boot`.** As of 2026-05-12, the `rebuild` shell alias stages changes for the next reboot rather than attempting a live switch.
 
@@ -33,7 +35,7 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed on the current config, dbus-broker can be re-enabled
-- M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix`; write the new `vpn.nix` module
+- M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `hosts/vpn-server/configuration.nix`; write the new `vpn.nix` module
 - M-9: Pin server to `nixos-25.05` stable by adding a second nixpkgs input in `flake.nix`
 
 ### Long-term
@@ -45,6 +47,8 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 
 ## Recent Decisions
 
+- **Host directories moved to `hosts/` (2026-05-15)** — All five host-specific directories (`gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`) relocated from `dotfiles/<hostname>/` to `hosts/<hostname>/`. Clarifies the repo layout: `dotfiles/` now holds only shared and user-specific HM configs; `hosts/` holds machine-specific NixOS config.
+- **Bosko-specific HM configs moved to `dotfiles/bosko/` (2026-05-15)** — `bosko-claude.nix` and `claude/agents/` relocated from `dotfiles/common/configs/` to `dotfiles/bosko/`. Makes the user-scope of these files explicit; `dotfiles/common/configs/` now contains only configs shared by both users.
 - **`nvidia.nix` scoped per-host (2026-05-14)** — Removed from `desktopModules`; each desktop host (gaming, laptop, natalie-laptop) now imports it explicitly. Preparation for the gaming AMD card swap: dropping NVIDIA from gaming will require only a one-line flake change.
 - **`rebuild` alias switched to `nh os boot` (2026-05-12)** — Avoids live-switch activation failures. Changes are staged; rebooting applies them.
 - **`claude-code` and `gemini-cli` moved to `users.nix` user packages (2026-05-14)** — User-scoped tools belong in `users.users.bosko.packages`, not duplicated across per-host `environment.nix` files.
@@ -69,7 +73,7 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
 - **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config.
 - **vpn.nix does not exist** — Deleted 2026-05-11. WireGuard VPN remains a goal; the module needs to be written from scratch before VPN deployment can proceed.
-- **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `dotfiles/vpn-server/configuration.nix` must be replaced with real keys before deployment.
+- **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `hosts/vpn-server/configuration.nix` must be replaced with real keys before deployment.
 - **M-9 deferred** — Server still runs `nixos-unstable`. Should be pinned to `nixos-25.05` for stability; requires a new flake input.
 - **vpn-server references `enp0s3`** — Interface name may differ on the actual Oracle Cloud instance; verify at deploy time.
 
@@ -78,7 +82,7 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 1. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot; verify `amd.nix` is sufficient
 2. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
 3. **Validate dbus-broker**: test dbus-broker AppArmor compatibility on the current config; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
-4. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
+4. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `hosts/vpn-server/configuration.nix` (M-7/M-8)
 5. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
 6. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
 7. Enable VPN on gaming and laptop once server is live and keys are real

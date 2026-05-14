@@ -63,9 +63,9 @@
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
-          "${self}/dotfiles/gaming/hardware-configuration.nix"
-          "${self}/dotfiles/gaming/environment.nix"
-          "${self}/dotfiles/gaming/networking.nix"
+          "${self}/hosts/gaming/hardware-configuration.nix"
+          "${self}/hosts/gaming/environment.nix"
+          "${self}/hosts/gaming/networking.nix"
           "${self}/dotfiles/common/modules/amd.nix"
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
@@ -80,9 +80,9 @@
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
-          "${self}/dotfiles/laptop/hardware-configuration.nix"
-          "${self}/dotfiles/laptop/environment.nix"
-          "${self}/dotfiles/laptop/networking.nix"
+          "${self}/hosts/laptop/hardware-configuration.nix"
+          "${self}/hosts/laptop/environment.nix"
+          "${self}/hosts/laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
         ];
@@ -94,9 +94,9 @@
         specialArgs = { inherit inputs self system; };
         modules = desktopModules ++ [
           # Machine-specific modules
-          "${self}/dotfiles/natalie-laptop/hardware-configuration.nix"
-          "${self}/dotfiles/natalie-laptop/environment.nix"
-          "${self}/dotfiles/natalie-laptop/networking.nix"
+          "${self}/hosts/natalie-laptop/hardware-configuration.nix"
+          "${self}/hosts/natalie-laptop/environment.nix"
+          "${self}/hosts/natalie-laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
         ];
@@ -108,9 +108,9 @@
         specialArgs = { inherit inputs self system; };
         modules = commonModules ++ [
           # Machine-specific modules
-          "${self}/dotfiles/server/hardware-configuration.nix"
-          "${self}/dotfiles/server/environment.nix"
-          "${self}/dotfiles/server/networking.nix"
+          "${self}/hosts/server/hardware-configuration.nix"
+          "${self}/hosts/server/environment.nix"
+          "${self}/hosts/server/networking.nix"
         ];
       };
 
@@ -122,8 +122,8 @@
           system = "aarch64-linux";
         };
         modules = commonModules ++ [
-          "${self}/dotfiles/vpn-server/hardware-configuration.nix"
-          "${self}/dotfiles/vpn-server/configuration.nix"
+          "${self}/hosts/vpn-server/hardware-configuration.nix"
+          "${self}/hosts/vpn-server/configuration.nix"
         ];
       };
     };

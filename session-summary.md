@@ -2,6 +2,59 @@
 
 ---
 
+## Session: 2026-05-15 — Repository restructure: hosts/ directory and bosko-specific HM split
+
+**Duration Estimate**: Short (focused structural refactor)
+**Session Focus**: Clarify the repository layout by separating host-specific NixOS files from shared dotfiles, and isolating bosko-specific Home Manager configs from configs shared with natty.
+
+### What Was Accomplished
+
+- Moved all five host-specific directories from `dotfiles/<hostname>/` into a new top-level `hosts/` directory: `gaming`, `laptop`, `natalie-laptop`, `server`, and `vpn-server`. Each host directory retains its three files (`hardware-configuration.nix`, `environment.nix`, `networking.nix`; vpn-server retains `configuration.nix` and `hardware-configuration.nix`).
+- Moved bosko-specific Home Manager configs out of `dotfiles/common/configs/` into a new `dotfiles/bosko/` directory: `bosko-claude.nix` and the `claude/agents/` folder (containing `repo-creator-agent.md` and `session-closer.md`).
+- Updated all path references in `flake.nix` (host module paths), `dotfiles/common/modules/home-manager.nix` (bosko-claude.nix import path), and `bosko-claude.nix` itself (agent source paths using `${self}/`).
+- Updated `CLAUDE.md` to reflect the new layout: description updated, directory tree redrawn to show `hosts/` as a top-level peer to `dotfiles/`, `dotfiles/bosko/` shown separately from `dotfiles/common/configs/`.
+- Verified the restructure with a dry-run build (`nh os boot /home/bosko/NixOS --dry`) — passed cleanly after both sets of moves.
+
+### Files Changed
+
+- `flake.nix` — updated all 17 host module paths from `${self}/dotfiles/<host>/...` to `${self}/hosts/<host>/...`
+- `dotfiles/common/modules/home-manager.nix` — updated `bosko-claude.nix` import path from `dotfiles/common/configs/bosko-claude.nix` to `dotfiles/bosko/bosko-claude.nix`
+- `dotfiles/bosko/bosko-claude.nix` (moved from `dotfiles/common/configs/bosko-claude.nix`) — updated `source` paths for agent symlinks to reflect new location under `dotfiles/bosko/claude/agents/`
+- `dotfiles/bosko/claude/agents/repo-creator-agent.md` (moved from `dotfiles/common/configs/claude/agents/`)
+- `dotfiles/bosko/claude/agents/session-closer.md` (moved from `dotfiles/common/configs/claude/agents/`)
+- `hosts/gaming/` — three files moved from `dotfiles/gaming/`
+- `hosts/laptop/` — three files moved from `dotfiles/laptop/`
+- `hosts/natalie-laptop/` — three files moved from `dotfiles/natalie-laptop/`
+- `hosts/server/` — three files moved from `dotfiles/server/`
+- `hosts/vpn-server/` — two files moved from `dotfiles/vpn-server/`
+- `CLAUDE.md` — updated architecture description and directory tree to reflect new layout
+- `README.md` — updated opening paragraph, Configuration section, and Project Structure tree
+- `project-state.md` — added restructure note to Current Project State and Recent Decisions
+
+### Commits This Session
+
+- (session-close commit — this session)
+
+### Decisions Made
+
+- **`hosts/` as top-level directory** — Placing host-specific files at the repo root alongside `dotfiles/` and `flake.nix` makes the separation of concerns immediately visible: `flake.nix` wires everything together, `dotfiles/` holds shared and user-specific HM config, `hosts/` holds per-machine NixOS config.
+- **`dotfiles/bosko/` for user-scoped HM configs** — `dotfiles/common/configs/` now contains only files imported by both `bosko` and `natty`. Bosko-specific configs (the Claude agent symlinks module) belong in a user-namespaced directory, not in `common/`.
+
+### Issues Encountered
+
+- None. Both moves were straightforward renames; the dry-run confirmed all path references resolved correctly.
+
+### Remaining / Next Session
+
+- AMD card swap on gaming: remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
+- Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
+- Validate dbus-broker AppArmor compatibility; remove the classic dbus pin from `security.nix` if clean
+- Generate WireGuard keypairs; write new `vpn.nix` client module; replace placeholder keys in `hosts/vpn-server/configuration.nix` (M-7/M-8)
+- Pin server to `nixos-25.05` stable (M-9)
+- Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+
+---
+
 ## Session: 2026-05-12 to 2026-05-14 — Refactor, housekeeping, and GPU module scoping for AMD card swap
 
 **Duration Estimate**: ~3 days (commits from 2026-05-12 evening through 2026-05-14 midday)
