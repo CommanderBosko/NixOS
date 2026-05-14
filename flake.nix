@@ -36,7 +36,7 @@
       "${self}/dotfiles/common/modules/users.nix"
     ];
 
-    # Modules specific to desktop systems (gaming, laptop) — includes zen kernel + GRUB
+    # Modules specific to desktop systems (gaming, laptop, natalie-laptop)
     desktopModules = commonModules ++ [
       home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
