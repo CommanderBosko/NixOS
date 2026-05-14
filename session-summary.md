@@ -2,6 +2,78 @@
 
 ---
 
+## Session: 2026-05-12 to 2026-05-14 — Refactor, housekeeping, and GPU module scoping for AMD card swap
+
+**Duration Estimate**: ~3 days (commits from 2026-05-12 evening through 2026-05-14 midday)
+**Session Focus**: Clean up and restructure configuration — centralise user-specific packages, tighten GPU module scoping in preparation for replacing the gaming host's NVIDIA card with AMD, improve flake and Home Manager readability, and general housekeeping.
+
+### What Was Accomplished
+
+- Switched the `rebuild` shell alias from `nh os switch` to `nh os boot` — rebuilds now stage changes for the next boot rather than attempting a live switch, avoiding activation-time conflicts.
+- Added `qdirstat` to `shell.nix` system packages (available on all hosts).
+- Bumped flake inputs (`flake.lock` — routine update, 6 changed entries).
+- Fixed `kdePackages.okular` reference in `natalie-laptop/environment.nix` (was `okular` without the KDE packages prefix — would have failed to evaluate).
+- Reorganised `home.nix` and `home-manager.nix`: moved `stateVersion` out of the shared `home.nix` and into each user's block in `home-manager.nix`; collapsed `home-manager.users.*` and `home-manager.extraSpecialArgs` into a single nested `home-manager { }` attrset for clarity; added `home.nix` import for `natty` (previously missing — natty had no Home Manager config applied).
+- Removed `nvidia.nix` from `desktopModules` (was applied to all desktop hosts); scoped it per-host explicitly (gaming, laptop, natalie-laptop each import it individually). This is groundwork for the upcoming AMD card swap on gaming — `nvidia.nix` can be removed from gaming's module list independently when the swap happens.
+- Refactored `flake.nix` and `home-manager.nix` for readability (consistent indentation, removed redundant comments, consistent attribute ordering).
+- Moved `mumble` from `users.nix` (user-level packages on all hosts) to `gaming/environment.nix` (gaming-only system package) — it was never needed on laptop or server.
+- Consolidated `claude-code` and `gemini-cli` into `users.nix` user packages for `bosko` (removed from per-host `environment.nix` files on gaming, laptop, natalie-laptop). These tools are user-scoped, not system-scoped, and belong on every machine bosko uses.
+- Removed `discord` from gaming and laptop environment packages (replaced by vesktop, which is already listed).
+- Removed `obs-studio` from laptop and natalie-laptop environment packages.
+- Removed `nodejs`, `tor-browser`, `vivaldi`, and `element-desktop` from natalie-laptop (cleanup of packages that weren't needed there).
+- Reduced `nh clean` retention from 5 builds to 3 in the `cleanup` shell alias.
+- Fixed a stale comment in `flake.nix`.
+
+### Files Changed
+
+- `flake.nix` — removed `nvidia.nix` from `desktopModules`; added explicit per-host `nvidia.nix` import for gaming, laptop, natalie-laptop; reformatted for clarity; fixed comment
+- `dotfiles/common/modules/home-manager.nix` — restructured into single `home-manager { }` block; moved `stateVersion` here; added `home.nix` import for natty's HM config
+- `dotfiles/common/configs/home.nix` — removed `stateVersion` (moved to `home-manager.nix`)
+- `dotfiles/common/modules/users.nix` — reformatted into a `users.users { }` block; added `packages = [ claude-code gemini-cli ]` to bosko; added `packages = []` stub for natty
+- `dotfiles/common/modules/shell.nix` — added `qdirstat`; reduced `cleanup` alias keep count from 5 to 3; `rebuild` alias changed from `nh os switch` to `nh os boot`
+- `dotfiles/gaming/environment.nix` — removed `claude-code`, `gemini-cli`, `discord`; added `mumble`
+- `dotfiles/laptop/environment.nix` — removed `claude-code`, `gemini-cli`, `discord`, `obs-studio`
+- `dotfiles/natalie-laptop/environment.nix` — removed `claude-code`, `gemini-cli`, `discord`, `element-desktop`, `nodejs`, `obs-studio`, `tor-browser`, `vivaldi`; fixed `okular` to `kdePackages.okular`
+- `flake.lock` — routine flake input update
+
+### Commits This Session
+
+- `0399833` — added qdirstat
+- `b6982eb` — switched rebuild alias from switch to boot
+- `4452793` — updated flake
+- `f244811` — fixed okular to kdePackages.okular
+- `11ecc80` — reorganized home.nix and home-manager.nix
+- `22d7162` — made flake.nix and home-manager.nix look better
+- `8471f27` — added nvidia.nix to specific machines in preperation for the switch to an AMD card on gaming
+- `0f0ea98` — moved mumble to gaming from users.nix
+- `296a2bd` — adjusted packages, and users.nix
+- `8932b8c` — changed cleanup to keep 3 builds instead of 5
+- `690a8b7` — fixed a comment
+
+### Decisions Made
+
+- **`nvidia.nix` scoped per-host** — Removing it from `desktopModules` means the upcoming AMD card swap on gaming only requires deleting one line from `flake.nix` rather than restructuring shared module lists. This is explicit preparation for that transition.
+- **`rebuild` alias now uses `nh os boot`** — Avoids live-switch activation failures during sessions where the system is actively in use. Changes are staged and applied on next reboot.
+- **`claude-code` and `gemini-cli` moved to user packages in `users.nix`** — These are user tools, not system tools. Moving them to `users.users.bosko.packages` means they follow the user across all hosts without needing to be repeated in each host's `environment.nix`.
+- **Cleanup retention reduced from 5 to 3** — Disk space optimisation; 3 generations is sufficient rollback headroom for this config.
+- **natty now gets `home.nix` applied** — The previous `home-manager.nix` had natty's HM block but no `imports`, meaning no dotfiles or HM config was applied for her. The reorganisation fixed this silently.
+
+### Issues Encountered
+
+- None. All changes are structural/housekeeping with no functional regressions expected.
+
+### Remaining / Next Session
+
+- **AMD card swap on gaming**: remove `nvidia.nix` from gaming's module list in `flake.nix`; verify `amd.nix` is sufficient; run `nh os boot` and reboot
+- **Apply config on gaming**: run `nh os boot /home/bosko/NixOS` and reboot to activate the staged changes from this and previous sessions
+- **Apply audit fix on laptop**: run `nh os boot /home/bosko/NixOS` on the laptop host; confirm `auditd` is running and `audit-rules-nixos.service` is disabled
+- **Natalie laptop install**: config is complete — perform initial install via `nixos-anywhere` or manual NixOS ISO install; verify Cosmic DE boots
+- **Re-enable lutris** once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
+- Generate WireGuard keypairs; write new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
+- Pin server to `nixos-25.05` stable (M-9)
+
+---
+
 ## Session: 2026-05-12 — Unblock gaming nh os switch (lutris/openldap workaround); add pnpm
 
 **Duration Estimate**: Short (focused debugging and fix)

@@ -9,16 +9,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Commands
 
 ```bash
-# Rebuild and switch the current host
-nh os switch /home/bosko/NixOS
+# Stage a rebuild for next boot (activate by rebooting)
+nh os boot /home/bosko/NixOS
 
 # Dry-run (see what would change without applying)
-nh os switch /home/bosko/NixOS --dry
+nh os boot /home/bosko/NixOS --dry
 
 # Update all flake inputs
 nix flake update
 
-# Garbage collect old generations
+# Garbage collect old generations (keeps 3 builds)
 sudo nix-collect-garbage -d
 ```
 
@@ -26,17 +26,19 @@ These are also available as shell aliases when running as bosko: `rebuild`, `dry
 
 ## Architecture Overview
 
-Single-flake NixOS config for three hosts: `gaming`, `laptop`, `server`. All configuration lives under `dotfiles/`.
+Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie-laptop`, `vpn-server`. All configuration lives under `dotfiles/`.
 
 ### Module Composition
 
 `flake.nix` defines a `lib.mkSystem` helper that composes module lists per host:
 
-- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, amd, nvidia, audio, emulation, virtualisation, SDDM; used by gaming and laptop
-- Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, and `networking.nix`
+- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, emulation, virtualisation, SDDM; used by gaming, laptop, and natalie-laptop
+- Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, `networking.nix`, and any host-specific modules (`amd.nix`, `nvidia.nix`, `gaming.nix`, etc.)
 
-The server host uses only `commonModules` (headless, no flatpaks, no DE).
+`nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) to allow the gaming host to drop it independently when the AMD card is installed. `amd.nix` and `gaming.nix` are gaming-only.
+
+The server host uses only `commonModules` (headless, no flatpaks, no DE). The vpn-server uses `commonModules` on `aarch64-linux`.
 
 ### Directory Layout
 
@@ -44,32 +46,35 @@ The server host uses only `commonModules` (headless, no flatpaks, no DE).
 dotfiles/
 ├── common/
 │   ├── modules/          # System-level NixOS modules
-│   │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, etc.)
-│   │   └── *.nix         # bootloader, shell, users, amd, nvidia, sddm, …
+│   │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
+│   │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
 │   └── configs/          # Home Manager configs shared by both users
 │       ├── home.nix      # HM root — imported by both bosko and natty
+│       ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
 │       ├── helix.nix
 │       └── dotfiles (katerc, kitty.conf, starship.toml)
 ├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/               # same three files
-└── server/               # same three files
+├── natalie-laptop/       # same three files
+├── server/               # same three files
+└── vpn-server/           # configuration.nix, hardware-configuration.nix
 ```
 
 ### Key Patterns
 
-- **Home Manager** runs as a NixOS module. Both users (`bosko` and `natty`) import the same `dotfiles/common/configs/home.nix`. DE modules extend HM config for Dank Material Shell on the laptop.
+- **Home Manager** runs as a NixOS module. Both users (`bosko` and `natty`) import the same `dotfiles/common/configs/home.nix`. User-specific HM state (username, homeDirectory, stateVersion) is set per-user in `home-manager.nix`.
 - **Desktop environments** are pluggable — swap by changing which DE module is imported in the host's flake entry.
 - **Flatpaks** are managed declaratively via `nix-flatpak`; defined per-host in `environment.nix`.
-- **System architecture** is `x86_64-linux` throughout; state version `25.11`.
+- **System architecture** is `x86_64-linux` throughout (vpn-server is `aarch64-linux`); state version `25.11`.
 - `nix-ld` is enabled only on gaming for binary compatibility.
-- Gaming: Plasma 6 / X11+Wayland. Laptop: Niri + Dank Material Shell / Wayland.
+- Gaming: Plasma 6 / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Cosmic / Wayland.
 
 ### Users
 
-- `bosko` — primary user, wheel/sudo, Nix trusted user, auto-login, extra package: mumble
-- `natty` — secondary user, same groups, extra package: gimp
+- `bosko` — primary user, wheel/sudo, Nix trusted user, auto-login; user packages: `claude-code`, `gemini-cli`
+- `natty` — secondary user, no wheel, no trusted-user; user packages: none
 
-Both users share the same Home Manager config.
+Both users share the same Home Manager config. `mumble` is a system package on gaming only.
 
 ### Flake Inputs / specialArgs
 
@@ -93,5 +98,5 @@ Part of `commonModules` (applies to all hosts). Enables:
 1. Create `dotfiles/common/modules/desktop-environments/my-de.nix`
 2. Add it to git: `git add dotfiles/common/modules/desktop-environments/my-de.nix`
 3. Import in the host's flake entry using `"${self}/dotfiles/common/modules/desktop-environments/my-de.nix"`
-4. Test with `nh os switch /home/bosko/NixOS --dry`
+4. Test with `nh os boot /home/bosko/NixOS --dry`
 5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`

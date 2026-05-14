@@ -1,26 +1,28 @@
 # NixOS Project State
 
-_Last updated: 2026-05-12_
+_Last updated: 2026-05-14_
 
 ## Current Project State
 
-The configuration manages four defined NixOS hosts from a single flake (`vpn-server` awaiting deployment; `natalie-laptop` awaiting initial install):
+The configuration manages five defined NixOS hosts from a single flake (`vpn-server` awaiting deployment):
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — `nh os switch` unblocked 2026-05-12 after commenting out `lutris` (openldap-2.6.13/i686 build failure); switch now succeeds; faugus-launcher in use as replacement | plasma.nix |
-| `laptop` | **LIVE** — last successful `nh os switch` 2026-05-10; security hardening active; `audit-rules-nixos.service` fix committed 2026-05-11 (not yet re-applied, needs a switch) | niri.nix |
+| `gaming` | **LIVE** — up to date as of 2026-05-14; all session changes applied. AMD card swap in preparation: `nvidia.nix` now per-host so it can be dropped independently. | plasma.nix |
+| `laptop` | **LIVE** — up to date as of 2026-05-14; `audit-rules-nixos.service` fix active. | niri.nix |
 | `server` | Active — headless | — |
-| `natalie-laptop` | **Ready to install** — host defined 2026-05-11; real `hardware-configuration.nix` committed 2026-05-12 (Intel CPU, NVMe root, vfat /boot); ready for initial install via `nixos-anywhere` or manual install | cosmic.nix |
-| `vpn-server` | Defined, awaiting deployment to Oracle Cloud | — |
+| `natalie-laptop` | **LIVE** — installed and running; Cosmic DE verified. | cosmic.nix |
+| `vpn-server` | Defined, awaiting deployment to Oracle Cloud (`aarch64-linux`) | — |
 
-**Laptop has an unverified fix pending.** The `audit-rules-nixos.service` was failing during activation because `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules` and nixpkgs hard-codes one. The service is now disabled via `systemd.services.audit-rules-nixos.enable = lib.mkForce false`. This needs to be activated via `nh os switch` to confirm.
+**`rebuild` alias now uses `nh os boot`.** As of 2026-05-12, the `rebuild` shell alias stages changes for the next reboot rather than attempting a live switch.
 
-**Security module is active.** `dotfiles/common/modules/security.nix` is in `commonModules` and applied on all hosts. It includes AppArmor MAC enforcement, auditd (running; rules-loader disabled), kernel image protection, ASLR, PAM wheel enforcement, SDDM PAM override workaround, and a pin for classic dbus implementation.
+**AMD card swap preparation in progress.** `nvidia.nix` was removed from `desktopModules` on 2026-05-14 and is now listed explicitly per-host. When the physical NVIDIA card is replaced with AMD on gaming, removing `nvidia.nix` from gaming's module list in `flake.nix` is the only change needed.
 
-**User natty restored (non-elevated).** `natty` is back in `users.nix` and Home Manager with no wheel group or trusted-user privileges. She was removed in the 2026-05-06 security audit for being in the wheel group; restored 2026-05-11 for the Natalie laptop host.
+**Home Manager reorganised.** `home-manager.nix` was refactored into a single nested `home-manager { }` block; `stateVersion` was moved here from `home.nix`; natty's block now correctly imports `home.nix` (previously missing).
 
-**VPN module deleted.** `dotfiles/common/modules/vpn.nix` was removed on 2026-05-11 — it had been commented out in `flake.nix` since April with no active use. WireGuard VPN remains a goal; the module will be rewritten when deployment is imminent.
+**`claude-code` and `gemini-cli` moved to user-level packages.** Both tools are now declared in `users.users.bosko.packages` in `users.nix` rather than repeated per-host in `environment.nix`.
+
+**Security module is active.** `dotfiles/common/modules/security.nix` is in `commonModules` and applied on all hosts. Includes AppArmor MAC enforcement, auditd (running; rules-loader disabled), kernel image protection, ASLR, PAM wheel enforcement, SDDM PAM override workaround, and a pin for classic dbus.
 
 **Security audit completed 2026-05-06.** All Critical and High findings remediated. Most Medium and Low findings remediated. Three items explicitly deferred (see Known Issues).
 
@@ -28,10 +30,9 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 ### Short-term (next 1-3 sessions)
 
-- **Apply the audit-rules-nixos fix on laptop** — run `nh os switch /home/bosko/NixOS` and confirm `auditd` is running while `audit-rules-nixos.service` is inactive/disabled
-- **Natalie laptop install** — `hardware-configuration.nix` is now real (committed 2026-05-12); next step is the initial install via `nixos-anywhere` or manual install
-- **Verify gaming host post-switch** — switch succeeded 2026-05-12; run `aa-status`, `journalctl -u auditd`, and confirm `~/.claude/agents/` symlinks are correct on gaming
-- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix` and remove the workaround comment
+- **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
+- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
+- **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed on the current config, dbus-broker can be re-enabled
 - M-7/M-8: Generate WireGuard keypairs on gaming and laptop; replace placeholder public keys in `dotfiles/vpn-server/configuration.nix`; write the new `vpn.nix` module
 - M-9: Pin server to `nixos-25.05` stable by adding a second nixpkgs input in `flake.nix`
 
@@ -44,6 +45,11 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 ## Recent Decisions
 
+- **`nvidia.nix` scoped per-host (2026-05-14)** — Removed from `desktopModules`; each desktop host (gaming, laptop, natalie-laptop) now imports it explicitly. Preparation for the gaming AMD card swap: dropping NVIDIA from gaming will require only a one-line flake change.
+- **`rebuild` alias switched to `nh os boot` (2026-05-12)** — Avoids live-switch activation failures. Changes are staged; rebooting applies them.
+- **`claude-code` and `gemini-cli` moved to `users.nix` user packages (2026-05-14)** — User-scoped tools belong in `users.users.bosko.packages`, not duplicated across per-host `environment.nix` files.
+- **Cleanup retention reduced to 3 builds (2026-05-14)** — 3 generations is sufficient rollback headroom; saves disk space.
+- **natty now gets `home.nix` applied (2026-05-14)** — The `home-manager.nix` reorganisation added the missing `home.nix` import to natty's HM block. Previously natty had a HM block with no imports.
 - **`lutris` commented out in gaming.nix (2026-05-12)** — `lutris` transitively depends on `openldap-2.6.13` for `i686-linux`; that derivation has no binary cache entry and attempting to build it from source blocks `nh os switch` for hours. Workaround: `# lutris` comment in `gaming.nix`; `faugus-launcher` (already in the list) covers the use-case. Restore once a binary cache entry exists.
 - **`audit-rules-nixos.service` disabled (2026-05-11)** — `auditctl` 4.1.2-unstable rejects blank lines in `audit.rules`; nixpkgs hard-codes one before `-e 1`. Disabling the service via `systemd.services.audit-rules-nixos.enable = lib.mkForce false` is cleaner than patching nixpkgs. `auditd` continues running (required for AppArmor). If custom audit rules are needed in future, load them via a separate unit.
 - **`natty` restored as non-wheel user (2026-05-11)** — Removed in the 2026-05-06 audit for being in the wheel group. Now back with no elevated privileges (no wheel, no trusted-user) for the Natalie laptop host.
@@ -60,23 +66,19 @@ The configuration manages four defined NixOS hosts from a single flake (`vpn-ser
 
 ## Known Issues / Tech Debt
 
-- **Laptop switch needed to apply audit fix** — `systemd.services.audit-rules-nixos.enable = lib.mkForce false` is committed but not yet activated on laptop. Run `nh os switch` to apply.
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
-- **natalie-laptop install pending** — `hardware-configuration.nix` now contains real hardware data (Intel CPU, NVMe root UUID `d6f891ea-efeb-4d79-97cd-ea6d8966e0ad`, vfat /boot UUID `229A-8574`). Config is complete; host needs its initial install.
-- **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config. Safe to revisit once gaming host is switched and AppArmor state is confirmed.
+- **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config.
 - **vpn.nix does not exist** — Deleted 2026-05-11. WireGuard VPN remains a goal; the module needs to be written from scratch before VPN deployment can proceed.
 - **vpn-server peer public keys are placeholders** — `GAMING_PUBLIC_KEY` and `LAPTOP_PUBLIC_KEY` in `dotfiles/vpn-server/configuration.nix` must be replaced with real keys before deployment.
 - **M-9 deferred** — Server still runs `nixos-unstable`. Should be pinned to `nixos-25.05` for stability; requires a new flake input.
 - **vpn-server references `enp0s3`** — Interface name may differ on the actual Oracle Cloud instance; verify at deploy time.
-- **bosko-claude.nix HM symlinks** — Laptop switch succeeded 2026-05-10; confirm `~/.claude/agents/` symlinks are correct. Gaming still pending its switch.
 
 ## Next Steps
 
-1. **Apply audit fix on laptop**: run `nh os switch /home/bosko/NixOS` on the laptop host; confirm `auditd` is running and `audit-rules-nixos.service` is disabled; verify swaylock idle trigger still works
-2. **Verify gaming post-switch**: run `aa-status`, `journalctl -u auditd`; confirm `~/.claude/agents/` symlinks are correct; check GameMode and Steam hardware support
-3. **Natalie laptop install**: perform initial install via `nixos-anywhere` from gaming host or manual install from NixOS ISO; verify Cosmic DE boots correctly
-4. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
-5. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
-6. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
-7. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
-8. Enable VPN on gaming and laptop once server is live and keys are real
+1. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot; verify `amd.nix` is sufficient
+2. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+3. **Validate dbus-broker**: test dbus-broker AppArmor compatibility on the current config; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
+4. Generate WireGuard keypairs on gaming and laptop; write the new `vpn.nix` module; replace placeholders in `dotfiles/vpn-server/configuration.nix` (M-7/M-8)
+5. Add stable nixpkgs input; pin server to `nixos-25.05` (M-9)
+6. Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+7. Enable VPN on gaming and laptop once server is live and keys are real
