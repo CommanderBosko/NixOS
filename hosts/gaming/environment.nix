@@ -70,6 +70,7 @@
     p7zip
     pnpm
     qalculate-qt
+    tmux
     tor-browser
     vesktop
     vivaldi
