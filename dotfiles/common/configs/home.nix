@@ -18,11 +18,5 @@
       source = "${self}/dotfiles/common/configs/kitty.conf";
       force = true;
     };
-
-    # Starship
-    file.".config/starship.toml" = {
-      source = "${self}/dotfiles/common/configs/starship.toml";
-      force = true;
-    };
   };
 }
