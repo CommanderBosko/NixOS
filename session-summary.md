@@ -2,6 +2,61 @@
 
 ---
 
+## Session: 2026-05-17 — Starship config inlined, flake updated, helix format disabled, symbol spacing fixed, tmux added
+
+**Duration Estimate**: ~2 days (commits from 2026-05-14 evening through 2026-05-17 morning)
+**Session Focus**: Eliminate the external `starship.toml` dotfile by converting it to a native Nix attrset in `shell.nix`, update flake inputs, tune Helix, and clean up the dotfiles/vpn directory.
+
+### What Was Accomplished
+
+- Migrated the Starship prompt configuration from an external `starship.toml` file (symlinked via `xdg.configFile` in `home.nix`) into a native `programs.starship.settings` attrset in `shell.nix`. Removed the `xdg.configFile` symlink from `home.nix` and deleted `dotfiles/common/configs/starship.toml`. The configuration is now fully managed by Nix without an external dotfile.
+- Disabled auto-format across all Helix language configurations in `helix.nix` — all languages now have `auto-format = false` set uniformly. Previously some languages would auto-format on save which interfered with the editing workflow.
+- Bumped flake inputs (routine `nix flake update` — 13 changed entries in `flake.lock`). The `lutris` openldap regression remains unresolved upstream.
+- Deleted the `dotfiles/vpn/` directory containing two stale NordVPN `.conf` files and an `auto-auth.txt` — these were leftover from before WireGuard replaced the NordVPN approach and served no purpose.
+- Fixed Nerd Font v3 symbol spacing in the inline starship config: added a trailing space to 9 language/tool symbols (`git_branch`, `nodejs`, `rust`, `golang`, `php`, `kotlin`, `haskell`, `python`, `docker_context`) so glyphs render with correct padding.
+- Added `tmux` to the gaming host system packages in `hosts/gaming/environment.nix`.
+
+### Files Changed
+
+- `dotfiles/common/modules/shell.nix` — added full `programs.starship.settings` attrset (190 lines); corrected trailing space on 9 Nerd Font symbols
+- `dotfiles/common/configs/home.nix` — removed `xdg.configFile."starship.toml"` symlink entry (6 lines deleted)
+- `dotfiles/common/configs/starship.toml` — deleted entirely (167 lines removed; config now lives in `shell.nix`)
+- `dotfiles/common/configs/helix.nix` — added `auto-format = false` to all language blocks (18 changes)
+- `flake.lock` — routine flake inputs update (13 changed entries)
+- `dotfiles/vpn/auto-auth.txt` — deleted (stale NordVPN credential file)
+- `dotfiles/vpn/us10399.newYork.nordvpn.conf` — deleted (82 lines, stale NordVPN config)
+- `dotfiles/vpn/us11656.manassas.nordvpn.conf` — deleted (82 lines, stale NordVPN config)
+- `hosts/gaming/environment.nix` — added `tmux` to system packages
+
+### Commits This Session
+
+- `72137fe` — disable auto-format across all helix languages
+- `a166689` — updated flake, lutris still broken from openldap
+- `d68acac` — Delete dotfiles/vpn directory
+- `40a450e` — move starship config inline into shell.nix, drop starship.toml
+- `6b55f92` — fix(shell): correct starship symbol spacing; add tmux to gaming
+
+### Decisions Made
+
+- **Starship config inlined into Nix** — Eliminates the `xdg.configFile` symlink and the external TOML file. The configuration is now a first-class Nix attrset evaluated at build time; no runtime file management required. The full Gruvbox-themed configuration (colour palette, module list, all language modules) was preserved exactly.
+- **Helix auto-format disabled globally** — Applied uniformly across all configured languages. Prevents unexpected reformatting during editing sessions; formatting can be triggered manually when needed.
+- **NordVPN configs deleted** — The `dotfiles/vpn/` directory was dead code from a previous VPN approach. The project now uses WireGuard (hub-and-spoke via Oracle Cloud); there is no path back to NordVPN. Deleting reduces repo noise.
+
+### Issues Encountered
+
+- `lutris` openldap regression (`openldap-2.6.13-i686-linux` missing from nixpkgs-unstable binary cache) remains unresolved. Flake update noted "lutris still broken from openldap" — no change from previous sessions.
+
+### Remaining / Next Session
+
+- AMD card swap on gaming: remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
+- Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
+- Validate dbus-broker AppArmor compatibility; remove the classic dbus pin from `security.nix` if clean
+- Generate WireGuard keypairs on gaming and laptop; write new `vpn.nix` client module; replace placeholder keys in `hosts/vpn-server/configuration.nix` (M-7/M-8)
+- Pin server to `nixos-25.05` stable (M-9)
+- Provision Oracle Cloud ARM VM; deploy vpn-server via `nixos-anywhere`
+
+---
+
 ## Session: 2026-05-15 — Repository restructure: hosts/ directory and bosko-specific HM split
 
 **Duration Estimate**: Short (focused structural refactor)

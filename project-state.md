@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-15_
+_Last updated: 2026-05-17_
 
 ## Current Project State
 
@@ -13,6 +13,16 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 | `server` | Active — headless | — |
 | `natalie-laptop` | **LIVE** — installed and running; Cosmic DE verified. | cosmic.nix |
 | `vpn-server` | Defined, awaiting deployment to Oracle Cloud (`aarch64-linux`) | — |
+
+**Starship config inlined (2026-05-17).** The external `starship.toml` dotfile has been eliminated. The full Gruvbox-themed Starship prompt configuration now lives as a native `programs.starship.settings` attrset in `shell.nix`. `dotfiles/common/configs/starship.toml` and the `xdg.configFile` symlink in `home.nix` were both removed.
+
+**Helix auto-format disabled globally (2026-05-17).** All language blocks in `helix.nix` now have `auto-format = false` set uniformly.
+
+**Stale NordVPN configs deleted (2026-05-17).** The `dotfiles/vpn/` directory (two `.conf` files and an `auto-auth.txt`) was removed. These were dead code from before the WireGuard approach.
+
+**Nerd Font v3 symbol spacing fixed (2026-05-17).** Nine starship module symbols in `shell.nix` had a trailing space added to render correctly in Nerd Font v3.
+
+**tmux added to gaming (2026-05-17).** `tmux` is now a system package on the gaming host.
 
 **Repository restructured (2026-05-15).** Host-specific files moved from `dotfiles/<hostname>/` into a new top-level `hosts/<hostname>/` directory. Bosko-specific Home Manager configs (`bosko-claude.nix` and `claude/agents/`) moved from `dotfiles/common/configs/` into `dotfiles/bosko/`. All `flake.nix` paths updated; dry-run passed cleanly after both moves.
 
@@ -47,6 +57,9 @@ The configuration manages five defined NixOS hosts from a single flake (`vpn-ser
 
 ## Recent Decisions
 
+- **Starship config inlined into `shell.nix` (2026-05-17)** — Eliminates the external TOML dotfile and its `xdg.configFile` symlink. The configuration is a first-class Nix attrset evaluated at build time; the full Gruvbox-themed prompt with all module settings was preserved. Single source of truth, no runtime file management.
+- **Helix auto-format disabled globally (2026-05-17)** — Applied uniformly with `auto-format = false` across all configured languages. Prevents unexpected reformatting during editing sessions; format manually when needed.
+- **NordVPN `dotfiles/vpn/` deleted (2026-05-17)** — Dead code from before the WireGuard approach. No path back to NordVPN in the current design.
 - **Host directories moved to `hosts/` (2026-05-15)** — All five host-specific directories (`gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`) relocated from `dotfiles/<hostname>/` to `hosts/<hostname>/`. Clarifies the repo layout: `dotfiles/` now holds only shared and user-specific HM configs; `hosts/` holds machine-specific NixOS config.
 - **Bosko-specific HM configs moved to `dotfiles/bosko/` (2026-05-15)** — `bosko-claude.nix` and `claude/agents/` relocated from `dotfiles/common/configs/` to `dotfiles/bosko/`. Makes the user-scope of these files explicit; `dotfiles/common/configs/` now contains only configs shared by both users.
 - **`nvidia.nix` scoped per-host (2026-05-14)** — Removed from `desktopModules`; each desktop host (gaming, laptop, natalie-laptop) now imports it explicitly. Preparation for the gaming AMD card swap: dropping NVIDIA from gaming will require only a one-line flake change.

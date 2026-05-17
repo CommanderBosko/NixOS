@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and active: `gaming`, `laptop`, `server`, `natalie-laptop` (installed 2026-05-14, Cosmic DE verified), plus `vpn-server` (awaiting Oracle Cloud deployment). All four local hosts are up to date as of 2026-05-14. `nvidia.nix` is now scoped per-host in preparation for swapping the gaming host's NVIDIA card to AMD. Classic dbus is pinned in `security.nix` pending validation of dbus-broker against this AppArmor configuration. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and active: `gaming`, `laptop`, `server`, `natalie-laptop` (Cosmic DE verified), plus `vpn-server` (awaiting Oracle Cloud deployment). All four local hosts are up to date as of 2026-05-17. Starship prompt configuration is now fully inlined as a Nix attrset in `shell.nix` (no external `starship.toml`). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
@@ -82,7 +82,7 @@ dotfiles/
     └── configs/                        # Home Manager configs shared by both users
         ├── home.nix                    # HM root — imported by both bosko and natty
         ├── helix.nix
-        └── dotfiles (katerc, kitty.conf, starship.toml)
+        └── dotfiles (katerc, kitty.conf)
 
 dotfiles/bosko/                         # bosko-specific HM configs (not shared with natty)
 ├── bosko-claude.nix                    # Symlinks Claude agent definitions into ~/.claude/agents/
@@ -148,6 +148,10 @@ The client `vpn.nix` module was deleted on 2026-05-11 (it was unused and comment
 Server config: `hosts/vpn-server/configuration.nix`.
 
 ## Recent Changes
+
+**2026-05-17** — Inlined the Starship prompt configuration from an external `starship.toml` into a native `programs.starship.settings` attrset in `shell.nix`; removed the `xdg.configFile` symlink and deleted the TOML file. Fixed Nerd Font v3 symbol spacing for 9 language/tool glyphs in the inline config. Disabled auto-format globally across all Helix language configurations. Routine flake inputs bump (`lutris` openldap regression still unresolved upstream). Deleted stale `dotfiles/vpn/` directory (NordVPN remnants). Added `tmux` to gaming system packages.
+
+**2026-05-15** — Repository layout restructured: host-specific directories moved from `dotfiles/<hostname>/` to a top-level `hosts/<hostname>/` directory; bosko-specific HM configs moved from `dotfiles/common/configs/` to `dotfiles/bosko/`. All `flake.nix` paths updated; dry-run passed cleanly.
 
 **2026-05-12 to 2026-05-14** — Housekeeping and preparation for the gaming AMD card swap. `nvidia.nix` removed from `desktopModules` and added explicitly per-host (gaming, laptop, natalie-laptop) — dropping NVIDIA from gaming now requires only a one-line change in `flake.nix`. `claude-code` and `gemini-cli` consolidated into `users.users.bosko.packages` in `users.nix` (removed from per-host environment files). `mumble` moved from `users.nix` to `gaming/environment.nix` (gaming-only). `rebuild` alias changed from `nh os switch` to `nh os boot`. `cleanup` retention reduced from 5 to 3 builds. `home-manager.nix` refactored into a single nested block; natty's HM config now correctly imports `home.nix`. `discord` removed from gaming and laptop (vesktop is the replacement). `obs-studio` removed from laptop and natalie-laptop. Various natalie-laptop package list cleanups. `qdirstat` added to shell packages. Flake inputs bumped. `natalie-laptop` installed and running with Cosmic DE verified.
 
