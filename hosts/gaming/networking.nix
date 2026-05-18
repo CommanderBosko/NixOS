@@ -27,6 +27,9 @@
       enable = true;
       allowedTCPPorts = [ 22 ];
     };
+
+    # WireGuard VPN — client address for gaming
+    wg-quick.interfaces.wg0.address = [ "10.10.0.2/24" ];
   };
 
   # SSH settings

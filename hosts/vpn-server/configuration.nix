@@ -1,9 +1,15 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   # Bootloader for Oracle Cloud ARM (aarch64 EFI, systemd-boot)
+  # Override commonModules/bootloader.nix which sets up GRUB + zen kernel
+  # (GRUB is x86-only; zen kernel packages may not be available for aarch64)
   boot = {
+    # Use the default kernel for aarch64 — zen is not reliably available on ARM
+    kernelPackages = lib.mkForce pkgs.linuxPackages;
+
     loader = {
+      grub.enable = lib.mkForce false;
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
@@ -19,30 +25,30 @@
     };
 
     wg-quick.interfaces.wg0 = {
-      address = [ "10.0.0.1/24" ];
+      address = [ "10.10.0.1/24" ];
       listenPort = 51820;
       privateKeyFile = "/etc/wireguard/private.key";
 
-      # Route all client traffic through the server
+      # Route client traffic through the server (NAT masquerade on WAN interface)
       postUp = ''
         ${pkgs.iptables}/bin/iptables -A FORWARD -i wg0 -j ACCEPT
-        ${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+        ${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -o enp0s6 -j MASQUERADE
       '';
       preDown = ''
         ${pkgs.iptables}/bin/iptables -D FORWARD -i wg0 -j ACCEPT
-        ${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -o enp0s3 -j MASQUERADE
+        ${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -o enp0s6 -j MASQUERADE
       '';
 
       peers = [
         {
-          # gaming — fill in after generating keys on gaming
-          publicKey = "GAMING_PUBLIC_KEY";
-          allowedIPs = [ "10.0.0.2/32" ];
+          # gaming
+          publicKey = "M9KajsVX9wKLyeqz8F4kXbtelJYxYZP2b+cvkYMZ+nA=";
+          allowedIPs = [ "10.10.0.2/32" ];
         }
         {
-          # laptop — fill in after generating keys on laptop
-          publicKey = "LAPTOP_PUBLIC_KEY";
-          allowedIPs = [ "10.0.0.3/32" ];
+          # laptop
+          publicKey = "c4H2dY7dGuvanWpmpChT4vocjDPB+pbC8KeLJ2N8m3s=";
+          allowedIPs = [ "10.10.0.3/32" ];
         }
       ];
     };
@@ -51,12 +57,20 @@
   # Enable IP forwarding for routing client traffic
   boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
+  # Root SSH access — needed to connect after nixos-anywhere installs NixOS.
+  # Key-only login; password auth remains off.
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhUXwMqe6Eu4PRrV6BcdYYk7yRYI3x0gq+liliNhOsy kurthoernig@gmail.com"
+  ];
+
   services = {
     openssh = {
       enable = true;
       settings = {
         PasswordAuthentication = false;
-        PermitRootLogin = "no";
+        # prohibit-password: root login only via SSH key, not password.
+        # Required to SSH in as root after nixos-anywhere install.
+        PermitRootLogin = "prohibit-password";
       };
     };
 

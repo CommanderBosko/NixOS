@@ -16,9 +16,15 @@
 
     # Nix-Flatpaks
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+
+    # Disko — declarative disk partitioning (used by vpn-server / nixos-anywhere)
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { dms, home-manager, nix-flatpak, nixpkgs, self, ... }@inputs:
+  outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, self, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
@@ -71,6 +77,7 @@
           "${self}/dotfiles/common/modules/gaming.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/dotfiles/common/modules/virtualisation.nix"
+          "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 
@@ -85,6 +92,7 @@
           "${self}/hosts/laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
+          "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 
@@ -122,7 +130,9 @@
           system = "aarch64-linux";
         };
         modules = commonModules ++ [
+          disko.nixosModules.disko
           "${self}/hosts/vpn-server/hardware-configuration.nix"
+          "${self}/hosts/vpn-server/disko.nix"
           "${self}/hosts/vpn-server/configuration.nix"
         ];
       };

@@ -27,6 +27,9 @@
       enable = true;
       allowedTCPPorts = [ 22 ];
     };
+
+    # WireGuard VPN — client address for laptop
+    wg-quick.interfaces.wg0.address = [ "10.10.0.3/24" ];
   };
 
   # SSH settings
