@@ -60,7 +60,10 @@
   # Root SSH access — needed to connect after nixos-anywhere installs NixOS.
   # Key-only login; password auth remains off.
   users.users.root.openssh.authorizedKeys.keys = [
+    # gaming
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhUXwMqe6Eu4PRrV6BcdYYk7yRYI3x0gq+liliNhOsy kurthoernig@gmail.com"
+    # laptop
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB/EGGwStXtv/iorgMcglJYQyGLxX/bB+2quIO36c7zm kurthoernig@gmail.com"
   ];
 
   services = {

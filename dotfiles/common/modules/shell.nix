@@ -303,6 +303,7 @@ in
       eza
       fastfetch
       fzf
+      gh
       git
       helix
       htop
