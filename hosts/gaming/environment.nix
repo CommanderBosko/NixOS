@@ -43,6 +43,10 @@
     graphics.enable = true;
   };
 
+  # Enable aarch64 emulation so this machine can build for vpn-server (Oracle ARM)
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+  nix.settings.extra-platforms = [ "aarch64-linux" ];
+
   # Programs
   programs = {
     # Shell aliases

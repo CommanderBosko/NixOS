@@ -59,13 +59,13 @@ in
           echo ""
           echo "Attempting a dry-run on vpn-server"
           echo ""
-          nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host localhost
+          nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
         '';
         server-rebuild = ''
           echo ""
           echo "Rebuilding vpn-server"
           echo ""
-          nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host localhost
+          nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
         '';
         server-ssh    = "ssh root@150.136.232.63";
         server-status = "ssh root@150.136.232.63 'wg show'";
