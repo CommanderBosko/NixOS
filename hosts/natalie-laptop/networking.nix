@@ -22,8 +22,11 @@
       "1.1.1.1"
     ];
 
-    # WireGuard VPN client address
-    wg-quick.interfaces.wg0.address = [ "10.10.0.4/24" ];
+    # WireGuard VPN client address and DNS for full-tunnel routing
+    wg-quick.interfaces.wg0 = {
+      address = [ "10.10.0.4/24" ];
+      dns = [ "1.1.1.1" "8.8.8.8" ];
+    };
 
     # Enable and open ports in the firewall
     firewall = {
