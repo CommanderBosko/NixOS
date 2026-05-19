@@ -9,7 +9,7 @@ Oracle Cloud ARM VM (VM.Standard.A1.Flex, aarch64-linux) running NixOS at `150.1
 
 **Why:** Bosko wants a WireGuard VPN server for routing gaming/laptop traffic.
 
-**Status as of 2026-05-18: DEPLOYED AND WORKING**
+**Status as of 2026-05-18: DEPLOYED AND WORKING (re-deployed successfully 2026-05-18 with natalie-laptop peer)**
 - vpn-server NixOS config deployed, wg0 active at `10.10.0.1/24`
 - WireGuard keys generated for gaming and laptop; private keys placed on vpn-server and gaming
 - vpn.nix imported in gaming and laptop flake entries
