@@ -22,6 +22,13 @@
       enable = true;
       allowedUDPPorts = [ 51820 ];
       allowedTCPPorts = [ 22 ];
+
+      # Accept forwarded packets from WireGuard peers
+      trustedInterfaces = [ "wg0" ];
+
+      # Allow asymmetric routing for NAT — return traffic arrives on enp0s6,
+      # not wg0, so strict reverse-path check would drop it
+      checkReversePath = "loose";
     };
 
     wg-quick.interfaces.wg0 = {
@@ -29,13 +36,12 @@
       listenPort = 51820;
       privateKeyFile = "/etc/wireguard/private.key";
 
-      # Route client traffic through the server (NAT masquerade on WAN interface)
+      # NAT masquerade: rewrite source IP so return traffic knows to come back
+      # to the server. FORWARD accept is handled declaratively via trustedInterfaces.
       postUp = ''
-        ${pkgs.iptables}/bin/iptables -A FORWARD -i wg0 -j ACCEPT
         ${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -o enp0s6 -j MASQUERADE
       '';
       preDown = ''
-        ${pkgs.iptables}/bin/iptables -D FORWARD -i wg0 -j ACCEPT
         ${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -o enp0s6 -j MASQUERADE
       '';
 
@@ -52,9 +58,7 @@
         }
         {
           # natalie-laptop
-          # TODO: replace with real public key generated on natalie-laptop
-          # Run: wg genkey | tee /etc/wireguard/private.key | wg pubkey
-          publicKey = "NATALIE_LAPTOP_PUBLIC_KEY_PLACEHOLDER";
+          publicKey = "YRrCAJ44V1y9uVkt7NWk8w61TDlU4o1G0MDLH0GSpSE=";
           allowedIPs = [ "10.10.0.4/32" ];
         }
       ];
@@ -72,8 +76,7 @@
     # laptop
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB/EGGwStXtv/iorgMcglJYQyGLxX/bB+2quIO36c7zm kurthoernig@gmail.com"
     # natalie-laptop
-    # TODO: replace with real SSH public key from natalie-laptop (~/.ssh/id_ed25519.pub or similar)
-    # "ssh-ed25519 NATALIE_LAPTOP_SSH_KEY_PLACEHOLDER kurthoernig@gmail.com"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHnENcEPt+wOxR2EAu3BAcCXwErGJ4KfiANdPZH3oZfc kurthoernig@gmail.com"
   ];
 
   services = {
