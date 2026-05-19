@@ -15,6 +15,7 @@
 
   networking.wg-quick.interfaces.wg0 = {
     privateKeyFile = "/etc/wireguard/private.key";
+    dns = [ "1.1.1.1" "8.8.8.8" ];
 
     peers = [
       {
