@@ -22,8 +22,8 @@
         publicKey = "ijhN7KUmHx5TOLpKgyzJpzSvp49TkD0c2CTf32Cyu1U=";
         endpoint = "150.136.232.63:51820";
 
-        # Split tunnel: only route VPN subnet through the tunnel
-        allowedIPs = [ "10.10.0.0/24" ];
+        # Full tunnel: route all traffic through the VPN
+        allowedIPs = [ "0.0.0.0/0" "::/0" ];
 
         # Oracle Cloud silently drops idle UDP after ~30s; keep-alive prevents that
         persistentKeepalive = 25;
