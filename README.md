@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and active: `gaming`, `laptop`, `server`, `natalie-laptop` (Cosmic DE verified), plus `vpn-server` (awaiting Oracle Cloud deployment). All four local hosts are up to date as of 2026-05-17. Starship prompt configuration is now fully inlined as a Nix attrset in `shell.nix` (no external `starship.toml`). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-18. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
@@ -16,7 +16,7 @@ Active development — `nixos-unstable` channel, state version `25.11`. Five hos
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for `bosko` (not duplicated per-host)
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
-- WireGuard VPN infrastructure partially defined (hub-and-spoke via Oracle Cloud free ARM VM) — server config in `hosts/vpn-server/`; client module not yet written
+- WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, classic dbus pinned
 
 ## Getting Started
@@ -138,16 +138,20 @@ SSH is hardened on gaming and laptop: `PasswordAuthentication = false`, `AllowUs
 
 ## VPN
 
-WireGuard hub-and-spoke topology (server config defined, client module not yet written):
+WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
 
-- **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`), `10.0.0.1/24`, port 51820
-- **gaming**: `10.0.0.2/32` (peer key: placeholder — generate at deploy time)
-- **laptop**: `10.0.0.3/32` (peer key: placeholder)
+- **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`, `150.136.232.63`), `10.10.0.1/24`, port 51820
+- **gaming**: `10.10.0.2/32` — private key placed, `wg-quick-wg0` active
+- **laptop**: `10.10.0.3/32` — config deployed, private key placement pending
+- **natalie-laptop**: `10.10.0.4/32` — config deployed, private key placement pending
 
-The client `vpn.nix` module was deleted on 2026-05-11 (it was unused and commented out). It will be rewritten when VPN deployment is imminent.
-Server config: `hosts/vpn-server/configuration.nix`.
+All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/0"]`). `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
+
+Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-05-18** — WireGuard VPN fully deployed. Oracle Cloud ARM vpn-server is live at `150.136.232.63`; `wg0` active at `10.10.0.1/24` with three configured peers (gaming, laptop, natalie-laptop). Shared `dotfiles/common/modules/vpn.nix` client module created with full-tunnel routing, DNS override (`1.1.1.1 8.8.8.8`), and `persistentKeepalive = 25`. Per-host VPN addresses configured in `hosts/*/networking.nix`. ARM build target fixed for `server-rebuild` alias (now builds natively on the server). binfmt aarch64 emulation added to gaming as offline fallback. natalie-laptop added as fourth WireGuard peer with real keys. `gh` added to common system packages.
 
 **2026-05-17** — Inlined the Starship prompt configuration from an external `starship.toml` into a native `programs.starship.settings` attrset in `shell.nix`; removed the `xdg.configFile` symlink and deleted the TOML file. Fixed Nerd Font v3 symbol spacing for 9 language/tool glyphs in the inline config. Disabled auto-format globally across all Helix language configurations. Routine flake inputs bump (`lutris` openldap regression still unresolved upstream). Deleted stale `dotfiles/vpn/` directory (NordVPN remnants). Added `tmux` to gaming system packages.
 
@@ -167,14 +171,12 @@ Server config: `hosts/vpn-server/configuration.nix`.
 
 ## Roadmap
 
+- Place WireGuard private keys on laptop and natalie-laptop to activate their VPN interfaces
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
 - Validate dbus-broker AppArmor compatibility; remove the classic dbus pin from `security.nix` if clean
-- Generate WireGuard keypairs; write new `vpn.nix` client module; replace placeholder keys in `hosts/vpn-server/configuration.nix` (M-7/M-8)
 - Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
-- Provision Oracle Cloud ARM VM; deploy `vpn-server` via `nixos-anywhere`
-- Enable VPN on gaming and laptop once server is live and keys are real
-- Harden server further (AppArmor profiles, fail2ban)
+- Harden vpn-server further (AppArmor profiles, fail2ban, rate-limiting on UDP 51820)
 
 ## License
 

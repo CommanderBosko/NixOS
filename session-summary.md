@@ -2,6 +2,77 @@
 
 ---
 
+## Session: 2026-05-18 — WireGuard VPN fully deployed; natalie-laptop added as fourth peer
+
+**Duration Estimate**: ~5 hours (commits spanning 18:18 to 22:51 on 2026-05-18)
+**Session Focus**: Complete the WireGuard VPN deployment — get the Oracle Cloud server live, wire up all three client hosts (gaming, laptop, natalie-laptop), and resolve all routing and DNS issues encountered along the way.
+
+### What Was Accomplished
+
+- Deployed WireGuard VPN server on Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`). Server config pushed via `nixos-rebuild` from the gaming host; `wg0` is active at `10.10.0.1/24`. Verified: FORWARD chain ACCEPT policy, MASQUERADE rule active on `enp0s6`, 1.3 GB forwarded.
+- Wrote and deployed the shared `dotfiles/common/modules/vpn.nix` client module. Full-tunnel routing (`allowedIPs = ["0.0.0.0/0" "::/0"]`), `persistentKeepalive = 25` (Oracle drops idle UDP after ~30s), and DNS set to `[1.1.1.1 8.8.8.8]` (promoted from natalie-laptop workaround into the shared module). Gaming and laptop imported the module; per-host VPN addresses set in `hosts/*/networking.nix`.
+- Added natalie-laptop as a fourth WireGuard peer (`10.10.0.4/32`) on the VPN server with real keys. `vpn.nix` imported into natalie-laptop's flake entry; VPN address configured in `hosts/natalie-laptop/networking.nix`.
+- Fixed ARM build target for `server-rebuild` / `server-dry-run` shell aliases — they were previously attempting to cross-compile `aarch64` on the local `x86_64` host without proper cross-compilation support, causing platform mismatch errors. Aliases now SSH to the ARM server and build there natively. Added `binfmt` `aarch64` emulation on gaming as an offline fallback.
+- Added server management shell aliases to `shell.nix`: `server-dry-run`, `server-rebuild`, `server-ssh`, `server-status`, `server-logs`, `server-watch`.
+- Switched from split-tunnel to full-tunnel routing: `allowedIPs` changed from `10.10.0.0/24` (VPN subnet only) to `0.0.0.0/0, ::/0` so all client traffic routes through the Oracle server. This hides the client's public IP behind the server's IP.
+- Fixed DNS failure under full-tunnel routing on natalie-laptop: the host's `nameservers` list included `10.0.0.20` (a LAN-side resolver, unreachable once all traffic is tunneled). Resolved by setting `wg-quick dns = [1.1.1.1 8.8.8.8]` so the interface updates `resolv.conf` on bring-up and restores it on teardown. Later promoted this DNS setting into the shared `vpn.nix` module so all three client hosts inherit it automatically.
+- Added `gh` (GitHub CLI) to `shell.nix` common system packages.
+- Added laptop SSH public key to vpn-server `root.authorizedKeys` alongside the gaming key, enabling nixos-anywhere deploys from the laptop.
+
+### Files Changed
+
+- `dotfiles/common/modules/vpn.nix` — created; shared WireGuard client config (full-tunnel, keepalive=25, DNS promoted here from natalie-laptop workaround)
+- `dotfiles/common/modules/shell.nix` — added server management aliases (`server-{dry-run,rebuild,ssh,status,logs,watch}`); fixed ARM build target to use the server as build host; added `gh` to system packages
+- `hosts/vpn-server/configuration.nix` — complete server WireGuard config: three peers (gaming, laptop, natalie-laptop) with real public keys, iptables MASQUERADE postUp/preDown, `trustedInterfaces = ["wg0"]`, `checkReversePath = "loose"`, root SSH keys for all three hosts
+- `hosts/gaming/networking.nix` — added `wg-quick.interfaces.wg0.address = ["10.10.0.2/24"]`
+- `hosts/laptop/networking.nix` — added `wg-quick.interfaces.wg0.address = ["10.10.0.3/24"]`
+- `hosts/natalie-laptop/networking.nix` — added `wg-quick.interfaces.wg0.address = ["10.10.0.4/24"]`; DNS entry refactored (wg0 DNS moved to shared `vpn.nix`)
+- `hosts/gaming/environment.nix` — added `binfmt` `aarch64` emulation as offline ARM build fallback
+- `hosts/vpn-server/disko.nix` — disko disk layout for Oracle Cloud EFI partition scheme
+- `hosts/vpn-server/hardware-configuration.nix` — aarch64 hardware config for Oracle Cloud A1.Flex
+- `flake.nix` — added vpn-server host; imported `vpn.nix` for gaming, laptop, natalie-laptop; added aarch64 to `nixpkgs.hostPlatform` for vpn-server
+- `flake.lock` — updated (vpn-server host added)
+- `.claude/agent-memory/nixos-agent/project_vpn_setup.md` — updated to reflect fully deployed state with natalie-laptop peer
+
+### Commits This Session
+
+- `a229f77` — feat(vpn): deploy WireGuard VPN server on Oracle Cloud ARM VM
+- `7bdabca` — chore(memory): update vpn-server setup memory to reflect deployed state
+- `9ff5879` — feat(shell): add server management aliases for vpn-server
+- `3f1994d` — feat(vpn): split-tunnel WireGuard, add laptop SSH key, add gh to shell
+- `76ebe64` — fix(server): build vpn-server natively on ARM target, add aarch64 emulation fallback
+- `d1db171` — feat(vpn): switch to full-tunnel to hide public IP
+- `382b2f3` — preparing vpn-server for natalie-laptop
+- `adc0263` — feat(vpn): add natalie-laptop as WireGuard peer with real keys
+- `0f9f12c` — fix(natalie-laptop): add wg0 DNS for full-tunnel VPN routing
+- `300c027` — refactor(vpn): move DNS into shared vpn.nix, apply to all client hosts
+- `4847b85` — chore(memory): update vpn-setup memory with natalie-laptop peer status
+
+### Decisions Made
+
+- **Full-tunnel routing chosen over split-tunnel** — `allowedIPs = ["0.0.0.0/0" "::/0"]` routes all client traffic through the Oracle server, hiding the client's real IP. Split-tunnel was briefly in place (only VPN subnet traffic routed) but replaced in `d1db171`.
+- **DNS promoted to shared `vpn.nix`** — The `dns = [1.1.1.1 8.8.8.8]` setting was first added as a natalie-laptop-specific fix for the LAN resolver problem, then recognized as universally correct under full-tunnel and moved to the shared module. All three clients now get it automatically on import.
+- **ARM server builds natively** — Cross-compiling `aarch64` on `x86_64` without explicit cross-compilation config fails. The `server-rebuild` alias now SSHs to the server and builds there; `binfmt` emulation on gaming is available as a fallback for offline scenarios.
+- **VPN subnet `10.10.0.0/24` (not `10.0.0.0/24`)** — Oracle's internal LAN uses `10.0.0.x`; using that subnet for WireGuard would create a routing conflict. The `10.10.0.0/24` subnet was chosen to avoid overlap.
+- **`trustedInterfaces + checkReversePath = "loose"` on vpn-server** — Required for the firewall to forward packets from WireGuard peers and accept return traffic arriving on `enp0s6` rather than `wg0`. Without these, the FORWARD chain drops forwarded packets and the reverse-path check drops asymmetric NAT return traffic.
+
+### Issues Encountered
+
+- **Platform mismatch on ARM builds** — `server-rebuild` was initially set up to build the `aarch64` config on the local `x86_64` machine without `--target-host`, causing nixpkgs to detect a platform mismatch and refuse to build. Fixed by routing the build through the server itself.
+- **WG placeholder peer broke the server** — Adding `natalie-laptop` initially with a placeholder public key (`NATALIE_LAPTOP_PUBLIC_KEY_PLACEHOLDER`) caused `wg-quick-wg0.service` to fail on every rebuild because WireGuard validates key format at startup. The placeholder was replaced with real keys before the deploy.
+- **DNS timeouts on natalie-laptop under full-tunnel** — The host's `nameservers` list included `10.0.0.20` (a LAN-side resolver). Once all traffic routes through the tunnel, that address is unreachable, causing all DNS lookups to time out. Fixed with wg-quick `dns` override.
+
+### Remaining / Next Session
+
+- **Laptop private key placement** — The laptop's WireGuard private key must be placed manually at `/etc/wireguard/private.key` on that machine; then run `rebuild` to activate `wg-quick-wg0.service`. (Gaming's private key is already placed and the config is active.)
+- **natalie-laptop private key placement** — Same manual step needed for natalie-laptop.
+- AMD card swap on gaming: remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
+- Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry
+- Validate dbus-broker AppArmor compatibility; remove the classic dbus pin from `security.nix` if clean
+- Pin server to `nixos-25.05` stable (M-9): add a second nixpkgs input in `flake.nix`
+
+---
+
 ## Session: 2026-05-17 — Starship config inlined, flake updated, helix format disabled, symbol spacing fixed, tmux added
 
 **Duration Estimate**: ~2 days (commits from 2026-05-14 evening through 2026-05-17 morning)
