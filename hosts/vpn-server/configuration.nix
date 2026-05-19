@@ -50,6 +50,13 @@
           publicKey = "c4H2dY7dGuvanWpmpChT4vocjDPB+pbC8KeLJ2N8m3s=";
           allowedIPs = [ "10.10.0.3/32" ];
         }
+        {
+          # natalie-laptop
+          # TODO: replace with real public key generated on natalie-laptop
+          # Run: wg genkey | tee /etc/wireguard/private.key | wg pubkey
+          publicKey = "NATALIE_LAPTOP_PUBLIC_KEY_PLACEHOLDER";
+          allowedIPs = [ "10.10.0.4/32" ];
+        }
       ];
     };
   };
@@ -64,6 +71,9 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhUXwMqe6Eu4PRrV6BcdYYk7yRYI3x0gq+liliNhOsy kurthoernig@gmail.com"
     # laptop
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB/EGGwStXtv/iorgMcglJYQyGLxX/bB+2quIO36c7zm kurthoernig@gmail.com"
+    # natalie-laptop
+    # TODO: replace with real SSH public key from natalie-laptop (~/.ssh/id_ed25519.pub or similar)
+    # "ssh-ed25519 NATALIE_LAPTOP_SSH_KEY_PLACEHOLDER kurthoernig@gmail.com"
   ];
 
   services = {

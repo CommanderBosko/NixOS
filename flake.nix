@@ -107,6 +107,7 @@
           "${self}/hosts/natalie-laptop/networking.nix"
           "${self}/dotfiles/common/modules/desktop-environments/cosmic.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
+          "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 

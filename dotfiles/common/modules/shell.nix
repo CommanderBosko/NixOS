@@ -18,6 +18,7 @@ in
       setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
 
       shellAliases = {
+        # Common aliases
         ".." = "cd ..";
         "/" = "cd /";
         "~" = "cd ~";
@@ -55,22 +56,24 @@ in
           echo ""
           nix flake update --flake ~/NixOS/.
         '';
-        server-dry-run = ''
+
+        # VPN aliases
+        vpn-dry-run = ''
           echo ""
           echo "Attempting a dry-run on vpn-server"
           echo ""
           nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
         '';
-        server-rebuild = ''
+        vpn-logs   = "ssh root@150.136.232.63 'journalctl -u wg-quick@wg0 -n 50 --no-pager'";
+        vpn-rebuild = ''
           echo ""
           echo "Rebuilding vpn-server"
           echo ""
           nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
         '';
-        server-ssh    = "ssh root@150.136.232.63";
-        server-status = "ssh root@150.136.232.63 'wg show'";
-        server-logs   = "ssh root@150.136.232.63 'journalctl -u wg-quick@wg0 -n 50 --no-pager'";
-        server-watch  = "watch -n 5 ssh root@150.136.232.63 wg show";
+        vpn-ssh    = "ssh root@150.136.232.63";
+        vpn-status = "ssh root@150.136.232.63 'wg show'";
+        vpn-watch  = "watch -n 5 ssh root@150.136.232.63 wg show";
       };
 
       # Pywal initation or not if no pywal cache generated
