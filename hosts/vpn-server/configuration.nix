@@ -103,6 +103,5 @@
 
   environment.systemPackages = with pkgs; [
     wireguard-tools
-    fastfetch
   ];
 }
