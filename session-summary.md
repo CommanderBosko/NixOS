@@ -2,6 +2,69 @@
 
 ---
 
+## Session: 2026-05-20 — Claude Code skill system built out: new-module, commit, push
+
+**Duration Estimate**: ~2 hours (commits spanning 18:53 to 19:17 on 2026-05-20; plus the earlier vpn-server fastfetch cleanup on 2026-05-19)
+**Session Focus**: Build a project-local Claude Code skill library that streamlines the most common NixOS workflow tasks — scaffolding modules, committing, and pushing — so each operation follows repo conventions consistently without manual prompting.
+
+### What Was Accomplished
+
+- Created `.claude/skills/nixos-dry-run/SKILL.md` and its `scripts/dry-run.sh` — invokes `nh os boot /home/bosko/NixOS --dry` to preview what a rebuild would change without writing to the system. Safe, read-only, no confirmation gate.
+- Created `.claude/skills/nixos-rebuild/SKILL.md` with `scripts/dry-run.sh` and `scripts/rebuild.sh` — guarded staged rebuild: mandatory dry-run shown first, explicit `YES` confirmation required before invoking `nh os boot`. Does not reboot automatically.
+- Created `.claude/skills/nixos-gc/SKILL.md` and `scripts/gc.sh` — garbage-collect Nix store keeping the last 3 generations (`nh clean all --keep 3`), not the destructive `-d` flag; guarded with a confirmation prompt showing how many generations would be removed before proceeding.
+- Created `.claude/skills/vpn-status/SKILL.md` and `scripts/vpn-status.sh` — SSHes to the Oracle Cloud WireGuard server (`150.136.232.63`) and runs `sudo wg show` to render a per-peer status table with transfer/handshake data.
+- Created `.claude/skills/new-module/SKILL.md` — interactive NixOS module scaffolder. Asks for module name, type (`system` or `desktop-environment`), purpose, target hosts, and optional service/package/HM details; generates a correctly-structured Nix file using one of three templates (always-on, options-based, desktop-environment); writes to the right location; runs `git add` to ensure flake evaluation sees the new file; shows the exact `flake.nix` import line needed without auto-editing that file; suggests a dry-run.
+- Created `.claude/skills/commit/SKILL.md` — structured git commit workflow: inspects working tree, drafts a conventional commit message (`type(scope): description`) following this repo's patterns, asks for user confirmation before staging, stages specific files by path (not `git add -A`), commits with mandatory `Co-Authored-By: Claude Sonnet 4.6` trailer; never amends unless explicitly asked.
+- Created `.claude/skills/push/SKILL.md` — push workflow: checks ahead/behind status relative to `origin/main`, lists commits to be pushed, asks for confirmation (skips if command was unambiguous), pushes; never force-pushes to main; reports the remote ref range on success.
+- Removed `fastfetch` from `hosts/vpn-server/configuration.nix` — the package was added then immediately identified as redundant for a headless ARM server (two commits on 2026-05-19: added then removed).
+
+### Files Changed
+
+- `.claude/skills/nixos-dry-run/SKILL.md` — new; dry-run preview skill
+- `.claude/skills/nixos-dry-run/scripts/dry-run.sh` — new; shell script wrapper
+- `.claude/skills/nixos-rebuild/SKILL.md` — new; guarded rebuild skill with YES gate
+- `.claude/skills/nixos-rebuild/scripts/dry-run.sh` — new; dry-run step for rebuild skill
+- `.claude/skills/nixos-rebuild/scripts/rebuild.sh` — new; actual `nh os boot` invocation
+- `.claude/skills/nixos-gc/SKILL.md` — new; GC skill keeping last 3 generations
+- `.claude/skills/nixos-gc/scripts/gc.sh` — new; GC shell script
+- `.claude/skills/vpn-status/SKILL.md` — new; VPN peer status skill
+- `.claude/skills/vpn-status/scripts/vpn-status.sh` — new; SSH + `wg show` script
+- `.claude/skills/new-module/SKILL.md` — new; interactive module scaffolder (217 lines, three templates)
+- `.claude/skills/commit/SKILL.md` — new; conventional commit workflow with user confirmation
+- `.claude/skills/push/SKILL.md` — new; push workflow with ahead/behind check and confirmation
+- `hosts/vpn-server/configuration.nix` — fastfetch added then removed (net: no change from 2026-05-18 state)
+
+### Commits This Session
+
+- `a79d726` — added fastfetch for vpn-server
+- `e461d1e` — fastfetch was redundant for vpn-server
+- `34a0008` — feat(skills): add nixos-tools skill set for NixOS workflow
+- `bce6500` — feat(skills): add new-module skill for NixOS module scaffolding
+- `748db80` — feat(skills): add commit and push skills for session workflow
+
+### Decisions Made
+
+- **Skills stored in `.claude/skills/` under the repo** — Makes them project-local: they travel with the repo, are version-controlled, and are automatically available to any Claude Code session opened in this directory. No global config changes needed.
+- **`new-module` does not auto-edit `flake.nix`** — The skill shows the user exactly which line to add and where, but requires the user (or an explicit follow-up prompt) to make the change. This avoids silent modifications to the most critical file in the repo.
+- **`commit` never uses `git add -A`** — Stages specific files by path to prevent accidentally committing secrets or large build artifacts. Only falls back to `git add -A` if the user explicitly requests it.
+- **`nixos-gc` keeps 3 generations (not `nix-collect-garbage -d`)** — Retains rollback headroom; matches the `cleanup` shell alias already in `shell.nix`.
+- **`nixos-rebuild` requires `YES` confirmation** — Rebuild stages a potentially breaking config change that requires a reboot to activate. The mandatory dry-run + explicit confirmation reduces the risk of accidentally staging a broken config.
+
+### Issues Encountered
+
+- None. All seven skills were committed and pushed cleanly. The fastfetch add/remove on vpn-server was a quick self-correction, not a blocker.
+
+### Remaining / Next Session
+
+- **Place laptop WireGuard private key** — manually write the key to `/etc/wireguard/private.key` on the laptop, then run `rebuild` (or `/nixos-rebuild`) to start `wg-quick-wg0`
+- **Place natalie-laptop WireGuard private key** — same manual step
+- **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `/nixos-rebuild` and reboot
+- **Re-enable lutris** — once nixpkgs-unstable has a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
+- **Validate dbus-broker** — test AppArmor compatibility; remove the `lib.mkDefault "dbus"` pin from `security.nix` if clean
+- **M-9: Pin server to `nixos-25.05` stable** — add second nixpkgs input in `flake.nix`
+
+---
+
 ## Session: 2026-05-18 — WireGuard VPN fully deployed; natalie-laptop added as fourth peer
 
 **Duration Estimate**: ~5 hours (commits spanning 18:18 to 22:51 on 2026-05-18)

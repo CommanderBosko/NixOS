@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-18. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-20. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. A project-local Claude Code skill library under `.claude/skills/` provides guided, repo-aware workflows for all common tasks. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
@@ -16,6 +16,7 @@ Active development — `nixos-unstable` channel, state version `25.11`. Five hos
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for `bosko` (not duplicated per-host)
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
+- Project-local Claude Code skill library under `.claude/skills/`: `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push` — guided, repo-aware workflows for all common tasks
 - WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, classic dbus pinned
 
@@ -93,7 +94,16 @@ hosts/
 ├── laptop/                             # same three files
 ├── natalie-laptop/                     # same three files (hardware-configuration.nix has real hardware data as of 2026-05-12)
 ├── server/                             # same three files
-└── vpn-server/                         # configuration.nix, hardware-configuration.nix (awaiting deployment)
+└── vpn-server/                         # configuration.nix, hardware-configuration.nix (live on Oracle Cloud ARM)
+
+.claude/skills/                         # Project-local Claude Code skills
+├── nixos-dry-run/                      # Preview config changes without applying (nh os boot --dry)
+├── nixos-rebuild/                      # Guarded staged rebuild with mandatory dry-run + YES gate
+├── nixos-gc/                           # Garbage-collect Nix store, keep last 3 generations
+├── vpn-status/                         # SSH to VPN server and display WireGuard peer table
+├── new-module/                         # Interactive NixOS module scaffolder (3 templates)
+├── commit/                             # Conventional commit workflow with user confirmation
+└── push/                               # Push to origin main with ahead/behind check
 ```
 
 ### Module Composition
@@ -150,6 +160,8 @@ All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-05-20** — Claude Code skill library built out. Seven project-local skills added under `.claude/skills/`: `nixos-dry-run` (safe config preview), `nixos-rebuild` (guarded staged rebuild with mandatory dry-run and `YES` confirmation gate), `nixos-gc` (GC keeping last 3 generations), `vpn-status` (SSH peer table from Oracle VPN server), `new-module` (interactive NixOS module scaffolder with always-on / options-based / desktop-environment templates), `commit` (conventional commit workflow with user confirmation, specific-file staging, and `Co-Authored-By` trailer), and `push` (ahead/behind check then push to `origin main`). The `nixos-rebuild` and `new-module` skills enforce this repo's safe-by-default conventions — no silent `flake.nix` edits, no unconfirmed activations.
 
 **2026-05-18** — WireGuard VPN fully deployed. Oracle Cloud ARM vpn-server is live at `150.136.232.63`; `wg0` active at `10.10.0.1/24` with three configured peers (gaming, laptop, natalie-laptop). Shared `dotfiles/common/modules/vpn.nix` client module created with full-tunnel routing, DNS override (`1.1.1.1 8.8.8.8`), and `persistentKeepalive = 25`. Per-host VPN addresses configured in `hosts/*/networking.nix`. ARM build target fixed for `server-rebuild` alias (now builds natively on the server). binfmt aarch64 emulation added to gaming as offline fallback. natalie-laptop added as fourth WireGuard peer with real keys. `gh` added to common system packages.
 
