@@ -12,10 +12,11 @@ Connect to any host in the NixOS repo by short name, without needing to remember
 
 | Short name      | SSH command                                                   | Notes                        |
 |-----------------|---------------------------------------------------------------|------------------------------|
-| `gaming`        | `ssh bosko@gaming`                                            | Local, NixOS hostname        |
-| `laptop`        | `ssh bosko@laptop`                                            | Local, NixOS hostname        |
-| `natalie-laptop`| `ssh bosko@natalie-laptop`                                    | Local, NixOS hostname        |
+| `gaming`        | `ssh bosko@gaming`                                            | Local, IP: 10.0.0.251        |
+| `laptop`        | `ssh bosko@laptop`                                            | Local, IP: 10.0.0.227        |
+| `natalie-laptop`| `ssh bosko@natalie-laptop`                                    | Local, IP: 10.0.0.103        |
 | `server`        | `ssh bosko@nixos-server`                                      | Local, hostname is nixos-server |
+| `pi-hole`       | `ssh bosko@pi-hole`                                           | Local, IP: 10.0.0.20           |
 | `vpn-server`    | `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`              | Oracle Cloud ARM VM          |
 
 ## Step 1 — Resolve the target
@@ -27,6 +28,7 @@ Accept these aliases:
 - `laptop` → `ssh bosko@laptop`
 - `natalie-laptop` or `natalie` → `ssh bosko@natalie-laptop`
 - `server` or `nixos-server` → `ssh bosko@nixos-server`
+- `pi-hole` → `ssh bosko@pi-hole`
 - `vpn-server` or `vpn` or `oracle` → `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`
 
 ## Step 2 — Show the command
@@ -68,4 +70,8 @@ After the session ends (or if the connection is refused/timed out), report the e
 - All hosts have password auth disabled — key auth only.
 - vpn-server uses the Oracle Cloud default `ubuntu` user; `bosko` does not exist there.
 - Key path for vpn-server: `~/.ssh/id_ed25519`.
-- Local hosts are resolvable by hostname — no need for IPs when on the local network.
+- Local hosts use ~/.ssh/config entries with static IPs (hostname resolution unreliable):
+  - `gaming` → 10.0.0.251
+  - `laptop` → 10.0.0.227
+  - `natalie-laptop` → 10.0.0.103
+  - `pi-hole` → 10.0.0.20
