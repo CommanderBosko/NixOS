@@ -33,35 +33,35 @@ Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie
 `flake.nix` defines a `lib.mkSystem` helper that composes module lists per host:
 
 - **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, emulation, virtualisation, SDDM; used by gaming, laptop, and natalie-laptop
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, emulation, SDDM; used by gaming, laptop, and natalie-laptop
 - Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, `networking.nix`, and any host-specific modules (`amd.nix`, `nvidia.nix`, `gaming.nix`, etc.)
 
 `nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) to allow the gaming host to drop it independently when the AMD card is installed. `amd.nix` and `gaming.nix` are gaming-only.
 
-The server host uses only `commonModules` (headless, no flatpaks, no DE). The vpn-server uses `commonModules` on `aarch64-linux`.
+The server host uses only `commonModules` (headless, no flatpaks, no DE). The vpn-server uses `commonModules` + disko on `aarch64-linux`.
 
 ### Directory Layout
 
 ```
 dotfiles/
-└── common/
-    ├── modules/          # System-level NixOS modules
-    │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
-    │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
-    └── configs/          # Home Manager configs shared by both users
-        ├── home.nix      # HM root — imported by both bosko and natty
-        ├── helix.nix
-        └── dotfiles (katerc, kitty.conf, starship.toml)
-├── bosko/                # bosko-specific HM configs (not shared with natty)
-│   ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
-│   └── claude/agents/    # Agent definition files (repo-creator-agent.md, session-closer.md)
+├── common/
+│   ├── modules/          # System-level NixOS modules
+│   │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
+│   │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
+│   └── configs/          # Home Manager configs shared by both users
+│       ├── home.nix      # HM root — imported by both bosko and natty
+│       ├── helix.nix
+│       └── dotfiles (katerc, kitty.conf, starship.toml)
+└── bosko/                # bosko-specific HM configs (not shared with natty)
+    ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
+    └── claude/agents/    # Agent definition files (repo-creator-agent.md, session-closer.md)
 
 hosts/
 ├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/               # same three files
 ├── natalie-laptop/       # same three files
 ├── server/               # same three files
-└── vpn-server/           # configuration.nix, hardware-configuration.nix
+└── vpn-server/           # configuration.nix, disko.nix, hardware-configuration.nix
 ```
 
 ### Key Patterns
