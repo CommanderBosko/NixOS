@@ -1,12 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-05-20 (night)_
+_Last updated: 2026-05-21_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported and real keys configured. Gaming's private key is placed and `wg-quick-wg0` is active. Laptop and natalie-laptop still need their private keys placed manually before the interface will start.
 
-**Claude Code skill library is at 17 skills (2026-05-20 night).** Lives under `.claude/skills/`. The `/nixos-rebuild` skill was removed after investigation confirmed `nh os boot` requires a real TTY for sudo and cannot be driven from a Claude Code subprocess. The apply step is always done by the user running `rebuild` in their terminal. Remaining skills cover: dry-run, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, and flake input pinning.
+**Claude Code skill library is at 22 skills (2026-05-21).** Lives under `.claude/skills/`. The `/nixos-rebuild` skill was removed after investigation confirmed `nh os boot` requires a real TTY for sudo and cannot be driven from a Claude Code subprocess. The apply step is always done by the user running `rebuild` in their terminal. Skills cover: dry-run, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, flake input pinning, diff-generations, flake-check, journal, nix-repl, and fmt.
 
 | Host | Status | DE |
 |------|--------|----|
@@ -59,6 +59,8 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **CLAUDE.md corrections (2026-05-21)** — Three inaccuracies fixed: (1) `virtualisation` removed from `desktopModules` description — it is gaming-only; (2) `+ disko` added to vpn-server module composition; (3) directory layout tree corrected (`bosko/` indentation, `disko.nix` added to vpn-server listing). natty's wheel/trusted-user status corrected — she has both, same as bosko; the only differences are no user packages and no SSH keys.
+- **Five new skills added (2026-05-21)** — `diff-generations` (nix store diff-closures between generations), `flake-check` (validate flake across all 5 hosts), `journal` (tail journald, local or remote), `nix-repl` (print repl command + host-specific starter expressions), `fmt` (alejandra with nixpkgs-fmt fallback). `nix-repl` prints rather than execs to avoid the TTY issue.
 - **`/nixos-rebuild` skill removed (2026-05-20, night)** — `nh os boot` requires a controlling TTY for sudo; it cannot be run from a Claude Code subprocess. The correct workflow is: Claude edits config → user runs `rebuild` in their terminal. The `/nixos-dry-run` skill is unaffected (uses `--dry`, no sudo). `switch-de` next-steps updated to reference the `rebuild` alias directly.
 - **Skill library extended to 18 skills (2026-05-20, second session)** — `ssh-host`, `remote-rebuild`, `rollback`, `search-pkg`, `new-host`, and `pin-input` added. The library now covers the full NixOS workflow surface: SSH, remote deployments, rollbacks, package discovery, host provisioning, and flake input management.
 - **`pin-input` warns about follow-inputs (2026-05-20)** — When pinning `nixpkgs`, the skill explicitly warns that `home-manager` and `disko` follow nixpkgs by default and will also be pinned unless the user breaks those follows first.

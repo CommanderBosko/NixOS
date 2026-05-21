@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-20. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. A project-local Claude Code skill library under `.claude/skills/` provides guided, repo-aware workflows for all common tasks. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-21. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided, repo-aware workflows covering the full NixOS development surface. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
@@ -16,7 +16,7 @@ Active development — `nixos-unstable` channel, state version `25.11`. Five hos
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for `bosko` (not duplicated per-host)
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
-- Project-local Claude Code skill library under `.claude/skills/`: 18 skills covering the full NixOS workflow — dry-run, rebuild, GC, VPN status, module scaffolding, new host, new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, and flake input pinning
+- Project-local Claude Code skill library under `.claude/skills/`: 22 skills covering the full NixOS workflow — dry-run, GC, VPN status, module scaffolding, new host, new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, flake input pinning, generation diff, flake validation, journal tailing, nix repl, and .nix formatting
 - WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, classic dbus pinned
 
@@ -94,11 +94,10 @@ hosts/
 ├── laptop/                             # same three files
 ├── natalie-laptop/                     # same three files (hardware-configuration.nix has real hardware data as of 2026-05-12)
 ├── server/                             # same three files
-└── vpn-server/                         # configuration.nix, hardware-configuration.nix (live on Oracle Cloud ARM)
+└── vpn-server/                         # configuration.nix, disko.nix, hardware-configuration.nix (live on Oracle Cloud ARM)
 
-.claude/skills/                         # Project-local Claude Code skills (18 total)
+.claude/skills/                         # Project-local Claude Code skills (22 total)
 ├── nixos-dry-run/                      # Preview config changes without applying (nh os boot --dry)
-├── nixos-rebuild/                      # Guarded staged rebuild with mandatory dry-run + YES gate
 ├── nixos-gc/                           # Garbage-collect Nix store, keep last 3 generations
 ├── vpn-status/                         # SSH to VPN server and display WireGuard peer table
 ├── new-module/                         # Interactive NixOS module scaffolder (3 templates)
@@ -114,7 +113,12 @@ hosts/
 ├── rollback/                           # Show generations, confirm, then switch --rollback
 ├── search-pkg/                         # nix search nixpkgs wrapper with add-package nudge
 ├── new-host/                           # Scaffold a new host (desktop/server/remote-arm types)
-└── pin-input/                          # Pin a flake input to a rev/tag (lock-only or permanent)
+├── pin-input/                          # Pin a flake input to a rev/tag (lock-only or permanent)
+├── diff-generations/                   # nix store diff-closures between current and previous generation
+├── flake-check/                        # Validate flake across all 5 hosts before rebuild or commit
+├── journal/                            # Tail journald for a named service, local or remote
+├── nix-repl/                           # Print nix repl command + host-specific starter expressions
+└── fmt/                                # Format changed .nix files (alejandra, nixpkgs-fmt fallback)
 ```
 
 ### Module Composition
@@ -122,10 +126,10 @@ hosts/
 `flake.nix` defines a `lib.mkSystem` helper and two module lists:
 
 - **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, audio, emulation, virtualisation, SDDM
+- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, audio, emulation, SDDM
 
 Each desktop host then adds its own machine-specific modules. Notable per-host additions:
-- **gaming**: `amd.nix`, `gaming.nix`, `nvidia.nix`, `virtualisation.nix`, `plasma.nix`
+- **gaming**: `amd.nix`, `gaming.nix`, `nvidia.nix`, `virtualisation.nix`, `plasma.nix` (virtualisation is gaming-only, not in desktopModules)
 - **laptop**: `nvidia.nix`, `niri.nix`
 - **natalie-laptop**: `nvidia.nix`, `cosmic.nix`
 - **server**: `commonModules` only (headless, no flatpaks, no DE)
@@ -136,9 +140,9 @@ Each desktop host then adds its own machine-specific modules. Notable per-host a
 | User | Groups | User-level packages |
 |------|--------|---------------------|
 | `bosko` | wheel, networkmanager, audio, video, input, kvm, libvirtd, lp, render | `claude-code`, `gemini-cli` |
-| `natty` | networkmanager, audio, video, input, kvm, libvirtd, lp, render | *(none)* |
+| `natty` | wheel, networkmanager, audio, video, input, kvm, libvirtd, lp, render | *(none)* |
 
-Both users share the same Home Manager config (`home.nix`). `homeMode` is `"0700"` for both. `natty` has no wheel group or trusted-user privileges. `mumble` is a system package on gaming only.
+Both users share the same Home Manager config (`home.nix`). `homeMode` is `"0700"` for both. Both users are wheel/sudo and Nix trusted users. `natty` has no user-level packages and no SSH keys. `mumble` is a system package on gaming only.
 
 ## Security
 
@@ -171,6 +175,8 @@ All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-05-21** — CLAUDE.md documentation audit: corrected natty's user permissions (she is wheel/sudo and a Nix trusted user, same as bosko); removed `virtualisation` from the `desktopModules` description (it is gaming-only); added `disko` to vpn-server module composition; fixed the directory layout tree. Added five new skills: `diff-generations` (nix store diff-closures between generations), `flake-check` (validate flake across all five hosts), `journal` (tail journald locally or via SSH), `nix-repl` (print repl invocation with host-specific starters), and `fmt` (alejandra/nixpkgs-fmt fallback for changed .nix files). Skill library now at 22 skills.
 
 **2026-05-20** — Claude Code skill library completed. 18 project-local skills now live under `.claude/skills/`. The second build session added: `ssh-host` (short-name SSH resolver), `remote-rebuild` (headless deployment via `nixos-rebuild switch --target-host` to vpn-server or server), `rollback` (generation listing + confirm + `switch --rollback`), `search-pkg` (`nix search nixpkgs` wrapper with add-package nudge), `new-host` (interactive scaffolder for desktop/server/remote-arm host types with correct template per type), and `pin-input` (flake input pinning to a rev/tag — lock-only or permanent, with home-manager/disko follow-input warnings). The first build session earlier the same day added `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push`, `update`, `add-package`, `add-flatpak`, `switch-de`, and `new-peer`. agenix for secret management was evaluated and deferred — VPN keys live at `/etc/wireguard/private.key` on each host and are never in the repo.
 

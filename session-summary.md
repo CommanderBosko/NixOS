@@ -2,6 +2,64 @@
 
 ---
 
+## Session: 2026-05-21 — CLAUDE.md audit and five new skills
+
+**Duration Estimate**: ~2 hours (commits fe780cf through 1a0ce2f)
+**Session Focus**: Correct documentation inaccuracies discovered in CLAUDE.md and expand the skill library with five new utility skills.
+
+### What Was Accomplished
+
+- **Corrected natty's user permissions in CLAUDE.md** — natty is actually wheel/sudo and a Nix trusted user, identical to bosko in those respects. The previous doc claimed she had neither.
+- **Full CLAUDE.md documentation audit** — verified every factual claim against the current codebase; found and fixed three additional inaccuracies:
+  - Removed `virtualisation` from the `desktopModules` description (it is gaming-only, not in the shared `desktopModules` list)
+  - Added `+ disko` to the vpn-server module composition description
+  - Fixed the directory layout tree: `bosko/` was shown at the wrong indentation level, and `disko.nix` was missing from the vpn-server listing
+- **Added `Read(/home/bosko/NixOS/**)` permission** to `.claude/settings.local.json` so all project files can be read without prompting.
+- **Built five new skills** under `.claude/skills/`:
+  - `diff-generations` — runs `nix store diff-closures` between the current and previous system generations to show exactly what packages changed
+  - `flake-check` — validates the flake across all five hosts with `nix flake check` before rebuild or commit
+  - `journal` — tails `journalctl` for a named service, with optional remote-host support via SSH
+  - `nix-repl` — prints the correct `nix repl` invocation with the flake loaded and host-specific starter expressions for interactive config exploration
+  - `fmt` — formats changed `.nix` files with `alejandra`, falling back to `nixpkgs-fmt` if alejandra is not available
+- **Added five matching permissions** to `.claude/settings.local.json`: `nix store diff-closures *`, `nix flake check *`, `journalctl *`, `alejandra *`, `nixpkgs-fmt *`.
+
+### Files Changed
+
+- `CLAUDE.md` — corrected natty's wheel/trusted-user status; removed virtualisation from desktopModules description; added disko to vpn-server; fixed directory tree layout
+- `.claude/skills/diff-generations/SKILL.md` — new skill (389-line batch across all five)
+- `.claude/skills/flake-check/SKILL.md` — new skill
+- `.claude/skills/fmt/SKILL.md` — new skill
+- `.claude/skills/journal/SKILL.md` — new skill
+- `.claude/skills/nix-repl/SKILL.md` — new skill
+- `.claude/settings.local.json` — added `Read(/home/bosko/NixOS/**)` and five new Bash permissions
+
+### Commits This Session
+
+- `fe780cf` — docs(users): correct natty's wheel and trusted-user status in CLAUDE.md
+- `80692c2` — docs: fix three inaccuracies found in CLAUDE.md audit
+- `1a0ce2f` — feat(skills): add diff-generations, flake-check, fmt, journal, nix-repl skills
+
+### Decisions Made
+
+- **`virtualisation` is gaming-only** — confirmed by reading `flake.nix`; it is not part of `desktopModules` and was incorrectly documented as such. Only gaming imports `virtualisation.nix` (for Podman/libvirt); laptop and natalie-laptop do not.
+- **natty has wheel and trusted-user** — verified in `users.nix`; the distinction between natty and bosko is only that natty has no user packages and no SSH keys. All other privileges are identical.
+- **`nix-repl` skill prints, not runs** — the skill outputs the repl command and starter expressions for the user to paste, rather than attempting to exec into an interactive session (which would fail in a Claude subprocess, the same TTY issue that killed `/nixos-rebuild`).
+- **`fmt` uses alejandra with nixpkgs-fmt fallback** — alejandra is not declared as a system package in this repo; the skill checks availability at runtime and falls back gracefully.
+
+### Issues Encountered
+
+- None — all three commits applied cleanly; working tree is clean and pushed.
+
+### Remaining / Next Session
+
+- **Place laptop WireGuard private key** — write key to `/etc/wireguard/private.key` on laptop, run `rebuild` in terminal
+- **Place natalie-laptop WireGuard private key** — same manual step
+- **AMD card swap on gaming** — when physical card arrives, remove `nvidia.nix` from gaming's flake entry; `rebuild` and reboot
+- **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry
+- **Pin server to nixos-25.05 (M-9)** — add stable nixpkgs input for vpn-server
+
+---
+
 ## Session: 2026-05-20 (night) — Remove /nixos-rebuild skill; fix switch-de TTY reference
 
 **Duration Estimate**: ~30 minutes
