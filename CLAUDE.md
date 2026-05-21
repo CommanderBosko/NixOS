@@ -76,7 +76,7 @@ hosts/
 ### Users
 
 - `bosko` — primary user, wheel/sudo, Nix trusted user, auto-login; user packages: `claude-code`, `gemini-cli`
-- `natty` — secondary user, no wheel, no trusted-user; user packages: none
+- `natty` — secondary user, wheel/sudo, Nix trusted user; user packages: none
 
 Both users share the same Home Manager config. `mumble` is a system package on gaming only.
 
