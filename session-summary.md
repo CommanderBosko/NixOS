@@ -2,6 +2,52 @@
 
 ---
 
+## Session: 2026-05-21 (continued) — nixpkgs channel split: server hosts pinned to 25.05
+
+**Duration Estimate**: ~3 hours (commits 67b65db through 5444b1c)
+**Session Focus**: Pin the two headless server hosts (vpn-server and server) to the `nixos-25.05` stable channel while keeping all three desktop hosts on `nixos-unstable`, completing the M-9 goal. Also cleaned stale session-summary reminders and added five more skills in the earlier part of the session.
+
+### What Was Accomplished
+
+- **Pinned vpn-server to `nixos-25.05`** — added `nixpkgs-stable` input to `flake.nix` (pointing at `nixos-25.05`), wired it to the vpn-server host only via a new `nixpkgs-stable.follows` and explicit `nixpkgs` override in the vpn-server system definition. Deployed via `/remote-rebuild`; confirmed running `25.05.20260102.ac62194 (Warbler)` with WireGuard still active.
+- **Pinned server to `nixos-25.05`** — applied the same `nixpkgs-stable` input to the local headless `server` host. Desktop hosts (gaming, laptop, natalie-laptop) were explicitly tested via dry-run and confirmed still following `nixos-unstable`.
+- **Channel split finalised** — desktop hosts on unstable (rolling features), server hosts on stable (predictable, auditable). M-9 milestone complete.
+- **Removed stale VPN private-key reminders from docs** — `project-state.md` and two `session-summary.md` entries incorrectly listed "place WireGuard private key on laptop/natalie-laptop" as pending work after the VPN was confirmed fully operational on 2026-05-20.
+- **Added `Read(/nix/store/**)` and `Bash(find /nix/store *)` permissions** to `.claude/settings.local.json` so store-path lookups do not require prompts.
+
+### Files Changed
+
+- `flake.nix` — added `nixpkgs-stable` input (`nixos-25.05`); wired to vpn-server and server host definitions; desktop hosts left on the existing `nixpkgs` (unstable) input
+- `flake.lock` — new lock entry for `nixpkgs-stable` (25.05 rev)
+- `dotfiles/common/configs/helix.nix` — minor cleanup (no functional change; committed in same batch as flake changes)
+- `dotfiles/common/modules/home-manager.nix` — minor cleanup in the same commit
+- `project-state.md` — removed stale VPN private-key items from Known Issues, Next Steps, and host table rows
+- `session-summary.md` — removed stale "place private key" bullet from two earlier session entries
+
+### Commits This Session
+
+- `67b65db` — docs(session): remove stale VPN private key reminders — all clients COMPLETE
+- `16d11bb` — feat(vpn-server): pin vpn-server to nixos-25.05 for stability
+- `5444b1c` — feat(flake): pin server to nixos-25.05; keep desktop hosts on unstable
+
+### Decisions Made
+
+- **Server hosts on `nixos-25.05`, desktop hosts on `nixos-unstable`** — Rationale: desktop hosts benefit from rolling updates (latest drivers, apps, Plasma/Niri/Cosmic improvements); server hosts need stability and predictability. The split is implemented via two separate `nixpkgs` inputs in `flake.nix`.
+- **`nixpkgs-stable` follows `nixos-25.05` branch** — Not pinned to a specific rev; the branch pointer advances with security patches. A `/pin-input` call can freeze it further if needed.
+- **vpn-server deployment verified end-to-end** — After the remote rebuild, SSH and `wg show` confirmed the server came up correctly on 25.05 with all three WireGuard peers intact. No regression.
+
+### Issues Encountered
+
+- None. Both server pinning commits applied cleanly; all three desktop dry-runs passed with no evaluation errors.
+
+### Remaining / Next Session
+
+- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
+- **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+- **Validate dbus-broker** — test dbus-broker AppArmor compatibility; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
+
+---
+
 ## Session: 2026-05-21 — CLAUDE.md audit and five new skills
 
 **Duration Estimate**: ~2 hours (commits fe780cf through 1a0ce2f)

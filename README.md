@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development — `nixos-unstable` channel, state version `25.11`. Five hosts defined and all operational as of 2026-05-21. WireGuard VPN is fully deployed: Oracle Cloud ARM vpn-server is live at `150.136.232.63` with three client peers (gaming, laptop, natalie-laptop). Gaming's VPN interface is active; laptop and natalie-laptop need their private keys placed before `wg-quick-wg0` starts. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided, repo-aware workflows covering the full NixOS development surface. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development, state version `25.11`. Five hosts defined and all operational. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; server hosts (server, vpn-server) are pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts (gaming, laptop, natalie-laptop) are active with real private keys placed. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided, repo-aware workflows covering the full NixOS development surface. Starship prompt is fully inlined in `shell.nix` (no external TOML). `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. Classic dbus is pinned in `security.nix` pending dbus-broker AppArmor validation. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
@@ -167,14 +167,16 @@ WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
 
 - **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`, `150.136.232.63`), `10.10.0.1/24`, port 51820
 - **gaming**: `10.10.0.2/32` — private key placed, `wg-quick-wg0` active
-- **laptop**: `10.10.0.3/32` — config deployed, private key placement pending
-- **natalie-laptop**: `10.10.0.4/32` — config deployed, private key placement pending
+- **laptop**: `10.10.0.3/32` — private key placed, `wg-quick-wg0` active
+- **natalie-laptop**: `10.10.0.4/32` — private key placed, `wg-quick-wg0` active
 
 All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/0"]`). `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
 
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-05-21 (continued)** — nixpkgs channel split complete. Added `nixpkgs-stable` input (`nixos-25.05`) to `flake.nix`; server and vpn-server now pin to the stable channel while desktop hosts remain on `nixos-unstable`. vpn-server deployed via remote rebuild and confirmed running `25.05.20260102.ac62194 (Warbler)` with all three WireGuard peers intact. Stale VPN private-key pending items removed from docs — all clients have been fully operational since 2026-05-20. M-9 milestone complete.
 
 **2026-05-21** — CLAUDE.md documentation audit: corrected natty's user permissions (she is wheel/sudo and a Nix trusted user, same as bosko); removed `virtualisation` from the `desktopModules` description (it is gaming-only); added `disko` to vpn-server module composition; fixed the directory layout tree. Added five new skills: `diff-generations` (nix store diff-closures between generations), `flake-check` (validate flake across all five hosts), `journal` (tail journald locally or via SSH), `nix-repl` (print repl invocation with host-specific starters), and `fmt` (alejandra/nixpkgs-fmt fallback for changed .nix files). Skill library now at 22 skills.
 
@@ -200,11 +202,9 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Roadmap
 
-- Place WireGuard private keys on laptop and natalie-laptop to activate their VPN interfaces
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
 - Validate dbus-broker AppArmor compatibility; remove the classic dbus pin from `security.nix` if clean
-- Pin server to `nixos-25.05` stable — add second nixpkgs input (M-9)
 - Harden vpn-server further (AppArmor profiles, fail2ban, rate-limiting on UDP 51820)
 
 ## License

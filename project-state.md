@@ -1,10 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-05-21_
+_Last updated: 2026-05-21 (continued)_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
+
+**nixpkgs channel split is complete (2026-05-21).** Desktop hosts (gaming, laptop, natalie-laptop) follow `nixos-unstable`. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a `nixpkgs-stable` input in `flake.nix`. vpn-server was deployed and confirmed running `25.05.20260102.ac62194 (Warbler)`.
 
 **Claude Code skill library is at 22 skills (2026-05-21).** Lives under `.claude/skills/`. The `/nixos-rebuild` skill was removed after investigation confirmed `nh os boot` requires a real TTY for sudo and cannot be driven from a Claude Code subprocess. The apply step is always done by the user running `rebuild` in their terminal. Skills cover: dry-run, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, flake input pinning, diff-generations, flake-check, journal, nix-repl, and fmt.
 
@@ -12,9 +14,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 |------|--------|----|
 | `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running | niri.nix |
-| `server` | Active — headless | — |
+| `server` | Active — headless; pinned to nixos-25.05 | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; DNS conflict with LAN nameserver fixed | cosmic.nix |
-| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured (gaming, laptop, natalie-laptop) | — |
+| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler) | — |
 
 **Starship config inlined (2026-05-17).** The external `starship.toml` dotfile has been eliminated. The full Gruvbox-themed Starship prompt configuration now lives as a native `programs.starship.settings` attrset in `shell.nix`. `dotfiles/common/configs/starship.toml` and the `xdg.configFile` symlink in `home.nix` were both removed.
 
@@ -47,7 +49,6 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed, dbus-broker can be re-enabled
-- **M-9: Pin server to `nixos-25.05` stable** — add a second nixpkgs input in `flake.nix` using `/pin-input` or manual edit
 
 ### Long-term
 
@@ -57,6 +58,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **nixpkgs channel split (2026-05-21)** — Desktop hosts (gaming, laptop, natalie-laptop) stay on `nixos-unstable` for rolling updates. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a dedicated `nixpkgs-stable` input in `flake.nix`. Rationale: server stability and predictability outweigh the value of rolling updates for headless hosts; desktop hosts benefit from latest drivers and DE releases. vpn-server deployed and confirmed healthy on 25.05 with WireGuard peers intact.
 - **CLAUDE.md corrections (2026-05-21)** — Three inaccuracies fixed: (1) `virtualisation` removed from `desktopModules` description — it is gaming-only; (2) `+ disko` added to vpn-server module composition; (3) directory layout tree corrected (`bosko/` indentation, `disko.nix` added to vpn-server listing). natty's wheel/trusted-user status corrected — she has both, same as bosko; the only differences are no user packages and no SSH keys.
 - **Five new skills added (2026-05-21)** — `diff-generations` (nix store diff-closures between generations), `flake-check` (validate flake across all 5 hosts), `journal` (tail journald, local or remote), `nix-repl` (print repl command + host-specific starter expressions), `fmt` (alejandra with nixpkgs-fmt fallback). `nix-repl` prints rather than execs to avoid the TTY issue.
 - **`/nixos-rebuild` skill removed (2026-05-20, night)** — `nh os boot` requires a controlling TTY for sudo; it cannot be run from a Claude Code subprocess. The correct workflow is: Claude edits config → user runs `rebuild` in their terminal. The `/nixos-dry-run` skill is unaffected (uses `--dry`, no sudo). `switch-de` next-steps updated to reference the `rebuild` alias directly.
@@ -102,11 +104,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
 - **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config.
-- **M-9 deferred** — vpn-server and all other hosts still run `nixos-unstable`. Should be pinned to `nixos-25.05` for stability on the server; requires a new flake input.
 
 ## Next Steps
 
 1. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient
 2. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
 3. **Validate dbus-broker**: test dbus-broker AppArmor compatibility on the current config; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
-4. **Pin server to `nixos-25.05` (M-9)**: add stable nixpkgs input in `flake.nix`; configure vpn-server to follow it
