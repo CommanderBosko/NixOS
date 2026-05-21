@@ -1,12 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-05-20_
+_Last updated: 2026-05-20 (night)_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported and real keys configured. Gaming's private key is placed and `wg-quick-wg0` is active. Laptop and natalie-laptop still need their private keys placed manually before the interface will start.
 
-**Claude Code skill library is now complete (2026-05-20).** 18 project-local skills live under `.claude/skills/`, covering every common NixOS workflow task: dry-run, rebuild, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, and flake input pinning.
+**Claude Code skill library is at 17 skills (2026-05-20 night).** Lives under `.claude/skills/`. The `/nixos-rebuild` skill was removed after investigation confirmed `nh os boot` requires a real TTY for sudo and cannot be driven from a Claude Code subprocess. The apply step is always done by the user running `rebuild` in their terminal. Remaining skills cover: dry-run, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, and flake input pinning.
 
 | Host | Status | DE |
 |------|--------|----|
@@ -44,9 +44,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ### Short-term (next 1-3 sessions)
 
-- **Place laptop WireGuard private key** — manually write the private key to `/etc/wireguard/private.key` on the laptop (key is in the VPN setup memory), then run `/nixos-rebuild` to activate `wg-quick-wg0`
+- **Place laptop WireGuard private key** — manually write the private key to `/etc/wireguard/private.key` on the laptop (key is in the VPN setup memory), then run `rebuild` in the terminal to activate `wg-quick-wg0`
 - **Place natalie-laptop WireGuard private key** — same manual step; key available from the VPN key-generation session
-- **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `/nixos-rebuild` and reboot
+- **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed, dbus-broker can be re-enabled
 - **M-9: Pin server to `nixos-25.05` stable** — add a second nixpkgs input in `flake.nix` using `/pin-input` or manual edit
@@ -59,6 +59,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **`/nixos-rebuild` skill removed (2026-05-20, night)** — `nh os boot` requires a controlling TTY for sudo; it cannot be run from a Claude Code subprocess. The correct workflow is: Claude edits config → user runs `rebuild` in their terminal. The `/nixos-dry-run` skill is unaffected (uses `--dry`, no sudo). `switch-de` next-steps updated to reference the `rebuild` alias directly.
 - **Skill library extended to 18 skills (2026-05-20, second session)** — `ssh-host`, `remote-rebuild`, `rollback`, `search-pkg`, `new-host`, and `pin-input` added. The library now covers the full NixOS workflow surface: SSH, remote deployments, rollbacks, package discovery, host provisioning, and flake input management.
 - **`pin-input` warns about follow-inputs (2026-05-20)** — When pinning `nixpkgs`, the skill explicitly warns that `home-manager` and `disko` follow nixpkgs by default and will also be pinned unless the user breaks those follows first.
 - **`new-host` does not auto-edit `flake.nix` (2026-05-20)** — Shows the exact flake.nix entry to add (including correct `lib.mkSystem` call and module list) but requires the user to apply it. Same safe-by-default convention as `new-module`.
@@ -106,9 +107,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Next Steps
 
-1. **Place laptop WireGuard private key**: on the laptop, run the key placement commands from the nixos-agent VPN memory, then use `/nixos-rebuild` to activate `wg-quick-wg0.service`
+1. **Place laptop WireGuard private key**: on the laptop, run the key placement commands from the nixos-agent VPN memory, then run `rebuild` in terminal to activate `wg-quick-wg0.service`
 2. **Place natalie-laptop WireGuard private key**: same process on natalie-laptop
-3. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; use `/nixos-rebuild` and reboot; verify `amd.nix` is sufficient
+3. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient
 4. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
 5. **Validate dbus-broker**: test dbus-broker AppArmor compatibility on the current config; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
 6. **Pin server to `nixos-25.05` (M-9)**: add stable nixpkgs input in `flake.nix`; configure vpn-server to follow it

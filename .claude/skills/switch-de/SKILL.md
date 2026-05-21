@@ -106,7 +106,7 @@ After the edit succeeds, show the user the updated line in context (the two line
 Then remind them of the next steps:
 
 > 1. Preview the change: `/nixos-dry-run`
-> 2. If the dry-run looks good, stage a rebuild: `/nixos-rebuild` (activates on next boot)
+> 2. If the dry-run looks good, run `rebuild` in your terminal to apply (requires TTY/sudo)
 > 3. Commit the change: `/commit`
 
 ---

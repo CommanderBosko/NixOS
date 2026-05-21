@@ -2,6 +2,48 @@
 
 ---
 
+## Session: 2026-05-20 (night) — Remove /nixos-rebuild skill; fix switch-de TTY reference
+
+**Duration Estimate**: ~30 minutes
+**Session Focus**: Investigate and remove the `/nixos-rebuild` skill that was non-functional due to a sudo/TTY limitation, and update the `switch-de` skill to point users to the `rebuild` terminal alias instead.
+
+### What Was Accomplished
+
+- Investigated why `/nixos-rebuild` was failing: `nh os boot` requires a real TTY for sudo authentication; running it inside a Claude Code subprocess (no controlling terminal) causes sudo to reject the password prompt.
+- Deleted the `/nixos-rebuild` skill entirely — removed `.claude/skills/nixos-rebuild/SKILL.md`, `.claude/skills/nixos-rebuild/scripts/dry-run.sh`, and `.claude/skills/nixos-rebuild/scripts/rebuild.sh`.
+- Cleaned up any `nixos-rebuild`-specific permissions that had been added to `.claude/settings.local.json`.
+- Updated `.claude/skills/switch-de/SKILL.md`: the "next steps" block that previously referenced `/nixos-rebuild` now tells the user to run `rebuild` in their terminal.
+
+### Files Changed
+
+- `.claude/skills/nixos-rebuild/SKILL.md` — deleted (skill removed)
+- `.claude/skills/nixos-rebuild/scripts/dry-run.sh` — deleted
+- `.claude/skills/nixos-rebuild/scripts/rebuild.sh` — deleted
+- `.claude/skills/switch-de/SKILL.md` — updated next-steps reference from `/nixos-rebuild` to the `rebuild` terminal alias
+
+### Commits This Session
+
+- none yet (staged in this session close)
+
+### Decisions Made
+
+- **`/nixos-rebuild` skill removed permanently** — `nh os boot` requires a real TTY for sudo; it cannot be driven from a Claude Code subprocess. The correct workflow is: Claude prepares the config change, the user runs `rebuild` in their terminal. The `/nixos-dry-run` skill (which uses `--dry` with no sudo) is unaffected.
+- **`rebuild` alias is the canonical rebuild trigger** — Defined in `shell.nix` as `nh os boot /home/bosko/NixOS`; all skill documentation now points users there for the actual apply step.
+
+### Issues Encountered
+
+- `nh os boot` and `sudo nixos-rebuild switch` both require a controlling TTY; running either from within a Claude Code Bash tool call fails because there is no TTY for sudo to prompt on.
+
+### Remaining / Next Session
+
+- **Place laptop WireGuard private key** — write key to `/etc/wireguard/private.key` on laptop, then run `rebuild` in terminal
+- **Place natalie-laptop WireGuard private key** — same manual step
+- **AMD card swap on gaming** — when physical card arrives, remove `nvidia.nix` from gaming's flake entry; `rebuild` and reboot
+- **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry
+- **Pin server to nixos-25.05 (M-9)** — add stable nixpkgs input for vpn-server
+
+---
+
 ## Session: 2026-05-20 (evening) — Skill library completed: ssh-host, remote-rebuild, rollback, search-pkg, new-host, pin-input
 
 **Duration Estimate**: ~2 hours (commits c16c5fc through a30a645)
