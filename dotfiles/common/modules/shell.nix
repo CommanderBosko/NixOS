@@ -36,7 +36,7 @@ in
           echo ""
           echo "Removing unused Flatpaks"
           echo ""
-          flatpak remove --unused --noninteractive
+          sudo flatpak remove --unused --noninteractive
         '';
         dry-run = ''
           echo ""
