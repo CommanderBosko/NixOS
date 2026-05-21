@@ -6,7 +6,7 @@ _Last updated: 2026-05-20_
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported and real keys configured. Gaming's private key is placed and `wg-quick-wg0` is active. Laptop and natalie-laptop still need their private keys placed manually before the interface will start.
 
-**Claude Code skill library added (2026-05-20).** Seven project-local skills now live under `.claude/skills/`, giving this repo a consistent, guided workflow for the most common tasks: `nixos-dry-run` (safe preview), `nixos-rebuild` (guarded staged rebuild with YES gate), `nixos-gc` (GC keeping 3 generations), `vpn-status` (SSH peer table), `new-module` (interactive module scaffolder with three templates), `commit` (conventional commit with user confirmation), and `push` (ahead/behind check then push to origin main).
+**Claude Code skill library is now complete (2026-05-20).** 18 project-local skills live under `.claude/skills/`, covering every common NixOS workflow task: dry-run, rebuild, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, and flake input pinning.
 
 | Host | Status | DE |
 |------|--------|----|
@@ -44,12 +44,12 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ### Short-term (next 1-3 sessions)
 
-- **Place laptop WireGuard private key** — manually write the private key to `/etc/wireguard/private.key` on the laptop (key is in the VPN setup memory), then run `rebuild` (or `/nixos-rebuild`) to activate `wg-quick-wg0`
+- **Place laptop WireGuard private key** — manually write the private key to `/etc/wireguard/private.key` on the laptop (key is in the VPN setup memory), then run `/nixos-rebuild` to activate `wg-quick-wg0`
 - **Place natalie-laptop WireGuard private key** — same manual step; key available from the VPN key-generation session
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `/nixos-rebuild` and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed, dbus-broker can be re-enabled
-- **M-9: Pin server to `nixos-25.05` stable** — add a second nixpkgs input in `flake.nix`
+- **M-9: Pin server to `nixos-25.05` stable** — add a second nixpkgs input in `flake.nix` using `/pin-input` or manual edit
 
 ### Long-term
 
@@ -59,7 +59,12 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
-- **Project-local Claude Code skill library added (2026-05-20)** — Seven skills under `.claude/skills/` give every Claude Code session a consistent, repo-aware workflow for dry-runs, rebuilds, GC, VPN status, module scaffolding, committing, and pushing. Skills travel with the repo and are version-controlled.
+- **Skill library extended to 18 skills (2026-05-20, second session)** — `ssh-host`, `remote-rebuild`, `rollback`, `search-pkg`, `new-host`, and `pin-input` added. The library now covers the full NixOS workflow surface: SSH, remote deployments, rollbacks, package discovery, host provisioning, and flake input management.
+- **`pin-input` warns about follow-inputs (2026-05-20)** — When pinning `nixpkgs`, the skill explicitly warns that `home-manager` and `disko` follow nixpkgs by default and will also be pinned unless the user breaks those follows first.
+- **`new-host` does not auto-edit `flake.nix` (2026-05-20)** — Shows the exact flake.nix entry to add (including correct `lib.mkSystem` call and module list) but requires the user to apply it. Same safe-by-default convention as `new-module`.
+- **agenix deferred (2026-05-20)** — Explored agenix for managing WireGuard private keys declaratively; decided against it. VPN is fully working, no reinstalls expected, and adding agenix would require a full re-keying of all hosts. Plan saved at `/home/bosko/.claude/plans/agentix-wireguard-setup.md` for reference if a future reinstall happens.
+- **Private keys confirmed out-of-repo (2026-05-20)** — WireGuard private keys live at `/etc/wireguard/private.key` on each host, referenced by path in the Nix config. They are never in the git repository. `.gitignore` already covers `*.key`.
+- **Project-local Claude Code skill library started (2026-05-20, first session)** — Seven skills added initially: `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push`. Skills travel with the repo and are version-controlled.
 - **`new-module` skill does not auto-edit `flake.nix` (2026-05-20)** — Shows the exact import line to add but requires the user (or explicit follow-up) to apply it. Avoids silent modifications to the most critical file in the repo.
 - **`commit` skill stages specific files, never `git add -A` (2026-05-20)** — Prevents accidentally committing private keys, `.env` files, or large build artifacts; falls back to `-A` only on explicit user request.
 - **`nixos-gc` keeps 3 generations (2026-05-20)** — Matches the `cleanup` alias in `shell.nix`; retains rollback headroom without the destruction of `nix-collect-garbage -d`.

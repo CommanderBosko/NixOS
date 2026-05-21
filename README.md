@@ -16,7 +16,7 @@ Active development — `nixos-unstable` channel, state version `25.11`. Five hos
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for `bosko` (not duplicated per-host)
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
-- Project-local Claude Code skill library under `.claude/skills/`: `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push` — guided, repo-aware workflows for all common tasks
+- Project-local Claude Code skill library under `.claude/skills/`: 18 skills covering the full NixOS workflow — dry-run, rebuild, GC, VPN status, module scaffolding, new host, new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, and flake input pinning
 - WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, classic dbus pinned
 
@@ -96,14 +96,25 @@ hosts/
 ├── server/                             # same three files
 └── vpn-server/                         # configuration.nix, hardware-configuration.nix (live on Oracle Cloud ARM)
 
-.claude/skills/                         # Project-local Claude Code skills
+.claude/skills/                         # Project-local Claude Code skills (18 total)
 ├── nixos-dry-run/                      # Preview config changes without applying (nh os boot --dry)
 ├── nixos-rebuild/                      # Guarded staged rebuild with mandatory dry-run + YES gate
 ├── nixos-gc/                           # Garbage-collect Nix store, keep last 3 generations
 ├── vpn-status/                         # SSH to VPN server and display WireGuard peer table
 ├── new-module/                         # Interactive NixOS module scaffolder (3 templates)
 ├── commit/                             # Conventional commit workflow with user confirmation
-└── push/                               # Push to origin main with ahead/behind check
+├── push/                               # Push to origin main with ahead/behind check
+├── update/                             # nix flake update with readable lock diff
+├── add-package/                        # Add package to correct host or user scope
+├── add-flatpak/                        # Declaratively add a Flatpak to a host's environment.nix
+├── switch-de/                          # Swap desktop environment import in flake.nix
+├── new-peer/                           # Add a new WireGuard peer to vpn-server
+├── ssh-host/                           # SSH to any known host by short name
+├── remote-rebuild/                     # nixos-rebuild switch --target-host for headless hosts
+├── rollback/                           # Show generations, confirm, then switch --rollback
+├── search-pkg/                         # nix search nixpkgs wrapper with add-package nudge
+├── new-host/                           # Scaffold a new host (desktop/server/remote-arm types)
+└── pin-input/                          # Pin a flake input to a rev/tag (lock-only or permanent)
 ```
 
 ### Module Composition
@@ -161,7 +172,7 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Recent Changes
 
-**2026-05-20** — Claude Code skill library built out. Seven project-local skills added under `.claude/skills/`: `nixos-dry-run` (safe config preview), `nixos-rebuild` (guarded staged rebuild with mandatory dry-run and `YES` confirmation gate), `nixos-gc` (GC keeping last 3 generations), `vpn-status` (SSH peer table from Oracle VPN server), `new-module` (interactive NixOS module scaffolder with always-on / options-based / desktop-environment templates), `commit` (conventional commit workflow with user confirmation, specific-file staging, and `Co-Authored-By` trailer), and `push` (ahead/behind check then push to `origin main`). The `nixos-rebuild` and `new-module` skills enforce this repo's safe-by-default conventions — no silent `flake.nix` edits, no unconfirmed activations.
+**2026-05-20** — Claude Code skill library completed. 18 project-local skills now live under `.claude/skills/`. The second build session added: `ssh-host` (short-name SSH resolver), `remote-rebuild` (headless deployment via `nixos-rebuild switch --target-host` to vpn-server or server), `rollback` (generation listing + confirm + `switch --rollback`), `search-pkg` (`nix search nixpkgs` wrapper with add-package nudge), `new-host` (interactive scaffolder for desktop/server/remote-arm host types with correct template per type), and `pin-input` (flake input pinning to a rev/tag — lock-only or permanent, with home-manager/disko follow-input warnings). The first build session earlier the same day added `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push`, `update`, `add-package`, `add-flatpak`, `switch-de`, and `new-peer`. agenix for secret management was evaluated and deferred — VPN keys live at `/etc/wireguard/private.key` on each host and are never in the repo.
 
 **2026-05-18** — WireGuard VPN fully deployed. Oracle Cloud ARM vpn-server is live at `150.136.232.63`; `wg0` active at `10.10.0.1/24` with three configured peers (gaming, laptop, natalie-laptop). Shared `dotfiles/common/modules/vpn.nix` client module created with full-tunnel routing, DNS override (`1.1.1.1 8.8.8.8`), and `persistentKeepalive = 25`. Per-host VPN addresses configured in `hosts/*/networking.nix`. ARM build target fixed for `server-rebuild` alias (now builds natively on the server). binfmt aarch64 emulation added to gaming as offline fallback. natalie-laptop added as fourth WireGuard peer with real keys. `gh` added to common system packages.
 

@@ -2,6 +2,58 @@
 
 ---
 
+## Session: 2026-05-20 (evening) — Skill library completed: ssh-host, remote-rebuild, rollback, search-pkg, new-host, pin-input
+
+**Duration Estimate**: ~2 hours (commits c16c5fc through a30a645)
+**Session Focus**: Complete the project-local Claude Code skill library by adding the six remaining workflow skills — SSH host resolution, remote headless deployments, generation rollback, package search, new host scaffolding, and flake input pinning — bringing the total to 18 skills.
+
+### What Was Accomplished
+
+- Created `.claude/skills/ssh-host/SKILL.md` — resolves any host short name (`gaming`, `laptop`, `server`, `natalie-laptop`, `vpn-server`) to the correct SSH command; uses `ubuntu` user and explicit IP for vpn-server, `bosko@nixos-server` for the local headless server.
+- Created `.claude/skills/remote-rebuild/SKILL.md` — deploys NixOS config to remote headless hosts (`vpn-server` or `server`) via `nixos-rebuild switch --target-host`; does an SSH pre-check before attempting the build; explains that desktop hosts are NOT valid targets (they use `nh os boot` locally).
+- Created `.claude/skills/rollback/SKILL.md` — shows the last 5 system generations, confirms with the user which generation to activate, then runs `nixos-rebuild switch --rollback`; immediate activation without reboot.
+- Created `.claude/skills/search-pkg/SKILL.md` — wraps `nix search nixpkgs#<query>` with clean tabular output; nudges toward `/add-package` when the user has found what they need.
+- Created `.claude/skills/new-host/SKILL.md` — interactive host scaffolder; asks for hostname, host type (desktop/server/remote-arm), system architecture, state version, and DE choice (for desktop type); writes all correctly-structured host files in the right directory; shows the exact `lib.mkSystem` flake.nix entry to add without auto-editing that file.
+- Created `.claude/skills/pin-input/SKILL.md` — pins a flake input to a specific git rev or tag; supports lock-only (temporary — next `nix flake update` will unpin) and permanent (edits `flake.nix` `url` directly); warns that `home-manager` and `disko` follow nixpkgs and will be co-pinned unless the user breaks the follow first.
+- Explored agenix for WireGuard private key management and decided to defer; plan file saved at `/home/bosko/.claude/plans/agentix-wireguard-setup.md`.
+- Confirmed private keys are NOT in the repository (they live at `/etc/wireguard/private.key` on each host, referenced by path in the Nix config).
+
+### Files Changed
+
+- `.claude/skills/ssh-host/SKILL.md` — new; host name → SSH command resolver
+- `.claude/skills/remote-rebuild/SKILL.md` — new; headless remote deployment via nixos-rebuild switch --target-host
+- `.claude/skills/rollback/SKILL.md` — new; generation listing and rollback with confirmation
+- `.claude/skills/search-pkg/SKILL.md` — new; nix search wrapper with add-package nudge
+- `.claude/skills/new-host/SKILL.md` — new; interactive host scaffolder for desktop/server/remote-arm types
+- `.claude/skills/pin-input/SKILL.md` — new; flake input pinning with follow-input warnings
+
+### Commits This Session
+
+- `c16c5fc` — feat(skills): add update, add-package, add-flatpak, switch-de, new-peer skills
+- `a30a645` — feat(skills): add ssh-host, remote-rebuild, rollback, search-pkg, new-host, pin-input skills
+
+### Decisions Made
+
+- **agenix deferred** — WireGuard VPN is fully operational, no reinstalls expected; adding agenix would require re-keying all hosts for no immediate benefit. Plan saved for future reference.
+- **Private keys confirmed never in repo** — Keys live at `/etc/wireguard/private.key`, referenced by path only. `.gitignore` covers `*.key`. No action needed.
+- **`new-host` does not auto-edit `flake.nix`** — Same safe convention as `new-module`: the skill shows the exact entry to add and where, but the user must apply it.
+- **`pin-input` distinguishes lock-only from permanent** — Lock-only is reversible (next `nix flake update` removes the pin); permanent edits `flake.nix`. The skill always shows both options and explains the trade-off.
+- **`remote-rebuild` explicitly excludes desktop hosts** — Gaming, laptop, and natalie-laptop are documented as invalid targets; they rebuild locally with `nh os boot`. This prevents accidentally running a server-style deployment on a desktop host.
+
+### Issues Encountered
+
+- None. All six skills committed cleanly. The skill library is now functionally complete for this project.
+
+### Remaining / Next Session
+
+- **Place laptop WireGuard private key** — manually write the private key to `/etc/wireguard/private.key` on the laptop, then `/nixos-rebuild` to start `wg-quick-wg0`
+- **Place natalie-laptop WireGuard private key** — same manual step on natalie-laptop
+- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; use `/nixos-rebuild` and reboot
+- **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry
+- **M-9: Pin server to nixos-25.05** — use `/pin-input` or manual `flake.nix` edit to add a stable nixpkgs input for the server host
+
+---
+
 ## Session: 2026-05-20 — Claude Code skill system built out: new-module, commit, push
 
 **Duration Estimate**: ~2 hours (commits spanning 18:53 to 19:17 on 2026-05-20; plus the earlier vpn-server fastfetch cleanup on 2026-05-19)
