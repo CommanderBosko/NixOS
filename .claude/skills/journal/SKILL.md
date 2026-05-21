@@ -1,0 +1,77 @@
+---
+name: journal
+description: Use this skill when the user wants to "check logs for X", "tail journal", "show logs", "journalctl X", or "debug service X". Tails journald logs for a named service, optionally on a remote host.
+version: 0.1.0
+---
+
+# Journal Log Viewer
+
+Fetch the last 50 lines of journald output for a named service, either locally or on a remote host.
+
+## Step 1 — Resolve the service and host
+
+If the user provided a service name (e.g. `/journal sddm`) use it directly. Otherwise ask:
+
+> Which service do you want to check logs for? (e.g. `sddm`, `wg-quick@wg0`, `nginx`, `bluetooth`)
+
+If the user mentioned a host (gaming/laptop/server/natalie-laptop/vpn-server), use that host. Otherwise default to **local** (the machine the user is on).
+
+## Step 2 — Run journalctl
+
+### Local (default)
+
+```bash
+journalctl -u <service> -n 50 --no-pager
+```
+
+### Remote hosts
+
+Use SSH to run journalctl on the remote machine. Host resolution follows the same table as the `ssh-host` skill:
+
+| Host             | SSH command prefix                                        |
+|------------------|-----------------------------------------------------------|
+| `gaming`         | `ssh bosko@gaming`                                        |
+| `laptop`         | `ssh bosko@laptop`                                        |
+| `natalie-laptop` | `ssh bosko@natalie-laptop`                                |
+| `server`         | `ssh bosko@nixos-server`                                  |
+| `vpn-server`     | `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`          |
+
+Remote command:
+
+```bash
+ssh <host-args> "journalctl -u <service> -n 50 --no-pager"
+```
+
+Example for gaming:
+
+```bash
+ssh bosko@gaming "journalctl -u sddm -n 50 --no-pager"
+```
+
+Use a 30-second timeout (30000ms) for remote commands.
+
+## Step 3 — Present the output
+
+Print the full log output. Then add a brief summary below:
+
+- Note the **last timestamp** seen in the logs.
+- If there are `error` or `failed` lines, highlight them explicitly — quote the relevant lines so the user sees the key failure immediately.
+- If the service is not found or has no journal entries, say so clearly and suggest checking the service name with `systemctl list-units --all | grep <pattern>`.
+
+## Step 4 — Offer follow-up
+
+After showing logs, offer:
+
+> Want to see more lines (`-n 200`), follow live output (`-f`), or check a different service?
+
+Wait for the user to respond before running anything additional.
+
+---
+
+## Key facts
+
+- Default host: local (wherever Claude Code is running — the gaming host in normal use).
+- `--no-pager` is mandatory to get plain text output without interactive paging.
+- For `wg-quick@wg0` style unit names, the `@` is part of the service name — pass it as-is.
+- vpn-server uses the `ubuntu` user, not `bosko`.
+- All local hosts use static IPs via `~/.ssh/config` — use hostnames, not raw IPs.
