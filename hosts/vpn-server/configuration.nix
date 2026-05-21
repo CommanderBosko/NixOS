@@ -79,6 +79,11 @@
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHnENcEPt+wOxR2EAu3BAcCXwErGJ4KfiANdPZH3oZfc kurthoernig@gmail.com"
   ];
 
+  # Oracle Cloud ARM kernel doesn't support the audit subsystem; disable the
+  # auditd service to prevent it from failing on every boot.
+  # security.nix sets auditd.enable = true via mkDefault; mkForce overrides here.
+  security.auditd.enable = lib.mkForce false;
+
   services = {
     openssh = {
       enable = true;
