@@ -5,6 +5,9 @@
     # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # Stable nixpkgs — used by vpn-server (Oracle Cloud ARM) for a quieter update cadence
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
@@ -24,7 +27,7 @@
     };
   };
 
-  outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, self, ... }@inputs:
+  outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
@@ -123,9 +126,10 @@
         ];
       };
 
-      # VPN Server (Oracle Cloud ARM)
+      # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.05 for stability
       vpn-server = self.lib.mkSystem {
-        inherit inputs nixpkgs;
+        inherit inputs;
+        nixpkgs = nixpkgs-stable;
         specialArgs = {
           inherit inputs self;
           system = "aarch64-linux";
