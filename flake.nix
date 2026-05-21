@@ -5,7 +5,7 @@
     # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Stable nixpkgs — used by vpn-server (Oracle Cloud ARM) for a quieter update cadence
+    # Stable nixpkgs — used by server and vpn-server for stability
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
 
     # Dank Material Shell
@@ -45,7 +45,6 @@
       "${self}/dotfiles/common/modules/users.nix"
     ];
 
-    # Modules specific to desktop systems (gaming, laptop, natalie-laptop)
     desktopModules = commonModules ++ [
       home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
@@ -114,9 +113,10 @@
         ];
       };
 
-      # Server
+      # Server — pinned to nixos-25.05 for stability
       server = self.lib.mkSystem {
-        inherit inputs system nixpkgs;
+        inherit inputs system;
+        nixpkgs = nixpkgs-stable;
         specialArgs = { inherit inputs self system; };
         modules = commonModules ++ [
           # Machine-specific modules

@@ -1,8 +1,4 @@
 { inputs, self, ... }:
-
-let
-  stateVersion = "25.11";
-in
 {
   home-manager = {
     users = {
@@ -10,7 +6,7 @@ in
         home = {
           username = "bosko";
           homeDirectory = "/home/bosko";
-          stateVersion = stateVersion;
+          stateVersion = "25.11";
         };
 
         imports = [
@@ -23,7 +19,7 @@ in
         home = {
           username = "natty";
           homeDirectory = "/home/natty";
-          stateVersion = stateVersion;
+          stateVersion = "25.11";
         };
 
         imports = [
