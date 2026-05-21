@@ -52,8 +52,6 @@
 
 ### Remaining / Next Session
 
-- **Place laptop WireGuard private key** — write key to `/etc/wireguard/private.key` on laptop, run `rebuild` in terminal
-- **Place natalie-laptop WireGuard private key** — same manual step
 - **AMD card swap on gaming** — when physical card arrives, remove `nvidia.nix` from gaming's flake entry; `rebuild` and reboot
 - **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry
 - **Pin server to nixos-25.05 (M-9)** — add stable nixpkgs input for vpn-server
@@ -94,8 +92,6 @@
 
 ### Remaining / Next Session
 
-- **Place laptop WireGuard private key** — write key to `/etc/wireguard/private.key` on laptop, then run `rebuild` in terminal
-- **Place natalie-laptop WireGuard private key** — same manual step
 - **AMD card swap on gaming** — when physical card arrives, remove `nvidia.nix` from gaming's flake entry; `rebuild` and reboot
 - **Re-enable lutris** — monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry
 - **Pin server to nixos-25.05 (M-9)** — add stable nixpkgs input for vpn-server
