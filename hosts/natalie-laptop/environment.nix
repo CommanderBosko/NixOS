@@ -6,9 +6,6 @@
     # Enable touchpad
     libinput.enable = true;
 
-    # Enable printing
-    printing.enable = true;
-
     # Enable Qbittorrent (Web UI bound to localhost only — H-6)
     qbittorrent = {
       enable = true;

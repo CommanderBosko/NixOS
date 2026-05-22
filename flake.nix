@@ -51,6 +51,7 @@
       "${self}/dotfiles/common/modules/audio.nix"
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/home-manager.nix"
+      "${self}/dotfiles/common/modules/printing.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
     ];
   in
