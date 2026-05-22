@@ -15,6 +15,7 @@
     kdePackages.dolphin # File manager
     kdePackages.konsole # Terminal emulator
     kdePackages.spectacle # Screenshot tool
+    kdePackages.print-manager # Print job manager
     # Add other desired KDE applications here, using kdePackages prefix
     # For example: kdePackages.kdenlive, kdePackages.ark
   ];
