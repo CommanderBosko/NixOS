@@ -1,6 +1,8 @@
 { self, ... }:
 
 {
+  home.sessionPath = [ "$HOME/.local/bin" ];
+
   home.file = {
     ".claude/agents/repo-creator-agent.md" = {
       source = "${self}/dotfiles/bosko/claude/agents/repo-creator-agent.md";
