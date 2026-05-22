@@ -24,7 +24,7 @@ This also revealed that the `services.dbus.implementation = lib.mkDefault "dbus"
 - `Invalid user-name 'systemd-timesync'` in timesync1.conf — dynamic user not present in NSS at parse time; timesyncd still works.
 - `Activation request for 'org.freedesktop.resolve1' failed` — systemd-resolved not enabled on gaming; expected.
 
-## Rollout Status — COMPLETE on 4 of 5 hosts; natalie-laptop needs local activation
+## Rollout Status — COMPLETE on all 5 hosts (verified 2026-05-21)
 
 | Host | Status | Notes |
 |------|--------|-------|
@@ -32,10 +32,8 @@ This also revealed that the `services.dbus.implementation = lib.mkDefault "dbus"
 | gaming | COMPLETE | Verified 2026-05-21: dbus-broker active, 0 failed units |
 | laptop | COMPLETE | Verified 2026-05-21: system + user broker both active, 0 failed units |
 | server | COMPLETE | On nixpkgs-stable 25.05; explicit setting applies; headless |
-| natalie-laptop | NEEDS LOCAL SWITCH | Machine rebooted into old generation (pre-fix). New closure `hcq5b059k970a4m1ppn8b1vgzpfs0dsr` is confirmed correct (dbus-broker-launch in dbus.service) and is already in the store on natalie-laptop. Remote activation blocked by sudo password requirement (no NOPASSWD). Must run `sudo nh os switch /home/bosko/NixOS` locally on natalie-laptop, or `sudo nh os boot /home/bosko/NixOS` + reboot. |
+| natalie-laptop | COMPLETE | Verified 2026-05-21 after git pull + nh os boot + reboot: system broker active (ExecStart=dbus-broker-launch), user broker active, 0 failed units, cosmic-greeter-daemon active. Git HEAD: 7ce37e1. |
 
-**Fix confirmed correct:** Inspection of the new closure's `/etc/systemd/system/dbus.service` shows `ExecStart=.../dbus-broker-37/bin/dbus-broker-launch --scope system --audit`. The plain `services.dbus.implementation = "broker"` in security.nix beats the nix-flatpak bundled nixpkgs `mkDefault "dbus"` as expected.
+**Root cause summary:** `nix-flatpak` bundles its own unpinned nixpkgs (rev `da5ad661`) whose `dbus.nix` still has `mkDefault "dbus"`. This silently outcompeted the newer nixpkgs `mkDefault "broker"` during module merge. Fixed by a plain (non-default) `services.dbus.implementation = "broker"` assignment in `security.nix`, which beats any `mkDefault` regardless of source.
 
-**gaming and laptop re-verification note:** The `mkForce` overrides for dbus on gaming and laptop were removed; they now rely on the same plain assignment in security.nix. Both were previously verified COMPLETE but should be re-verified after natalie-laptop is resolved to confirm no regression.
-
-**Verification method (post-activation):** `systemctl status dbus-broker` ExecStart must show `dbus-broker-launch` (not `dbus-daemon`). `journalctl -b -u dbus-broker` must have entries. `systemctl --failed` must be 0. `systemctl status cosmic-greeter-daemon` must be active.
+**Fix confirmed correct on all hosts:** Plain assignment in `dotfiles/common/modules/security.nix` is the definitive fix. All five hosts verified running `dbus-broker-launch`.
