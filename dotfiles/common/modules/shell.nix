@@ -71,6 +71,8 @@ in
           echo ""
           nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
         '';
+        vpn-off    = "sudo systemctl stop wg-quick@wg0";
+        vpn-on     = "sudo systemctl start wg-quick@wg0";
         vpn-ssh    = "ssh root@150.136.232.63";
         vpn-status = "ssh root@150.136.232.63 'wg show'";
         vpn-watch  = "watch -n 5 ssh root@150.136.232.63 wg show";
