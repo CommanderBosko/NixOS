@@ -2,6 +2,51 @@
 
 ---
 
+## Session: 2026-05-21 (late evening) — Printing module added; dbus-broker confirmed complete on all hosts
+
+**Duration Estimate**: ~30 minutes (commits e2b0a8f through d9b526c)
+**Session Focus**: Extract duplicated CUPS/Avahi printing configuration from per-host environment.nix files into a shared `printing.nix` module used by all desktop hosts.
+
+### What Was Accomplished
+
+- **Created `dotfiles/common/modules/printing.nix`** — New shared module enabling CUPS (`services.printing`), Avahi mDNS discovery (`services.avahi`), and printer drivers (gutenprint, hplip, brlaser). Added to `desktopModules` in `flake.nix`, replacing per-host duplicates in gaming, laptop, and natalie-laptop `environment.nix` files.
+- **`kdePackages.print-manager` correctly kept in `plasma.nix`** — The print-job manager GUI is KDE-specific and does not belong in a DE-agnostic printing module. A two-commit correction: first commit incorrectly placed it in `printing.nix`; second commit moved it back to `plasma.nix`. Final state is correct.
+- **dbus-broker transition confirmed fully complete** — The project context provided confirmed gaming and all other hosts successfully completed the transition. Memory updated to remove stale "gaming rebooting" / "laptop/natalie-laptop pending" status.
+
+### Files Changed
+
+- `dotfiles/common/modules/printing.nix` — new module; CUPS + Avahi + gutenprint/hplip/brlaser drivers
+- `dotfiles/common/modules/desktop-environments/plasma.nix` — retained `kdePackages.print-manager` in `systemPackages`
+- `flake.nix` — added `printing.nix` to `desktopModules`
+- `hosts/gaming/environment.nix` — removed per-host CUPS/Avahi entries (now in printing.nix)
+- `hosts/laptop/environment.nix` — removed per-host CUPS/Avahi entries
+- `hosts/natalie-laptop/environment.nix` — removed per-host CUPS/Avahi entries
+
+### Commits This Session
+
+- `e2b0a8f` — feat(printing): add full CUPS/Avahi printing module for all desktop hosts
+- `587b330` — refactor(printing): move print-manager from plasma to printing module
+- `d9b526c` — fix(printing): move print-manager back to plasma, drop it from printing module
+
+### Decisions Made
+
+- **`print-manager` is Plasma-only** — `kdePackages.print-manager` is a KDE application that has no purpose on Niri or Cosmic hosts. The correct home is `plasma.nix`, not the shared `printing.nix`. The two-commit path (move then revert) confirms this is the settled decision.
+- **Avahi mDNS kept in the printing module** — `services.avahi.nssmdns4 = true` and `openFirewall = true` are printing-specific enablements; they belong alongside CUPS rather than in a separate networking module.
+- **gutenprint + hplip + brlaser as baseline drivers** — Covers most common printer brands (HP, Brother, generic PostScript/PCL). Per-host driver additions can still be made in individual `environment.nix` files if a specific model needs more.
+
+### Issues Encountered
+
+- **Two-step fix required for `print-manager` placement** — First commit placed `print-manager` in `printing.nix` (incorrect — it is a KDE-specific GUI); second commit corrected it back to `plasma.nix`. Net result is correct; the intermediate commit is harmless.
+
+### Remaining / Next Session
+
+- **Apply sessionPath fix via rebuild**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop so the `~/.local/bin` PATH entry takes effect for the native claude-code binary
+- **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` + reboot; verify `amd.nix` is sufficient on its own
+- **Re-enable lutris**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+- **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) following the vpn-server pattern
+
+---
+
 ## Session: 2026-05-21 (evening) — dbus-broker complete; server placeholder removed; PATH fix for native claude binary
 
 **Duration Estimate**: ~1.5 hours (commits 4370472 through 427b512)

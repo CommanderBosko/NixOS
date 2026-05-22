@@ -1,12 +1,14 @@
 # NixOS Project State
 
-_Last updated: 2026-05-21 (evening)_
+_Last updated: 2026-05-21 (late evening)_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
 
 **nixpkgs channel split is complete (2026-05-21).** Desktop hosts (gaming, laptop, natalie-laptop) follow `nixos-unstable`. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a `nixpkgs-stable` input in `flake.nix`. vpn-server was deployed and confirmed running `25.05.20260102.ac62194 (Warbler)`. The `server` host placeholder was removed from `flake.nix` and `hosts/server/` (2026-05-21) — no hardware exists yet; the entry will be recreated via the `/new-host` skill when physical hardware arrives.
+
+**Printing module added to desktopModules (2026-05-21, late session).** `dotfiles/common/modules/printing.nix` provides CUPS + Avahi mDNS printing with drivers (gutenprint, hplip, brlaser) for all desktop hosts. The module is now in `desktopModules` in `flake.nix`. Per-host printing entries previously duplicated in each host's `environment.nix` were removed. `kdePackages.print-manager` (the KDE print-job GUI) remains in `plasma.nix` — it is Plasma-specific and does not belong in the DE-agnostic printing module.
 
 **dbus-broker transition is COMPLETE on all 5 hosts (2026-05-21).** `services.dbus.implementation = "broker"` is set as a plain (non-default) assignment in `security.nix`. This beats `nix-flatpak`'s bundled older nixpkgs whose `mkDefault "dbus"` was silently winning during module merge. All five hosts have been rebooted and verified running `dbus-broker-launch`.
 
@@ -63,6 +65,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **Printing module extracted to `printing.nix` (2026-05-21, late session)** — Replaced duplicated per-host CUPS/Avahi config with a shared `dotfiles/common/modules/printing.nix` (CUPS, Avahi mDNS, gutenprint/hplip/brlaser drivers). Added to `desktopModules`. `kdePackages.print-manager` retained in `plasma.nix` — it is a KDE-specific print-job GUI and does not belong in a DE-agnostic module. Two-step commit: `print-manager` was first moved into `printing.nix` then corrected back to `plasma.nix`.
 - **`~/.local/bin` added to bosko sessionPath (2026-05-21, evening)** — `home.sessionPath = [ "$HOME/.local/bin" ]` added to `dotfiles/bosko/bosko-claude.nix`. Diagnosed via `/doctor`: native claude-code binary installed at `~/.local/bin/claude` was not in PATH. Fix scoped to bosko's HM config (not shared with natty). Dry-run confirmed clean (+2.94 MiB closure, no package changes, no service restarts).
 - **`server` placeholder removed from flake (2026-05-21, evening)** — `hosts/server/` directory and `flake.nix` entry deleted. The `server` host has no physical hardware; the placeholder was dead weight. Will be re-created via `/new-host` when hardware is available.
 - **dbus-broker transition COMPLETE on all 5 hosts (2026-05-21)** — Root cause of resistance: `nix-flatpak` bundles its own older nixpkgs (`da5ad661`) whose `dbus.nix` defaults to `mkDefault "dbus"`, silently winning over nixpkgs-unstable's `mkDefault "broker"`. Fix: explicit (non-default) `services.dbus.implementation = "broker"` in `security.nix` beats all `mkDefault` values regardless of source. All five hosts verified via `systemctl status dbus`.
