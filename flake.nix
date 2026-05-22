@@ -113,19 +113,6 @@
         ];
       };
 
-      # Server — pinned to nixos-25.05 for stability
-      server = self.lib.mkSystem {
-        inherit inputs system;
-        nixpkgs = nixpkgs-stable;
-        specialArgs = { inherit inputs self system; };
-        modules = commonModules ++ [
-          # Machine-specific modules
-          "${self}/hosts/server/hardware-configuration.nix"
-          "${self}/hosts/server/environment.nix"
-          "${self}/hosts/server/networking.nix"
-        ];
-      };
-
       # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.05 for stability
       vpn-server = self.lib.mkSystem {
         inherit inputs;
