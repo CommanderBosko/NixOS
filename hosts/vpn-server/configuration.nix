@@ -84,6 +84,13 @@
   # security.nix sets auditd.enable = true via mkDefault; mkForce overrides here.
   security.auditd.enable = lib.mkForce false;
 
+  # security.nix (commonModules) appends audit=1 to kernelParams.  The Oracle
+  # Cloud ARM kernel's broken audit subsystem floods kauditd on boot, causing
+  # PAM D-Bus timeouts that drop the nixos-rebuild SSH session mid-deploy.
+  # Appending audit=0 after audit=1 wins at boot (last value takes precedence)
+  # without clobbering any other kernel params.
+  boot.kernelParams = lib.mkAfter [ "audit=0" ];
+
   services = {
     openssh = {
       enable = true;
