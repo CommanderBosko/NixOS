@@ -76,8 +76,15 @@ in
         vpn-watch  = "watch -n 5 ssh root@150.136.232.63 wg show";
       };
 
-      # Pywal initation or not if no pywal cache generated
+      # Source Home Manager session variables (sessionPath, sessionVariables) for
+      # non-login shells. HM writes these to ~/.nix-profile/etc/profile.d/hm-session-vars.sh
+      # but that file is only sourced by login shells unless we explicitly include it here.
       shellInit = ''
+        if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+        fi
+
+        # Pywal initation or not if no pywal cache generated
         if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
         fi
