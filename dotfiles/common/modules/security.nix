@@ -72,4 +72,9 @@
 
   # Enable AppArmor mediation for D-Bus
   services.dbus.apparmor = "enabled";
+
+  # Explicitly select dbus-broker as the D-Bus implementation. Without this,
+  # nix-flatpak's unpinned nixpkgs input (which still defaults to "dbus") wins
+  # in module merging and silently keeps the old dbus-daemon on all desktop hosts.
+  services.dbus.implementation = "broker";
 }
