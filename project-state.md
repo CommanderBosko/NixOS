@@ -1,22 +1,26 @@
 # NixOS Project State
 
-_Last updated: 2026-05-21 (continued)_
+_Last updated: 2026-05-21 (evening)_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
 
-**nixpkgs channel split is complete (2026-05-21).** Desktop hosts (gaming, laptop, natalie-laptop) follow `nixos-unstable`. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a `nixpkgs-stable` input in `flake.nix`. vpn-server was deployed and confirmed running `25.05.20260102.ac62194 (Warbler)`.
+**nixpkgs channel split is complete (2026-05-21).** Desktop hosts (gaming, laptop, natalie-laptop) follow `nixos-unstable`. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a `nixpkgs-stable` input in `flake.nix`. vpn-server was deployed and confirmed running `25.05.20260102.ac62194 (Warbler)`. The `server` host placeholder was removed from `flake.nix` and `hosts/server/` (2026-05-21) — no hardware exists yet; the entry will be recreated via the `/new-host` skill when physical hardware arrives.
+
+**dbus-broker transition is COMPLETE on all 5 hosts (2026-05-21).** `services.dbus.implementation = "broker"` is set as a plain (non-default) assignment in `security.nix`. This beats `nix-flatpak`'s bundled older nixpkgs whose `mkDefault "dbus"` was silently winning during module merge. All five hosts have been rebooted and verified running `dbus-broker-launch`.
 
 **Claude Code skill library is at 22 skills (2026-05-21).** Lives under `.claude/skills/`. The `/nixos-rebuild` skill was removed after investigation confirmed `nh os boot` requires a real TTY for sudo and cannot be driven from a Claude Code subprocess. The apply step is always done by the user running `rebuild` in their terminal. Skills cover: dry-run, GC, VPN status, module scaffolding, commit, push, flake update, package/flatpak addition, desktop environment switching, new peer, SSH to any host, remote rebuild (headless targets), generation rollback, package search, new host scaffolding, flake input pinning, diff-generations, flake-check, journal, nix-repl, and fmt.
 
+**`~/.local/bin` added to bosko's sessionPath (2026-05-21).** `home.sessionPath = [ "$HOME/.local/bin" ]` added to `dotfiles/bosko/bosko-claude.nix`. This ensures the native Claude Code binary installed at `~/.local/bin/claude` is discoverable in PATH, fixing the `/doctor` native binary check.
+
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds | plasma.nix |
-| `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running | niri.nix |
-| `server` | Active — headless; pinned to nixos-25.05 | — |
-| `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; DNS conflict with LAN nameserver fixed | cosmic.nix |
-| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler) | — |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE | plasma.nix |
+| `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE | niri.nix |
+| `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
+| `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE | cosmic.nix |
+| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler); dbus-broker COMPLETE | — |
 
 **Starship config inlined (2026-05-17).** The external `starship.toml` dotfile has been eliminated. The full Gruvbox-themed Starship prompt configuration now lives as a native `programs.starship.settings` attrset in `shell.nix`. `dotfiles/common/configs/starship.toml` and the `xdg.configFile` symlink in `home.nix` were both removed.
 
@@ -38,7 +42,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 **`claude-code` and `gemini-cli` moved to user-level packages.** Both tools are now declared in `users.users.bosko.packages` in `users.nix` rather than repeated per-host in `environment.nix`.
 
-**Security module is active.** `dotfiles/common/modules/security.nix` is in `commonModules` and applied on all hosts. Includes AppArmor MAC enforcement, auditd (running; rules-loader disabled), kernel image protection, ASLR, PAM wheel enforcement, SDDM PAM override workaround, and a pin for classic dbus.
+**Security module is active.** `dotfiles/common/modules/security.nix` is in `commonModules` and applied on all hosts. Includes AppArmor MAC enforcement, auditd (running; rules-loader disabled), kernel image protection, ASLR, PAM wheel enforcement, SDDM PAM override workaround, and an explicit `services.dbus.implementation = "broker"` assignment (dbus-broker, COMPLETE on all hosts).
 
 **Security audit completed 2026-05-06.** All Critical and High findings remediated. Most Medium and Low findings remediated. Three items explicitly deferred (see Known Issues).
 
@@ -48,7 +52,8 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
-- **Validate dbus-broker** — classic dbus is pinned in `security.nix`; once AppArmor profile compatibility is confirmed, dbus-broker can be re-enabled
+- **Activate native claude-code via rebuild** — `~/.local/bin` sessionPath fix is committed; take effect after next `rebuild` + reboot on each host
+- **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
 
 ### Long-term
 
@@ -58,6 +63,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **`~/.local/bin` added to bosko sessionPath (2026-05-21, evening)** — `home.sessionPath = [ "$HOME/.local/bin" ]` added to `dotfiles/bosko/bosko-claude.nix`. Diagnosed via `/doctor`: native claude-code binary installed at `~/.local/bin/claude` was not in PATH. Fix scoped to bosko's HM config (not shared with natty). Dry-run confirmed clean (+2.94 MiB closure, no package changes, no service restarts).
+- **`server` placeholder removed from flake (2026-05-21, evening)** — `hosts/server/` directory and `flake.nix` entry deleted. The `server` host has no physical hardware; the placeholder was dead weight. Will be re-created via `/new-host` when hardware is available.
+- **dbus-broker transition COMPLETE on all 5 hosts (2026-05-21)** — Root cause of resistance: `nix-flatpak` bundles its own older nixpkgs (`da5ad661`) whose `dbus.nix` defaults to `mkDefault "dbus"`, silently winning over nixpkgs-unstable's `mkDefault "broker"`. Fix: explicit (non-default) `services.dbus.implementation = "broker"` in `security.nix` beats all `mkDefault` values regardless of source. All five hosts verified via `systemctl status dbus`.
 - **nixpkgs channel split (2026-05-21)** — Desktop hosts (gaming, laptop, natalie-laptop) stay on `nixos-unstable` for rolling updates. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a dedicated `nixpkgs-stable` input in `flake.nix`. Rationale: server stability and predictability outweigh the value of rolling updates for headless hosts; desktop hosts benefit from latest drivers and DE releases. vpn-server deployed and confirmed healthy on 25.05 with WireGuard peers intact.
 - **CLAUDE.md corrections (2026-05-21)** — Three inaccuracies fixed: (1) `virtualisation` removed from `desktopModules` description — it is gaming-only; (2) `+ disko` added to vpn-server module composition; (3) directory layout tree corrected (`bosko/` indentation, `disko.nix` added to vpn-server listing). natty's wheel/trusted-user status corrected — she has both, same as bosko; the only differences are no user packages and no SSH keys.
 - **Five new skills added (2026-05-21)** — `diff-generations` (nix store diff-closures between generations), `flake-check` (validate flake across all 5 hosts), `journal` (tail journald, local or remote), `nix-repl` (print repl command + host-specific starter expressions), `fmt` (alejandra with nixpkgs-fmt fallback). `nix-repl` prints rather than execs to avoid the TTY issue.
@@ -103,10 +111,13 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 ## Known Issues / Tech Debt
 
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
-- **dbus-broker not yet validated** — Classic dbus is pinned in `security.nix`. dbus-broker cannot be adopted until its AppArmor profile is verified compatible with this config.
+- **dbus-broker journal warnings are benign** — After the dbus-broker transition, three warning classes appear in journald: duplicate dbus service name entries (stricter parser), `Invalid group-name 'netdev'` in avahi-dbus.conf, `Invalid user-name 'systemd-timesync'` in timesync1.conf. All confirmed harmless; services function normally.
+- **`nix-flatpak` bundles unpinned nixpkgs** — `nix-flatpak` in `flake.nix` has no `inputs.nixpkgs.follows = "nixpkgs"`. Its bundled rev (`da5ad661`) still defaults `dbus.implementation` to `"dbus"`. The explicit assignment in `security.nix` overrides this; the underlying issue remains if flatpak's nixpkgs ever changes other defaults in unexpected ways.
+- **`server` host has no hardware** — Removed placeholder from flake; will be re-added via `/new-host` when physical hardware is available.
 
 ## Next Steps
 
-1. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient
-2. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
-3. **Validate dbus-broker**: test dbus-broker AppArmor compatibility on the current config; if clean, remove the `lib.mkDefault "dbus"` pin from `security.nix`
+1. **Apply sessionPath fix via rebuild**: run `rebuild` + reboot on each active host so the `~/.local/bin` PATH entry takes effect for the native claude-code binary
+2. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient
+3. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+4. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server

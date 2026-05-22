@@ -2,6 +2,59 @@
 
 ---
 
+## Session: 2026-05-21 (evening) — dbus-broker complete; server placeholder removed; PATH fix for native claude binary
+
+**Duration Estimate**: ~1.5 hours (commits 4370472 through 427b512)
+**Session Focus**: Complete the dbus-broker transition across all five hosts, remove the dead `server` host placeholder, and fix the native claude-code binary not being in PATH.
+
+### What Was Accomplished
+
+- **dbus-broker transition completed on all 5 hosts** — Diagnosed why natalie-laptop and desktop hosts resisted the broker switch: `nix-flatpak` bundles its own older nixpkgs (`da5ad661`) whose `dbus.nix` sets `mkDefault "dbus"`, silently winning over nixpkgs-unstable's newer `mkDefault "broker"`. Fixed by adding `services.dbus.implementation = "broker"` (plain assignment, no `mkDefault`) to `security.nix`. This beats any `mkDefault` from any flake input. All five hosts verified running `dbus-broker-launch`.
+- **Removed `server` host placeholder** — `hosts/server/` directory and the `flake.nix` entry were deleted. No physical hardware exists; the placeholder was unused dead weight. Will be recreated via `/new-host` when hardware arrives.
+- **Fixed native claude-code binary not in PATH** — Diagnosed a `/doctor` issue: the native Claude Code binary at `~/.local/bin/claude` was not discoverable because `~/.local/bin` was absent from PATH. Fixed by adding `home.sessionPath = [ "$HOME/.local/bin" ]` to `dotfiles/bosko/bosko-claude.nix` (bosko-specific HM config, not shared with natty). Dry-run confirmed clean: +2.94 MiB closure delta, no package changes, no service restarts.
+- **Committed and pushed all changes** — All four substantive commits pushed to `origin/main` before this session close.
+
+### Files Changed
+
+- `dotfiles/common/modules/security.nix` — added explicit `services.dbus.implementation = "broker"` assignment; removed previous `lib.mkDefault "dbus"` holdback (two separate commits: `4370472` removed holdback, `7ce37e1` added positive assignment)
+- `hosts/vpn-server/configuration.nix` — added explicit `services.dbus.implementation = lib.mkForce "broker"` as a belt-and-suspenders override during the transition (commit `4370472`)
+- `flake.nix` — removed `server` host entry from `nixosConfigurations`
+- `hosts/server/environment.nix` — deleted (40 lines)
+- `hosts/server/hardware-configuration.nix` — deleted (25 lines)
+- `hosts/server/networking.nix` — deleted (45 lines)
+- `dotfiles/bosko/bosko-claude.nix` — added `home.sessionPath = [ "$HOME/.local/bin" ]`
+- `.claude/agent-memory/nixos-agent/MEMORY.md` — updated dbus-broker status to COMPLETE
+- `.claude/agent-memory/nixos-agent/project_dbus_broker_default.md` — updated rollout table; added root-cause analysis for nix-flatpak unpinned nixpkgs
+- `.claude/agent-memory/nixos-agent/feedback_nix_flatpak_unpinned_nixpkgs.md` — new memory file documenting the nix-flatpak/nixpkgs interaction
+
+### Commits This Session
+
+- `4370472` — feat(security): switch all hosts to dbus-broker; remove hold-back and per-host overrides
+- `7ce37e1` — fix(security): add plain dbus-broker assignment to beat nix-flatpak's old mkDefault
+- `95f0df0` — chore(memory): mark dbus-broker transition complete on all 5 hosts
+- `2c19af5` — chore(flake): remove server host placeholder — no hardware yet
+- `427b512` — fix(bosko): add ~/.local/bin to sessionPath for native claude-code binary
+
+### Decisions Made
+
+- **Plain assignment beats mkDefault from any source** — The key insight: `services.dbus.implementation = "broker"` (no `lib.mkDefault`) is a priority-2 assignment in the NixOS module system, which always wins over `mkDefault` (priority 1000). This is the correct way to force a value when multiple flake inputs each provide different `mkDefault` values.
+- **nix-flatpak's unpinned nixpkgs is a latent risk** — `nix-flatpak` has no `inputs.nixpkgs.follows`. Its bundled nixpkgs can silently override module defaults. Explicit (non-default) assignments in `security.nix` are the correct mitigation pattern for security-sensitive options.
+- **`server` placeholder removed** — Keeping a host entry with fake hardware config in the flake creates evaluation noise and false signals. Removed cleanly; `/new-host` skill will reconstruct it correctly when hardware exists.
+
+### Issues Encountered
+
+- **Two-commit fix for dbus-broker** — The first commit (`4370472`) removed the `mkDefault "dbus"` holdback without adding a positive `broker` assignment, which left desktop hosts still picking up nix-flatpak's `mkDefault "dbus"`. The second commit (`7ce37e1`) added the explicit assignment. Root cause: the holdback removal was correct, but insufficient on its own because nix-flatpak was filling the vacuum.
+- **Dry-run for sessionPath fix showed +2.94 MiB closure delta** — Expected; `home.sessionPath` wires into HM's env management machinery. No packages changed, no service restarts — purely a PATH configuration change.
+
+### Remaining / Next Session
+
+- **Apply sessionPath fix**: run `rebuild` + reboot on each active host; the `~/.local/bin` PATH entry takes effect on next login after reboot
+- **AMD card swap on gaming**: when physical card arrives, remove `nvidia.nix` from gaming's module list; `rebuild` + reboot
+- **Re-enable lutris**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove comment from `gaming.nix`
+- **Re-add `server` host**: use `/new-host` skill when physical hardware is available; pin to `nixpkgs-stable` following the vpn-server pattern
+
+---
+
 ## Session: 2026-05-21 (continued) — nixpkgs channel split: server hosts pinned to 25.05
 
 **Duration Estimate**: ~3 hours (commits 67b65db through 5444b1c)
