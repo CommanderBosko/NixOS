@@ -48,7 +48,7 @@ in
           echo ""
           echo "Rebuilding your system"
           echo ""
-          nh os switch ~/NixOS/. -H ${hostName}
+          nh os boot ~/NixOS/. -H ${hostName}
         '';
         update = ''
           echo ""
