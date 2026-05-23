@@ -328,7 +328,7 @@ in
       nix-init
       nix-tree
       nixd
-      nixfmt-classic
+      nixfmt
       pipes
       pywal
       qdirstat

@@ -222,7 +222,7 @@
         scope = "source.nix";
         file-types = [ "nix" ];
         auto-format = false;
-        formatter.command = lib.getExe pkgs.nixfmt-classic;
+        formatter.command = lib.getExe pkgs.nixfmt;
         language-servers = [
           "nixd"
           "nil"
