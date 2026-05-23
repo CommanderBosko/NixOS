@@ -2,6 +2,60 @@
 
 ---
 
+## Session: 2026-05-22 — vpn-on/vpn-off aliases debugged and confirmed working; nixfmt migration
+
+**Duration Estimate**: ~1 hour (commits 99f14b8 through 6dffa66, plus 366c872 and fdef725 from earlier that day)
+**Session Focus**: Add and iteratively fix `vpn-on` / `vpn-off` shell aliases for toggling the local WireGuard interface, and migrate the formatter reference from the deprecated `nixfmt-classic` to `nixfmt`.
+
+### What Was Accomplished
+
+- **`vpn-on` and `vpn-off` aliases confirmed working** — Two aliases added to the `shellAliases` attrset in `dotfiles/common/modules/shell.nix` for toggling the local WireGuard client. The implementation went through two iterations before landing correctly:
+  1. First attempt used `wg-quick up wg0` / `wg-quick down wg0` directly — rejected because `wg-quick` is not in PATH for non-root sessions.
+  2. Second attempt switched to `sudo systemctl start wg-quick@wg0` / `sudo systemctl stop wg-quick@wg0` — this is the correct systemd unit name for a `wg-quick` managed interface; confirmed working.
+  - Final values in `shell.nix`: `vpn-on = "sudo systemctl start wg-quick-wg0"` and `vpn-off = "sudo systemctl stop wg-quick-wg0"` (hyphen form, which is how systemd renders the `@` template for `wg0`).
+- **`rebuild` alias corrected back to `nh os boot`** — An intermediate commit had accidentally switched the `rebuild` alias from `nh os boot` to `nh os switch`; reverted to `boot` which is the established convention.
+- **`nixfmt-classic` replaced with `nixfmt`** — The `nixfmt-classic` package was deprecated upstream. Updated both `dotfiles/common/modules/shell.nix` (system package) and `dotfiles/common/configs/helix.nix` (formatter reference) to use `nixfmt` (the current stable package). `flake.lock` was updated automatically as part of the `nix flake update` that resolved the package name change.
+- **vpn-server: `audit=0` kernel param added** — Added `boot.kernelParams = lib.mkAfter [ "audit=0" ]` to `hosts/vpn-server/configuration.nix`. The Oracle Cloud ARM kernel's broken audit subsystem was flooding `kauditd` on boot, causing PAM D-Bus timeouts that dropped `nixos-rebuild` SSH sessions mid-deploy. Appending `audit=0` after `security.nix`'s `audit=1` wins at boot (last value takes precedence) without touching any other kernel params.
+- **Non-login shell HM session vars fix** — Added sourcing of `~/.nix-profile/etc/profile.d/hm-session-vars.sh` in `zsh.shellInit`. Home Manager writes `sessionPath` and `sessionVariables` to this file, but it is only sourced automatically for login shells. Non-login shells (e.g., terminal emulators launched inside a compositor) were missing these variables, including the `~/.local/bin` PATH fix added the previous session.
+
+### Files Changed
+
+- `dotfiles/common/modules/shell.nix` — added `vpn-on`/`vpn-off` aliases (two-step iteration to final systemd form); corrected `rebuild` alias back to `nh os boot`; replaced `nixfmt-classic` package with `nixfmt`; added `shellInit` block sourcing `hm-session-vars.sh`
+- `dotfiles/common/configs/helix.nix` — replaced `nixfmt-classic` formatter reference with `nixfmt`
+- `hosts/vpn-server/configuration.nix` — added `boot.kernelParams = lib.mkAfter [ "audit=0" ]` to suppress broken Oracle ARM audit subsystem
+- `flake.lock` — updated as part of the nixfmt package resolution
+
+### Commits This Session
+
+- `fdef725` — fix(shell): source hm-session-vars.sh for non-login shells
+- `366c872` — fix(vpn-server): append audit=0 kernel param to suppress broken audit subsystem
+- `99f14b8` — feat(shell): add vpn-on and vpn-off aliases for wg-quick toggle
+- `0193265` — fix(shell): replace deprecated nixfmt-classic with nixfmt
+- `d836549` — fix(shell): revert rebuild alias from switch to boot
+- `721c564` — fix(shell): use wg-quick directly for vpn-on/vpn-off aliases
+- `6dffa66` — fix(shell): use systemd unit for vpn-on/vpn-off aliases
+
+### Decisions Made
+
+- **`vpn-on`/`vpn-off` use `systemctl start/stop wg-quick-wg0`** — `wg-quick` is not in PATH for non-root zsh sessions. The correct approach is the systemd service that `wg-quick@.service` creates for each interface. The unit is named with a hyphen (`wg-quick-wg0`), not the `@` template name.
+- **`audit=0` appended rather than overriding `security.nix`** — Using `lib.mkAfter` on `kernelParams` lets `security.nix`'s `audit=1` stay intact for other hosts; vpn-server appends `audit=0` which wins by last-value-wins boot semantics. Avoids a per-host security module override.
+- **`hm-session-vars.sh` sourced in `shellInit` not `interactiveShellInit`** — The PATH fix needs to be available even in non-interactive zsh sessions (e.g., scripted calls via `claude-code`). Using `shellInit` (which runs unconditionally) covers both cases; the `if [ -f ... ]` guard keeps it safe on hosts where the file may not exist yet.
+
+### Issues Encountered
+
+- **`wg-quick` not in PATH for non-root zsh** — First iteration attempted `wg-quick up/down wg0` directly; fails because `wg-quick` is installed as a system package but not resolvable from a user shell without a full PATH setup. Switching to `systemctl` avoids the PATH dependency entirely.
+- **Intermediate regression: `rebuild` alias** — A commit during the nixfmt migration accidentally changed `rebuild` from `nh os boot` to `nh os switch`. Caught and reverted in `d836549`.
+- **Oracle ARM kernel drops SSH during remote rebuild** — The `audit=0` param was required to get stable `nixos-rebuild switch` SSH sessions against vpn-server. Without it, the audit subsystem flood caused the connection to drop mid-activation.
+
+### Remaining / Next Session
+
+- **Apply rebuilds on active desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop so the `hm-session-vars.sh` sourcing fix and `~/.local/bin` sessionPath take effect
+- **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` + reboot; verify `amd.nix` is sufficient
+- **Re-enable lutris**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+- **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) following the established vpn-server pattern
+
+---
+
 ## Session: 2026-05-21 (late evening) — Printing module added; dbus-broker confirmed complete on all hosts
 
 **Duration Estimate**: ~30 minutes (commits e2b0a8f through d9b526c)

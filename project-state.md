@@ -1,10 +1,18 @@
 # NixOS Project State
 
-_Last updated: 2026-05-21 (late evening)_
+_Last updated: 2026-05-22_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
+
+**`vpn-on` / `vpn-off` shell aliases confirmed working (2026-05-22).** `vpn-on = "sudo systemctl start wg-quick-wg0"` and `vpn-off = "sudo systemctl stop wg-quick-wg0"` are now in `dotfiles/common/modules/shell.nix`. The systemd unit name uses a hyphen (`wg-quick-wg0`) which is how systemd renders the `wg-quick@wg0` template. Using `systemctl` avoids `wg-quick` binary PATH issues for non-root shell sessions.
+
+**Non-login shell Home Manager session variables now sourced (2026-05-22).** `zsh.shellInit` in `shell.nix` now sources `~/.nix-profile/etc/profile.d/hm-session-vars.sh` when the file exists. This makes `sessionPath` (including `~/.local/bin`) and `sessionVariables` available to non-login zsh sessions (terminal emulators, scripted tool calls) — previously only login shells received them.
+
+**`nixfmt-classic` replaced with `nixfmt` (2026-05-22).** The deprecated `nixfmt-classic` package was updated to `nixfmt` in both `shell.nix` (system package) and `helix.nix` (formatter reference). `flake.lock` updated accordingly.
+
+**vpn-server: `audit=0` kernel param added (2026-05-22).** `boot.kernelParams = lib.mkAfter [ "audit=0" ]` in `hosts/vpn-server/configuration.nix` suppresses the Oracle Cloud ARM kernel's broken audit subsystem, which was flooding `kauditd` and dropping SSH connections mid-rebuild. The `mkAfter` placement ensures it wins over `security.nix`'s `audit=1` at boot without touching the shared module.
 
 **nixpkgs channel split is complete (2026-05-21).** Desktop hosts (gaming, laptop, natalie-laptop) follow `nixos-unstable`. Server hosts (vpn-server, server) are pinned to `nixos-25.05` via a `nixpkgs-stable` input in `flake.nix`. vpn-server was deployed and confirmed running `25.05.20260102.ac62194 (Warbler)`. The `server` host placeholder was removed from `flake.nix` and `hosts/server/` (2026-05-21) — no hardware exists yet; the entry will be recreated via the `/new-host` skill when physical hardware arrives.
 
@@ -65,6 +73,10 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **`vpn-on`/`vpn-off` aliases use `systemctl start/stop wg-quick-wg0` (2026-05-22)** — `wg-quick` is not in PATH for non-root zsh sessions; `systemctl` avoids the PATH dependency entirely. The systemd unit name is `wg-quick-wg0` (hyphen-joined), which is how systemd renders the `wg-quick@wg0` template instance.
+- **`audit=0` appended on vpn-server via `lib.mkAfter` (2026-05-22)** — The Oracle Cloud ARM kernel's broken audit subsystem floods `kauditd` on boot, causing PAM D-Bus timeouts that drop SSH sessions during `nixos-rebuild switch`. Using `lib.mkAfter [ "audit=0" ]` in `hosts/vpn-server/configuration.nix` appends after `security.nix`'s `audit=1`; last value wins at boot. This avoids touching `security.nix` or disrupting other hosts.
+- **`hm-session-vars.sh` sourced in `zsh.shellInit` (2026-05-22)** — Non-login shells (terminal emulators, scripted tool calls) do not automatically source the HM session vars file. Adding sourcing to `shellInit` (not `interactiveShellInit`) covers both interactive and non-interactive non-login sessions. The `if [ -f ... ]` guard is safe on hosts that have not yet been rebuilt.
+- **`nixfmt-classic` replaced with `nixfmt` (2026-05-22)** — The `nixfmt-classic` package is deprecated upstream; `nixfmt` is the actively maintained successor. Updated in `shell.nix` (system package) and `helix.nix` (formatter reference).
 - **Printing module extracted to `printing.nix` (2026-05-21, late session)** — Replaced duplicated per-host CUPS/Avahi config with a shared `dotfiles/common/modules/printing.nix` (CUPS, Avahi mDNS, gutenprint/hplip/brlaser drivers). Added to `desktopModules`. `kdePackages.print-manager` retained in `plasma.nix` — it is a KDE-specific print-job GUI and does not belong in a DE-agnostic module. Two-step commit: `print-manager` was first moved into `printing.nix` then corrected back to `plasma.nix`.
 - **`~/.local/bin` added to bosko sessionPath (2026-05-21, evening)** — `home.sessionPath = [ "$HOME/.local/bin" ]` added to `dotfiles/bosko/bosko-claude.nix`. Diagnosed via `/doctor`: native claude-code binary installed at `~/.local/bin/claude` was not in PATH. Fix scoped to bosko's HM config (not shared with natty). Dry-run confirmed clean (+2.94 MiB closure, no package changes, no service restarts).
 - **`server` placeholder removed from flake (2026-05-21, evening)** — `hosts/server/` directory and `flake.nix` entry deleted. The `server` host has no physical hardware; the placeholder was dead weight. Will be re-created via `/new-host` when hardware is available.
@@ -120,7 +132,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Next Steps
 
-1. **Apply sessionPath fix via rebuild**: run `rebuild` + reboot on each active host so the `~/.local/bin` PATH entry takes effect for the native claude-code binary
-2. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient
-3. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
-4. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server
+1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop so the `hm-session-vars.sh` sourcing and `~/.local/bin` sessionPath fix take effect. Without a rebuild, non-login shells still lack `sessionPath`.
+2. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
+3. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
+4. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
