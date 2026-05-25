@@ -1,6 +1,6 @@
 # NixOS Project State
 
-_Last updated: 2026-05-22_
+_Last updated: 2026-05-25_
 
 ## Current Project State
 
@@ -127,7 +127,6 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
 - **dbus-broker journal warnings are benign** — After the dbus-broker transition, three warning classes appear in journald: duplicate dbus service name entries (stricter parser), `Invalid group-name 'netdev'` in avahi-dbus.conf, `Invalid user-name 'systemd-timesync'` in timesync1.conf. All confirmed harmless; services function normally.
-- **`nix-flatpak` bundles unpinned nixpkgs** — `nix-flatpak` in `flake.nix` has no `inputs.nixpkgs.follows = "nixpkgs"`. Its bundled rev (`da5ad661`) still defaults `dbus.implementation` to `"dbus"`. The explicit assignment in `security.nix` overrides this; the underlying issue remains if flatpak's nixpkgs ever changes other defaults in unexpected ways.
 - **`server` host has no hardware** — Removed placeholder from flake; will be re-added via `/new-host` when physical hardware is available.
 
 ## Next Steps

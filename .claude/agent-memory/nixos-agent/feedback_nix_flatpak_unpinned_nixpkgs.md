@@ -1,13 +1,13 @@
 ---
 name: nix-flatpak-unpinned-nixpkgs
-description: nix-flatpak does not follow our nixpkgs input and silently injects older NixOS module defaults (e.g. dbus implementation = "dbus") that override upstream changes
+description: nix-flatpak does NOT bundle its own nixpkgs (flake declares zero inputs); the dbus-broker resistance was from module evaluation order, not a bundled nixpkgs
 type: feedback
 ---
 
-`nix-flatpak` in `flake.nix` has no `inputs.nixpkgs.follows = "nixpkgs"`. It brings its own pinned nixpkgs (rev `da5ad661`) whose NixOS modules may have different defaults than the nixpkgs we're actually targeting.
+`nix-flatpak` declares zero inputs in its `flake.nix` — it does not bundle its own nixpkgs at all. The earlier belief that it bundled rev `da5ad661` was a misdiagnosis.
 
-**Why:** Discovered 2026-05-21 while debugging why natalie-laptop stayed on dbus-daemon despite nixpkgs-unstable having defaulted to dbus-broker. The nix-flatpak nixpkgs's `dbus.nix` with `default = "dbus"` was silently winning in the NixOS module merge priority for `mkDefault` values.
+**Why:** Investigated 2026-05-25. The original "bundled nixpkgs" theory was formed while debugging why dbus-broker resistance persisted on desktop hosts. The real cause was NixOS module evaluation order (nix-flatpak's module providing `mkDefault "dbus"` coming from its evaluated module file), not a pinned nixpkgs shadow.
 
-**How to apply:** Whenever nixpkgs adds a new `mkDefault` for a service option and we expect it to take effect on desktop hosts, verify with `nix eval .#nixosConfigurations.<host>.config.<option>`. If it doesn't match, check whether nix-flatpak's unpinned nixpkgs is providing a conflicting default. The fix is to set the option explicitly (not with `mkDefault`) in `security.nix` or another shared module — this beats all `mkDefault` values regardless of their source. Do NOT rely on nixpkgs upstream defaults taking effect passively when nix-flatpak is in the module chain.
+**How to apply:** Do not add `inputs.nixpkgs.follows = "nixpkgs"` to nix-flatpak in flake.nix — it has no nixpkgs input to override. The correct and still-valid fix when a nix-flatpak module default conflicts with our desired setting is to assign the option explicitly (no `mkDefault`) in `security.nix` or another shared module, which beats all `mkDefault` values regardless of source. Never rely on nixpkgs upstream `mkDefault` values taking effect passively when nix-flatpak is in the module chain.
 
 Related: [[dbus-broker default change in nixpkgs unstable]]
