@@ -75,6 +75,7 @@
           "${self}/hosts/gaming/hardware-configuration.nix"
           "${self}/hosts/gaming/environment.nix"
           "${self}/hosts/gaming/networking.nix"
+          "${self}/hosts/gaming/ollama.nix"
           "${self}/dotfiles/common/modules/amd.nix"
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
