@@ -3,26 +3,37 @@
 {
   programs.ssh = {
     enable = true;
-    matchBlocks = {
+    enableDefaultConfig = false;
+
+    settings = {
+      "*" = {
+        ServerAliveInterval = 60;
+        ServerAliveCountMax = 3;
+      };
+
       "natalie-laptop" = {
-        hostname = "10.0.0.103";
-        user = "bosko";
+        Hostname = "10.0.0.103";
+        User = "bosko";
       };
+
       "laptop" = {
-        hostname = "10.0.0.227";
-        user = "bosko";
+        Hostname = "10.0.0.227";
+        User = "bosko";
       };
+
       "gaming" = {
-        hostname = "10.0.0.251";
-        user = "bosko";
+        Hostname = "10.0.0.251";
+        User = "bosko";
       };
+
       "pi-hole" = {
-        hostname = "10.0.0.20";
-        user = "bosko";
+        Hostname = "10.0.0.20";
+        User = "bosko";
       };
+
       "famdash" = {
-        hostname = "10.0.0.21";
-        user = "natalie";
+        Hostname = "10.0.0.21";
+        User = "natalie";
       };
     };
   };
