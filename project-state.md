@@ -6,6 +6,8 @@ _Last updated: 2026-05-25_
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
 
+**`~/.ssh/config` migrated into Home Manager declaratively (2026-05-25).** A new `dotfiles/common/configs/ssh.nix` module uses `programs.ssh.matchBlocks` to define all five SSH hosts: `natalie-laptop` (10.0.0.103, user bosko), `laptop` (10.0.0.227, user bosko), `gaming` (10.0.0.251, user bosko), `pi-hole` (10.0.0.20, user bosko), and `famdash` (10.0.0.21, user natalie). Imported from `home.nix` so both users receive the managed SSH config. Dry-run confirmed clean build.
+
 **`vpn-on` / `vpn-off` shell aliases confirmed working (2026-05-22).** `vpn-on = "sudo systemctl start wg-quick-wg0"` and `vpn-off = "sudo systemctl stop wg-quick-wg0"` are now in `dotfiles/common/modules/shell.nix`. The systemd unit name uses a hyphen (`wg-quick-wg0`) which is how systemd renders the `wg-quick@wg0` template. Using `systemctl` avoids `wg-quick` binary PATH issues for non-root shell sessions.
 
 **Non-login shell Home Manager session variables now sourced (2026-05-22).** `zsh.shellInit` in `shell.nix` now sources `~/.nix-profile/etc/profile.d/hm-session-vars.sh` when the file exists. This makes `sessionPath` (including `~/.local/bin`) and `sessionVariables` available to non-login zsh sessions (terminal emulators, scripted tool calls) — previously only login shells received them.
@@ -60,9 +62,9 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ### Short-term (next 1-3 sessions)
 
+- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the new `ssh.nix` managed SSH config and the `hm-session-vars.sh`/sessionPath fixes from 2026-05-22
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
-- **Activate native claude-code via rebuild** — `~/.local/bin` sessionPath fix is committed; take effect after next `rebuild` + reboot on each host
 - **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
 
 ### Long-term
@@ -73,6 +75,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **SSH config migrated into Home Manager via `programs.ssh.matchBlocks` (2026-05-25)** — All five SSH hosts are now declared in `dotfiles/common/configs/ssh.nix` with explicit `user` fields. Managed by HM means the SSH config is version-controlled, reproducible across hosts, and rebuilt automatically on each generation. Both users inherit the same block via `home.nix`. The previous hand-maintained `~/.ssh/config` file should be removed on each host after the next rebuild.
 - **`vpn-on`/`vpn-off` aliases use `systemctl start/stop wg-quick-wg0` (2026-05-22)** — `wg-quick` is not in PATH for non-root zsh sessions; `systemctl` avoids the PATH dependency entirely. The systemd unit name is `wg-quick-wg0` (hyphen-joined), which is how systemd renders the `wg-quick@wg0` template instance.
 - **`audit=0` appended on vpn-server via `lib.mkAfter` (2026-05-22)** — The Oracle Cloud ARM kernel's broken audit subsystem floods `kauditd` on boot, causing PAM D-Bus timeouts that drop SSH sessions during `nixos-rebuild switch`. Using `lib.mkAfter [ "audit=0" ]` in `hosts/vpn-server/configuration.nix` appends after `security.nix`'s `audit=1`; last value wins at boot. This avoids touching `security.nix` or disrupting other hosts.
 - **`hm-session-vars.sh` sourced in `zsh.shellInit` (2026-05-22)** — Non-login shells (terminal emulators, scripted tool calls) do not automatically source the HM session vars file. Adding sourcing to `shellInit` (not `interactiveShellInit`) covers both interactive and non-interactive non-login sessions. The `if [ -f ... ]` guard is safe on hosts that have not yet been rebuilt.
@@ -131,7 +134,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Next Steps
 
-1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop so the `hm-session-vars.sh` sourcing and `~/.local/bin` sessionPath fix take effect. Without a rebuild, non-login shells still lack `sessionPath`.
+1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the new `ssh.nix` managed SSH config, the `hm-session-vars.sh` sourcing fix, and the `~/.local/bin` sessionPath fix. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
 2. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
 3. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
 4. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.

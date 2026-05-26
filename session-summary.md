@@ -2,6 +2,50 @@
 
 ---
 
+## Session: 2026-05-25 — Migrate ~/.ssh/config into Home Manager declaratively
+
+**Duration Estimate**: ~30 minutes (single commit: aee3864)
+**Session Focus**: Replace the hand-maintained `~/.ssh/config` file with a declarative `programs.ssh.matchBlocks` definition managed by Home Manager, so SSH host configuration is version-controlled and reproducible across all hosts.
+
+### What Was Accomplished
+
+- **`dotfiles/common/configs/ssh.nix` created** — New Home Manager module using `programs.ssh.matchBlocks` to define all five SSH hosts with explicit `hostname` and `user` fields:
+  - `natalie-laptop` → `10.0.0.103`, user `bosko`
+  - `laptop` → `10.0.0.227`, user `bosko`
+  - `gaming` → `10.0.0.251`, user `bosko`
+  - `pi-hole` → `10.0.0.20`, user `bosko`
+  - `famdash` → `10.0.0.21`, user `natalie`
+- **Imported from `dotfiles/common/configs/home.nix`** — `./ssh.nix` added to the `imports` list so both users (`bosko` and `natty`) receive the managed SSH config on rebuild.
+- **Dry-run confirmed clean build** — No package changes, no service restarts; the change only adds an `~/.ssh/config` generation managed by Home Manager.
+
+### Files Changed
+
+- `dotfiles/common/configs/ssh.nix` — new file; all five SSH host blocks with `programs.ssh.matchBlocks`
+- `dotfiles/common/configs/home.nix` — added `./ssh.nix` to imports list
+
+### Commits This Session
+
+- `aee3864` — feat(ssh): migrate ~/.ssh/config into Home Manager declaratively
+
+### Decisions Made
+
+- **`programs.ssh.matchBlocks` over raw file management** — Home Manager's `programs.ssh` module generates a well-formed `~/.ssh/config` at activation time. This is declarative, diff-able in git, and automatically applied on every rebuild without manual file management.
+- **Shared in `home.nix` for both users** — Both `bosko` and `natty` share the SSH config via the common `home.nix` import. The `famdash` entry uses `user = "natalie"` because that host has a different local username; all other hosts default to `bosko`.
+- **Explicit `user` fields on every block** — Avoids ambiguity when running `ssh gaming` from either user account; the config always specifies which remote user to connect as.
+
+### Issues Encountered
+
+None — the dry-run passed cleanly on the first attempt.
+
+### Remaining / Next Session
+
+- **Run `rebuild` + reboot on each desktop host** to activate the new managed SSH config. After each host is rebuilt, remove the old hand-maintained `~/.ssh/config` on that machine.
+- **AMD card swap on gaming**: remove `nvidia.nix` from gaming's module list when the physical card arrives.
+- **Re-enable lutris**: watch nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry.
+- **Re-add `server` host when hardware arrives**: use `/new-host` skill; pin to `nixpkgs-stable`.
+
+---
+
 ## Session: 2026-05-22 — vpn-on/vpn-off aliases debugged and confirmed working; nixfmt migration
 
 **Duration Estimate**: ~1 hour (commits 99f14b8 through 6dffa66, plus 366c872 and fdef725 from earlier that day)

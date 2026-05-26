@@ -4,12 +4,13 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts are active with real private keys placed. `vpn-on` and `vpn-off` shell aliases are confirmed working via systemd. dbus-broker is active on all hosts — an explicit `services.dbus.implementation = "broker"` in `security.nix` beats `nix-flatpak`'s bundled older nixpkgs. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided workflows covering the full NixOS development surface. `~/.local/bin` is in bosko's `sessionPath` (sourced correctly for non-login shells via `zsh.shellInit`) so the native claude-code binary is discoverable. `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts are active with real private keys placed. `vpn-on` and `vpn-off` shell aliases are confirmed working via systemd. dbus-broker is active on all hosts — an explicit `services.dbus.implementation = "broker"` in `security.nix` beats `nix-flatpak`'s bundled older nixpkgs. SSH configuration is managed declaratively via Home Manager (`programs.ssh.matchBlocks`) in `dotfiles/common/configs/ssh.nix` — all five hosts defined, rebuilt automatically on each generation. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided workflows covering the full NixOS development surface. `~/.local/bin` is in bosko's `sessionPath` (sourced correctly for non-login shells via `zsh.shellInit`) so the native claude-code binary is discoverable. `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
 
 ## Features
 
 - Single flake managing four active hosts (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`) with shared module composition; `server` host deferred pending physical hardware
-- Home Manager integrated as a NixOS module for both users (`bosko` and `natty`); both users receive the same `home.nix` config
+- Home Manager integrated as a NixOS module for both users (`bosko` and `natty`); both users receive the same `home.nix` config — includes Helix editor config and SSH configuration
+- SSH config managed declaratively via `programs.ssh.matchBlocks` in `dotfiles/common/configs/ssh.nix`; all five SSH hosts (natalie-laptop, laptop, gaming, pi-hole, famdash) defined with explicit `hostname` and `user` fields
 - Declarative Flatpak management via `nix-flatpak`
 - Swappable desktop environment modules (11 options under `desktop-environments/`)
 - GPU modules correctly scoped: `amd.nix` gaming-only; `nvidia.nix` per-host explicit import (gaming, laptop, natalie-laptop) — ready for gaming AMD card swap by removing one line
@@ -84,6 +85,7 @@ dotfiles/
     └── configs/                        # Home Manager configs shared by both users
         ├── home.nix                    # HM root — imported by both bosko and natty
         ├── helix.nix
+        ├── ssh.nix                     # Declarative SSH config (programs.ssh.matchBlocks)
         └── dotfiles (katerc, kitty.conf)
 
 dotfiles/bosko/                         # bosko-specific HM configs (not shared with natty)
@@ -175,6 +177,8 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Recent Changes
 
+**2026-05-25** — Migrated `~/.ssh/config` into Home Manager declaratively. New `dotfiles/common/configs/ssh.nix` uses `programs.ssh.matchBlocks` to define all five SSH hosts: `natalie-laptop` (10.0.0.103, user bosko), `laptop` (10.0.0.227, user bosko), `gaming` (10.0.0.251, user bosko), `pi-hole` (10.0.0.20, user bosko), and `famdash` (10.0.0.21, user natalie). Imported from `home.nix` so both users receive the managed config automatically on each rebuild. Dry-run confirmed clean build. The hand-maintained `~/.ssh/config` on each host should be removed after the next rebuild.
+
 **2026-05-22** — Added `vpn-on` / `vpn-off` shell aliases to `shell.nix`: `vpn-on = "sudo systemctl start wg-quick-wg0"` and `vpn-off = "sudo systemctl stop wg-quick-wg0"`. Uses the systemd service rather than `wg-quick` directly (the binary is not in PATH for non-root zsh sessions). The correct unit name is `wg-quick-wg0` — the hyphen-joined form of the `wg-quick@wg0` template. Added `boot.kernelParams = lib.mkAfter [ "audit=0" ]` to `hosts/vpn-server/configuration.nix` to suppress the Oracle ARM kernel's broken audit subsystem, which was flooding `kauditd` and dropping SSH sessions mid-rebuild. Replaced deprecated `nixfmt-classic` with `nixfmt` in `shell.nix` and `helix.nix`. Added `zsh.shellInit` sourcing of `~/.nix-profile/etc/profile.d/hm-session-vars.sh` so `sessionPath` and `sessionVariables` are available in non-login shells (terminal emulators, scripted tool calls). Corrected a regression in the `rebuild` alias (had been accidentally switched from `nh os boot` to `nh os switch`; reverted).
 
 **2026-05-21 (evening)** — dbus-broker transition completed on all five hosts. Root cause of resistance identified: `nix-flatpak` bundles its own older nixpkgs (`da5ad661`) that still defaults `dbus.implementation` to `"dbus"` via `mkDefault`, silently winning over nixpkgs-unstable's newer `mkDefault "broker"`. Fix: added an explicit (non-default) `services.dbus.implementation = "broker"` in `security.nix`; this plain assignment beats all `mkDefault` values regardless of source. Removed `server` host placeholder from `flake.nix` and `hosts/server/` — no physical hardware exists; will be re-added via `/new-host` when hardware arrives. Added `home.sessionPath = [ "$HOME/.local/bin" ]` to `dotfiles/bosko/bosko-claude.nix` so the native claude-code binary at `~/.local/bin/claude` is discoverable in PATH after rebuild.
@@ -205,7 +209,7 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Roadmap
 
-- Apply sessionPath fix: `rebuild` + reboot on each active host so `~/.local/bin` takes effect for the native claude-code binary
+- Apply rebuilds on desktop hosts: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, `hm-session-vars.sh` sourcing fix, and `~/.local/bin` sessionPath; remove hand-maintained `~/.ssh/config` on each host afterward
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
 - Harden vpn-server further (AppArmor profiles, fail2ban, rate-limiting on UDP 51820)
