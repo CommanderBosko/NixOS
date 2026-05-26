@@ -3,6 +3,7 @@
 {
   imports = [
     ./helix.nix
+    ./ssh.nix
   ];
 
   home = {
