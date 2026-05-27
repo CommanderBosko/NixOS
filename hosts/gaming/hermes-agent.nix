@@ -8,14 +8,16 @@
 # client library rejects an empty string before the request reaches Ollama
 # (which ignores the key entirely).
 #
-# Model: mistral-nemo-hermes (custom Ollama model derived from mistral-nemo:12b).
-# num_ctx is pinned to 32768 via a local Modelfile.  Ollama defaults to 4096,
-# causing empty responses; 65536 was previously used but pushed the RTX 3070 8GB
-# VRAM toward the CPU-offload threshold causing dropped connections mid-response.
-# 32768 halves VRAM pressure while still providing enough context for Hermes tool use.
-# Create/recreate the model on the host before rebuilding:
-#   printf 'FROM mistral-nemo:12b\nPARAMETER num_ctx 32768\n' > /tmp/Modelfile.hermes
-#   ollama create mistral-nemo-hermes -f /tmp/Modelfile.hermes
+# Model: qwen2.5:7b (pulled directly from Ollama Hub via loadModels).
+# num_ctx is set to 65536 (64K) via ollama_num_ctx in Hermes settings.
+# This satisfies Hermes Agent's 64K minimum requirement while keeping VRAM
+# usage well within the RTX 3070's 8GB:
+#   weights (Q4_K_M): ~4.4GB
+#   KV cache @ 65536 ctx (q8_0, 4 KV heads × 28 layers): ~1.84GB
+#   total: ~6.25GB — ~1.75GB headroom
+# mistral-nemo:12b was previously used but its ~7.5GB weight left insufficient
+# room for a 64K KV cache, causing VRAM-induced connection drops at 65536 and
+# Hermes initialisation failures at 32768 (below the 64K minimum).
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
@@ -32,7 +34,7 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
-    loadModels = [ "mistral-nemo-hermes" ];
+    loadModels = [ "qwen2.5:7b" ];
   };
 
   services.hermes-agent = {
@@ -42,17 +44,17 @@
     settings = {
       model = {
         provider = "custom";
-        default = "mistral-nemo-hermes";
+        default = "qwen2.5:7b";
         base_url = "http://localhost:11434/v1";
         # Non-empty dummy — the OpenAI client requires a non-empty api_key
         # field; Ollama ignores its value.
         api_key = "ollama";
         api_mode = "chat_completions";
-        # Pass num_ctx 32768 with every inference request so Ollama allocates
-        # the full context window regardless of the Modelfile default.
-        ollama_num_ctx = 32768;
+        # Pass num_ctx 65536 with every inference request so Ollama allocates
+        # the full context window.  Satisfies Hermes Agent's 64K minimum.
+        ollama_num_ctx = 65536;
         # Tell Hermes the effective context length for prompt-budget calculations.
-        context_length = 32768;
+        context_length = 65536;
       };
     };
   };
