@@ -8,10 +8,14 @@
 # client library rejects an empty string before the request reaches Ollama
 # (which ignores the key entirely).
 #
-# Model: mistral-nemo:12b (128K context window, ~7GB Q4, fits in RTX 3070 8GB VRAM).
-# Hermes Agent enforces a hard 64K minimum context length.  mistral-nemo:12b has
-# 128K context, excellent tool-calling support, and its Q4 quantisation sits just
-# under the RTX 3070's 8GB VRAM headroom.
+# Model: mistral-nemo-hermes (custom Ollama model derived from mistral-nemo:12b).
+# num_ctx is pinned to 16384 via a local Modelfile because Ollama defaults to 4096,
+# which causes empty responses when Hermes Agent sends ~15K-token prompts.
+# 32K was considered but 16K already pushes the RTX 3070 8GB VRAM to ~7GB used
+# (34%/66% CPU/GPU split at load time) — 32K would overflow further onto CPU.
+# Create the model on the host before rebuilding:
+#   printf 'FROM mistral-nemo:12b\nPARAMETER num_ctx 16384\n' > /tmp/Modelfile.hermes
+#   ollama create mistral-nemo-hermes -f /tmp/Modelfile.hermes
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
@@ -28,7 +32,7 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
-    loadModels = [ "mistral-nemo:12b" ];
+    loadModels = [ "mistral-nemo-hermes" ];
   };
 
   services.hermes-agent = {
@@ -38,7 +42,7 @@
     settings = {
       model = {
         provider = "custom";
-        default = "mistral-nemo:12b";
+        default = "mistral-nemo-hermes";
         base_url = "http://localhost:11434/v1";
         # Non-empty dummy — the OpenAI client requires a non-empty api_key
         # field; Ollama ignores its value.
