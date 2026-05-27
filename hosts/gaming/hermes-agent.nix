@@ -10,6 +10,11 @@
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
 # exports HERMES_HOME=/var/lib/hermes/.hermes system-wide so interactive shells
 # share state with the gateway service.
+#
+# /var/lib/hermes is created with mode 2770 (hermes:hermes).  bosko must be in
+# the hermes group so the interactive CLI can stat/read the .env file inside it
+# without hitting EPERM (Python's pathlib.Path.exists() raises on permission
+# denied rather than returning False).
 {
   services.hermes-agent = {
     enable = true;
@@ -27,4 +32,10 @@
       };
     };
   };
+
+  # Grant bosko read/write access to /var/lib/hermes so the interactive `hermes`
+  # CLI (which inherits HERMES_HOME=/var/lib/hermes/.hermes) can traverse the
+  # service state directory.  The hermes group is only created on gaming by the
+  # module above, so this lives here rather than in the shared users.nix.
+  users.users.bosko.extraGroups = [ "hermes" ];
 }
