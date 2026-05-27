@@ -9,12 +9,12 @@
 # (which ignores the key entirely).
 #
 # Model: mistral-nemo-hermes (custom Ollama model derived from mistral-nemo:12b).
-# num_ctx is pinned to 65536 via a local Modelfile.  Ollama defaults to 4096,
-# causing empty responses; 16384 was previously used but is too small for reliable
-# Hermes tool use (needs ≥64K tokens).  65536 pushes the RTX 3070 8GB VRAM toward
-# the CPU-offload threshold — monitor VRAM under load.
+# num_ctx is pinned to 32768 via a local Modelfile.  Ollama defaults to 4096,
+# causing empty responses; 65536 was previously used but pushed the RTX 3070 8GB
+# VRAM toward the CPU-offload threshold causing dropped connections mid-response.
+# 32768 halves VRAM pressure while still providing enough context for Hermes tool use.
 # Create/recreate the model on the host before rebuilding:
-#   printf 'FROM mistral-nemo:12b\nPARAMETER num_ctx 65536\n' > /tmp/Modelfile.hermes
+#   printf 'FROM mistral-nemo:12b\nPARAMETER num_ctx 32768\n' > /tmp/Modelfile.hermes
 #   ollama create mistral-nemo-hermes -f /tmp/Modelfile.hermes
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
@@ -48,11 +48,11 @@
         # field; Ollama ignores its value.
         api_key = "ollama";
         api_mode = "chat_completions";
-        # Pass num_ctx 65536 with every inference request so Ollama allocates
+        # Pass num_ctx 32768 with every inference request so Ollama allocates
         # the full context window regardless of the Modelfile default.
-        ollama_num_ctx = 65536;
+        ollama_num_ctx = 32768;
         # Tell Hermes the effective context length for prompt-budget calculations.
-        context_length = 65536;
+        context_length = 32768;
       };
     };
   };
