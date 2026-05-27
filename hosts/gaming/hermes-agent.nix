@@ -1,10 +1,12 @@
-{ ... }:
+{ pkgs, ... }:
 
-# Hermes Agent configured to use the local Ollama instance as its LLM backend.
-# Ollama exposes an OpenAI-compatible API at http://localhost:11434/v1 — no
-# upstream API key is required.  We set model.api_key to a non-empty dummy so
-# the OpenAI client library does not reject the request before it reaches
-# Ollama (which ignores the key entirely).
+# Ollama (CUDA backend) + Hermes Agent for gaming.
+#
+# Ollama exposes an OpenAI-compatible API at http://localhost:11434/v1.
+# Hermes Agent is configured to use that local endpoint so no upstream API key
+# is required.  model.api_key is set to a non-empty dummy because the OpenAI
+# client library rejects an empty string before the request reaches Ollama
+# (which ignores the key entirely).
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
@@ -16,6 +18,14 @@
 # without hitting EPERM (Python's pathlib.Path.exists() raises on permission
 # denied rather than returning False).
 {
+  hardware.nvidia-container-toolkit.enable = true;
+
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+    loadModels = [ "qwen2.5:14b" ];
+  };
+
   services.hermes-agent = {
     enable = true;
     addToSystemPackages = true;
@@ -23,7 +33,7 @@
     settings = {
       model = {
         provider = "custom";
-        default = "hermes3:8b";
+        default = "qwen2.5:14b";
         base_url = "http://localhost:11434/v1";
         # Non-empty dummy — the OpenAI client requires a non-empty api_key
         # field; Ollama ignores its value.
