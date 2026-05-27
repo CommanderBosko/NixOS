@@ -2,6 +2,67 @@
 
 ---
 
+## Session: 2026-05-26 — Ollama + Hermes Agent deployed on gaming with local LLM backend
+
+**Duration Estimate**: ~4.5 hours (18:54 – 23:15)
+**Session Focus**: Deploy a local LLM stack on the gaming host — Ollama with CUDA acceleration serving models out of the RTX 3070's VRAM, and the Hermes Agent CLI/service configured to use that local Ollama backend instead of any upstream API. Iterated through four model choices to find one that satisfies Hermes Agent's 64K context requirement and fits in 8GB VRAM.
+
+### What Was Accomplished
+
+- **Ollama deployed with CUDA backend on gaming** — `services.ollama` enabled using `pkgs.ollama-cuda`; `hardware.nvidia-container-toolkit.enable = true` added as the required enablement. Ollama exposes an OpenAI-compatible API at `http://localhost:11434/v1`.
+- **Hermes Agent deployed pointing to local Ollama** — `hermes-agent` added as a flake input (`github:NousResearch/hermes-agent`); its nixos module imported for the gaming host. `services.hermes-agent` configured with `provider = "custom"`, `base_url = "http://localhost:11434/v1"`, and a dummy `api_key = "ollama"` (the OpenAI client library rejects an empty string; Ollama ignores the value). `addToSystemPackages = true` puts the `hermes` CLI on the system PATH and exports `HERMES_HOME` system-wide.
+- **`bosko` added to `hermes` group** — The Hermes systemd service runs as the `hermes` system user under `/var/lib/hermes` (mode 2770, hermes:hermes). Without group membership, Python's `pathlib.Path.exists()` raises `PermissionError` on the `.env` file inside that directory rather than returning `False`, breaking the CLI. Fixed by adding `users.users.bosko.extraGroups = [ "hermes" ]` to `hermes-agent.nix`.
+- **Ollama config consolidated from separate file into `hermes-agent.nix`** — An intermediate refactor merged the short-lived `hosts/gaming/ollama.nix` into `hermes-agent.nix` and removed `ollama.nix` from the flake. The gaming host now has a single coherent module for the entire local LLM stack.
+- **Model iterated four times to satisfy constraints** — Hermes Agent enforces a hard 64K minimum context window. The RTX 3070 has 8GB VRAM. The search for the right Q4 quantised model went through:
+  1. `hermes-3-llama-3.1:8b` (initial) — declared in `ollama.nix`; Hermes Agent rejected it at startup for insufficient context length
+  2. `llama3.1:8b` — 128K context (satisfies the 64K gate), but poor tool-calling in practice
+  3. `qwen2.5:7b` — better tool-calling, but 32K context window (Hermes Agent rejected it)
+  4. `qwen2.5:14b` — good context and tool-calling, but ~9GB Q4, slightly over RTX 3070 VRAM headroom; caused OOM during inference
+  5. **`mistral-nemo:12b`** (final) — 128K context (satisfies Hermes Agent gate), excellent tool-calling, ~7GB Q4 (fits comfortably in 8GB VRAM). Current model.
+- **SSH `matchBlocks` to `programs.ssh.settings` migration completed** — The 2026-05-25 `ssh.nix` module was using the deprecated `programs.ssh.matchBlocks` API. Migrated to `programs.ssh.settings` (the correct current API), capitalised all option keys to match `ssh_config(5)` naming convention, added a global `ServerAliveInterval`/`ServerAliveCountMax` stanza, and set `enableDefaultConfig = false` to suppress implicit-defaults warnings.
+
+### Files Changed
+
+- `flake.nix` — added `hermes-agent` input (`github:NousResearch/hermes-agent`); wired `hermes-agent.nixosModules.default` into the gaming host module list; `ollama.nix` import added then removed as part of consolidation refactor
+- `flake.lock` — updated with `hermes-agent` flake input lock entry (221 lines added)
+- `hosts/gaming/hermes-agent.nix` — new file; CUDA Ollama + Hermes Agent service configuration, dummy api_key comment, bosko group membership; model iterated to `mistral-nemo:12b`
+- `hosts/gaming/ollama.nix` — created then deleted (consolidated into `hermes-agent.nix`)
+- `dotfiles/common/configs/ssh.nix` — migrated from `programs.ssh.matchBlocks` to `programs.ssh.settings`; capitalised option keys; added global `ServerAliveInterval`/`ServerAliveCountMax`; set `enableDefaultConfig = false`
+
+### Commits This Session
+
+- `c652182` — fix(ssh): migrate matchBlocks to programs.ssh.settings; disable default config
+- `c77fb96` — feat(gaming): add Ollama with CUDA + Hermes 3 8B
+- `10c2dbd` — feat(gaming): add Hermes Agent configured to use local Ollama backend
+- `a46512c` — fix(gaming): add bosko to hermes group to fix CLI permission error
+- `61b4fde` — refactor(gaming): consolidate Ollama config into hermes-agent.nix, switch to qwen2.5:14b
+- `94b7a00` — fix(gaming): switch Hermes Agent model to llama3.1:8b for 64K context requirement
+- `feca3d9` — fix(gaming): switch Hermes Agent model to qwen2.5:7b for better tool-calling
+- `af7fb02` — fix(gaming): switch Hermes Agent model to mistral-nemo:12b
+
+### Decisions Made
+
+- **`mistral-nemo:12b` as the Hermes Agent model** — Satisfies all three constraints simultaneously: 128K context window (above Hermes Agent's 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation that fits within the RTX 3070's 8GB VRAM with headroom. No other evaluated model met all three constraints.
+- **Dummy `api_key = "ollama"` in Hermes settings** — The OpenAI-compatible client library validates that `api_key` is non-empty before sending the request. Ollama ignores the key entirely. A non-empty dummy is the correct workaround; documented clearly in a module comment.
+- **Ollama config consolidated into `hermes-agent.nix`** — A single-file module is clearer than two small files with an implicit dependency between them. `hermes-agent.nix` now owns the entire local LLM stack for gaming.
+- **`bosko` in `hermes` group, declared in `hermes-agent.nix`** — The `hermes` group only exists on gaming (created by the hermes-agent module); adding bosko's extra group membership in the same file keeps the gaming-specific concern colocated. `users.nix` (shared) is not the right place.
+- **`programs.ssh.settings` over deprecated `matchBlocks` API** — Migrated to current API to suppress warnings; `enableDefaultConfig = false` prevents Home Manager from injecting implicit defaults that would contradict the explicit host blocks.
+
+### Issues Encountered
+
+- **Hermes Agent 64K context gate** — Hermes Agent refuses to start if the configured model reports a context window below 64K tokens. This eliminated `qwen2.5:7b` (32K) and the initial `hermes-3-llama-3.1:8b`. The gate is enforced at service startup, not at inference time, so each rejection required a full `loadModels` pull cycle.
+- **`qwen2.5:14b` VRAM OOM** — The 14B parameter model's Q4 quantisation is approximately 9GB, slightly above the RTX 3070's 8GB VRAM. Inference caused the GPU driver to OOM, crashing the Ollama process mid-generation.
+- **CLI permission error without group membership** — Python's `pathlib.Path.exists()` raises `PermissionError` (rather than returning `False`) when the process lacks execute permission on a parent directory. The `hermes` CLI (run as bosko) could not traverse `/var/lib/hermes` (mode 2770, owned hermes:hermes) without group membership.
+
+### Remaining / Next Session
+
+- **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate all pending changes; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Verify Hermes Agent operational post-rebuild**: confirm `services.ollama` is pulling `mistral-nemo:12b` successfully, `services.hermes-agent` starts cleanly, and the `hermes` CLI is reachable as bosko
+- **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` and reboot
+- **Re-enable lutris on gaming**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`
+
+---
+
 ## Session: 2026-05-25 — Migrate ~/.ssh/config into Home Manager declaratively
 
 **Duration Estimate**: ~30 minutes (single commit: aee3864)

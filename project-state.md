@@ -1,12 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-05-25_
+_Last updated: 2026-05-26_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
 
-**`~/.ssh/config` migrated into Home Manager declaratively (2026-05-25).** A new `dotfiles/common/configs/ssh.nix` module uses `programs.ssh.matchBlocks` to define all five SSH hosts: `natalie-laptop` (10.0.0.103, user bosko), `laptop` (10.0.0.227, user bosko), `gaming` (10.0.0.251, user bosko), `pi-hole` (10.0.0.20, user bosko), and `famdash` (10.0.0.21, user natalie). Imported from `home.nix` so both users receive the managed SSH config. Dry-run confirmed clean build.
+**Local LLM stack deployed on gaming (2026-05-26).** A new `hosts/gaming/hermes-agent.nix` module provisions the entire local AI stack: `services.ollama` using `pkgs.ollama-cuda` (CUDA-accelerated, RTX 3070) with `loadModels = [ "mistral-nemo:12b" ]`, and `services.hermes-agent` configured to use the local Ollama OpenAI-compatible API at `http://localhost:11434/v1`. The `hermes` CLI is on the system PATH via `addToSystemPackages = true`; bosko is in the `hermes` group so the CLI can traverse `/var/lib/hermes` (mode 2770). `mistral-nemo:12b` was selected after iterating through four models: it is the only evaluated model satisfying all three constraints simultaneously — 128K context (above Hermes Agent's 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation that fits in the RTX 3070's 8GB VRAM. The `hermes-agent` flake input (`github:NousResearch/hermes-agent`) is wired into the gaming host in `flake.nix`.
+
+**SSH config API corrected (2026-05-26).** The `dotfiles/common/configs/ssh.nix` module was migrated from the deprecated `programs.ssh.matchBlocks` API to `programs.ssh.settings`, option keys capitalised to match `ssh_config(5)`, a global `ServerAliveInterval`/`ServerAliveCountMax` stanza added, and `enableDefaultConfig = false` set to suppress implicit-defaults warnings.
+
+**`~/.ssh/config` migrated into Home Manager declaratively (2026-05-25).** A new `dotfiles/common/configs/ssh.nix` module uses `programs.ssh.settings` to define all five SSH hosts: `natalie-laptop` (10.0.0.103, user bosko), `laptop` (10.0.0.227, user bosko), `gaming` (10.0.0.251, user bosko), `pi-hole` (10.0.0.20, user bosko), and `famdash` (10.0.0.21, user natalie). Imported from `home.nix` so both users receive the managed SSH config. Dry-run confirmed clean build.
 
 **`vpn-on` / `vpn-off` shell aliases confirmed working (2026-05-22).** `vpn-on = "sudo systemctl start wg-quick-wg0"` and `vpn-off = "sudo systemctl stop wg-quick-wg0"` are now in `dotfiles/common/modules/shell.nix`. The systemd unit name uses a hyphen (`wg-quick-wg0`) which is how systemd renders the `wg-quick@wg0` template. Using `systemctl` avoids `wg-quick` binary PATH issues for non-root shell sessions.
 
@@ -28,7 +32,7 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE | cosmic.nix |
@@ -62,7 +66,8 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ### Short-term (next 1-3 sessions)
 
-- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the new `ssh.nix` managed SSH config and the `hm-session-vars.sh`/sessionPath fixes from 2026-05-22
+- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, `hm-session-vars.sh` sourcing fix, and the new Ollama/Hermes Agent module; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Verify Hermes Agent operational post-rebuild** — confirm Ollama pulls `mistral-nemo:12b`, `services.hermes-agent` starts cleanly, and the `hermes` CLI works as bosko
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
@@ -75,7 +80,12 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
-- **SSH config migrated into Home Manager via `programs.ssh.matchBlocks` (2026-05-25)** — All five SSH hosts are now declared in `dotfiles/common/configs/ssh.nix` with explicit `user` fields. Managed by HM means the SSH config is version-controlled, reproducible across hosts, and rebuilt automatically on each generation. Both users inherit the same block via `home.nix`. The previous hand-maintained `~/.ssh/config` file should be removed on each host after the next rebuild.
+- **`mistral-nemo:12b` selected as Hermes Agent model (2026-05-26)** — The only evaluated model satisfying all three constraints: 128K context (above Hermes Agent's hard 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation within the RTX 3070's 8GB VRAM. `qwen2.5:7b` (32K context), `llama3.1:8b` (poor tool-calling), and `qwen2.5:14b` (~9GB, VRAM OOM) were all rejected. `hermes-3-llama-3.1:8b` was rejected by Hermes Agent's context-window gate at startup.
+- **Dummy `api_key = "ollama"` in Hermes settings (2026-05-26)** — The OpenAI client library validates that `api_key` is non-empty before making the request; Ollama ignores the value. A non-empty dummy string is the correct workaround.
+- **Ollama config colocated in `hermes-agent.nix`, not a separate file (2026-05-26)** — A single-module approach keeps the gaming LLM stack coherent; `hosts/gaming/ollama.nix` was created and then absorbed into `hermes-agent.nix` in the same session.
+- **`bosko` in `hermes` group, declared in `hermes-agent.nix` (2026-05-26)** — The `hermes` group only exists on gaming; group membership belongs in the same gaming-specific file. `users.nix` (shared across all hosts) is not the right place for a group that only exists on one host.
+- **SSH config API corrected to `programs.ssh.settings` (2026-05-26)** — Migrated from deprecated `programs.ssh.matchBlocks`; `enableDefaultConfig = false` added to prevent implicit defaults.
+- **SSH config migrated into Home Manager (2026-05-25)** — All five SSH hosts declared in `dotfiles/common/configs/ssh.nix` with explicit `user` fields. Version-controlled, reproducible across hosts, rebuilt automatically on each generation. Both users inherit the same block via `home.nix`. The previous hand-maintained `~/.ssh/config` file should be removed on each host after the next rebuild.
 - **`vpn-on`/`vpn-off` aliases use `systemctl start/stop wg-quick-wg0` (2026-05-22)** — `wg-quick` is not in PATH for non-root zsh sessions; `systemctl` avoids the PATH dependency entirely. The systemd unit name is `wg-quick-wg0` (hyphen-joined), which is how systemd renders the `wg-quick@wg0` template instance.
 - **`audit=0` appended on vpn-server via `lib.mkAfter` (2026-05-22)** — The Oracle Cloud ARM kernel's broken audit subsystem floods `kauditd` on boot, causing PAM D-Bus timeouts that drop SSH sessions during `nixos-rebuild switch`. Using `lib.mkAfter [ "audit=0" ]` in `hosts/vpn-server/configuration.nix` appends after `security.nix`'s `audit=1`; last value wins at boot. This avoids touching `security.nix` or disrupting other hosts.
 - **`hm-session-vars.sh` sourced in `zsh.shellInit` (2026-05-22)** — Non-login shells (terminal emulators, scripted tool calls) do not automatically source the HM session vars file. Adding sourcing to `shellInit` (not `interactiveShellInit`) covers both interactive and non-interactive non-login sessions. The `if [ -f ... ]` guard is safe on hosts that have not yet been rebuilt.
@@ -134,7 +144,8 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Next Steps
 
-1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the new `ssh.nix` managed SSH config, the `hm-session-vars.sh` sourcing fix, and the `~/.local/bin` sessionPath fix. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
-2. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
-3. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
-4. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
+1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, `hm-session-vars.sh` sourcing fix, `~/.local/bin` sessionPath fix, and the new Ollama/Hermes Agent module on gaming. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
+2. **Verify Hermes Agent operational on gaming post-rebuild**: confirm Ollama pulls and caches `mistral-nemo:12b` on first boot, `services.hermes-agent` starts without errors, and the `hermes` CLI is accessible and functional as bosko.
+3. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
+4. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
+5. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
