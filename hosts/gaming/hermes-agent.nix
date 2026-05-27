@@ -8,11 +8,11 @@
 # client library rejects an empty string before the request reaches Ollama
 # (which ignores the key entirely).
 #
-# Model: llama3.1:8b (128K context window).
+# Model: qwen2.5:7b (128K context window).
 # Hermes Agent enforces a hard 64K minimum context length.  qwen2.5:14b has
 # only 32K context (hard-coded in its GGUF), which causes a ValueError at
-# agent init.  llama3.1:8b has 128K context, is a smaller download (~5 GB
-# Q4_K_M vs ~9 GB), and has well-tested tool-calling support.
+# agent init.  qwen2.5:7b has 128K context and superior tool-calling vs
+# llama3.1:8b at the same ~5 GB VRAM footprint on the RTX 3070.
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
@@ -29,10 +29,7 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
-    # llama3.1:8b has a 128K context window (vs qwen2.5:14b's 32K which is
-    # below Hermes Agent's 64K hard minimum).  It is also a smaller download
-    # (~5 GB Q4_K_M vs ~9 GB) and has well-tested tool-calling support.
-    loadModels = [ "llama3.1:8b" ];
+    loadModels = [ "qwen2.5:7b" ];
   };
 
   services.hermes-agent = {
@@ -42,7 +39,7 @@
     settings = {
       model = {
         provider = "custom";
-        default = "llama3.1:8b";
+        default = "qwen2.5:7b";
         base_url = "http://localhost:11434/v1";
         # Non-empty dummy — the OpenAI client requires a non-empty api_key
         # field; Ollama ignores its value.
