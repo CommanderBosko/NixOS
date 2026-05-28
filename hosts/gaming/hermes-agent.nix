@@ -8,16 +8,12 @@
 # client library rejects an empty string before the request reaches Ollama
 # (which ignores the key entirely).
 #
-# Model: qwen2.5:7b (pulled directly from Ollama Hub via loadModels).
+# Model: nous-hermes3:8b (pulled directly from Ollama Hub via loadModels).
 # num_ctx is set to 65536 (64K) via ollama_num_ctx in Hermes settings.
 # This satisfies Hermes Agent's 64K minimum requirement while keeping VRAM
-# usage well within the RTX 3070's 8GB:
-#   weights (Q4_K_M): ~4.4GB
-#   KV cache @ 65536 ctx (q8_0, 4 KV heads × 28 layers): ~1.84GB
-#   total: ~6.25GB — ~1.75GB headroom
-# mistral-nemo:12b was previously used but its ~7.5GB weight left insufficient
-# room for a 64K KV cache, causing VRAM-induced connection drops at 65536 and
-# Hermes initialisation failures at 32768 (below the 64K minimum).
+# usage well within the RTX 3070's 8GB.
+# qwen2.5:7b was previously used; nous-hermes3:8b is a drop-in swap with the
+# same context budget and comparable VRAM footprint.
 #
 # The systemd service runs as the "hermes" system user under /var/lib/hermes.
 # addToSystemPackages = true puts the `hermes` CLI on the system PATH and
@@ -34,7 +30,7 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
-    loadModels = [ "qwen2.5:7b" ];
+    loadModels = [ "nous-hermes3:8b" ];
   };
 
   services.hermes-agent = {
@@ -44,7 +40,7 @@
     settings = {
       model = {
         provider = "custom";
-        default = "qwen2.5:7b";
+        default = "nous-hermes3:8b";
         base_url = "http://localhost:11434/v1";
         # Non-empty dummy — the OpenAI client requires a non-empty api_key
         # field; Ollama ignores its value.
