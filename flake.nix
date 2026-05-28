@@ -26,11 +26,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Hermes Agent — AI agent framework by Nous Research (gaming only)
-    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
-  outputs = { dms, disko, hermes-agent, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
+  outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
@@ -78,14 +76,12 @@
           "${self}/hosts/gaming/hardware-configuration.nix"
           "${self}/hosts/gaming/environment.nix"
           "${self}/hosts/gaming/networking.nix"
-          "${self}/hosts/gaming/hermes-agent.nix"
           "${self}/dotfiles/common/modules/amd.nix"
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/dotfiles/common/modules/virtualisation.nix"
           "${self}/dotfiles/common/modules/vpn.nix"
-          hermes-agent.nixosModules.default
         ];
       };
 
