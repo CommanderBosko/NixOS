@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Agent Enforcement
-
-**ALL prompts and tasks in this project MUST be handled by the `nixos-agent` agent.** Before doing any work, spawn the `nixos-agent` agent and delegate the full task to it. Do not perform NixOS work directly — always use `@nixos-agent (agent)` as the handler.
-
 ## Common Commands
 
 ```bash
