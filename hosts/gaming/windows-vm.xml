@@ -1,16 +1,23 @@
 <!--
-  Windows GPU-passthrough VM — RTX 3070 + Looking Glass
-  ======================================================
+  Windows GPU-passthrough VM — RTX 3070 (single GPU passthrough)
+  ==============================================================
+  HOW IT WORKS:
+    When you "virsh start windows", the libvirt hook at /etc/libvirt/hooks/qemu
+    automatically stops SDDM, unbinds the RTX 3070 from nvidia, and hands it to
+    the VM. Your physical display goes to Windows. When the VM stops, the hook
+    resets the GPU (vendor-reset) and restarts SDDM.
+
   PRE-FLIGHT (do once, before virsh define):
 
-  1. Install AMD host GPU, reboot, verify IOMMU groups:
+  1. Verify IOMMU is working and the RTX 3070 is in its own group:
        find /sys/kernel/iommu_groups/*/devices -name '0000:08:00.*'
-     The RTX 3070 and its audio device must be in a group with no other
-     devices you need on the host. If not, you may need the ACS kernel patch.
+     Both 08:00.0 (VGA) and 08:00.1 (audio) should be in the same group.
+     If other required host devices share that group, you may need the ACS patch.
 
-  2. Uncomment "vfio-pci.ids=10de:2484,10de:228b" in virtualisation.nix,
-     then rebuild and reboot. Confirm with:
-       lspci -nnk -d 10de:2484 | grep 'Kernel driver'  # should say vfio-pci
+  2. Verify PCI addresses match what's in this XML (08:00.0 / 08:00.1):
+       lspci -nn | grep -E 'NVIDIA|RTX'
+     If different, update the <hostdev> sections below AND the GPU/GPU_AUDIO
+     variables in virtualisation.nix's gpuHook script.
 
   3. Create disk image and download ISOs:
        sudo qemu-img create -f qcow2 /var/lib/libvirt/images/windows.qcow2 128G
@@ -18,16 +25,26 @@
        # Download VirtIO drivers: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
        # Place at:               /var/lib/libvirt/images/virtio-win.iso
 
-  4. Define and start:
+  4. Replace the UUID placeholder:
+       sed -i "s/REPLACE-WITH-OUTPUT-OF-uuidgen/$(uuidgen)/" \
+         /home/bosko/NixOS/hosts/gaming/windows-vm.xml
+
+  5. Define and start:
        virsh define /home/bosko/NixOS/hosts/gaming/windows-vm.xml
        virsh start windows
+     SDDM will stop automatically. Connect via VNC for initial Windows install:
+       virt-viewer --connect qemu:///system windows
 
   POST-INSTALL (inside Windows, after OS is installed):
   - Install VirtIO guest drivers from the virtio-win CD
-  - Install Looking Glass host binary from https://looking-glass.io/downloads
-    (match version to looking-glass-client package on the host)
-  - The Looking Glass host will write frames to the IVSHMEM buffer;
-    on the host run:  looking-glass-client
+  - Install NVIDIA driver — Windows will then render via the RTX 3070's physical outputs
+  - At that point you can stop using VNC and use your monitor directly
+
+  WHEN AMD HOST GPU IS INSTALLED:
+  - Remove amd.nix from gaming host in flake.nix (or keep both)
+  - Enable vfio-pci.ids in virtualisation.nix kernelParams so the RTX 3070 binds at boot
+  - Re-add the Looking Glass IVSHMEM device below (ivshmem-plain, 128 MiB)
+  - Install Looking Glass host binary in Windows; run looking-glass-client on host
 -->
 
 <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
@@ -187,14 +204,7 @@
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x1'/>
     </hostdev>
 
-    <!-- Looking Glass IVSHMEM — 128 MiB shared memory buffer -->
-    <shmem name='looking-glass'>
-      <model type='ivshmem-plain'/>
-      <size unit='M'>128</size>
-      <address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x0'/>
-    </shmem>
-
-    <!-- Virtual display for VNC (initial install only; disable after Looking Glass is working) -->
+    <!-- Virtual display for VNC (used during initial Windows install via virt-viewer) -->
     <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'>
       <listen type='address' address='127.0.0.1'/>
     </graphics>
