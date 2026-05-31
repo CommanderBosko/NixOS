@@ -6,7 +6,11 @@
   # To bind a GPU: append "vfio-pci.ids=XXXX:XXXX,XXXX:XXXX" to kernelParams.
   # Find IDs: lspci -nn | grep -E 'VGA|Audio'
   boot = {
-    kernelParams = [ "amd_iommu=on" "intel_iommu=on" "iommu=pt" ];
+    kernelParams = [
+      "amd_iommu=on" "intel_iommu=on" "iommu=pt"
+      # RTX 3070 (08:00.0 VGA + 08:00.1 audio) — uncomment once AMD host GPU is installed:
+      # "vfio-pci.ids=10de:2484,10de:228b"
+    ];
     # Load VFIO before GPU drivers so vfio-pci can claim passthrough devices first
     initrd.kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" ];
     kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" "kvmfr" ];
@@ -20,10 +24,6 @@
       enable = true;
       qemu = {
         swtpm.enable = true;
-        ovmf = {
-          enable = true;
-          packages = [ pkgs.OVMFFull ]; # Includes Secure Boot — required for Windows 11
-        };
         runAsRoot = false;
       };
     };
