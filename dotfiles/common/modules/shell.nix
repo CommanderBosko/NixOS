@@ -303,7 +303,6 @@ in
     variables = {
       EDITOR = "hx";
       VISUAL = "hx";
-      LIBVIRT_DEFAULT_URI = "qemu:///system";
     };
 
     # Shell packages

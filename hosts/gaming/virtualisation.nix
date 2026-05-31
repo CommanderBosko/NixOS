@@ -119,6 +119,8 @@ in
 
   users.users.bosko.extraGroups = [ "libvirtd" "kvm" ];
 
+  environment.variables.LIBVIRT_DEFAULT_URI = "qemu:///system";
+
   environment.systemPackages = with pkgs; [
     looking-glass-client
     qemu
