@@ -1,19 +1,35 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
-  # Set up virtualisation
+  # IOMMU — required for GPU passthrough; iommu=pt improves performance for
+  # devices not passed through. Both AMD and Intel flags are safe to include.
+  # To bind a GPU: append "vfio-pci.ids=XXXX:XXXX,XXXX:XXXX" to kernelParams.
+  # Find IDs: lspci -nn | grep -E 'VGA|Audio'
+  boot = {
+    kernelParams = [ "amd_iommu=on" "intel_iommu=on" "iommu=pt" ];
+    # Load VFIO before GPU drivers so vfio-pci can claim passthrough devices first
+    initrd.kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" ];
+    kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" "kvmfr" ];
+    # kvmfr: Looking Glass shared memory kernel module
+    extraModulePackages = [ config.boot.kernelPackages.kvmfr ];
+    extraModprobeConfig = "options kvmfr static_size_mb=128";
+  };
+
   virtualisation = {
-    # Enable and configure libvirt with QEMU/KVM
     libvirtd = {
       enable = true;
       qemu = {
         swtpm.enable = true;
+        ovmf = {
+          enable = true;
+          packages = [ pkgs.OVMFFull ]; # Includes Secure Boot — required for Windows 11
+        };
         runAsRoot = false;
       };
     };
   };
 
-  # Set up networking for libvirt
+  # NAT network for VMs
   environment.etc."libvirt/qemu/networks/default.xml".text = ''
     <network>
       <name>default</name>
@@ -26,17 +42,25 @@
     </network>
   '';
 
-  # Services
+  # Looking Glass shared memory buffer (host side)
+  systemd.tmpfiles.rules = [
+    "f /dev/shm/looking-glass 0660 bosko kvm -"
+  ];
+
   services = {
-    # Avahi
     avahi = {
       enable = true;
       nssmdns4 = true;
     };
+    udev.extraRules = ''
+      SUBSYSTEM=="kvmfr", OWNER="root", GROUP="kvm", MODE="0660"
+    '';
   };
 
-  # Packages
+  users.users.bosko.extraGroups = [ "libvirtd" "kvm" ];
+
   environment.systemPackages = with pkgs; [
+    looking-glass-client
     qemu
     spice
     spice-gtk
@@ -45,16 +69,13 @@
     virt-viewer
   ];
 
-  # Required for virt-manager auth
   security.polkit.enable = true;
-
-  # Enable dconf for virt-manager settings
   programs.dconf.enable = true;
 
   # Fix hardcoded path in libvirt secret encryption service
   systemd.services.virt-secret-init-encryption = {
     serviceConfig.ExecStart = [
-      "" # Clear existing command
+      ""
       "${pkgs.bash}/bin/sh -c 'umask 0077 && (dd if=/dev/random status=none bs=32 count=1 | systemd-creds encrypt --name=secrets-encryption-key - /var/lib/libvirt/secrets/secrets-encryption-key)'"
     ];
   };
