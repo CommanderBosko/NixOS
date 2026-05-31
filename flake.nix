@@ -80,7 +80,7 @@
           "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
           "${self}/dotfiles/common/modules/gaming.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
-          "${self}/dotfiles/common/modules/virtualisation.nix"
+          "${self}/hosts/gaming/virtualisation.nix"
           "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
