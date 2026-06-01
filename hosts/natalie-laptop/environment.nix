@@ -35,6 +35,9 @@
     graphics.enable = true;
   };
 
+  # Qt apps default to Wayland on Cosmic (no X server running)
+  environment.sessionVariables.QT_QPA_PLATFORM = "wayland;xcb";
+
   # System packages
   environment.systemPackages = with pkgs; [
     brave
