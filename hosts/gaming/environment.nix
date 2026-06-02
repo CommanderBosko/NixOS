@@ -74,7 +74,6 @@
     tmux
     tor-browser
     vesktop
-    vivaldi
     vlc
   ];
 

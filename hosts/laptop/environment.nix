@@ -58,7 +58,6 @@
     rpi-imager
     tor-browser
     vesktop
-    vivaldi
     vlc
   ];
 
