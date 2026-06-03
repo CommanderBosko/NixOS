@@ -5,10 +5,7 @@
   services = {
     # Display manager settings
     displayManager = {
-      autoLogin = {
-        enable = true;
-        user = "bosko";
-      };
+      autoLogin.enable = false;
     };
 
     # Enable Qbittorrent (Web UI bound to localhost only — H-6)

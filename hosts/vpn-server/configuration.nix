@@ -84,6 +84,10 @@
   # security.nix sets auditd.enable = true via mkDefault; mkForce overrides here.
   security.auditd.enable = lib.mkForce false;
 
+  # nixos-rebuild --use-remote-sudo SSHes as bosko and runs sudo non-interactively;
+  # a password prompt would stall the deploy over a batch SSH session.
+  security.sudo.wheelNeedsPassword = false;
+
   # security.nix (commonModules) appends audit=1 to kernelParams.  The Oracle
   # Cloud ARM kernel's broken audit subsystem floods kauditd on boot, causing
   # PAM D-Bus timeouts that drop the nixos-rebuild SSH session mid-deploy.
@@ -96,9 +100,7 @@
       enable = true;
       settings = {
         PasswordAuthentication = false;
-        # prohibit-password: root login only via SSH key, not password.
-        # Required to SSH in as root after nixos-anywhere install.
-        PermitRootLogin = "prohibit-password";
+        PermitRootLogin = "no";
       };
     };
 

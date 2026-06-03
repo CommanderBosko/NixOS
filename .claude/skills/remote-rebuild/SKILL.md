@@ -12,7 +12,7 @@ Deploy a NixOS configuration to a remote headless host (`vpn-server` or `server`
 
 | Flake hostname | SSH target               | Architecture  | Notes                          |
 |----------------|--------------------------|---------------|--------------------------------|
-| `vpn-server`   | `root@150.136.232.63`    | aarch64-linux | Oracle Cloud ARM, WireGuard hub |
+| `vpn-server`   | `bosko@150.136.232.63`   | aarch64-linux | Oracle Cloud ARM, WireGuard hub |
 | `server`       | `bosko@nixos-server`     | x86_64-linux  | Local headless server          |
 
 ## Step 1 — Determine target
@@ -21,7 +21,7 @@ If the user supplied a hostname as an argument (e.g. `/remote-rebuild vpn-server
 
 ```
 Which remote host do you want to rebuild?
-  1. vpn-server  (root@150.136.232.63 — Oracle Cloud ARM)
+  1. vpn-server  (bosko@150.136.232.63 — Oracle Cloud ARM)
   2. server      (bosko@nixos-server — local headless server)
 ```
 
@@ -33,7 +33,7 @@ Before running the rebuild, do a quick connectivity check:
 
 For `vpn-server`:
 ```bash
-ssh -i ~/.ssh/id_ed25519 -o ConnectTimeout=10 -o BatchMode=yes root@150.136.232.63 echo ok
+ssh -i ~/.ssh/id_ed25519 -o ConnectTimeout=10 -o BatchMode=yes bosko@150.136.232.63 echo ok
 ```
 
 For `server`:
@@ -52,7 +52,7 @@ Display the full command before running it so the user can confirm:
 For `vpn-server`:
 ```
 nixos-rebuild switch \
-  --target-host root@150.136.232.63 \
+  --target-host bosko@150.136.232.63 \
   --use-remote-sudo \
   --flake /home/bosko/NixOS#vpn-server
 ```
@@ -73,7 +73,7 @@ Run the appropriate command. This is long-running (can take 5–15 minutes depen
 
 For `vpn-server`:
 ```bash
-nixos-rebuild switch --target-host root@150.136.232.63 --use-remote-sudo --flake /home/bosko/NixOS#vpn-server
+nixos-rebuild switch --target-host bosko@150.136.232.63 --use-remote-sudo --flake /home/bosko/NixOS#vpn-server
 ```
 
 For `server`:
@@ -94,14 +94,14 @@ On failure:
   - SSH connectivity lost mid-build: retry after checking the connection
   - `nix copy` fails: store path transfer interrupted; retry
   - Evaluation error: fix the Nix config and re-run
-  - `--use-remote-sudo` rejected: the remote user may not have passwordless sudo — for `vpn-server` use `root` directly (already configured)
+  - `--use-remote-sudo` rejected: verify bosko is in the wheel group and that `security.sudo.wheelNeedsPassword = false` is set on the remote host
 
 ---
 
 ## Key constraints
 
 - The flake is always at `/home/bosko/NixOS`.
-- vpn-server SSH key: `~/.ssh/id_ed25519`, login as `root` (NixOS is configured to allow root login with key-only auth; `ubuntu` is the OCI default but NixOS uses `root`).
+- vpn-server SSH key: `~/.ssh/id_ed25519`, login as `bosko` (root login is disabled; bosko has passwordless sudo for non-interactive deploys).
 - server SSH login: `bosko@nixos-server` (hostname set in `hosts/server/networking.nix`).
 - Never attempt to remote-rebuild a desktop host — those use `nh os boot` locally.
 - Do not reboot the remote host after the rebuild unless the user explicitly requests it. `nixos-rebuild switch` activates the new generation immediately without a reboot.
