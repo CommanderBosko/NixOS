@@ -2,6 +2,52 @@
 
 ---
 
+## Session: 2026-06-03 — Security audit and hardening: root SSH disabled, auto-login removed
+
+**Duration Estimate**: ~3 hours (single commit session)
+**Session Focus**: Run a multi-agent security review of the full NixOS flake, identify real findings, remediate two of three, and deploy the vpn-server change immediately to confirm the new deploy path (bosko + passwordless sudo) works end-to-end.
+
+### What Was Accomplished
+
+- **Full security audit completed** — Multi-agent review across all six security domains: users/SSH, kernel hardening, networking/firewall, desktop environments, gaming/VFIO. Three real findings were identified; two remediated this session.
+- **Fixed: root SSH login on vpn-server** — Changed `PermitRootLogin` from `"prohibit-password"` to `"no"` in `hosts/vpn-server/configuration.nix`. Added `security.sudo.wheelNeedsPassword = false` so `nixos-rebuild --use-remote-sudo` can operate non-interactively as bosko over SSH without stalling on a password prompt.
+- **Fixed: SDDM auto-login on gaming** — Changed `autoLogin.enable` from `true` to `false` in `hosts/gaming/environment.nix`. Physical access to the gaming machine no longer drops directly into an unauthenticated desktop session.
+- **Updated remote-rebuild skill** — All `root@150.136.232.63` references in `.claude/skills/remote-rebuild/SKILL.md` changed to `bosko@150.136.232.63`; troubleshooting notes updated accordingly.
+- **Cosmetic improvement to users.nix** — Added `# Desktop` / `# Laptop` inline comments to the SSH authorized keys block in `dotfiles/common/modules/users.nix` (only unstaged change at session start).
+- **Deployed to vpn-server** — Used a transitional `root@` deploy (the last time root SSH would work) to push the change that disables root SSH. Post-deploy verification: root SSH is now blocked, `bosko` passwordless sudo confirmed working.
+- **Found but deferred: Avahi mDNS `openFirewall = true`** — `dotfiles/common/modules/printing.nix:12` exposes UDP 5353 on all interfaces. Left unfixed because closing it would break printer discovery. Proper fix is interface-scoped firewall rules; deferred to a future session.
+
+### Files Changed
+
+- `hosts/vpn-server/configuration.nix` — `PermitRootLogin = "no"` (was `"prohibit-password"`); added `security.sudo.wheelNeedsPassword = false`
+- `hosts/gaming/environment.nix` — `autoLogin.enable = false` (was `true`)
+- `.claude/skills/remote-rebuild/SKILL.md` — updated all deploy targets from `root@150.136.232.63` to `bosko@150.136.232.63`
+- `dotfiles/common/modules/users.nix` — added `# Desktop` / `# Laptop` inline comments to authorized_keys block
+
+### Commits This Session
+
+- `cb6105d` — fix(security): disable root SSH on vpn-server and auto-login on gaming
+
+### Decisions Made
+
+- **`PermitRootLogin = "no"` over `"prohibit-password"` on an internet-facing host** — The vpn-server is directly reachable on the public internet (TCP 22 open). `"prohibit-password"` still permits key-based root login, which presents an elevated-privilege attack surface. Removing root SSH entirely and using `bosko` with passwordless sudo is strictly more secure; the deploy path works identically in practice.
+- **Passwordless sudo on vpn-server is acceptable** — The only accounts on the server are root and bosko; bosko requires SSH key auth to reach the machine. An attacker who can SSH as bosko already has the key material needed to be dangerous. `wheelNeedsPassword = false` exists solely to enable non-interactive remote deploys over batch SSH sessions.
+- **Avahi `openFirewall` left as-is** — Interface-scoped firewall rules are the correct fix but require testing to avoid breaking mDNS discovery on the LAN interface. Deferred rather than risking printer discovery breakage on all three desktop hosts.
+- **Auto-login disabled on gaming** — Physical access to the gaming machine is not as controlled as a server rack. Requiring a login credential adds a meaningful barrier for an unattended session.
+
+### Issues Encountered
+
+- None. The security audit, remediation commits, and vpn-server deploy all completed cleanly on the first attempt.
+
+### Remaining / Next Session
+
+- **Avahi `openFirewall` interface scoping** — `dotfiles/common/modules/printing.nix:12`: implement per-interface firewall rules to restrict UDP 5353 to the LAN interface only rather than all interfaces.
+- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the auto-login change (gaming) and other pending config changes.
+- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot.
+- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`.
+
+---
+
 ## Session: 2026-05-26 — Ollama + Hermes Agent deployed on gaming with local LLM backend
 
 **Duration Estimate**: ~4.5 hours (18:54 – 23:15)

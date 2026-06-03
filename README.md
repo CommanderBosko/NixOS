@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts are active with real private keys placed. `vpn-on` and `vpn-off` shell aliases are confirmed working via systemd. dbus-broker is active on all hosts. SSH configuration is managed declaratively via Home Manager (`programs.ssh.settings`) in `dotfiles/common/configs/ssh.nix`. A local LLM stack is deployed on gaming: Ollama with CUDA acceleration (RTX 3070) serving `mistral-nemo:12b`, with Hermes Agent configured to use the local Ollama OpenAI-compatible API. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided workflows. `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable.
+Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts are active with real private keys placed. `vpn-on` and `vpn-off` shell aliases are confirmed working via systemd. dbus-broker is active on all hosts. SSH configuration is managed declaratively via Home Manager (`programs.ssh.settings`) in `dotfiles/common/configs/ssh.nix`. A local LLM stack is deployed on gaming: Ollama with CUDA acceleration (RTX 3070) serving `mistral-nemo:12b`, with Hermes Agent configured to use the local Ollama OpenAI-compatible API. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided workflows. `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable. Security hardening pass completed 2026-06-03: root SSH disabled on vpn-server, SDDM auto-login disabled on gaming.
 
 ## Features
 
@@ -86,7 +86,7 @@ dotfiles/
     └── configs/                        # Home Manager configs shared by both users
         ├── home.nix                    # HM root — imported by both bosko and natty
         ├── helix.nix
-        ├── ssh.nix                     # Declarative SSH config (programs.ssh.matchBlocks)
+        ├── ssh.nix                     # Declarative SSH config (programs.ssh.settings)
         └── dotfiles (katerc, kitty.conf)
 
 dotfiles/bosko/                         # bosko-specific HM configs (not shared with natty)
@@ -163,6 +163,8 @@ Enabled hardening:
 
 SSH is hardened on gaming and laptop: `PasswordAuthentication = false`, `AllowUsers = [ "bosko" ]`, public key installed.
 
+SSH is fully locked down on vpn-server: `PasswordAuthentication = false`, `PermitRootLogin = "no"` (set 2026-06-03). Remote deploys use `bosko@150.136.232.63` with `security.sudo.wheelNeedsPassword = false`.
+
 ## VPN
 
 WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
@@ -177,6 +179,8 @@ All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-06-03** — Security audit and hardening pass. Multi-agent review across all six security domains identified three real findings. Two remediated: (1) `PermitRootLogin` changed from `"prohibit-password"` to `"no"` on vpn-server; `security.sudo.wheelNeedsPassword = false` added for non-interactive `nixos-rebuild --use-remote-sudo` deploys as bosko; (2) SDDM `autoLogin.enable = false` on gaming (rebuild+reboot required to activate). Third finding — Avahi mDNS `openFirewall = true` in `printing.nix` — deferred: closing it would break printer discovery; interface-scoped firewall rules are the correct fix. Updated `remote-rebuild` skill to target `bosko@150.136.232.63`.
 
 **2026-05-26** — Deployed a local LLM stack on gaming. New `hosts/gaming/hermes-agent.nix` enables Ollama with CUDA acceleration (`pkgs.ollama-cuda`) and Hermes Agent service, both pointing to `http://localhost:11434/v1`. Model settled on `mistral-nemo:12b` after iterating through four options: it is the only model satisfying Hermes Agent's 64K context minimum, fitting in 8GB VRAM (~7GB Q4), and providing good tool-calling support. `bosko` added to the `hermes` group so the interactive `hermes` CLI can traverse `/var/lib/hermes`. `hermes-agent` added as a flake input. Also corrected the SSH config module from the deprecated `programs.ssh.matchBlocks` API to `programs.ssh.settings`, capitalised option keys, added `enableDefaultConfig = false`, and added a global keepalive stanza.
 
@@ -212,7 +216,8 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Roadmap
 
-- Apply rebuilds on desktop hosts: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, Ollama/Hermes Agent module, and other pending changes; remove hand-maintained `~/.ssh/config` on each host afterward
+- Apply rebuilds on desktop hosts: run `rebuild` + reboot on gaming (activates auto-login disable), laptop, and natalie-laptop; remove hand-maintained `~/.ssh/config` on each host afterward
+- Interface-scope Avahi mDNS: replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface
 - Verify Hermes Agent operational on gaming post-rebuild: Ollama pulls `mistral-nemo:12b`, service starts cleanly, `hermes` CLI accessible as bosko
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable

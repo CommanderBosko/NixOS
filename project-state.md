@@ -1,10 +1,18 @@
 # NixOS Project State
 
-_Last updated: 2026-05-26_
+_Last updated: 2026-06-03_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
+
+**Security hardening pass completed 2026-06-03.** A multi-agent security audit found three real findings. Two were remediated immediately:
+
+1. **Root SSH on vpn-server disabled** (`hosts/vpn-server/configuration.nix`) — `PermitRootLogin` set to `"no"`. `security.sudo.wheelNeedsPassword = false` added so `nixos-rebuild --use-remote-sudo` works non-interactively as `bosko`. Deployed and verified: root SSH is blocked; passwordless sudo for bosko confirmed working.
+2. **SDDM auto-login on gaming disabled** (`hosts/gaming/environment.nix`) — `autoLogin.enable = false`. A rebuild + reboot on gaming is required to activate this change.
+3. **Avahi mDNS `openFirewall = true` in printing.nix** — deferred; closing it breaks printer discovery. Proper fix (interface-scoped firewall rules) is tracked in Known Issues.
+
+The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` instead of `root@150.136.232.63`.
 
 **Local LLM stack deployed on gaming (2026-05-26).** A new `hosts/gaming/hermes-agent.nix` module provisions the entire local AI stack: `services.ollama` using `pkgs.ollama-cuda` (CUDA-accelerated, RTX 3070) with `loadModels = [ "mistral-nemo:12b" ]`, and `services.hermes-agent` configured to use the local Ollama OpenAI-compatible API at `http://localhost:11434/v1`. The `hermes` CLI is on the system PATH via `addToSystemPackages = true`; bosko is in the `hermes` group so the CLI can traverse `/var/lib/hermes` (mode 2770). `mistral-nemo:12b` was selected after iterating through four models: it is the only evaluated model satisfying all three constraints simultaneously — 128K context (above Hermes Agent's 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation that fits in the RTX 3070's 8GB VRAM. The `hermes-agent` flake input (`github:NousResearch/hermes-agent`) is wired into the gaming host in `flake.nix`.
 
@@ -32,11 +40,11 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate) | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE | cosmic.nix |
-| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler); dbus-broker COMPLETE | — |
+| `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler); dbus-broker COMPLETE; **root SSH disabled** (deployed 2026-06-03); deploy via `bosko@` + passwordless sudo | — |
 
 **Starship config inlined (2026-05-17).** The external `starship.toml` dotfile has been eliminated. The full Gruvbox-themed Starship prompt configuration now lives as a native `programs.starship.settings` attrset in `shell.nix`. `dotfiles/common/configs/starship.toml` and the `xdg.configFile` symlink in `home.nix` were both removed.
 
@@ -66,7 +74,8 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ### Short-term (next 1-3 sessions)
 
-- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, `hm-session-vars.sh` sourcing fix, and the new Ollama/Hermes Agent module; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the auto-login change (gaming), managed SSH config, `hm-session-vars.sh` sourcing fix, and the Ollama/Hermes Agent module; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Interface-scope Avahi mDNS firewall** — `dotfiles/common/modules/printing.nix:12`: replace `openFirewall = true` with per-interface rules so UDP 5353 is only reachable on the LAN interface, not on all interfaces
 - **Verify Hermes Agent operational post-rebuild** — confirm Ollama pulls `mistral-nemo:12b`, `services.hermes-agent` starts cleanly, and the `hermes` CLI works as bosko
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
@@ -80,6 +89,10 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Recent Decisions
 
+- **Root SSH disabled on vpn-server (2026-06-03)** — `PermitRootLogin = "no"` replaces `"prohibit-password"`. Rationale: the server is internet-facing (TCP 22 open); key-based root login still presents an elevated-privilege surface. `bosko` with passwordless sudo is the new deploy path. `wheelNeedsPassword = false` is safe because bosko requires SSH key auth to reach the machine at all.
+- **SDDM auto-login disabled on gaming (2026-06-03)** — `autoLogin.enable = false`. Gaming is a physically accessible workstation; an unauthenticated session from physical access is a meaningful risk. Rebuild + reboot required to activate.
+- **Avahi `openFirewall` deferred (2026-06-03)** — Closing UDP 5353 would break mDNS-based printer discovery on all three desktop hosts. The correct fix (interface-scoped rules) requires careful testing. Accepted as a known risk for now; tracked in Known Issues.
+- **remote-rebuild skill updated to bosko@ (2026-06-03)** — All skill documentation now targets `bosko@150.136.232.63`. The old `root@` path is permanently blocked as of this session's deploy.
 - **`mistral-nemo:12b` selected as Hermes Agent model (2026-05-26)** — The only evaluated model satisfying all three constraints: 128K context (above Hermes Agent's hard 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation within the RTX 3070's 8GB VRAM. `qwen2.5:7b` (32K context), `llama3.1:8b` (poor tool-calling), and `qwen2.5:14b` (~9GB, VRAM OOM) were all rejected. `hermes-3-llama-3.1:8b` was rejected by Hermes Agent's context-window gate at startup.
 - **Dummy `api_key = "ollama"` in Hermes settings (2026-05-26)** — The OpenAI client library validates that `api_key` is non-empty before making the request; Ollama ignores the value. A non-empty dummy string is the correct workaround.
 - **Ollama config colocated in `hermes-agent.nix`, not a separate file (2026-05-26)** — A single-module approach keeps the gaming LLM stack coherent; `hosts/gaming/ollama.nix` was created and then absorbed into `hermes-agent.nix` in the same session.
@@ -138,14 +151,17 @@ The configuration manages five NixOS hosts from a single flake. The WireGuard VP
 
 ## Known Issues / Tech Debt
 
+- **Avahi mDNS `openFirewall = true` in printing.nix** — `dotfiles/common/modules/printing.nix:12` exposes UDP 5353 on all interfaces (not just the LAN interface). Closing it would break mDNS-based printer discovery. Proper fix: interface-scoped firewall rules (e.g., `networking.firewall.interfaces.<lan-if>.allowedUDPPorts = [ 5353 ]`). Deferred from 2026-06-03 security audit.
+- **gaming auto-login change not yet activated** — `autoLogin.enable = false` is committed but requires a `rebuild` + reboot on the gaming host to take effect.
 - **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
 - **dbus-broker journal warnings are benign** — After the dbus-broker transition, three warning classes appear in journald: duplicate dbus service name entries (stricter parser), `Invalid group-name 'netdev'` in avahi-dbus.conf, `Invalid user-name 'systemd-timesync'` in timesync1.conf. All confirmed harmless; services function normally.
 - **`server` host has no hardware** — Removed placeholder from flake; will be re-added via `/new-host` when physical hardware is available.
 
 ## Next Steps
 
-1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the managed SSH config, `hm-session-vars.sh` sourcing fix, `~/.local/bin` sessionPath fix, and the new Ollama/Hermes Agent module on gaming. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
-2. **Verify Hermes Agent operational on gaming post-rebuild**: confirm Ollama pulls and caches `mistral-nemo:12b` on first boot, `services.hermes-agent` starts without errors, and the `hermes` CLI is accessible and functional as bosko.
-3. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
-4. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
-5. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
+1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop. Gaming needs the reboot to activate the auto-login disable. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
+2. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
+3. **Verify Hermes Agent operational on gaming post-rebuild**: confirm Ollama pulls and caches `mistral-nemo:12b` on first boot, `services.hermes-agent` starts without errors, and the `hermes` CLI is accessible and functional as bosko.
+4. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
+5. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
+6. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
