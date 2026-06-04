@@ -26,6 +26,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # FinanceGuru — personal finance desktop app
+    # Switch to "github:CommanderBosko/FinanceGuru" once the repo is public
+    financeguru.url = "path:/home/bosko/projects/FinanceGuru";
+
   };
 
   outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
