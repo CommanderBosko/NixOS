@@ -40,7 +40,6 @@
 
   # System packages
   environment.systemPackages = with pkgs; [
-    inputs.financeguru.packages.x86_64-linux.default
     brave
     chromium
     element-desktop
