@@ -27,8 +27,7 @@
     };
 
     # FinanceGuru — personal finance desktop app
-    # Switch to "github:CommanderBosko/FinanceGuru" once the repo is public
-    financeguru.url = "path:/home/bosko/projects/FinanceGuru";
+    financeguru.url = "github:CommanderBosko/FinanceGuru";
 
   };
 

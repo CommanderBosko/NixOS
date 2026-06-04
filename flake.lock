@@ -39,6 +39,24 @@
         "type": "github"
       }
     },
+    "financeguru": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1780579018,
+        "narHash": "sha256-SgIPuWoykBDnXSv2hDVRzM8VOPWSshBztrw46hnbUrc=",
+        "owner": "CommanderBosko",
+        "repo": "FinanceGuru",
+        "rev": "a6ee29bcc5415b1cb08b49703b4f3467a6f941cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CommanderBosko",
+        "repo": "FinanceGuru",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -139,13 +157,30 @@
         "type": "github"
       }
     },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "disko": "disko",
         "dms": "dms",
+        "financeguru": "financeguru",
         "home-manager": "home-manager",
         "nix-flatpak": "nix-flatpak",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "nixpkgs-stable": "nixpkgs-stable"
       }
     }
