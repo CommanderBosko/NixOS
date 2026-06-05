@@ -45,6 +45,7 @@
     github-desktop
     gparted
     kdePackages.kate
+    kdePackages.krohnkite
     kdePackages.okular
     kitty
     megasync
