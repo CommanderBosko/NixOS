@@ -14,10 +14,9 @@
     kdePackages.discover # Software center
     kdePackages.dolphin # File manager
     kdePackages.konsole # Terminal emulator
-    kdePackages.spectacle # Screenshot tool
+    kdePackages.krohnkite # Tiling window manager script
     kdePackages.print-manager # Print job manager
-    # Add other desired KDE applications here, using kdePackages prefix
-    # For example: kdePackages.kdenlive, kdePackages.ark
+    kdePackages.spectacle # Screenshot tool
   ];
 
   # Additional Plasma specific configurations can go here
