@@ -26,11 +26,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1780818720,
-        "narHash": "sha256-bsxm89wMq503J6R5r7lrb4JcDPG6VcXo5NOylTc0HMs=",
+        "lastModified": 1780868844,
+        "narHash": "sha256-YnqjsE6AcA2FTl0t/YnC9oWq72CqPjEZBrnYP9nMnoI=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "69f3dee25a4ecfe67ee8c8c8d49be60a736921f8",
+        "rev": "d08c7c5e5528133d84aac80f34935931ae3423c9",
         "type": "github"
       },
       "original": {
@@ -44,11 +44,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1780865872,
-        "narHash": "sha256-h01BBazp5WpjGauTu+5oZxS3VbNJ0d+S/2gia+uQTAo=",
+        "lastModified": 1780868791,
+        "narHash": "sha256-xMjo53XG/mSaOwKLC/CXIQcKE7zH3e71mtTm7X+Jwtw=",
         "owner": "CommanderBosko",
         "repo": "FinanceGuru",
-        "rev": "7aa05cde8ca8ef992269fe0f5f915efb6563f819",
+        "rev": "61aa41a414ab6c989415465af6f409c6a17e695a",
         "type": "github"
       },
       "original": {
