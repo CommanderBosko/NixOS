@@ -1,10 +1,22 @@
 # NixOS Project State
 
-_Last updated: 2026-06-03_
+_Last updated: 2026-06-09_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
+
+**Claude Code managed policy deployed (2026-06-09).** `dotfiles/common/modules/claude-code.nix` deploys `/etc/claude-code/managed-settings.json` on every host via `environment.etc`. The managed file enforces deny rules for destructive commands, ask rules for sensitive operations, and a PreToolUse fork bomb guard (jq pinned to its Nix store path). Wired into `commonModules` so all hosts share the enforced, tamper-resistant policy. On gaming (where the rebuild+reboot was done today), the managed file is active and the personal `~/.claude/settings.json` has been trimmed to personal preferences only. **laptop and natalie-laptop still need rebuild+reboot to activate the policy.**
+
+**gemini-cli added to natty's user packages (2026-06-09).** `pkgs.gemini-cli` added to `users.users.natty.packages` in `users.nix`, matching bosko.
+
+**Package consolidation (2026-06-09).** `nodejs`, `pnpm`, `p7zip`, and `jq` moved from per-host `environment.nix` files (gaming, laptop, natalie-laptop) into `dotfiles/common/modules/shell.nix` `systemPackages`. These tools now apply consistently across all hosts.
+
+**natalie-laptop switched to Plasma 6 (2026-06-04/05).** Changed DE import from `cosmic.nix` to `plasma.nix` in `flake.nix`. `krohnkite` (KWin tiling script) added to the shared `plasma.nix` module so both gaming and natalie-laptop receive it. natalie-laptop rebuild+reboot needed to activate.
+
+**FinanceGuru integrated (2026-06-04/05).** `github:CommanderBosko/FinanceGuru` added as a flake input and installed on gaming and natalie-laptop. Not on laptop.
+
+**lutris re-enabled on gaming (2026-06-03).** The upstream `openldap-2.6.13-i686-linux` binary cache regression is resolved in nixpkgs-unstable; `gaming.nix` un-commented `lutris`.
 
 **Security hardening pass completed 2026-06-03.** A multi-agent security audit found three real findings. Two were remediated immediately:
 
@@ -40,10 +52,10 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate) | plasma.nix |
-| `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE | niri.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed | plasma.nix |
+| `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE; **managed Claude Code policy pending** (rebuild+reboot needed) | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
-| `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE | cosmic.nix |
+| `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE; **DE switched to Plasma** (rebuild+reboot needed); **managed Claude Code policy pending** (rebuild+reboot needed) | plasma.nix (pending rebuild) |
 | `vpn-server` | **LIVE** — Oracle Cloud ARM VM (`150.136.232.63`, `aarch64-linux`); wg0 active at `10.10.0.1/24`; three peers configured; pinned to nixos-25.05 (Warbler); dbus-broker COMPLETE; **root SSH disabled** (deployed 2026-06-03); deploy via `bosko@` + passwordless sudo | — |
 
 **Starship config inlined (2026-05-17).** The external `starship.toml` dotfile has been eliminated. The full Gruvbox-themed Starship prompt configuration now lives as a native `programs.starship.settings` attrset in `shell.nix`. `dotfiles/common/configs/starship.toml` and the `xdg.configFile` symlink in `home.nix` were both removed.
@@ -74,11 +86,11 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ### Short-term (next 1-3 sessions)
 
-- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the auto-login change (gaming), managed SSH config, `hm-session-vars.sh` sourcing fix, and the Ollama/Hermes Agent module; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Apply rebuilds on laptop and natalie-laptop** — run `rebuild` + reboot on both hosts to activate: managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru package, package consolidation changes; remove old hand-maintained `~/.ssh/config` on each host afterward
+- **Apply rebuild on gaming** — reboot to activate SDDM auto-login disable (committed 2026-06-03 but not yet rebooted)
 - **Interface-scope Avahi mDNS firewall** — `dotfiles/common/modules/printing.nix:12`: replace `openFirewall = true` with per-interface rules so UDP 5353 is only reachable on the LAN interface, not on all interfaces
 - **Verify Hermes Agent operational post-rebuild** — confirm Ollama pulls `mistral-nemo:12b`, `services.hermes-agent` starts cleanly, and the `hermes` CLI works as bosko
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
-- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`
 - **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
 
 ### Long-term
@@ -89,6 +101,12 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Recent Decisions
 
+- **Managed Claude Code policy via NixOS module (2026-06-09)** — `claude-code.nix` deploys the policy through `environment.etc` so it is system-managed, version-controlled, and tamper-resistant. `jq` is pinned to its Nix store path inside the JSON so the fork bomb hook works regardless of the shell's `$PATH`. Chose `environment.etc` over a declarative file symlink because the content is derived from Nix expressions (package store paths) that must be interpolated at build time.
+- **Personal `~/.claude/settings.json` trimmed to prefs only (2026-06-09)** — After confirming the managed file was active, all deny/ask rules and the fork bomb hook were removed from the personal file. The managed layer handles policy; the personal file now holds only tool preferences.
+- **Package consolidation to `shell.nix` (2026-06-09)** — `nodejs`, `pnpm`, `p7zip`, and `jq` moved to `commonModules` shell.nix. Rationale: these are general-purpose tools with no desktop or host-specific justification; consolidation removes duplication and ensures consistency across all hosts including vpn-server.
+- **natalie-laptop switched to Plasma (2026-06-04)** — Switched from Cosmic to Plasma 6 to align with gaming and share the `krohnkite` tiling configuration without per-host duplication.
+- **krohnkite added to shared `plasma.nix` (2026-06-05)** — Any Plasma host should get the tiling script automatically; keeping it per-host creates duplication. Added directly to `plasma.nix` `systemPackages`.
+- **lutris re-enabled (2026-06-03)** — The `openldap-2.6.13-i686-linux` binary cache regression that blocked `lutris` since May 2026 is resolved in nixpkgs-unstable. Un-commented in `gaming.nix` and flake lock bumped.
 - **Root SSH disabled on vpn-server (2026-06-03)** — `PermitRootLogin = "no"` replaces `"prohibit-password"`. Rationale: the server is internet-facing (TCP 22 open); key-based root login still presents an elevated-privilege surface. `bosko` with passwordless sudo is the new deploy path. `wheelNeedsPassword = false` is safe because bosko requires SSH key auth to reach the machine at all.
 - **SDDM auto-login disabled on gaming (2026-06-03)** — `autoLogin.enable = false`. Gaming is a physically accessible workstation; an unauthenticated session from physical access is a meaningful risk. Rebuild + reboot required to activate.
 - **Avahi `openFirewall` deferred (2026-06-03)** — Closing UDP 5353 would break mDNS-based printer discovery on all three desktop hosts. The correct fix (interface-scoped rules) requires careful testing. Accepted as a known risk for now; tracked in Known Issues.
@@ -152,16 +170,16 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 ## Known Issues / Tech Debt
 
 - **Avahi mDNS `openFirewall = true` in printing.nix** — `dotfiles/common/modules/printing.nix:12` exposes UDP 5353 on all interfaces (not just the LAN interface). Closing it would break mDNS-based printer discovery. Proper fix: interface-scoped firewall rules (e.g., `networking.firewall.interfaces.<lan-if>.allowedUDPPorts = [ 5353 ]`). Deferred from 2026-06-03 security audit.
-- **gaming auto-login change not yet activated** — `autoLogin.enable = false` is committed but requires a `rebuild` + reboot on the gaming host to take effect.
-- **lutris disabled on gaming (upstream openldap regression)** — `openldap-2.6.13-i686-linux` has no binary cache entry in nixpkgs-unstable; `lutris` was commented out as a workaround. Re-enable once a cache entry appears. `faugus-launcher` covers the immediate need.
+- **gaming auto-login change not yet activated** — `autoLogin.enable = false` is committed (2026-06-03) but requires a `rebuild` + reboot on the gaming host to take effect.
+- **laptop and natalie-laptop pending multiple rebuild activations** — Several changes require `rebuild` + reboot: managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru package, package consolidation.
 - **dbus-broker journal warnings are benign** — After the dbus-broker transition, three warning classes appear in journald: duplicate dbus service name entries (stricter parser), `Invalid group-name 'netdev'` in avahi-dbus.conf, `Invalid user-name 'systemd-timesync'` in timesync1.conf. All confirmed harmless; services function normally.
 - **`server` host has no hardware** — Removed placeholder from flake; will be re-added via `/new-host` when physical hardware is available.
 
 ## Next Steps
 
-1. **Apply rebuilds on desktop hosts**: run `rebuild` + reboot on gaming, laptop, and natalie-laptop. Gaming needs the reboot to activate the auto-login disable. After each rebuild, remove the old hand-maintained `~/.ssh/config` on that host.
-2. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
-3. **Verify Hermes Agent operational on gaming post-rebuild**: confirm Ollama pulls and caches `mistral-nemo:12b` on first boot, `services.hermes-agent` starts without errors, and the `hermes` CLI is accessible and functional as bosko.
-4. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
-5. **Re-enable lutris when possible**: monitor nixpkgs-unstable for `openldap-2.6.13-i686-linux` binary cache entry; remove the comment-out from `gaming.nix`.
+1. **Apply rebuild + reboot on laptop**: activate managed Claude Code policy, package consolidation, and other pending changes. Remove old hand-maintained `~/.ssh/config` afterward.
+2. **Apply rebuild + reboot on natalie-laptop**: activate DE switch to Plasma, managed Claude Code policy, FinanceGuru package, and other pending changes. Remove old `~/.ssh/config` afterward.
+3. **Apply rebuild + reboot on gaming**: activate SDDM auto-login disable (committed 2026-06-03); verify Hermes Agent and Ollama start cleanly post-rebuild.
+4. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
+5. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
 6. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.

@@ -2,6 +2,149 @@
 
 ---
 
+## Session: 2026-06-09 — Claude Code managed policy activated; personal settings trimmed
+
+**Duration Estimate**: ~30 minutes
+**Session Focus**: Activate the NixOS-managed Claude Code policy deployed in the previous session, verify it was live, then trim the now-redundant duplicate rules from the personal `~/.claude/settings.json`.
+
+### What Was Accomplished
+
+- **Rebuilt and rebooted to activate the managed Claude Code policy** — The `dotfiles/common/modules/claude-code.nix` module (committed as `92e0358`) deploys `/etc/claude-code/managed-settings.json` system-wide via `environment.etc`. After rebooting, confirmed the managed file was present and active.
+- **Ran `~/.claude/trim-after-managed.sh`** — The trim script removed from `~/.claude/settings.json` all permission rules (deny/ask) and the fork bomb `PreToolUse` hook that were now redundant, because those same rules are enforced at the system level via the managed file. The personal settings file now contains only personal preferences: the `allow` permission list, `enabledPlugins`, and `model`.
+- **Backup saved** — The pre-trim settings were backed up to `~/.claude/settings.json.bak.1781041160` before modification.
+- **Trim script deleted** — The one-shot trim script was deleted per the user's request after successful execution.
+
+### Files Changed
+
+All changes were outside the git repo:
+
+- `~/.claude/settings.json` — trimmed: deny/ask permission rules and fork bomb hook removed; only personal prefs remain
+- `~/.claude/settings.json.bak.1781041160` — backup of pre-trim settings (created by trim script)
+- `~/.claude/trim-after-managed.sh` — deleted after use
+
+### Commits This Session
+
+None. The repo was clean at session start. All work was on files outside `/home/bosko/NixOS`.
+
+### Decisions Made
+
+- **Personal settings file should only hold personal preferences** — Now that deny/ask rules and the fork bomb hook are enforced at the system level (via the managed file that applies to all users on all rebuilt hosts), duplicating them in the personal file adds maintenance noise. The managed file takes precedence and cannot be overridden by the personal file, so the personal copies were vestigial.
+- **Trim script is single-use** — Once applied, there is no reason to keep the script. Deleted to keep `~/.claude/` clean.
+
+### Issues Encountered
+
+None. The managed file was present and correctly formatted after the reboot. The trim script ran cleanly.
+
+### Remaining / Next Session
+
+- **Apply rebuilds on laptop and natalie-laptop** — to deploy the managed Claude Code policy on those hosts.
+- **Apply rebuilds on desktop hosts** — gaming (activates auto-login disable), laptop, and natalie-laptop; remove hand-maintained `~/.ssh/config` on each host afterward.
+- **Interface-scope Avahi mDNS firewall** — replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface.
+- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list; run `rebuild` and reboot.
+- **Re-enable `lutris` on gaming** — once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable.
+
+---
+
+## Session: 2026-06-09 (earlier) — Managed Claude Code policy; natty gets gemini-cli; package consolidation
+
+**Duration Estimate**: ~1.5 hours
+**Session Focus**: Deploy a NixOS-managed Claude Code settings file that enforces security policy globally across all hosts, add gemini-cli for the natty user, and consolidate common packages from per-host environment files into the shared shell module.
+
+### What Was Accomplished
+
+- **`dotfiles/common/modules/claude-code.nix` created** — New NixOS module that deploys `/etc/claude-code/managed-settings.json` via `environment.etc`. The managed file encodes deny rules for destructive commands (`rm -rf`, `mkfs`, `dd`, etc.), ask rules for sensitive operations (`git push --force`, `sudo` commands, etc.), and a `PreToolUse` fork bomb guard using `jq` pinned to its Nix store path so it resolves regardless of `PATH`. Added to `commonModules` in `flake.nix` so all five hosts share the enforced, tamper-resistant policy. Managed settings layer over each user's writable `~/.claude/settings.json`; users cannot override managed rules.
+- **`gemini-cli` added to natty's user packages** — `pkgs.gemini-cli` added to `users.users.natty.packages` in `dotfiles/common/modules/users.nix`, mirroring bosko's existing package.
+- **Package consolidation into `shell.nix`** — `nodejs`, `pnpm`, and `p7zip` moved out of per-host `environment.nix` files (gaming, laptop, natalie-laptop) and into `dotfiles/common/modules/shell.nix` `systemPackages`. `jq` also added. These now apply consistently across all hosts instead of being duplicated.
+- **Flake inputs bumped** — Four `flake.lock` updates (2026-06-07 and 2026-06-09) bumped nixpkgs-unstable, home-manager, nix-flatpak, and other inputs.
+
+### Files Changed
+
+- `dotfiles/common/modules/claude-code.nix` — new; 101-line module deploying managed-settings.json with deny/ask rules and fork bomb hook
+- `flake.nix` — added `claude-code.nix` to `commonModules` list
+- `dotfiles/common/modules/users.nix` — added `pkgs.gemini-cli` to `users.users.natty.packages`
+- `dotfiles/common/modules/shell.nix` — added `jq`, `nodejs`, `pnpm`, `p7zip` to `systemPackages`
+- `hosts/gaming/environment.nix` — removed `nodejs`, `pnpm`, `p7zip` (now in shell.nix)
+- `hosts/laptop/environment.nix` — removed `nodejs`, `pnpm` (now in shell.nix)
+- `hosts/natalie-laptop/environment.nix` — removed `p7zip` (now in shell.nix)
+- `flake.lock` — updated inputs (four bump commits)
+
+### Commits This Session
+
+- `26635e4` — refactor(packages): consolidate node toolchain, jq, p7zip into shell.nix
+- `8105995` — feat(users): add gemini-cli to natty's user packages
+- `92e0358` — feat(claude-code): enforce Claude Code policy via managed settings
+- `1870d93` — Revert "chore(memory): add nixos-agent memory to repo for cross-machine sharing"
+- `b3ba202` — chore(memory): add nixos-agent memory to repo for cross-machine sharing
+- `fbddcb0`, `f6ef70a`, `1bf7d9c`, `24efd1f` — flake lock bumps (2026-06-07 – 2026-06-09)
+
+### Decisions Made
+
+- **`jq` pinned to its Nix store path in managed-settings.json** — The `PreToolUse` fork bomb hook runs in a restricted environment where `$PATH` may not include `jq`. Interpolating the absolute store path at build time ensures the hook resolves regardless of shell environment.
+- **Managed settings via `environment.etc`** — Using `environment.etc."claude-code/managed-settings.json".text` generates the file at activation time from the Nix expression. The file content is always in sync with the flake; no manual file management needed.
+- **Package consolidation to `shell.nix` `commonModules`** — `nodejs`, `pnpm`, and `p7zip` are general-purpose tools useful on any machine. Moving them removes three-way duplication and ensures consistency across hosts.
+
+### Issues Encountered
+
+None. All three substantive commits built cleanly.
+
+### Remaining / Next Session
+
+- **Rebuild and reboot to activate managed policy** — until then, the personal settings still have the old redundant rules.
+- **Trim personal `~/.claude/settings.json`** — after confirming the managed file is active, run `~/.claude/trim-after-managed.sh` to remove duplicate rules.
+- **Apply rebuilds on other desktop hosts** (laptop, natalie-laptop) to deploy the managed policy there too.
+
+---
+
+## Session: 2026-06-05 — natalie-laptop switches to Plasma; FinanceGuru integrated; krohnkite shared; lutris re-enabled
+
+**Duration Estimate**: ~2 hours
+**Session Focus**: Switch natalie-laptop from Cosmic to Plasma 6, integrate the FinanceGuru personal finance app as a desktop package, clean up the krohnkite tiling configuration, and re-enable lutris now that the upstream openldap regression is resolved.
+
+### What Was Accomplished
+
+- **natalie-laptop DE switched to Plasma** — Changed the imported DE module from `cosmic.nix` to `plasma.nix` in natalie-laptop's flake entry in `flake.nix`. `krohnkite` (KWin tiling script) added to `hosts/natalie-laptop/environment.nix`.
+- **krohnkite moved to shared `plasma.nix`** — `krohnkite` extracted from `hosts/natalie-laptop/environment.nix` and added to `dotfiles/common/modules/desktop-environments/plasma.nix` `systemPackages`, so all Plasma hosts (gaming and natalie-laptop) get it automatically. Package list sorted.
+- **FinanceGuru added to desktop hosts** — `financeguru` wired as a flake input (`github:CommanderBosko/FinanceGuru`), installed via `environment.systemPackages` on gaming, laptop, and natalie-laptop. URL first set to `path:` (local) then corrected to `github:` (public repo). Later removed from laptop — not needed there. flake pin bumped to include Stock Tips and Debt Snowball tabs.
+- **lutris re-enabled on gaming** — `gaming.nix` updated to un-comment `lutris`; `flake.lock` bumped to a nixpkgs-unstable rev that includes the binary cache entry for `openldap-2.6.13-i686-linux`. The months-long workaround is resolved.
+
+### Files Changed
+
+- `flake.nix` — switched natalie-laptop DE to `plasma.nix`; added `financeguru` input; added package to three hosts; then removed from laptop
+- `flake.lock` — added financeguru lock entry; bumped nixpkgs-unstable (lutris fix)
+- `hosts/natalie-laptop/environment.nix` — krohnkite added then removed (moved to plasma.nix)
+- `dotfiles/common/modules/desktop-environments/plasma.nix` — added krohnkite to systemPackages; sorted package list
+- `hosts/gaming/environment.nix` — added financeguru package
+- `hosts/laptop/environment.nix` — added then removed financeguru package
+- `dotfiles/common/modules/gaming.nix` — un-commented `lutris`
+
+### Commits This Session
+
+- `b73640b` — refactor(plasma): move krohnkite to shared plasma.nix, sort packages
+- `d33a148` — feat(natalie-laptop): switch DE to Plasma and add krohnkite
+- `c7e2b30` — chore: remove FinanceGuru from laptop, bump flake pin
+- `fc37146` — chore: switch financeguru input to public GitHub URL
+- `d83951a` — feat: add FinanceGuru to all desktop hosts
+- `f62dc5f` — updated flake and lutris is working again
+
+### Decisions Made
+
+- **natalie-laptop on Plasma** — Switched from Cosmic to Plasma 6 to align with the gaming host's DE and share krohnkite tiling configuration without per-host duplication.
+- **krohnkite in shared `plasma.nix`** — Any host using Plasma should get the tiling script; keeping it per-host would require duplication for each future Plasma host.
+- **FinanceGuru removed from laptop** — The personal finance app is best used on the primary desktop (gaming) and natalie-laptop; not needed on the laptop.
+- **lutris re-enabled** — The upstream `openldap-2.6.13-i686-linux` binary cache regression that blocked `lutris` for several months has been resolved in nixpkgs-unstable.
+
+### Issues Encountered
+
+None. All commits applied cleanly.
+
+### Remaining / Next Session
+
+- **Apply rebuild + reboot on natalie-laptop** — activate DE switch to Plasma and FinanceGuru installation.
+- **Apply rebuild on gaming** — activate lutris and FinanceGuru.
+- **AMD card swap on gaming** — remove `nvidia.nix` when physical card arrives.
+
+---
+
 ## Session: 2026-06-03 — Security audit and hardening: root SSH disabled, auto-login removed
 
 **Duration Estimate**: ~3 hours (single commit session)

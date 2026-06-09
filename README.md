@@ -4,19 +4,21 @@ Bosko's single-flake NixOS configuration for five hosts. Shared modules live und
 
 ## Current Status
 
-Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational: all three client hosts are active with real private keys placed. `vpn-on` and `vpn-off` shell aliases are confirmed working via systemd. dbus-broker is active on all hosts. SSH configuration is managed declaratively via Home Manager (`programs.ssh.settings`) in `dotfiles/common/configs/ssh.nix`. A local LLM stack is deployed on gaming: Ollama with CUDA acceleration (RTX 3070) serving `mistral-nemo:12b`, with Hermes Agent configured to use the local Ollama OpenAI-compatible API. A project-local Claude Code skill library under `.claude/skills/` provides 22 guided workflows. `nvidia.nix` is scoped per-host in preparation for the gaming AMD card swap. `lutris` remains commented out on gaming due to an upstream `openldap-2.6.13/i686-linux` build cache miss in nixpkgs-unstable. Security hardening pass completed 2026-06-03: root SSH disabled on vpn-server, SDDM auto-login disabled on gaming.
+Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.05` for stability. WireGuard full-tunnel VPN is fully operational. dbus-broker active on all hosts. SSH config managed declaratively via Home Manager. A managed Claude Code policy is deployed system-wide via `dotfiles/common/modules/claude-code.nix` (active on gaming; laptop and natalie-laptop pending rebuild+reboot). natalie-laptop switched to Plasma 6 (pending rebuild). FinanceGuru installed on gaming and natalie-laptop. lutris re-enabled on gaming. Security hardening completed 2026-06-03: root SSH disabled on vpn-server, SDDM auto-login disabled on gaming (pending reboot to activate).
 
 ## Features
 
 - Single flake managing four active hosts (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`) with shared module composition; `server` host deferred pending physical hardware
 - Home Manager integrated as a NixOS module for both users (`bosko` and `natty`); both users receive the same `home.nix` config — includes Helix editor config and SSH configuration
 - SSH config managed declaratively via `programs.ssh.settings` in `dotfiles/common/configs/ssh.nix`; all five SSH hosts (natalie-laptop, laptop, gaming, pi-hole, famdash) defined with explicit `Hostname` and `User` fields; `enableDefaultConfig = false` suppresses implicit-defaults warnings
+- **Managed Claude Code policy** deployed via `dotfiles/common/modules/claude-code.nix`; generates `/etc/claude-code/managed-settings.json` at activation time via `environment.etc`; enforces deny rules for destructive commands, ask rules for sensitive operations, and a PreToolUse fork bomb guard (`jq` pinned to its Nix store path); part of `commonModules` so all hosts share the same policy; users cannot override managed rules in their personal `~/.claude/settings.json`
 - Local LLM stack on gaming: Ollama with CUDA acceleration (`pkgs.ollama-cuda`, RTX 3070) serving `mistral-nemo:12b` (128K context, ~7GB Q4, fits in 8GB VRAM); Hermes Agent service configured to use the local Ollama OpenAI-compatible API at `http://localhost:11434/v1`; `hermes` CLI on system PATH; bosko in the `hermes` group for CLI access
+- FinanceGuru personal finance app installed on gaming and natalie-laptop via the `github:CommanderBosko/FinanceGuru` flake input
 - Declarative Flatpak management via `nix-flatpak`
-- Swappable desktop environment modules (11 options under `desktop-environments/`)
+- Swappable desktop environment modules (11 options under `desktop-environments/`); gaming and natalie-laptop on Plasma 6, laptop on Niri
 - GPU modules correctly scoped: `amd.nix` gaming-only; `nvidia.nix` per-host explicit import (gaming, laptop, natalie-laptop) — ready for gaming AMD card swap by removing one line
-- Gaming module with Steam, GameMode, Gamescope, MangoHud, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
-- `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for `bosko` (not duplicated per-host)
+- Gaming module with Steam, GameMode, Gamescope, MangoHud, lutris, faugus-launcher, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
+- `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for both `bosko` and `natty`
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`
 - Project-local Claude Code skill library under `.claude/skills/`: 22 skills covering the full NixOS workflow — dry-run, GC, VPN status, module scaffolding, new host, new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, flake input pinning, generation diff, flake validation, journal tailing, nix repl, and .nix formatting
 - WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
@@ -134,7 +136,7 @@ hosts/
 Each desktop host then adds its own machine-specific modules. Notable per-host additions:
 - **gaming**: `amd.nix`, `gaming.nix`, `nvidia.nix`, `virtualisation.nix`, `plasma.nix` (virtualisation is gaming-only, not in desktopModules)
 - **laptop**: `nvidia.nix`, `niri.nix`
-- **natalie-laptop**: `nvidia.nix`, `cosmic.nix`
+- **natalie-laptop**: `nvidia.nix`, `plasma.nix` (switched from cosmic.nix 2026-06-04)
 - **vpn-server**: `commonModules` only (`aarch64-linux`, systemd-boot, disko)
 
 ### Users
@@ -142,7 +144,7 @@ Each desktop host then adds its own machine-specific modules. Notable per-host a
 | User | Groups | User-level packages |
 |------|--------|---------------------|
 | `bosko` | wheel, networkmanager, audio, video, input, kvm, libvirtd, lp, render | `claude-code`, `gemini-cli` |
-| `natty` | wheel, networkmanager, audio, video, input, kvm, libvirtd, lp, render | *(none)* |
+| `natty` | wheel, networkmanager, audio, video, input, kvm, libvirtd, lp, render | `gemini-cli` |
 
 Both users share the same Home Manager config (`home.nix`). `homeMode` is `"0700"` for both. Both users are wheel/sudo and Nix trusted users. `natty` has no user-level packages and no SSH keys. `mumble` is a system package on gaming only.
 
@@ -180,6 +182,10 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Recent Changes
 
+**2026-06-09** — Claude Code managed policy activated on gaming. `dotfiles/common/modules/claude-code.nix` deployed `/etc/claude-code/managed-settings.json` system-wide after rebuild+reboot. Personal `~/.claude/settings.json` trimmed to prefs only (deny/ask rules and fork bomb hook are now enforced by the managed layer). Also: `gemini-cli` added to natty's user packages; `nodejs`, `pnpm`, `p7zip`, and `jq` consolidated from per-host `environment.nix` files into `shell.nix` `commonModules`. laptop and natalie-laptop still need rebuild+reboot to activate the managed policy.
+
+**2026-06-05/04** — natalie-laptop switched from Cosmic to Plasma 6. `krohnkite` (KWin tiling script) added to shared `plasma.nix` so both gaming and natalie-laptop get it automatically. FinanceGuru personal finance app added to gaming and natalie-laptop as a flake input (`github:CommanderBosko/FinanceGuru`). lutris re-enabled on gaming — the upstream `openldap-2.6.13-i686-linux` binary cache regression that blocked it since May 2026 is resolved in nixpkgs-unstable.
+
 **2026-06-03** — Security audit and hardening pass. Multi-agent review across all six security domains identified three real findings. Two remediated: (1) `PermitRootLogin` changed from `"prohibit-password"` to `"no"` on vpn-server; `security.sudo.wheelNeedsPassword = false` added for non-interactive `nixos-rebuild --use-remote-sudo` deploys as bosko; (2) SDDM `autoLogin.enable = false` on gaming (rebuild+reboot required to activate). Third finding — Avahi mDNS `openFirewall = true` in `printing.nix` — deferred: closing it would break printer discovery; interface-scoped firewall rules are the correct fix. Updated `remote-rebuild` skill to target `bosko@150.136.232.63`.
 
 **2026-05-26** — Deployed a local LLM stack on gaming. New `hosts/gaming/hermes-agent.nix` enables Ollama with CUDA acceleration (`pkgs.ollama-cuda`) and Hermes Agent service, both pointing to `http://localhost:11434/v1`. Model settled on `mistral-nemo:12b` after iterating through four options: it is the only model satisfying Hermes Agent's 64K context minimum, fitting in 8GB VRAM (~7GB Q4), and providing good tool-calling support. `bosko` added to the `hermes` group so the interactive `hermes` CLI can traverse `/var/lib/hermes`. `hermes-agent` added as a flake input. Also corrected the SSH config module from the deprecated `programs.ssh.matchBlocks` API to `programs.ssh.settings`, capitalised option keys, added `enableDefaultConfig = false`, and added a global keepalive stanza.
@@ -216,11 +222,10 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Roadmap
 
-- Apply rebuilds on desktop hosts: run `rebuild` + reboot on gaming (activates auto-login disable), laptop, and natalie-laptop; remove hand-maintained `~/.ssh/config` on each host afterward
+- Apply rebuild + reboot on laptop and natalie-laptop: activate managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru, and package consolidation changes; remove hand-maintained `~/.ssh/config` on each host afterward
+- Apply rebuild + reboot on gaming: activate SDDM auto-login disable; verify Hermes Agent and Ollama start cleanly
 - Interface-scope Avahi mDNS: replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface
-- Verify Hermes Agent operational on gaming post-rebuild: Ollama pulls `mistral-nemo:12b`, service starts cleanly, `hermes` CLI accessible as bosko
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
-- Re-enable `lutris` on gaming once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable
 - Harden vpn-server further (AppArmor profiles, fail2ban, rate-limiting on UDP 51820)
 - Re-add `server` host via `/new-host` skill when physical hardware is available; pin to `nixpkgs-stable` following the vpn-server pattern
 
