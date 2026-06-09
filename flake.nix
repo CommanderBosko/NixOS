@@ -40,6 +40,7 @@
     commonModules = [
       { system.stateVersion = "25.11"; }
       "${self}/dotfiles/common/modules/bootloader.nix"
+      "${self}/dotfiles/common/modules/claude-code.nix"
       "${self}/dotfiles/common/modules/firmware.nix"
       "${self}/dotfiles/common/modules/fonts.nix"
       "${self}/dotfiles/common/modules/localisation.nix"
