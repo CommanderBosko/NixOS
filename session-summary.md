@@ -2,6 +2,47 @@
 
 ---
 
+## Session: 2026-06-09 (session 3) — Declarative settings trim in bosko-claude.nix
+
+**Duration Estimate**: ~15 minutes
+**Session Focus**: Replace the one-shot `~/.claude/trim-after-managed.sh` script (deleted earlier today) with a permanent, per-rebuild-automatic declarative solution in `bosko-claude.nix`.
+
+### What Was Accomplished
+
+- **`home.activation.trimClaudeSettings` added to `dotfiles/bosko/bosko-claude.nix`** — Home Manager activation script that, on every rebuild, checks whether `/etc/claude-code/managed-settings.json` exists, and if so, uses `jq` to strip `permissions.deny`, `permissions.ask`, and `hooks` from `~/.claude/settings.json` while leaving `permissions.allow`, `model`, and `enabledPlugins` intact. The file stays writable so interactive `/model` and plugin toggles persist across sessions. Idempotent: if the target keys are already absent, `jq -e` exits non-zero and the trim is skipped. No-op until the managed file exists.
+- **Module signature updated** — `{ self, ... }` changed to `{ self, pkgs, lib, ... }` to bring in `pkgs.jq`, `pkgs.coreutils`, and `lib.hm.dag`.
+- **Replaces the deleted one-shot trim script** — `~/.claude/trim-after-managed.sh` was deleted earlier this session after running successfully on gaming. This activation script provides the same cleanup automatically on all future rebuilds.
+- **Scoped to bosko only** — Lives in `dotfiles/bosko/bosko-claude.nix`, which natty does not import. If natty ever starts using Claude Code, the trim logic can be added for her then.
+- **Verified via dry-run** — `nh os boot . --dry` evaluated cleanly; activation-script node present in the build graph. jq logic unit-tested for both the no-op case (already-clean file) and the trim case (keys present and correctly removed).
+
+### Files Changed
+
+- `dotfiles/bosko/bosko-claude.nix` — updated module signature; added `home.activation.trimClaudeSettings` (24 lines)
+
+### Commits This Session
+
+- `af831b6` — feat(bosko): replace trim script with declarative HM activation script
+
+### Decisions Made
+
+- **HM activation script over a systemd service or login hook** — Activation runs in the correct user context, is guaranteed to execute on every generation switch, and integrates cleanly with the HM DAG (`entryAfter [ "writeBoundary" ]`). No separate unit file needed.
+- **Scoped to bosko only** — natty does not use Claude Code; no managed file exists for her. Adding the trim logic to a shared module would be premature.
+- **`jq -e` for the conditional check** — Skips temp-file creation and `mv` entirely when the file is already clean, avoiding spurious writes to `settings.json`.
+
+### Issues Encountered
+
+None. Dry-run clean; jq logic verified for both the no-op and trim paths.
+
+### Remaining / Next Session
+
+- **Apply rebuild + reboot on gaming** — activates the new trim activation script and the SDDM auto-login disable committed 2026-06-03; trim will also run automatically on all future rebuilds.
+- **Apply rebuild + reboot on laptop** — activates managed Claude Code policy, package consolidation, and other pending changes.
+- **Apply rebuild + reboot on natalie-laptop** — activates DE switch to Plasma, managed Claude Code policy, FinanceGuru, and other pending changes.
+- **Interface-scope Avahi mDNS firewall** — replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface.
+- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list.
+
+---
+
 ## Session: 2026-06-09 — Claude Code managed policy activated; personal settings trimmed
 
 **Duration Estimate**: ~30 minutes

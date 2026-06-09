@@ -1,10 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-06-09_
+_Last updated: 2026-06-09 (session 3)_
 
 ## Current Project State
 
 The configuration manages five NixOS hosts from a single flake. The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, real keys configured, and private keys placed. All three client interfaces are active.
+
+**Declarative settings trim added to bosko-claude.nix (2026-06-09, session 3).** `home.activation.trimClaudeSettings` added to `dotfiles/bosko/bosko-claude.nix`. On every rebuild, once `/etc/claude-code/managed-settings.json` exists, the activation script uses `jq` to strip `permissions.deny`, `permissions.ask`, and `hooks` from `~/.claude/settings.json` while leaving `permissions.allow`, `model`, and `enabledPlugins` intact. Idempotent; no-op until the managed file is present. Replaces the one-shot `~/.claude/trim-after-managed.sh` script deleted earlier this session. Scoped to bosko only. Module signature updated to `{ self, pkgs, lib, ... }`.
 
 **Claude Code managed policy deployed (2026-06-09).** `dotfiles/common/modules/claude-code.nix` deploys `/etc/claude-code/managed-settings.json` on every host via `environment.etc`. The managed file enforces deny rules for destructive commands, ask rules for sensitive operations, and a PreToolUse fork bomb guard (jq pinned to its Nix store path). Wired into `commonModules` so all hosts share the enforced, tamper-resistant policy. On gaming (where the rebuild+reboot was done today), the managed file is active and the personal `~/.claude/settings.json` has been trimmed to personal preferences only. **laptop and natalie-laptop still need rebuild+reboot to activate the policy.**
 
@@ -52,7 +54,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key placed; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; `wg-quick-wg0` running; dbus-broker COMPLETE; **managed Claude Code policy pending** (rebuild+reboot needed) | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key placed; DNS conflict fixed; dbus-broker COMPLETE; **DE switched to Plasma** (rebuild+reboot needed); **managed Claude Code policy pending** (rebuild+reboot needed) | plasma.nix (pending rebuild) |
@@ -101,6 +103,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Recent Decisions
 
+- **Declarative settings trim via HM activation script (2026-06-09, session 3)** — `home.activation.trimClaudeSettings` in `bosko-claude.nix` replaces the one-shot `~/.claude/trim-after-managed.sh` script. On every rebuild it automatically strips redundant deny/ask/hooks keys from `~/.claude/settings.json` (idempotent; no-op if the keys are already absent or the managed file does not yet exist). Scoped to bosko only; if natty ever uses Claude Code it should be added for her separately. Chose Home Manager activation over a systemd unit or login hook because activation runs in the correct user context and is guaranteed to execute on every generation switch.
 - **Managed Claude Code policy via NixOS module (2026-06-09)** — `claude-code.nix` deploys the policy through `environment.etc` so it is system-managed, version-controlled, and tamper-resistant. `jq` is pinned to its Nix store path inside the JSON so the fork bomb hook works regardless of the shell's `$PATH`. Chose `environment.etc` over a declarative file symlink because the content is derived from Nix expressions (package store paths) that must be interpolated at build time.
 - **Personal `~/.claude/settings.json` trimmed to prefs only (2026-06-09)** — After confirming the managed file was active, all deny/ask rules and the fork bomb hook were removed from the personal file. The managed layer handles policy; the personal file now holds only tool preferences.
 - **Package consolidation to `shell.nix` (2026-06-09)** — `nodejs`, `pnpm`, `p7zip`, and `jq` moved to `commonModules` shell.nix. Rationale: these are general-purpose tools with no desktop or host-specific justification; consolidation removes duplication and ensures consistency across all hosts including vpn-server.
