@@ -319,6 +319,7 @@ in
       git
       helix
       htop
+      jq
       lm_sensors
       micro
       nh
@@ -329,7 +330,10 @@ in
       nix-tree
       nixd
       nixfmt
+      nodejs
+      p7zip
       pipes
+      pnpm
       pywal
       qdirstat
       starship

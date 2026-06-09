@@ -49,7 +49,6 @@
     kitty
     megasync
     onlyoffice-desktopeditors
-    p7zip
     qalculate-qt
     qutebrowser
     rpi-imager

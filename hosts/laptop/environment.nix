@@ -50,9 +50,7 @@
     kdePackages.kate
     kitty
     megasync
-    nodejs
     onlyoffice-desktopeditors
-    p7zip
     qalculate-qt
     qutebrowser
     rpi-imager

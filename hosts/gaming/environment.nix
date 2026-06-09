@@ -63,11 +63,8 @@
     kitty
     megasync
     mumble
-    nodejs
     obs-studio
     onlyoffice-desktopeditors
-    p7zip
-    pnpm
     qalculate-qt
     tmux
     tor-browser
