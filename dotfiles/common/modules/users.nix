@@ -55,6 +55,10 @@
 
       openssh.authorizedKeys.keys = [
       ];
+
+      packages = with pkgs; [
+        gemini-cli
+      ];
     };
   };
 
