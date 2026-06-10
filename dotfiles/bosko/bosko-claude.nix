@@ -37,6 +37,50 @@
       fi
     '';
 
+  # Declaratively install official-marketplace LSP plugins for Claude Code.
+  # For each plugin: populate the cache from the already-cloned official marketplace,
+  # register in installed_plugins.json, and enable in settings.json.
+  # lspServers config lives in the official marketplace.json — no patching needed.
+  home.activation.claudeOfficialPlugins =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      official_marketplace="$HOME/.claude/plugins/marketplaces/claude-plugins-official"
+      plugin_dir="$HOME/.claude/plugins"
+      installed="$plugin_dir/installed_plugins.json"
+      settings="$HOME/.claude/settings.json"
+      jq="${pkgs.jq}/bin/jq"
+
+      for plugin_name in pyright-lsp; do
+        cache_dir="$plugin_dir/cache/claude-plugins-official/$plugin_name/1.0.0"
+        plugin_id="$plugin_name@claude-plugins-official"
+
+        if [ ! -d "$cache_dir" ] && [ -d "$official_marketplace/plugins/$plugin_name" ]; then
+          ${pkgs.coreutils}/bin/mkdir -p "$cache_dir"
+          ${pkgs.coreutils}/bin/cp -r \
+            "$official_marketplace/plugins/$plugin_name/." "$cache_dir/"
+          $VERBOSE_ECHO "Populated $plugin_name cache"
+        fi
+
+        if [ -f "$installed" ] && \
+            ! $jq -e ".plugins[\"$plugin_id\"]" "$installed" >/dev/null 2>&1; then
+          tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          $jq --arg id "$plugin_id" --arg path "$cache_dir" \
+            '.plugins[$id] = [{"scope":"user","installPath":$path,"version":"1.0.0","installedAt":"2026-06-10T00:00:00.000Z","lastUpdated":"2026-06-10T00:00:00.000Z"}]' \
+            "$installed" > "$tmp" \
+            && ${pkgs.coreutils}/bin/mv "$tmp" "$installed"
+          $VERBOSE_ECHO "Registered $plugin_id in installed_plugins.json"
+        fi
+
+        if [ -f "$settings" ] && \
+            ! $jq -e ".enabledPlugins[\"$plugin_id\"]" "$settings" >/dev/null 2>&1; then
+          tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          $jq --arg id "$plugin_id" '.enabledPlugins[$id] = true' \
+            "$settings" > "$tmp" \
+            && ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
+          $VERBOSE_ECHO "Enabled $plugin_id in settings.json"
+        fi
+      done
+    '';
+
   # Declaratively install the nixd LSP plugin for Claude Code.
   # The plugin system uses three mutable JSON files plus a marketplace clone,
   # none of which can be managed with home.file. This activation script ensures
