@@ -36,4 +36,99 @@
         fi
       fi
     '';
+
+  # Declaratively install the nixd LSP plugin for Claude Code.
+  # The plugin system uses three mutable JSON files plus a marketplace clone,
+  # none of which can be managed with home.file. This activation script ensures
+  # all four pieces are present after every rebuild — idempotent, additive only.
+  home.activation.claudeNixdPlugin =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      plugin_dir="$HOME/.claude/plugins"
+      marketplace_dir="$plugin_dir/marketplaces/claude-code-lsps"
+      cache_dir="$plugin_dir/cache/claude-code-lsps/nixd/1.0.0"
+      known="$plugin_dir/known_marketplaces.json"
+      installed="$plugin_dir/installed_plugins.json"
+      settings="$HOME/.claude/settings.json"
+      jq="${pkgs.jq}/bin/jq"
+      lsp_patch='{"lspServers":{"nix":{"command":"nixd","extensionToLanguage":{".nix":"nix"}}}}'
+
+      # 1. Clone marketplace if absent
+      if [ ! -d "$marketplace_dir/.git" ]; then
+        ${pkgs.git}/bin/git clone --depth=1 \
+          https://github.com/boostvolt/claude-code-lsps.git \
+          "$marketplace_dir" 2>/dev/null
+        $VERBOSE_ECHO "Cloned boostvolt/claude-code-lsps marketplace"
+      fi
+
+      # 2. Patch marketplace.json to add lspServers to nixd entry (needed because
+      #    the community marketplace uses .lsp.json files but Claude Code only reads
+      #    lspServers from marketplace.json, matching the official marketplace format)
+      mp_json="$marketplace_dir/.claude-plugin/marketplace.json"
+      if [ -f "$mp_json" ] && ! $jq -e \
+          '[.plugins[] | select(.name=="nixd")] | .[0].lspServers' \
+          "$mp_json" >/dev/null 2>&1; then
+        tmp="$(${pkgs.coreutils}/bin/mktemp)"
+        $jq "(.plugins[] | select(.name==\"nixd\")) += $lsp_patch" \
+          "$mp_json" > "$tmp" \
+          && ${pkgs.coreutils}/bin/mv "$tmp" "$mp_json"
+        $VERBOSE_ECHO "Patched nixd lspServers into marketplace.json"
+      fi
+
+      # 3. Populate plugin cache if absent
+      if [ ! -d "$cache_dir" ]; then
+        ${pkgs.coreutils}/bin/mkdir -p "$cache_dir"
+        ${pkgs.coreutils}/bin/cp -r "$marketplace_dir/nixd/." "$cache_dir/"
+        $VERBOSE_ECHO "Populated nixd plugin cache"
+      fi
+
+      # 4. Patch cached plugin.json to add lspServers
+      cached_plugin="$cache_dir/.claude-plugin/plugin.json"
+      if [ -f "$cached_plugin" ] && ! $jq -e '.lspServers' "$cached_plugin" >/dev/null 2>&1; then
+        tmp="$(${pkgs.coreutils}/bin/mktemp)"
+        $jq ". + $lsp_patch" "$cached_plugin" > "$tmp" \
+          && ${pkgs.coreutils}/bin/mv "$tmp" "$cached_plugin"
+        $VERBOSE_ECHO "Patched nixd lspServers into cached plugin.json"
+      fi
+
+      # 5. Register marketplace in known_marketplaces.json
+      if [ -f "$known" ] && ! $jq -e '."claude-code-lsps"' "$known" >/dev/null 2>&1; then
+        tmp="$(${pkgs.coreutils}/bin/mktemp)"
+        $jq --arg loc "$marketplace_dir" \
+          '. + {"claude-code-lsps": {"source": {"source": "github", "repo": "boostvolt/claude-code-lsps"}, "installLocation": $loc, "lastUpdated": "2026-06-10T00:00:00.000Z"}}' \
+          "$known" > "$tmp" \
+          && ${pkgs.coreutils}/bin/mv "$tmp" "$known"
+        $VERBOSE_ECHO "Registered claude-code-lsps in known_marketplaces.json"
+      fi
+
+      # 6. Register plugin in installed_plugins.json
+      if [ -f "$installed" ] && ! $jq -e '.plugins["nixd@claude-code-lsps"]' "$installed" >/dev/null 2>&1; then
+        tmp="$(${pkgs.coreutils}/bin/mktemp)"
+        $jq --arg path "$cache_dir" \
+          '.plugins["nixd@claude-code-lsps"] = [{"scope":"user","installPath":$path,"version":"1.0.0","installedAt":"2026-06-10T00:00:00.000Z","lastUpdated":"2026-06-10T00:00:00.000Z"}]' \
+          "$installed" > "$tmp" \
+          && ${pkgs.coreutils}/bin/mv "$tmp" "$installed"
+        $VERBOSE_ECHO "Registered nixd@claude-code-lsps in installed_plugins.json"
+      fi
+
+      # 7. Ensure settings.json has enabledPlugins and extraKnownMarketplaces entries
+      if [ -f "$settings" ]; then
+        needs_update=0
+        $jq -e '.enabledPlugins["nixd@claude-code-lsps"]' "$settings" >/dev/null 2>&1 \
+          || needs_update=1
+        $jq -e '.extraKnownMarketplaces["claude-code-lsps"]' "$settings" >/dev/null 2>&1 \
+          || needs_update=1
+        if [ "$needs_update" = "1" ]; then
+          tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          $jq --arg loc "$marketplace_dir" '
+            .enabledPlugins["nixd@claude-code-lsps"] = true |
+            .extraKnownMarketplaces["claude-code-lsps"] = {
+              "source": {"source": "github", "repo": "boostvolt/claude-code-lsps"},
+              "installLocation": $loc
+            }
+          ' "$settings" > "$tmp" \
+            && ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
+          $VERBOSE_ECHO "Added nixd plugin entries to settings.json"
+        fi
+      fi
+    '';
 }
