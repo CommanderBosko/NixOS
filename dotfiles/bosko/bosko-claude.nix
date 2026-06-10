@@ -37,6 +37,65 @@
       fi
     '';
 
+  # Declaratively reconcile the personal permissions.allow list in
+  # ~/.claude/settings.json. The managed policy (/etc/claude-code/managed-settings.json,
+  # see claude-code.nix) owns deny/ask/hooks system-wide; the allow list is a
+  # per-user convenience that belongs here, not in the system policy. We reconcile
+  # additively (rather than symlinking the file read-only) so interactive /model and
+  # plugin toggles still persist and the plugin-management scripts below keep working.
+  # Idempotent: only rewrites when a desired entry is missing; preserves hand-added ones.
+  home.activation.claudeAllowList =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      let
+        allowList = [
+          "Skill"
+          "Bash(*)"
+          "Read"
+          "Edit"
+          "Write"
+          "Glob"
+          "Grep"
+          "WebFetch"
+          "WebSearch"
+          "Agent"
+          "NotebookEdit"
+          "TaskCreate"
+          "TaskGet"
+          "TaskList"
+          "TaskOutput"
+          "TaskStop"
+          "TaskUpdate"
+          "Monitor"
+          "CronCreate"
+          "CronList"
+          "CronDelete"
+          "PushNotification"
+          "RemoteTrigger"
+          "LSP"
+          "AskUserQuestion"
+          "EnterPlanMode"
+          "ExitPlanMode"
+        ];
+      in
+      ''
+        settings="$HOME/.claude/settings.json"
+        jq="${pkgs.jq}/bin/jq"
+        desired='${builtins.toJSON allowList}'
+        if [ -f "$settings" ]; then
+          missing="$($jq --argjson d "$desired" \
+            '($d - (.permissions.allow // [])) | length' "$settings" 2>/dev/null || echo 0)"
+          if [ "$missing" != "0" ]; then
+            tmp="$(${pkgs.coreutils}/bin/mktemp)"
+            $jq --argjson d "$desired" \
+              '.permissions.allow = ((.permissions.allow // []) + ($d - (.permissions.allow // [])))' \
+              "$settings" > "$tmp" \
+              && ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
+            $VERBOSE_ECHO "Reconciled permissions.allow in $settings"
+          fi
+        fi
+      ''
+    );
+
   # Declaratively install official-marketplace LSP plugins for Claude Code.
   # For each plugin: populate the cache from the already-cloned official marketplace,
   # register in installed_plugins.json, and enable in settings.json.
