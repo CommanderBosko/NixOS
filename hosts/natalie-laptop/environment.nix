@@ -58,8 +58,8 @@
 
   # Flatpaks
   services.flatpak.packages = [
+    "dev.aunetx.deezer" # Deezer
     "org.kde.digikam" # Digikam
     "app.zen_browser.zen" # Zen Browser
-    "dev.aunetx.deezer" # Deezer
   ];
 }

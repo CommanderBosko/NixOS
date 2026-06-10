@@ -11,8 +11,8 @@
 
   # Add common Budgie applications and utilities
   environment.systemPackages = with pkgs; [
-    budgie-desktop # The main Budgie desktop package
     budgie-control-center # Budgie's settings panel
+    budgie-desktop # The main Budgie desktop package
     # Add other desired Budgie applications here
   ];
 }

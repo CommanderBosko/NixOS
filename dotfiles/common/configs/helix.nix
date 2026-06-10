@@ -11,15 +11,15 @@
       lua-language-server
       marksman
       prettier
-      typescript-language-server
       pyright
+      ruff
       rust-analyzer
       rustfmt
-      ruff
       shfmt
       stylua
       taplo
       terraform-ls
+      typescript-language-server
       vscode-langservers-extracted
       yaml-language-server
     ];

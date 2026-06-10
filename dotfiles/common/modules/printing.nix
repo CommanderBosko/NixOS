@@ -3,7 +3,7 @@
 {
   services.printing = {
     enable = true;
-    drivers = with pkgs; [ gutenprint hplip brlaser ];
+    drivers = with pkgs; [ brlaser gutenprint hplip ];
   };
 
   services.avahi = {

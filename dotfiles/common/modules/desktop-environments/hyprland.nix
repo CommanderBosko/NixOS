@@ -10,16 +10,16 @@
 
   # Enable the XDG portal for Hyprland
   environment.systemPackages = with pkgs; [
-    xdg-desktop-portal-hyprland
-    waybar # Customizable Wayland bar
-    rofi # Application launcher
-    swaylock # Screen locker
-    swayidle # Idle management daemon
-    mako # Notification daemon
     grim # Screenshot utility
+    mako # Notification daemon
+    rofi # Application launcher
     slurp # Region selection for grim
+    swayidle # Idle management daemon
+    swaylock # Screen locker
+    waybar # Customizable Wayland bar
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
+    xdg-desktop-portal-hyprland
   ];
 
   # Configure services for Hyprland

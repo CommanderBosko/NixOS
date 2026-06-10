@@ -12,11 +12,11 @@
   # Add common XFCE applications and utilities
   environment.systemPackages = with pkgs; [
     thunar # File manager
-    xfce4-terminal # Terminal emulator
     xfce4-appfinder # Application finder
     xfce4-panel # Panel
     xfce4-session # Session manager
     xfce4-settings # Settings manager
+    xfce4-terminal # Terminal emulator
     xfwm4 # Window manager
     # Add other desired XFCE applications here
     # For example: xfce.xfce4-taskmanager, xfce.ristretto

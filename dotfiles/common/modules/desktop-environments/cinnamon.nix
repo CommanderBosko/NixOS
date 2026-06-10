@@ -14,8 +14,8 @@
   # Add common Cinnamon applications and utilities
   environment.systemPackages = with pkgs; [
     cinnamon-control-center
-    nemo # File manager
     gnome-terminal # Often used in Cinnamon, or an alternative
+    nemo # File manager
     # Add other desired Cinnamon applications here
   ];
 }

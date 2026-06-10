@@ -49,7 +49,9 @@
         krb5
         libdrm
         libGL
+        libICE
         libpulseaudio
+        libSM
         libusb1
         libva
         libvdpau
@@ -62,13 +64,11 @@
         libXext
         libXfixes
         libXi
-        libICE
         libXinerama
         libXrandr
         libXrender
-        libSM
-        libXtst
         libXt
+        libXtst
         mesa
         nspr
         nss

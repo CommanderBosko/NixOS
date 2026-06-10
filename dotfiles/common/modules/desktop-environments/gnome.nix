@@ -11,9 +11,9 @@
 
   # Add common GNOME applications and utilities
   environment.systemPackages = with pkgs; [
+    gnome-system-monitor
     gnome-terminal
     nautilus
-    gnome-system-monitor
     # Add other desired GNOME applications here
     # For example: gnome-calculator, gnome-text-editor
   ];

@@ -5,7 +5,7 @@
   # iommu=pt improves performance for devices not passed through.
   boot = {
     kernelParams = [ "amd_iommu=on" "intel_iommu=on" "iommu=pt" ];
-    kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" "vendor-reset" ];
+    kernelModules = [ "vendor-reset" "vfio" "vfio_iommu_type1" "vfio_pci" ];
     extraModulePackages = with config.boot.kernelPackages; [ vendor-reset ];
   };
 
@@ -37,7 +37,7 @@
     nssmdns4 = true;
   };
 
-  users.users.bosko.extraGroups = [ "libvirtd" "kvm" ];
+  users.users.bosko.extraGroups = [ "kvm" "libvirtd" ];
 
   environment.variables.LIBVIRT_DEFAULT_URI = "qemu:///system";
 
