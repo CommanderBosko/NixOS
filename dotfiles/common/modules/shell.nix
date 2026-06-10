@@ -335,6 +335,7 @@ in
       pipes
       pnpm
       pywal
+      python3
       qdirstat
       starship
       tree
