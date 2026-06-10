@@ -31,7 +31,7 @@
 
   };
 
-  outputs = { dms, disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
+  outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
   let
     # Configure system settings
     system = "x86_64-linux";
