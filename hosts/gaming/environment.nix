@@ -55,6 +55,7 @@
     brave
     chromium
     element-desktop
+    ffmpeg
     firefox
     freetube
     github-desktop
