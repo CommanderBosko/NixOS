@@ -62,20 +62,20 @@ in
           echo ""
           echo "Attempting a dry-run on vpn-server"
           echo ""
-          nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
+          nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host bosko@150.136.232.63 --build-host bosko@150.136.232.63 --use-remote-sudo
         '';
-        vpn-logs   = "ssh root@150.136.232.63 'journalctl -u wg-quick@wg0 -n 50 --no-pager'";
+        vpn-logs   = "ssh bosko@150.136.232.63 'sudo journalctl -u wg-quick-wg0 -n 50 --no-pager'";
         vpn-rebuild = ''
           echo ""
           echo "Rebuilding vpn-server"
           echo ""
-          nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host root@150.136.232.63 --build-host root@150.136.232.63
+          nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host bosko@150.136.232.63 --build-host bosko@150.136.232.63 --use-remote-sudo
         '';
         vpn-off    = "sudo systemctl stop wg-quick-wg0";
         vpn-on     = "sudo systemctl start wg-quick-wg0";
-        vpn-ssh    = "ssh root@150.136.232.63";
-        vpn-status = "ssh root@150.136.232.63 'wg show'";
-        vpn-watch  = "watch -n 5 ssh root@150.136.232.63 wg show";
+        vpn-ssh    = "ssh bosko@150.136.232.63";
+        vpn-status = "ssh bosko@150.136.232.63 'sudo wg show'";
+        vpn-watch  = "watch -n 5 ssh bosko@150.136.232.63 sudo wg show";
       };
 
       # Source Home Manager session variables (sessionPath, sessionVariables) for
