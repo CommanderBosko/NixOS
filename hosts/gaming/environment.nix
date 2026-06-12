@@ -71,6 +71,7 @@
     tor-browser
     vesktop
     vlc
+    yt-dlp
   ];
 
   # Flatpaks
