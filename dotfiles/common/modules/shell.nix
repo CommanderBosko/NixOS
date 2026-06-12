@@ -309,12 +309,15 @@ in
     systemPackages = with pkgs; [
       btop
       cava
+      clang-tools
       cmatrix
       comma
       curl
       eza
       fastfetch
       fzf
+      gcc
+      gdb
       gh
       git
       helix
