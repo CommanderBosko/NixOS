@@ -84,6 +84,7 @@
           "${self}/dotfiles/common/modules/gaming.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/hosts/gaming/virtualisation.nix"
+          "${self}/hosts/gaming/brobot.nix"
           "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };

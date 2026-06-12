@@ -55,7 +55,6 @@
     brave
     chromium
     element-desktop
-    ffmpeg
     firefox
     freetube
     github-desktop
@@ -71,7 +70,6 @@
     tor-browser
     vesktop
     vlc
-    yt-dlp
   ];
 
   # Flatpaks
