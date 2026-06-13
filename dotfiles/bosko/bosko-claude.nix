@@ -12,6 +12,10 @@
       source = "${self}/dotfiles/bosko/claude/agents/session-closer.md";
       force = true;
     };
+    ".claude/skills/interview/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/interview/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
