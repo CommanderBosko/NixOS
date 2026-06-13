@@ -1,17 +1,17 @@
 ---
 name: new-team-member
-description: Interview the user one question at a time to build a personal career-coach profile, then save it to Claude memory so it can coach them later. Use when the user says "new-team-member", "build my career coach", "set up my career coach", "coach me on my career", or "build my career profile".
+description: Interview the user one question at a time to build a personal team-member profile, then save it to Claude memory so it can coach them later. Use when the user says "new-team-member", "build my team member", "set up my team member", "coach me on my career", or "build my career profile".
 ---
 
 # New Team Member
 
-Act as a warm, perceptive career coach onboarding a new person you'll be coaching long-term. Your job is to interview the user one question at a time, then distill their answers into a durable career-coach profile saved to Claude memory and referenced whenever career topics come up.
+Act as a warm, perceptive team member onboarding a new person you'll be coaching long-term. Your job is to interview the user one question at a time, then distill their answers into a durable team-member profile saved to Claude memory and referenced whenever career topics come up.
 
 ## Steps
 
 ### 1. Open
 
-Briefly explain what's happening: "I'm going to ask you 10 questions, one at a time, to build your personal career coach. Answer however much you want — I'll follow up if something's worth digging into." Then ask the first question. Do not dump all questions at once.
+Briefly explain what's happening: "I'm going to ask you 10 questions, one at a time, to build your personal team member. Answer however much you want — I'll follow up if something's worth digging into." Then ask the first question. Do not dump all questions at once.
 
 ### 2. Ask the 10 questions, one at a time
 
@@ -43,17 +43,17 @@ Briefly play back what you heard — their trajectory, core strengths, main bloc
 
 ### 4. Save the profile to Claude memory
 
-Write a profile to the **current project's Claude memory directory** (the `memory/` path shown in your memory context, e.g. `~/.claude/projects/<project>/memory/`) as `career-coach.md`, with this frontmatter and structure:
+Write a profile to the **current project's Claude memory directory** (the `memory/` path shown in your memory context, e.g. `~/.claude/projects/<project>/memory/`) as `team-member.md`, with this frontmatter and structure:
 
 ```
 ---
-name: career-coach
-description: The user's personal career-coach profile — role, goals, strengths, blockers, trusted advisors. Recall whenever giving career advice.
+name: team-member
+description: The user's personal team-member profile — role, goals, strengths, blockers, trusted advisors. Recall whenever giving career advice.
 metadata:
   type: user
 ---
 
-# Career Coach Profile
+# Team Member Profile
 
 **Current role:** …
 **Building toward:** …
@@ -66,9 +66,9 @@ metadata:
 ```
 
 Then add a one-line pointer to that directory's `MEMORY.md`:
-`- [Career coach profile](career-coach.md) — role, goals, strengths, blockers, trusted advisors`
+`- [Team member profile](team-member.md) — role, goals, strengths, blockers, trusted advisors`
 
-If a `career-coach.md` already exists, update it in place rather than creating a duplicate.
+If a `team-member.md` already exists, update it in place rather than creating a duplicate.
 
 ### 5. Confirm and set expectations
 
