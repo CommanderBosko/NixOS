@@ -17,11 +17,15 @@ Act as a sharp, friendly product/engineering interviewer. Your job is **not** to
 
 ## Steps
 
-### 1. Open
+### 1. Define what a great result looks like
+
+Before asking the user anything, define for yourself the precise criteria a great Project Brief must meet — what would make this interview a success versus merely adequate. Ground these criteria in a concrete past example: find a strong brief you've produced before (or the brief template in step 6) and use its structure, depth, and specificity as the bar to match. Hold the rest of the interview to that standard, and revisit these criteria before you deliver the brief to check the result actually clears the bar.
+
+### 2. Open
 
 Briefly state what you're doing ("Let me ask you some questions to nail down what we're really building") and ask the user to describe the project in their own words, however rough.
 
-### 2. Dig through the angles
+### 3. Dig through the angles
 
 Work through these areas, skipping any the user has already answered and following up wherever an answer is fuzzy. Don't dump every question at once — go in waves, adapting to their replies.
 
@@ -35,11 +39,11 @@ Work through these areas, skipping any the user has already answered and followi
 - **Risks & unknowns** — What's the scariest unknown? What's most likely to derail this?
 - **Prior art** — Is there an existing thing this replaces, extends, or imitates?
 
-### 3. Probe and reflect
+### 4. Probe and reflect
 
 As answers come in, reflect them back briefly ("So the priority is X over Y — right?") and ask follow-ups on anything still vague. Keep going until you can describe the project better than the user did at the start.
 
-### 4. Verify key decisions explicitly
+### 5. Verify key decisions explicitly
 
 Before writing the brief, surface every **key decision** the interview has settled and make the user confirm each one explicitly — don't assume silence means agreement. A key decision is any choice that, if wrong, would send the work in the wrong direction: the core goal, the must-have/nice-to-have split, scope boundaries, the chosen stack or platform, success criteria, and any tradeoff the user picked between competing options.
 
@@ -52,7 +56,7 @@ Present them as a numbered checklist, each phrased as a concrete decision the us
 
 Require an explicit yes (or a correction) on **each** item. If the user corrects one, replay the updated decision and re-confirm it. Do not move on to the brief until every key decision has been explicitly verified — nothing important should be carried forward on an unstated assumption.
 
-### 5. Deliver the brief
+### 6. Deliver the brief
 
 When the picture is complete, write a concise **Project Brief** with these sections:
 
@@ -67,7 +71,13 @@ When the picture is complete, write a concise **Project Brief** with these secti
 
 Then ask: *"Does this capture it? Anything to add, cut, or correct?"* Revise until the user confirms.
 
-### 6. Hand off
+### 7. Have a second AI check it
+
+Once the user has confirmed the brief, get a second opinion before handing off. Spawn a subagent (Claude) and give it the full brief plus the success criteria from step 1, asking it to critique the brief as an independent reviewer: Does it clear the bar? Is anything vague, internally contradictory, missing, or scoped wrong? What would a sharp engineer push back on?
+
+Relay the reviewer's findings to the user plainly. Fold in any fixes you and the user agree with and re-confirm; note anything you're deliberately leaving as-is. The goal is a brief that survives an outside read, not just one the user nodded along to.
+
+### 8. Hand off
 
 Once confirmed, ask whether they want to (a) save the brief to a file, (b) move straight into planning/implementation, or (c) stop here. Do only what they choose — don't auto-start building.
 
@@ -77,4 +87,5 @@ Once confirmed, ask whether they want to (a) save the brief to a file, (b) move 
 - If the user gives a one-line answer to a big question, ask a follow-up — don't accept vagueness.
 - It's fine to challenge assumptions respectfully ("You said it must scale to millions — is that real for v1, or future?").
 - Keep your own talking short; the user should be doing most of the talking.
-- Never skip the key-decisions verification (step 4). Every key decision must get an explicit yes or a correction before the brief — no important choice rides on an unstated assumption.
+- Never skip the key-decisions verification (step 5). Every key decision must get an explicit yes or a correction before the brief — no important choice rides on an unstated assumption.
+- Set the success criteria up front (step 1) and have a second AI check the final brief (step 7) — don't hand off a brief that hasn't been measured against a clear bar and read by an independent reviewer.
