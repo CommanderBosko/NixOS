@@ -26,7 +26,7 @@ These are also available as shell aliases when running as bosko: `rebuild`, `dry
 
 ## Architecture Overview
 
-Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie-laptop`, `vpn-server`. Shared modules live under `dotfiles/common/`; host-specific files live under `hosts/<hostname>/`.
+Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared modules live under `dotfiles/common/`; host-specific files live under `hosts/<hostname>/`.
 
 ### Module Composition
 
@@ -38,7 +38,7 @@ Single-flake NixOS config for five hosts: `gaming`, `laptop`, `server`, `natalie
 
 `nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) to allow the gaming host to drop it independently when the AMD card is installed. `amd.nix` and `gaming.nix` are gaming-only.
 
-The server host uses only `commonModules` (headless, no flatpaks, no DE). The vpn-server uses `commonModules` + disko on `aarch64-linux`.
+The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no flatpaks, no DE).
 
 ### Directory Layout
 
@@ -60,7 +60,6 @@ hosts/
 ├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
 ├── laptop/               # same three files
 ├── natalie-laptop/       # same three files
-├── server/               # same three files
 └── vpn-server/           # configuration.nix, disko.nix, hardware-configuration.nix
 ```
 

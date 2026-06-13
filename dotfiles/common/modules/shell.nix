@@ -332,7 +332,7 @@ in
       nix-init
       nix-tree
       nixd
-      nixfmt
+      nixfmt-rfc-style
       nodejs
       p7zip
       pipes

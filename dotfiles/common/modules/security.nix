@@ -7,7 +7,7 @@
       # false: processes without an AppArmor profile are not killed — most
       # desktop applications on NixOS lack profiles, so killing them would
       # disrupt normal desktop use. MAC enforcement still applies to profiled
-      # applications (e.g. dbus, cups). Revisit per-host for the server.
+      # applications (e.g. dbus, cups).
       killUnconfinedConfinables = false;
     };
 
@@ -28,7 +28,7 @@
   # PAM module paths, but PAM include directives (e.g. "include login") are
   # service-name references, not .so paths. Clear the affected rules attrsets
   # and preserve identical PAM behaviour with explicit text overrides.
-  # Only applied when SDDM is actually enabled (not on headless servers).
+  # Only applied when SDDM is actually enabled (not on the headless vpn-server).
   security.pam.services.sddm = lib.mkIf config.services.displayManager.sddm.enable {
     rules = lib.mkForce {
       auth = { };
