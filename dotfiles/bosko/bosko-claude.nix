@@ -4,8 +4,8 @@
   home.sessionPath = [ "$HOME/.local/bin" ];
 
   home.file = {
-    ".claude/agents/repo-creator-agent.md" = {
-      source = "${self}/dotfiles/bosko/claude/agents/repo-creator-agent.md";
+    ".claude/skills/repo-creator/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/repo-creator/SKILL.md";
       force = true;
     };
     ".claude/skills/session-closer/SKILL.md" = {
