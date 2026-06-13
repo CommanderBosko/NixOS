@@ -28,6 +28,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/git-push/SKILL.md";
       force = true;
     };
+    ".claude/skills/search-pkg/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/search-pkg/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
