@@ -16,6 +16,18 @@
       source = "${self}/dotfiles/bosko/claude/skills/interview/SKILL.md";
       force = true;
     };
+    ".claude/skills/new-skill/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/new-skill/SKILL.md";
+      force = true;
+    };
+    ".claude/skills/git-commit/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/git-commit/SKILL.md";
+      force = true;
+    };
+    ".claude/skills/git-push/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/git-push/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
