@@ -171,12 +171,21 @@
       jq="${pkgs.jq}/bin/jq"
       lsp_patch='{"lspServers":{"nix":{"command":"nixd","extensionToLanguage":{".nix":"nix"}}}}'
 
-      # 1. Clone marketplace if absent
+      # 1. Clone marketplace if absent.
+      #    This is a network operation; at boot-time activation the network may
+      #    not be up yet, in which case the clone exits 128. Keep it non-fatal so
+      #    a failed clone never aborts activation (which runs under `set -e`) — an
+      #    abort here would skip linkGeneration and leave every home.file symlink
+      #    (agents + skills) uncreated. On failure we skip the nixd plugin setup;
+      #    the next interactive activation (with network) completes it.
       if [ ! -d "$marketplace_dir/.git" ]; then
-        ${pkgs.git}/bin/git clone --depth=1 \
+        if ${pkgs.git}/bin/git clone --depth=1 \
           https://github.com/boostvolt/claude-code-lsps.git \
-          "$marketplace_dir" 2>/dev/null
-        $VERBOSE_ECHO "Cloned boostvolt/claude-code-lsps marketplace"
+          "$marketplace_dir" 2>/dev/null; then
+          $VERBOSE_ECHO "Cloned boostvolt/claude-code-lsps marketplace"
+        else
+          $VERBOSE_ECHO "nixd marketplace clone failed (no network?); skipping"
+        fi
       fi
 
       # 2. Patch marketplace.json to add lspServers to nixd entry (needed because
@@ -193,8 +202,9 @@
         $VERBOSE_ECHO "Patched nixd lspServers into marketplace.json"
       fi
 
-      # 3. Populate plugin cache if absent
-      if [ ! -d "$cache_dir" ]; then
+      # 3. Populate plugin cache if absent (only if the clone supplied the source;
+      #    guarded so a skipped/failed clone above can't abort activation here)
+      if [ ! -d "$cache_dir" ] && [ -d "$marketplace_dir/nixd" ]; then
         ${pkgs.coreutils}/bin/mkdir -p "$cache_dir"
         ${pkgs.coreutils}/bin/cp -r "$marketplace_dir/nixd/." "$cache_dir/"
         $VERBOSE_ECHO "Populated nixd plugin cache"
