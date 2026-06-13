@@ -40,6 +40,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/team-meeting/SKILL.md";
       force = true;
     };
+    ".claude/skills/team-member-ingest/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/team-member-ingest/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active

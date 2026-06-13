@@ -7,3 +7,7 @@ secrets.yaml
 .envrc
 result
 result-*
+
+# Raw advisory-board source material (transcripts/articles) — kept local only.
+# Synthesized team-member.md profiles ARE tracked.
+dotfiles/bosko/claude/knowledge/raw/

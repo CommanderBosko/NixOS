@@ -5,7 +5,7 @@ description: Interview the user one question at a time to build a personal team-
 
 # New Team Member
 
-Act as a warm, perceptive team member onboarding a new person you'll be coaching long-term. Your job is to interview the user one question at a time, then distill their answers into a durable team-member profile saved to Claude memory and referenced whenever career topics come up.
+Act as a warm, perceptive team member onboarding a new person you'll be coaching long-term. Your job is to interview the user one question at a time, then distill their answers into a durable team-member profile saved to the shared knowledge base in the Nix repo and referenced whenever career topics come up.
 
 ## Steps
 
@@ -41,9 +41,9 @@ Ask each question, **wait for the answer**, and only then move to the next. The 
 
 Briefly play back what you heard — their trajectory, core strengths, main blocker, and trusted advisors — and ask if you got it right. Correct based on their reply.
 
-### 4. Save the profile to Claude memory
+### 4. Save the profile to the shared knowledge base
 
-Write a profile to the **current project's Claude memory directory** (the `memory/` path shown in your memory context, e.g. `~/.claude/projects/<project>/memory/`) as `team-member.md`, with this frontmatter and structure:
+Write the profile to the **shared advisory-board knowledge base in the Nix repo** — the absolute path `/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md` — so it's version-controlled and available from any project, not just this one. Use this frontmatter and structure:
 
 ```
 ---
@@ -65,10 +65,7 @@ metadata:
 <any nuance, quotes, or context worth keeping>
 ```
 
-Then add a one-line pointer to that directory's `MEMORY.md`:
-`- [Team member profile](team-member.md) — role, goals, strengths, blockers, trusted advisors`
-
-If a `team-member.md` already exists, update it in place rather than creating a duplicate.
+Create the `knowledge/` directory if it doesn't exist yet. If a `team-member.md` already exists there, update it in place rather than creating a duplicate.
 
 ### 5. Confirm and set expectations
 

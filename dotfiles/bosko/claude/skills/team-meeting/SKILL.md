@@ -11,10 +11,11 @@ Convene the user's personal advisory board. Based on everything you know about t
 
 ### 1. Ground yourself in who the user is
 
-Recall the user's `team-member.md` profile from the current project's Claude memory directory (the `memory/` path in your memory context, e.g. `~/.claude/projects/<project>/memory/`). Read their current role, what they're building toward, strengths, blockers, and trusted advisors.
+Read the user's profile from the shared advisory-board knowledge base in the Nix repo — `/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md`. Note their current role, what they're building toward, strengths, blockers, and trusted advisors.
 
-- If no `team-member.md` exists, say so and suggest running the `new-team-member` skill first — then offer to proceed using whatever you already know about them from the conversation and memory.
-- Weave in anything else you know about the user (other memories, the work in this repo, things they've told you).
+- If that file doesn't exist, say so and suggest running the `new-team-member` skill first — then offer to proceed using whatever you already know about them from the conversation and memory.
+- If any advisor profiles already exist under `knowledge/<person-slug>/team-member.md`, factor in who's already on the board so you don't just repeat them.
+- Weave in anything else you know about the user (memories, the work in this repo, things they've told you).
 
 ### 2. Pick exactly 2 experts
 
