@@ -10,6 +10,14 @@ If you notice you've performed the same multi-step task twice in a session — o
 
 Before building anything multistep, include a verification plan — state up front how you'll confirm each part actually works before calling it done. For changes to this repo that usually means a `nh os boot /home/bosko/NixOS --dry` (or `flake-check`) to prove the config still evaluates, plus whatever host-specific check applies (service status, journal logs, a rebuild on the affected host). Lay out the plan with the work, not after it.
 
+## Editing Claude Skills
+
+The global Claude Code skills (`interview`, `new-skill`, `git-commit`, `git-push`, `repo-creator`, `session-closer`, `search-pkg`) are **owned by this repo**, not by `~/.claude`. Source lives in `dotfiles/bosko/claude/skills/<name>/SKILL.md`; `dotfiles/bosko/bosko-claude.nix` symlinks each one into `~/.claude/skills/<name>/SKILL.md` via Home Manager `home.file`.
+
+- **Always edit the repo copy** under `dotfiles/bosko/claude/skills/`. The `~/.claude/skills/` path is a read-only `/nix/store` symlink — editing it directly is impossible, and the change wouldn't survive a rebuild anyway.
+- A new skill must be added to the `home.file` list in `bosko-claude.nix`, then rebuilt before its symlink appears.
+- Edits to an existing skill's `SKILL.md` only take effect in `~/.claude` after a rebuild (`nh os boot /home/bosko/NixOS`); the live session keeps using the old store path until then.
+
 ## Common Commands
 
 ```bash
@@ -57,8 +65,8 @@ dotfiles/
 │       ├── helix.nix
 │       └── dotfiles (katerc, kitty.conf, starship.toml)
 └── bosko/                # bosko-specific HM configs (not shared with natty)
-    ├── bosko-claude.nix  # Symlinks Claude agents into ~/.claude/agents/
-    └── claude/agents/    # Agent definition files (repo-creator-agent.md, session-closer.md)
+    ├── bosko-claude.nix  # Symlinks Claude skills into ~/.claude/skills/ + plugin/settings activation
+    └── claude/skills/    # Claude Code skill files (one dir per skill, each with SKILL.md)
 
 hosts/
 ├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
