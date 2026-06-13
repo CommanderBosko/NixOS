@@ -8,8 +8,8 @@
       source = "${self}/dotfiles/bosko/claude/agents/repo-creator-agent.md";
       force = true;
     };
-    ".claude/agents/session-closer.md" = {
-      source = "${self}/dotfiles/bosko/claude/agents/session-closer.md";
+    ".claude/skills/session-closer/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/session-closer/SKILL.md";
       force = true;
     };
     ".claude/skills/interview/SKILL.md" = {
