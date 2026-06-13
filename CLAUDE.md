@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 If you notice you've performed the same multi-step task twice in a session — or if a task involved 4+ steps that could be cleanly reused — proactively offer to create a skill for it. Say something like: "I've done this a few times now — want me to create a skill so you can invoke it with a single phrase?" If the user agrees, invoke the `new-skill` skill to build it interactively. Prefer project-local scope for NixOS-specific workflows, global scope for general-purpose utilities.
 
+## Verification Plan
+
+Before building anything multistep, include a verification plan — state up front how you'll confirm each part actually works before calling it done. For changes to this repo that usually means a `nh os boot /home/bosko/NixOS --dry` (or `flake-check`) to prove the config still evaluates, plus whatever host-specific check applies (service status, journal logs, a rebuild on the affected host). Lay out the plan with the work, not after it.
+
 ## Common Commands
 
 ```bash
