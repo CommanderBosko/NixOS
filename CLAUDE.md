@@ -8,7 +8,7 @@ If you notice you've performed the same multi-step task twice in a session — o
 
 ## Verification Plan
 
-Before building anything multistep, include a verification plan — state up front how you'll confirm each part actually works before calling it done. For changes to this repo that usually means a `nh os boot /home/bosko/NixOS --dry` (or `flake-check`) to prove the config still evaluates, plus whatever host-specific check applies (service status, journal logs, a rebuild on the affected host). Lay out the plan with the work, not after it.
+Before you do any work, mention how you could verify the work with the `/verify` skill — state up front how you'll confirm each part actually works before calling it done. For changes to this repo that usually means a `nh os boot /home/bosko/NixOS --dry` (or `flake-check`) to prove the config still evaluates, plus whatever host-specific check applies (service status, journal logs, a rebuild on the affected host). Lay out the plan with the work, not after it.
 
 ## Editing Claude Skills
 
