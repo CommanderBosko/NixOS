@@ -1,19 +1,16 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   # Enable fwupd
-  services.fwupd = {
-    enable = true;
+  services.fwupd.enable = true;
 
-    # fwupd 2.x auto-detects the ESP by partition type. gaming's ESP is a valid
-    # FAT32 partition but carries the wrong type code (W95 FAT32, not "EFI System"),
-    # so the UEFI capsule plugin can't auto-detect it and warns "UEFI ESP partition
-    # not detected or configured". Point the plugin straight at the ESP mount.
-    #
-    # NOTE: this must live under uefiCapsuleSettings ([uefi_capsule] section). The
-    # old [fwupd] EspLocation key is not consulted by the capsule plugin for its ESP.
-    uefiCapsuleSettings.OverrideESPMountPoint = config.boot.loader.efi.efiSysMountPoint;
-  };
+  # Note: fwupd reports "UEFI ESP partition not detected or configured" on gaming.
+  # That's harmless here: the ESP (nvme0n1p1, MBR type 0x0c) isn't auto-detected,
+  # but this board (ASRock X570) ships no firmware via LVFS, Secure Boot is off, and
+  # the only updatable device (Samsung 870 EVO SSD) updates over ATA, not the capsule
+  # path. fwupd's EspLocation/OverrideESPMountPoint keys don't override 2.x detection,
+  # so no config workaround helps — left unset on purpose. Revisit only if this host
+  # moves to GPT + Secure Boot or a board that's on LVFS.
 
   # Update cpu microcode — only available on x86 platforms
   hardware.cpu = lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
