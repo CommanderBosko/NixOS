@@ -1,0 +1,64 @@
+---
+name: claude-rules
+description: Ensure the current project's CLAUDE.md contains the user's three standing workflow rules — Scope First (Interview), Verification Plan, and Parallelize with Sub-Agents — adding any that are missing. Use when the user says "claude-rules", "check claude rules", "apply my rules", "add my rules to this project", or "make sure CLAUDE.md has my rules".
+---
+
+# Claude Rules
+
+These three sections are rules the user wants followed in **every** project. This skill checks the current project's `CLAUDE.md` and adds any that are missing, leaving existing ones untouched.
+
+## The three rules (canonical, project-agnostic text)
+
+When adding a missing section, insert the exact Markdown below. Do **not** rewrite or "improve" the wording — these are the agreed canonical versions. (If the user's NixOS repo has richer, project-specific variants of these sections, leave those as-is; they already satisfy the rule.)
+
+### Scope First (Interview)
+
+```markdown
+## Scope First (Interview)
+
+Before you do any work, use the `/interview` skill to pin down the real goal with the user — don't start building from a fuzzy or assumed understanding of the request. Surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before starting the work.
+```
+
+### Verification Plan
+
+```markdown
+## Verification Plan
+
+Before you do any work, state how you'll verify it with the `/verify` skill — say up front how you'll confirm each part actually works before calling it done. Pick the checks that fit this project (build, test suite, linter, type-check, running the app, hitting the endpoint, reading the logs) and name the specific commands. Lay out the plan with the work, not after it.
+```
+
+### Parallelize with Sub-Agents
+
+```markdown
+## Parallelize with Sub-Agents
+
+Once scope and the verification plan are set, spawn as many sub-agents as the goal needs to get it done faster. Independent pieces of work — researching options, searching the tree, scaffolding separate files, drafting changes across multiple areas — should run in parallel rather than serially. Fan out aggressively when tasks don't depend on each other; reserve serial work for genuine dependencies. This is a large time saver, so default to delegating breadth-first instead of plodding through everything yourself.
+```
+
+## Steps
+
+### 1. Locate the project's CLAUDE.md
+
+Find `CLAUDE.md` at the root of the current project (the working directory the session was launched in). Do not touch `~/.claude/CLAUDE.md` or any other project's file — only the current project.
+
+- **If no `CLAUDE.md` exists:** stop and tell the user there is no `CLAUDE.md` in this project. Ask whether to create one containing all three rules. Only create it if they say yes. Do not create it silently.
+
+### 2. Check which rules are present
+
+Read the file and check for each of the three sections by heading. Match on the heading text (`## Scope First`, `## Verification Plan`, `## Parallelize with Sub-Agents`) — a section counts as present even if its body wording differs from the canonical text above (e.g. a project-specific variant). Treat case-insensitively and tolerate minor heading wording differences; when unsure whether an existing section covers a rule, ask the user rather than duplicating it.
+
+### 3. Add the missing sections
+
+For each rule that is **missing**, append its canonical Markdown block (from above). Preserve a blank line between sections. Prefer to keep the three rules grouped together near the top of the file, after any intro paragraph, in this order: Scope First → Verification Plan → Parallelize with Sub-Agents. If some already exist mid-file, just append the missing ones near them rather than reordering the whole file.
+
+If all three are already present, report that and make no changes.
+
+### 4. Report
+
+Tell the user exactly which sections were already present and which were added, and the path to the file edited.
+
+## Gotchas
+
+- This skill edits the **current project's** `CLAUDE.md`, which is an ordinary tracked file — not a Claude skill. It does not require a NixOS rebuild to take effect (unlike this skill's own `SKILL.md`, which lives in the NixOS repo and only updates `~/.claude` after a rebuild).
+- Never overwrite or reword an existing section. Only append missing ones.
+- Don't commit the change unless the user asks — leave it staged for them to review.
