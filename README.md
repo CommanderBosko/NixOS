@@ -20,7 +20,7 @@ Active development, state version `25.11`. Four active hosts (gaming, laptop, na
 - Gaming module with Steam, GameMode, Gamescope, MangoHud, lutris, faugus-launcher, nix-ld, and Steam hardware support — all gaming-specific config colocated in `gaming.nix`
 - `claude-code` and `gemini-cli` declared as user-level packages in `users.nix` for both `bosko` and `natty`
 - Claude agent definitions (`repo-creator-agent.md`, `session-closer.md`) backed up declaratively via Home Manager and symlinked into `~/.claude/agents/`; `home.activation.trimClaudeSettings` in `bosko-claude.nix` automatically strips redundant deny/ask/hooks keys from `~/.claude/settings.json` on every rebuild once the managed policy file is present (idempotent; no-op until the managed file exists; scoped to bosko only)
-- Project-local Claude Code skill library under `.claude/skills/`: 22 skills covering the full NixOS workflow — dry-run, GC, VPN status, module scaffolding, new host, new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, flake input pinning, generation diff, flake validation, journal tailing, nix repl, and .nix formatting
+- Project-local Claude Code skill library under `.claude/skills/`: 25 skills covering the full NixOS workflow — dry-run, GC, VPN status, module scaffolding, new host (sops-aware), new peer, commit, push, flake update, package/flatpak addition, desktop environment switching, SSH to any host, remote headless deployment, generation rollback, package search, flake input pinning, generation diff, flake validation, journal tailing, nix repl, .nix formatting, sops secret management, a fleet health sweep, and leaked-secret scanning
 - WireGuard full-tunnel VPN deployed (hub-and-spoke via Oracle Cloud free ARM VM): shared `vpn.nix` client module, per-host VPN addresses, full-tunnel routing (`0.0.0.0/0`), DNS override, keepalive=25 for Oracle's idle UDP timeout; all three client hosts configured
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement, auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, dbus-broker active on all hosts (explicit plain assignment overrides `nix-flatpak`'s bundled older nixpkgs)
 - `~/.local/bin` in bosko's `home.sessionPath` (via `bosko-claude.nix`) so the native claude-code binary at `~/.local/bin/claude` is in PATH after rebuild
@@ -101,7 +101,7 @@ hosts/
 ├── natalie-laptop/                     # same three files (real hardware data from nixos-generate-config)
 └── vpn-server/                         # configuration.nix, disko.nix, hardware-configuration.nix (live on Oracle Cloud ARM)
 
-.claude/skills/                         # Project-local Claude Code skills (22 total)
+.claude/skills/                         # Project-local Claude Code skills (25 total)
 ├── nixos-dry-run/                      # Preview config changes without applying (nh os boot --dry)
 ├── nixos-gc/                           # Garbage-collect Nix store, keep last 3 generations
 ├── vpn-status/                         # SSH to VPN server and display WireGuard peer table
@@ -123,7 +123,10 @@ hosts/
 ├── flake-check/                        # Validate flake across all 5 hosts before rebuild or commit
 ├── journal/                            # Tail journald for a named service, local or remote
 ├── nix-repl/                           # Print nix repl command + host-specific starter expressions
-└── fmt/                                # Format changed .nix files (alejandra, nixpkgs-fmt fallback)
+├── fmt/                                # Format changed .nix files (alejandra, nixpkgs-fmt fallback)
+├── add-secret/                         # Add / edit / rotate a sops-nix secret
+├── fleet-status/                       # Read-only health sweep across all four hosts
+└── secret-scan/                        # Scan working tree + git history for leaked secrets
 ```
 
 ### Module Composition

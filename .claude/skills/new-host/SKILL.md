@@ -1,7 +1,7 @@
 ---
 name: new-host
-description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files and shows the flake.nix entry to add.
-version: 0.1.0
+description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
+version: 0.2.0
 ---
 
 # New NixOS Host Scaffolder
@@ -425,7 +425,49 @@ After showing the flake entry, tell the user:
 > ```
 > Copy the output into `hosts/<hostname>/hardware-configuration.nix` and rebuild.
 
-## Step 8 — Suggest a dry-run
+## Step 8 — Register the host with sops-nix (REQUIRED)
+
+`commonModules` includes `dotfiles/common/modules/sops.nix`, which declares the shared login-password secrets (`bosko`/`natty`) with `neededForUsers = true`. **A host can only decrypt those secrets once its age identity is a recipient of `secrets/common.yaml`.** The age identity is derived from the host's SSH ed25519 host key, which only exists after the machine has booted NixOS for the first time. So this step is post-first-boot, like the hardware-config step.
+
+> **Bootstrapping note:** on the very first build the new host is not yet a recipient, so the password hashes won't decrypt — the user accounts come up with no valid password. **Key-based SSH still works** (the install places authorized keys), so the host is reachable and recoverable. Complete this step and rebuild, and password login starts working. Don't be alarmed by sops decrypt failures in the first activation log.
+
+Once the machine has booted and `/etc/ssh/ssh_host_ed25519_key` exists:
+
+1. **Derive the host's age recipient key** (public; safe):
+
+   ```bash
+   ssh bosko@<hostname> 'cat /etc/ssh/ssh_host_ed25519_key.pub' \
+     | nix shell nixpkgs#ssh-to-age --command ssh-to-age
+   ```
+
+2. **Add it to `.sops.yaml`** — a new anchor under `keys:` and add the alias to the `secrets/common.yaml` creation rule's `age:` list:
+
+   ```yaml
+   keys:
+     # ... existing ...
+     - &<hostname> age1...                    # the key from step 1
+   creation_rules:
+     - path_regex: secrets/common\.yaml$
+       key_groups:
+         - age:
+             # ... existing ...
+             - *<hostname>
+   ```
+
+3. **Re-encrypt** so the new recipient is included (admin key required):
+
+   ```bash
+   SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
+     nix shell nixpkgs#sops --command sops updatekeys /home/bosko/NixOS/secrets/common.yaml
+   ```
+
+4. `git add .sops.yaml secrets/common.yaml`, then rebuild the host. Password login now works.
+
+If the host will also **join the VPN** (imports `vpn.nix`), it additionally needs its WireGuard private key encrypted in `secrets/hosts/<hostname>.yaml` (encrypted to admin + this host). Add a matching `creation_rule` in `.sops.yaml` and use the **`add-secret`** skill (or follow the `new-peer` flow) — `vpn.nix` reads `config.sops.secrets."wg-private-key".path`.
+
+---
+
+## Step 9 — Suggest a dry-run
 
 After the user adds the flake entry (or asks you to), remind them to test with:
 
@@ -446,5 +488,6 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `{ ... }:` when the module uses no named arguments. `{ pkgs, ... }:` when it references `pkgs.*`. `{ lib, pkgs, ... }:` when it also calls `lib.*`.
 - `lib.mkForce` is used on `boot.kernelPackages` and `boot.loader.grub.enable` in `configuration.nix` for remote hosts because `commonModules/bootloader.nix` sets those values and they must be overridden cleanly.
 - `security.nix` already handles AppArmor, audit, PAM wheel, ASLR, and kexec for all hosts — do not add any of those in host files.
+- `sops.nix` (in `commonModules`) supplies the shared login-password secrets to every host. A new host must be registered as a sops recipient (Step 8) or it cannot decrypt them. Do not add `sops.*` config to host files.
 - `audio.nix` already handles PipeWire for desktop hosts — do not add PipeWire config.
 - Do NOT add `virtualisation.nix`, `gaming.nix`, or `vpn.nix` to the new host entry unless the user explicitly asks — those are optional host-specific modules.
