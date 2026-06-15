@@ -2,7 +2,58 @@
 
 ---
 
-## Session: 2026-06-09 (session 3) — Declarative settings trim in bosko-claude.nix
+## Session: 2026-06-15 (session 4) — Make the repo public via sops-nix secrets
+
+**Duration Estimate**: ~1.5 hours
+**Session Focus**: Make the NixOS config repository public without exposing any sensitive data — by migrating in-repo secrets to sops-nix and scrubbing history.
+
+### What Was Accomplished
+
+- **Full-repo secret scan** — identified the one true in-repo secret (the `bosko`/`natty` `$6$` password hashes in `users.nix`) plus judgment-call items (Oracle endpoint IP, SSH/WG public keys, LAN IPs, UUIDs). Confirmed WG **private** keys were already out of the repo (`/etc/wireguard/private.key`).
+- **Adopted sops-nix** — added the flake input, `dotfiles/common/modules/sops.nix` (in `commonModules`), and `.sops.yaml`. Each host's age recipient key is derived from its existing SSH ed25519 host key via `ssh-to-age`; a personal admin age key was generated at `~/.config/sops/age/keys.txt` (kept out of repo).
+- **Encrypted secrets committed** — `secrets/common.yaml` (both password hashes, `neededForUsers`) encrypted to admin + all hosts; `secrets/hosts/<host>.yaml` (each host's WG private key) encrypted to admin + that host only.
+- **Rewired consumers** — `users.nix` → `hashedPasswordFile`; `vpn.nix` and `hosts/vpn-server/configuration.nix` → `privateKeyFile = config.sops.secrets."wg-private-key".path`.
+- **Verified identity-preserving** — decrypted each WG private key and confirmed its derived pubkey matches the server's registered peer (all 4 MATCH) before any rebuild.
+- **Rebuilt + verified all four hosts** — vpn-server first (canary, passwordless sudo, done over SSH), then gaming/laptop/natalie-laptop (user-run, password sudo). Confirmed via server-side `wg show`: live handshakes on every peer within seconds of each rebuild; `sudo`/login intact everywhere.
+- **History rewrite** — `git filter-repo --replace-text` purged both plaintext hashes from all commits (183 occurrences → 0), force-pushed, and realigned the laptop/natalie clones. A pre-rewrite backup bundle is at `~/nixos-pre-sops-rewrite.bundle` (local only).
+- **Documented + published** — added a "Secrets" section to `README.md`, fixed the VPN bullets, superseded the old "agenix deferred" note, then flipped the repo **public** (`gh repo edit … --visibility public`) after a final clean scan.
+
+### Files Changed
+
+- `flake.nix`, `flake.lock` — sops-nix input; `sops.nix` added to `commonModules`
+- `dotfiles/common/modules/sops.nix` — new; imports sops-nix module, declares shared password secrets
+- `.sops.yaml` — new; recipient map (admin + 4 host age keys)
+- `secrets/common.yaml`, `secrets/hosts/{gaming,laptop,natalie-laptop,vpn-server}.yaml` — new; encrypted
+- `dotfiles/common/modules/users.nix` — `hashedPassword` → `hashedPasswordFile`
+- `dotfiles/common/modules/vpn.nix`, `hosts/vpn-server/configuration.nix` — `privateKeyFile` → sops path
+- `README.md` — new Secrets section, VPN bullet fixes, changelog entries
+
+### Commits This Session
+
+- `a2c2a52` — feat(sops): manage password hashes and WireGuard keys with sops-nix
+- `ab1396d` — docs(readme): document sops-nix secrets setup
+- `af330e2` — docs(readme): mark the 2026-05-20 agenix-deferred note as superseded
+
+### Decisions Made
+
+- **sops-nix over `hashedPasswordFile`-only** — chosen for a self-contained, reproducible public repo (secrets encrypted in-repo) rather than just removing them.
+- **Migrate WG private keys too** (reproducibility) but **leave the endpoint IP in-repo** — it's a public internet endpoint, not a secret, and hiding it (a build-time wg-quick string) would add a VPN failure-mode for no real gain.
+- **Rewrite history** rather than rotate passwords — purges the old hashes from the public-bound history directly.
+- **Per-host least privilege** — each WG key encrypted only to its own host + admin, not shared.
+
+### Issues Encountered
+
+- **Desktop sudo blocks non-interactive ops** — the three desktops require a sudo password, so their WG-key reads and rebuilds had to be user-run in a real terminal (the `!` prefix has no tty for sudo). vpn-server's passwordless sudo let it be driven fully over SSH.
+- **`ssh -t` merged sudo's prompt into the captured key file** — handled by extracting the 43-char base64 key with a regex and validating each before encrypting.
+- **`gh` not authenticated** — `git push` works via SSH key, but the visibility flip needed `gh auth login` (user ran it).
+
+### Remaining / Next Session
+
+- **Back up `~/.config/sops/age/keys.txt`** (admin key) and **delete `~/nixos-pre-sops-rewrite.bundle`** once confident (it contains the old hashes).
+- Optional: rotate the two login passwords for belt-and-suspenders (not required — history is clean).
+- Carried over from prior sessions: rebuild+reboot laptop and natalie-laptop to activate the managed Claude Code policy / Plasma switch; activate SDDM auto-login disable on gaming; interface-scope Avahi mDNS in `printing.nix`.
+
+---
 
 **Duration Estimate**: ~15 minutes
 **Session Focus**: Replace the one-shot `~/.claude/trim-after-managed.sh` script (deleted earlier today) with a permanent, per-rebuild-automatic declarative solution in `bosko-claude.nix`.
