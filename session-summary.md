@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-15 (session 4, continued) — Post-sops skills + fwupd ESP fix
+
+**Focus**: Tooling and follow-ups after the sops/public work — NixOS skills for the new secrets setup, plus fixing gaming's fwupd ESP detection.
+
+### What changed (and why)
+- Built three project-local skills: `add-secret` (sops add/edit/rotate), `fleet-status` (read-only health sweep of all hosts), `secret-scan` (tree + full-history leak scan). Both scripts tested; secret-scan reports clean across 776 commits.
+- Upgraded `new-host` to register a new host as a sops recipient — closes a footgun where a scaffolded host couldn't decrypt the shared password secrets.
+- Reworked the `session-closer` skill toward curating `project-state.md`/README over exhaustive logging, and rotated the 28-entry log (kept ~5 active, archived the rest in `session-summary-archive.md`).
+- Fixed fwupd ESP detection in `firmware.nix`: gaming's ESP has the wrong partition type code, so the old `[fwupd] EspLocation` (wrong config section) was ignored — switched to `uefiCapsuleSettings.OverrideESPMountPoint`. Eval-clean on all four hosts.
+
+### Decisions
+- fwupd: declarative `OverrideESPMountPoint` override (non-destructive) over relabeling the partition type on disk.
+- New skills are project-local (`.claude/skills/`), not global — they're NixOS-specific.
+
+### Issues / surprises
+- Two `fleet-status` bugs caught by actually running it (the `●` status glyph parsed as a unit name; a wrong reboot-vs-staged comparison) — fixed before commit.
+- `EspLocation` and `OverrideESPMountPoint` both exist in fwupd 2.1.4 but in different sections; only the `[uefi_capsule]` one is read by the capsule plugin.
+
+### Next session
+- Rebuild each host to activate the fwupd fix; verify on gaming with `sudo fwupdtool esp-list` (should list the ESP) and a clean `fwupd-refresh`.
+- The rebuild also activates the reworked `session-closer` skill in `~/.claude`.
+- Optional: the second disk (`sda`) GRUB may be probing via `useOSProber` — investigate if an extra boot entry appears.
+
+**Commits**: `f929196..1555a2d` (3 commits)
+
+---
+
 ## Session: 2026-06-15 (session 4) — Make the repo public via sops-nix secrets
 
 **Duration Estimate**: ~1.5 hours
