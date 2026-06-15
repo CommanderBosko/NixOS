@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-15 (session 5) — fwupd ESP: prior fix was a no-op, override removed
+
+**Focus**: Verify the fwupd ESP fix on gaming after rebuild+reboot, and decide whether the remaining warning is worth chasing.
+
+### What changed (and why)
+- Removed the `uefiCapsuleSettings.OverrideESPMountPoint` block from `firmware.nix`. Verified on the running 2.1.4 binaries that this key is dead (only in bash-completion stubs, not in any library), and that `EspLocation` no longer overrides 2.x's partition-type-based ESP enumeration — so the session-4 "fix" never worked. `fwupdtool esp-list` still reported "No ESP or BDP found".
+- Replaced the override with a comment documenting why the warning is intentionally left unaddressed. Dry-run clean (−88 bytes).
+
+### Decisions
+- **Declined the only real fix** (relabel ESP from MBR type `0x0c` → `0xEF` via `parted ... set 1 esp on`). Grounded the call in the actual hardware: ASRock X570 ships no LVFS firmware (`get-updates` → "No updatable devices"), Secure Boot is off (dbx updates moot), and the one updatable device (Samsung 870 EVO) updates over ATA, not the capsule path. Zero benefit vs. touching the boot partition table.
+
+### Issues / surprises
+- The session-4 note claiming `[uefi_capsule] OverrideESPMountPoint` is "the key the plugin actually reads" was wrong — that key is removed in fwupd 2.1.4. Corrected here.
+- Disk is MBR (`dos`), not GPT — relevant if Secure Boot/lanzaboote is ever pursued.
+
+### Next session
+- No fwupd follow-up needed; the warning is cosmetic and documented. Reboot gaming at convenience to drop the override from `/etc/fwupd/fwupd.conf` (already staged via `nh os boot`).
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall.
+
+**Commits**: `c40b702` (1 commit)
+
+---
+
 ## Session: 2026-06-15 (session 4, continued) — Post-sops skills + fwupd ESP fix
 
 **Focus**: Tooling and follow-ups after the sops/public work — NixOS skills for the new secrets setup, plus fixing gaming's fwupd ESP detection.
@@ -215,100 +238,3 @@ None. All three substantive commits built cleanly.
 - **Apply rebuilds on other desktop hosts** (laptop, natalie-laptop) to deploy the managed policy there too.
 
 ---
-
-## Session: 2026-06-05 — natalie-laptop switches to Plasma; FinanceGuru integrated; krohnkite shared; lutris re-enabled
-
-**Duration Estimate**: ~2 hours
-**Session Focus**: Switch natalie-laptop from Cosmic to Plasma 6, integrate the FinanceGuru personal finance app as a desktop package, clean up the krohnkite tiling configuration, and re-enable lutris now that the upstream openldap regression is resolved.
-
-### What Was Accomplished
-
-- **natalie-laptop DE switched to Plasma** — Changed the imported DE module from `cosmic.nix` to `plasma.nix` in natalie-laptop's flake entry in `flake.nix`. `krohnkite` (KWin tiling script) added to `hosts/natalie-laptop/environment.nix`.
-- **krohnkite moved to shared `plasma.nix`** — `krohnkite` extracted from `hosts/natalie-laptop/environment.nix` and added to `dotfiles/common/modules/desktop-environments/plasma.nix` `systemPackages`, so all Plasma hosts (gaming and natalie-laptop) get it automatically. Package list sorted.
-- **FinanceGuru added to desktop hosts** — `financeguru` wired as a flake input (`github:CommanderBosko/FinanceGuru`), installed via `environment.systemPackages` on gaming, laptop, and natalie-laptop. URL first set to `path:` (local) then corrected to `github:` (public repo). Later removed from laptop — not needed there. flake pin bumped to include Stock Tips and Debt Snowball tabs.
-- **lutris re-enabled on gaming** — `gaming.nix` updated to un-comment `lutris`; `flake.lock` bumped to a nixpkgs-unstable rev that includes the binary cache entry for `openldap-2.6.13-i686-linux`. The months-long workaround is resolved.
-
-### Files Changed
-
-- `flake.nix` — switched natalie-laptop DE to `plasma.nix`; added `financeguru` input; added package to three hosts; then removed from laptop
-- `flake.lock` — added financeguru lock entry; bumped nixpkgs-unstable (lutris fix)
-- `hosts/natalie-laptop/environment.nix` — krohnkite added then removed (moved to plasma.nix)
-- `dotfiles/common/modules/desktop-environments/plasma.nix` — added krohnkite to systemPackages; sorted package list
-- `hosts/gaming/environment.nix` — added financeguru package
-- `hosts/laptop/environment.nix` — added then removed financeguru package
-- `dotfiles/common/modules/gaming.nix` — un-commented `lutris`
-
-### Commits This Session
-
-- `b73640b` — refactor(plasma): move krohnkite to shared plasma.nix, sort packages
-- `d33a148` — feat(natalie-laptop): switch DE to Plasma and add krohnkite
-- `c7e2b30` — chore: remove FinanceGuru from laptop, bump flake pin
-- `fc37146` — chore: switch financeguru input to public GitHub URL
-- `d83951a` — feat: add FinanceGuru to all desktop hosts
-- `f62dc5f` — updated flake and lutris is working again
-
-### Decisions Made
-
-- **natalie-laptop on Plasma** — Switched from Cosmic to Plasma 6 to align with the gaming host's DE and share krohnkite tiling configuration without per-host duplication.
-- **krohnkite in shared `plasma.nix`** — Any host using Plasma should get the tiling script; keeping it per-host would require duplication for each future Plasma host.
-- **FinanceGuru removed from laptop** — The personal finance app is best used on the primary desktop (gaming) and natalie-laptop; not needed on the laptop.
-- **lutris re-enabled** — The upstream `openldap-2.6.13-i686-linux` binary cache regression that blocked `lutris` for several months has been resolved in nixpkgs-unstable.
-
-### Issues Encountered
-
-None. All commits applied cleanly.
-
-### Remaining / Next Session
-
-- **Apply rebuild + reboot on natalie-laptop** — activate DE switch to Plasma and FinanceGuru installation.
-- **Apply rebuild on gaming** — activate lutris and FinanceGuru.
-- **AMD card swap on gaming** — remove `nvidia.nix` when physical card arrives.
-
----
-
-## Session: 2026-06-03 — Security audit and hardening: root SSH disabled, auto-login removed
-
-**Duration Estimate**: ~3 hours (single commit session)
-**Session Focus**: Run a multi-agent security review of the full NixOS flake, identify real findings, remediate two of three, and deploy the vpn-server change immediately to confirm the new deploy path (bosko + passwordless sudo) works end-to-end.
-
-### What Was Accomplished
-
-- **Full security audit completed** — Multi-agent review across all six security domains: users/SSH, kernel hardening, networking/firewall, desktop environments, gaming/VFIO. Three real findings were identified; two remediated this session.
-- **Fixed: root SSH login on vpn-server** — Changed `PermitRootLogin` from `"prohibit-password"` to `"no"` in `hosts/vpn-server/configuration.nix`. Added `security.sudo.wheelNeedsPassword = false` so `nixos-rebuild --use-remote-sudo` can operate non-interactively as bosko over SSH without stalling on a password prompt.
-- **Fixed: SDDM auto-login on gaming** — Changed `autoLogin.enable` from `true` to `false` in `hosts/gaming/environment.nix`. Physical access to the gaming machine no longer drops directly into an unauthenticated desktop session.
-- **Updated remote-rebuild skill** — All `root@150.136.232.63` references in `.claude/skills/remote-rebuild/SKILL.md` changed to `bosko@150.136.232.63`; troubleshooting notes updated accordingly.
-- **Cosmetic improvement to users.nix** — Added `# Desktop` / `# Laptop` inline comments to the SSH authorized keys block in `dotfiles/common/modules/users.nix` (only unstaged change at session start).
-- **Deployed to vpn-server** — Used a transitional `root@` deploy (the last time root SSH would work) to push the change that disables root SSH. Post-deploy verification: root SSH is now blocked, `bosko` passwordless sudo confirmed working.
-- **Found but deferred: Avahi mDNS `openFirewall = true`** — `dotfiles/common/modules/printing.nix:12` exposes UDP 5353 on all interfaces. Left unfixed because closing it would break printer discovery. Proper fix is interface-scoped firewall rules; deferred to a future session.
-
-### Files Changed
-
-- `hosts/vpn-server/configuration.nix` — `PermitRootLogin = "no"` (was `"prohibit-password"`); added `security.sudo.wheelNeedsPassword = false`
-- `hosts/gaming/environment.nix` — `autoLogin.enable = false` (was `true`)
-- `.claude/skills/remote-rebuild/SKILL.md` — updated all deploy targets from `root@150.136.232.63` to `bosko@150.136.232.63`
-- `dotfiles/common/modules/users.nix` — added `# Desktop` / `# Laptop` inline comments to authorized_keys block
-
-### Commits This Session
-
-- `cb6105d` — fix(security): disable root SSH on vpn-server and auto-login on gaming
-
-### Decisions Made
-
-- **`PermitRootLogin = "no"` over `"prohibit-password"` on an internet-facing host** — The vpn-server is directly reachable on the public internet (TCP 22 open). `"prohibit-password"` still permits key-based root login, which presents an elevated-privilege attack surface. Removing root SSH entirely and using `bosko` with passwordless sudo is strictly more secure; the deploy path works identically in practice.
-- **Passwordless sudo on vpn-server is acceptable** — The only accounts on the server are root and bosko; bosko requires SSH key auth to reach the machine. An attacker who can SSH as bosko already has the key material needed to be dangerous. `wheelNeedsPassword = false` exists solely to enable non-interactive remote deploys over batch SSH sessions.
-- **Avahi `openFirewall` left as-is** — Interface-scoped firewall rules are the correct fix but require testing to avoid breaking mDNS discovery on the LAN interface. Deferred rather than risking printer discovery breakage on all three desktop hosts.
-- **Auto-login disabled on gaming** — Physical access to the gaming machine is not as controlled as a server rack. Requiring a login credential adds a meaningful barrier for an unattended session.
-
-### Issues Encountered
-
-- None. The security audit, remediation commits, and vpn-server deploy all completed cleanly on the first attempt.
-
-### Remaining / Next Session
-
-- **Avahi `openFirewall` interface scoping** — `dotfiles/common/modules/printing.nix:12`: implement per-interface firewall rules to restrict UDP 5353 to the LAN interface only rather than all interfaces.
-- **Apply rebuilds on desktop hosts** — run `rebuild` + reboot on gaming, laptop, and natalie-laptop to activate the auto-login change (gaming) and other pending config changes.
-- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot.
-- **Re-enable lutris on gaming** — once nixpkgs-unstable ships a binary cache entry for `openldap-2.6.13-i686-linux`, uncomment `lutris` in `gaming.nix`.
-
----
-
