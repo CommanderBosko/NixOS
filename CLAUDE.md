@@ -6,9 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 If you notice you've performed the same multi-step task twice in a session — or if a task involved 4+ steps that could be cleanly reused — proactively offer to create a skill for it. Say something like: "I've done this a few times now — want me to create a skill so you can invoke it with a single phrase?" If the user agrees, invoke the `new-skill` skill to build it interactively. Prefer project-local scope for NixOS-specific workflows, global scope for general-purpose utilities.
 
+## Scope First (Interview)
+
+Before you do any work, use the `/interview` skill to pin down the real goal with me — don't start building from a fuzzy or assumed understanding of the request. Surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before touching the config.
+
 ## Verification Plan
 
 Before you do any work, mention how you could verify the work with the `/verify` skill — state up front how you'll confirm each part actually works before calling it done. For changes to this repo that usually means a `nh os boot /home/bosko/NixOS --dry` (or `flake-check`) to prove the config still evaluates, plus whatever host-specific check applies (service status, journal logs, a rebuild on the affected host). Lay out the plan with the work, not after it.
+
+## Parallelize with Sub-Agents
+
+Once scope and the verification plan are set, spawn as many sub-agents as the goal needs to get it done faster. Independent pieces of work — researching options, searching the tree, scaffolding separate modules, drafting changes across multiple hosts — should run in parallel rather than serially. Fan out aggressively when tasks don't depend on each other; reserve serial work for genuine dependencies. This is a large time saver, so default to delegating breadth-first instead of plodding through everything yourself.
 
 ## Editing Claude Skills
 
@@ -31,7 +39,7 @@ nh os boot /home/bosko/NixOS --dry
 nix flake update
 
 # Garbage collect old generations (keeps 3 builds)
-sudo nix-collect-garbage -d
+nh clean all --keep 3
 ```
 
 These are also available as shell aliases when running as bosko: `rebuild`, `dry-run`, `update`, `cleanup`.
