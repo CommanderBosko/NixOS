@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, config, ... }:
 
 {
   # Bootloader for Oracle Cloud ARM (aarch64 EFI, systemd-boot)
@@ -34,7 +34,7 @@
     wg-quick.interfaces.wg0 = {
       address = [ "10.10.0.1/24" ];
       listenPort = 51820;
-      privateKeyFile = "/etc/wireguard/private.key";
+      privateKeyFile = config.sops.secrets."wg-private-key".path;
 
       # NAT masquerade: rewrite source IP so return traffic knows to come back
       # to the server. FORWARD accept is handled declaratively via trustedInterfaces.
@@ -64,6 +64,9 @@
       ];
     };
   };
+
+  # WireGuard private key, supplied by sops-nix (decrypted to /run/secrets).
+  sops.secrets."wg-private-key".sopsFile = ../../secrets/hosts/vpn-server.yaml;
 
   # Enable IP forwarding for routing client traffic
   boot.kernel.sysctl."net.ipv4.ip_forward" = 1;

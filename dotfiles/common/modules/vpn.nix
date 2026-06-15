@@ -1,10 +1,11 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   # WireGuard client — shared peer/server config for gaming and laptop
   # Each host that imports this must also set:
   #   networking.wg-quick.interfaces.wg0.address = [ "<host-vpn-ip>/24" ];
-  # and provide its private key at /etc/wireguard/private.key
+  # The private key is supplied by sops-nix from secrets/hosts/<host>.yaml,
+  # decrypted at activation to /run/secrets/wg-private-key.
   #
   # VPN subnet: 10.10.0.0/24
   #   vpn-server:  10.10.0.1
@@ -13,8 +14,11 @@
 
   environment.systemPackages = [ pkgs.wireguard-tools ];
 
+  sops.secrets."wg-private-key".sopsFile =
+    ../../../secrets/hosts/${config.networking.hostName}.yaml;
+
   networking.wg-quick.interfaces.wg0 = {
-    privateKeyFile = "/etc/wireguard/private.key";
+    privateKeyFile = config.sops.secrets."wg-private-key".path;
     dns = [ "1.1.1.1" "8.8.8.8" ];
 
     peers = [

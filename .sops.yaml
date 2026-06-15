@@ -1,0 +1,41 @@
+# sops-nix recipient map.
+#
+# - admin: your personal age key at ~/.config/sops/age/keys.txt (never committed).
+#   Lets you edit any secret.
+# - each host: age key derived from its SSH ed25519 host key, so the host can
+#   decrypt the secrets encrypted to it at activation time.
+#
+# common.yaml      -> all hosts (shared login password hashes)
+# hosts/<host>.yaml -> that host only (its WireGuard private key)
+keys:
+  - &admin          age1u87ds7mavxj6hpmwdzmf6had863h3pl5ezmkpx7wx99pgexf3qzqdsnl84
+  - &gaming         age1zqugny5n026jh6q82m85dulc3wuwleysq76qecarf4dchcq4l9vs545sxx
+  - &laptop         age1q0jxkfmwgq5acv5u22u9ka2h0kl2raqjtny2z0y8dzy4s630cvrqn6awy9
+  - &natalie-laptop age1ryfsw95jndacymzv92w98mnavktagqxl2uyff76v5xvrr00fj97sn68el4
+  - &vpn-server     age1mzg5wqvlw9ndlgwpf6g6f67x9wzv59vn2cjdkxckxfqmaygpsqusvvyewk
+
+creation_rules:
+  - path_regex: secrets/common\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *gaming
+          - *laptop
+          - *natalie-laptop
+          - *vpn-server
+
+  - path_regex: secrets/hosts/gaming\.yaml$
+    key_groups:
+      - age: [*admin, *gaming]
+
+  - path_regex: secrets/hosts/laptop\.yaml$
+    key_groups:
+      - age: [*admin, *laptop]
+
+  - path_regex: secrets/hosts/natalie-laptop\.yaml$
+    key_groups:
+      - age: [*admin, *natalie-laptop]
+
+  - path_regex: secrets/hosts/vpn-server\.yaml$
+    key_groups:
+      - age: [*admin, *vpn-server]

@@ -29,6 +29,13 @@
     # FinanceGuru — personal finance desktop app
     financeguru.url = "github:CommanderBosko/FinanceGuru";
 
+    # sops-nix — encrypted secrets committed in-repo (login password hashes,
+    # WireGuard private keys). Lets the repo be public without leaking secrets.
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
@@ -47,6 +54,7 @@
       "${self}/dotfiles/common/modules/nix.nix"
       "${self}/dotfiles/common/modules/security.nix"
       "${self}/dotfiles/common/modules/shell.nix"
+      "${self}/dotfiles/common/modules/sops.nix"
       "${self}/dotfiles/common/modules/users.nix"
     ];
 

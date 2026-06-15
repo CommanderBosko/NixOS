@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   users.users = {
@@ -7,7 +7,7 @@
       shell = pkgs.zsh;
       isNormalUser = true;
       description = "bosko";
-      hashedPassword = "***REDACTED-HASH***";
+      hashedPasswordFile = config.sops.secrets."bosko-hashedPassword".path;
       homeMode = "0700";
       createHome = true;
       extraGroups = [
@@ -38,7 +38,7 @@
       shell = pkgs.zsh;
       isNormalUser = true;
       description = "natty";
-      hashedPassword = "***REDACTED-HASH***";
+      hashedPasswordFile = config.sops.secrets."natty-hashedPassword".path;
       homeMode = "0700";
       createHome = true;
       extraGroups = [
