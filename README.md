@@ -167,20 +167,53 @@ SSH is hardened on gaming and laptop: `PasswordAuthentication = false`, `AllowUs
 
 SSH is fully locked down on vpn-server: `PasswordAuthentication = false`, `PermitRootLogin = "no"` (set 2026-06-03). Remote deploys use `bosko@150.136.232.63` with `security.sudo.wheelNeedsPassword = false`.
 
+## Secrets
+
+Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) and committed to the repo **encrypted**, which is what makes this configuration safe to publish. Plaintext secrets never live in the repo or the Nix store.
+
+| Secret | File | Encrypted to |
+|--------|------|--------------|
+| `bosko` / `natty` login password hashes | `secrets/common.yaml` | admin + all hosts |
+| Each host's WireGuard private key | `secrets/hosts/<host>.yaml` | admin + that host only |
+
+**How it works.** Each host derives its age identity from its existing SSH ed25519 host key (`/etc/ssh/ssh_host_ed25519_key`) — no extra key material is distributed. At activation, `sops-install-secrets` decrypts each secret to `/run/secrets/` (password hashes go to `/run/secrets-for-users/` via `neededForUsers = true`, so they exist before user accounts are created). The recipient map lives in `.sops.yaml`.
+
+Wiring:
+
+- `dotfiles/common/modules/sops.nix` — imports the sops-nix module and declares the shared password secrets (part of `commonModules`)
+- `users.nix` — `hashedPasswordFile = config.sops.secrets."<user>-hashedPassword".path`
+- `vpn.nix` and `hosts/vpn-server/configuration.nix` — `privateKeyFile = config.sops.secrets."wg-private-key".path`
+
+**Admin key.** Editing secrets requires the personal admin age key at `~/.config/sops/age/keys.txt`, kept out of the repo. Back it up — it is the recovery path if a host's SSH host key is ever lost.
+
+```bash
+# Edit a secret (decrypts in $EDITOR, re-encrypts on save)
+sops secrets/common.yaml
+
+# Add a new host as a recipient:
+#   1. derive its age key:   ssh-to-age < ssh_host_ed25519_key.pub
+#   2. add it to .sops.yaml (keys: + the relevant creation_rules)
+#   3. re-encrypt:           sops updatekeys secrets/<file>.yaml
+```
+
+**Intentionally left in plaintext** (not secrets): the VPN endpoint IP, all SSH/WireGuard *public* keys, and LAN/VPN addresses (`10.0.0.x`, `10.10.0.0/24`) — these are public by nature.
+
 ## VPN
 
 WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
 
 - **Server**: Oracle Cloud free-tier ARM VM (`aarch64-linux`, `150.136.232.63`), `10.10.0.1/24`, port 51820
-- **gaming**: `10.10.0.2/32` — private key placed, `wg-quick-wg0` active
-- **laptop**: `10.10.0.3/32` — private key placed, `wg-quick-wg0` active
-- **natalie-laptop**: `10.10.0.4/32` — private key placed, `wg-quick-wg0` active
+- **gaming**: `10.10.0.2/32` — private key via sops, `wg-quick-wg0` active
+- **laptop**: `10.10.0.3/32` — private key via sops, `wg-quick-wg0` active
+- **natalie-laptop**: `10.10.0.4/32` — private key via sops, `wg-quick-wg0` active
 
 All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/0"]`). `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
 
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-06-15** — Adopted [sops-nix](https://github.com/Mic92/sops-nix) so the repo can be made public without leaking secrets (supersedes the 2026-05-20 decision to defer agenix). Login password hashes (`bosko`, `natty`) and all four per-host WireGuard private keys are now encrypted in `secrets/` and consumed via `hashedPasswordFile` / `privateKeyFile`; `users.nix` no longer contains plaintext hashes. Each host decrypts with an age key derived from its SSH ed25519 host key; the admin key stays at `~/.config/sops/age/keys.txt` (out of repo). WireGuard keys verified identity-preserving (derived pubkeys match the server's registered peers) and all four hosts rebuilt with live handshakes confirmed. Git history was rewritten with `git filter-repo` to purge the old plaintext password hashes from all commits. The endpoint IP is intentionally left in-repo (public endpoint, not a secret). See the [Secrets](#secrets) section.
 
 **2026-06-09** — Three sessions of Claude Code policy work. (1) `dotfiles/common/modules/claude-code.nix` created to deploy `/etc/claude-code/managed-settings.json` system-wide; also: `gemini-cli` added to natty's user packages; `nodejs`, `pnpm`, `p7zip`, and `jq` consolidated from per-host `environment.nix` files into `shell.nix`. (2) Rebuilt and rebooted gaming to activate the managed policy; trimmed personal `~/.claude/settings.json` manually using the one-shot trim script, then deleted the script. (3) Replaced the deleted script with a declarative `home.activation.trimClaudeSettings` in `dotfiles/bosko/bosko-claude.nix`: on every rebuild, once the managed file exists, the activation script uses `jq` to strip redundant deny/ask/hooks keys while leaving personal prefs intact. Idempotent. laptop and natalie-laptop still need rebuild+reboot to activate the managed policy.
 
