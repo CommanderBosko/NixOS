@@ -18,6 +18,10 @@ Before you do any work, mention how you could verify the work with the `/verify`
 
 Once scope and the verification plan are set, spawn as many sub-agents as the goal needs to get it done faster. Independent pieces of work — researching options, searching the tree, scaffolding separate modules, drafting changes across multiple hosts — should run in parallel rather than serially. Fan out aggressively when tasks don't depend on each other; reserve serial work for genuine dependencies. This is a large time saver, so default to delegating breadth-first instead of plodding through everything yourself.
 
+## Use Existing Skills First
+
+Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising. This repo ships many task-specific skills (`add-package`, `add-flatpak`, `flake-check`, `nixos-dry-run`, `ssh-host`, `journal`, `update`, and more) — prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
+
 ## Editing Claude Skills
 
 The global Claude Code skills (`interview`, `new-skill`, `git-commit`, `git-push`, `repo-creator`, `session-closer`, `search-pkg`) are **owned by this repo**, not by `~/.claude`. Source lives in `dotfiles/bosko/claude/skills/<name>/SKILL.md`; `dotfiles/bosko/bosko-claude.nix` symlinks each one into `~/.claude/skills/<name>/SKILL.md` via Home Manager `home.file`.
