@@ -16,6 +16,11 @@
 
     # Require wheel group membership at the PAM level for sudo
     pam.services.sudo.requireWheel = true;
+
+    # Show a "*" for each character typed at the sudo password prompt so the
+    # length of what you've entered is visible. (The CVE-2019-18634 pwfeedback
+    # stack overflow was fixed in sudo 1.8.31; current sudo is unaffected.)
+    sudo.extraConfig = "Defaults pwfeedback";
   };
 
   # audit-4.1.2-unstable rejects blank lines in audit.rules, but nixpkgs
