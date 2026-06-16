@@ -64,6 +64,7 @@
       "${self}/dotfiles/common/modules/audio.nix"
       "${self}/dotfiles/common/modules/emulation.nix"
       "${self}/dotfiles/common/modules/home-manager.nix"
+      "${self}/dotfiles/common/modules/jellyfin-client.nix"
       "${self}/dotfiles/common/modules/printing.nix"
       "${self}/dotfiles/common/modules/sddm.nix"
     ];
@@ -93,6 +94,7 @@
           "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/hosts/gaming/virtualisation.nix"
           "${self}/hosts/gaming/brobot.nix"
+          "${self}/hosts/gaming/jellyfin-server.nix"
           "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
