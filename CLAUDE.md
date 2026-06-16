@@ -20,7 +20,7 @@ Once scope and the verification plan are set, spawn as many sub-agents as the go
 
 ## Use Existing Skills First
 
-Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising. This repo ships many task-specific skills (`add-package`, `add-flatpak`, `flake-check`, `nixos-dry-run`, `ssh-host`, `journal`, `update`, and more) — prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
+Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising. This repo ships many task-specific skills (`add-package`, `add-flatpak`, `flake-check`, `nixos-dry-run`, `ssh-host`, `journal`, `update`, `verify-service`, and more) — prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
 
 ## Editing Claude Skills
 
