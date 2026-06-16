@@ -4,6 +4,36 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-16 (session 8) — Jellyfin media server on gaming
+
+**Focus**: Stand up a Jellyfin media server on the gaming host with hardware transcoding, get media reachable from every device, and capture the verification workflow as a skill.
+
+### What changed (and why)
+- **Jellyfin server on gaming** (`hosts/gaming/jellyfin-server.nix`, new): native `services.jellyfin` backed by the spare 1TB Samsung SSD reformatted ext4 and mounted at `/mnt/media` (pinned by UUID). NVENC hardware transcoding via the RTX 3070 (jellyfin user added to `render`/`video`). Firewall scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — no internet-facing ports. Shared `media` group + setgid Movies/Shows dirs so manual file drops stay readable by the scanner.
+- **jellyfin-media-player client** for all desktop hosts (`dotfiles/common/modules/jellyfin-client.nix`, added to `desktopModules` in `flake.nix`).
+- **qBittorrent: service → desktop GUI** (`refactor`): swapped the headless `qbittorrent-nox` service (localhost Web UI, finding H-6) for the `qbittorrent` desktop app, removing the listening Web UI to harden. Added `/mnt/media/downloads` (setgid `bosko:media`) as the save path so finished downloads stay readable by Jellyfin's scanner.
+- **verify-service skill** (`.claude/skills/verify-service/`, new project-local): read-only post-rebuild health sweep for one systemd service on a host (unit active, listening ports, optional mount/data-dir ownership), distilled from the by-hand Jellyfin/qBittorrent verification done this session. Listed in CLAUDE.md.
+- **flake update** (`1a207f3`): routine `flake.lock` bump.
+
+### Decisions
+- **NVENC over CPU transcoding** — RTX 3070 is already in the box; offloads transcoding for free.
+- **Firewall scoped to LAN + wg0, never the internet** — media is reachable from the fleet (incl. remote over the VPN) without exposing Jellyfin publicly.
+- **qBittorrent desktop GUI over the nox service** — eliminates the localhost-bound Web UI as an attack surface rather than hardening it.
+- **Shared `media` group + setgid dirs** — manual drops and torrent downloads both stay group-readable by the Jellyfin scanner without per-file chmod.
+
+### Issues / surprises
+- None blocking. Verification was done by hand, which prompted distilling it into the `verify-service` skill so future service stand-ups are repeatable.
+
+### Verified
+- **Jellyfin confirmed working on all client devices (2026-06-16).** Server up on gaming with NVENC; playback confirmed across the fleet. Recorded as COMPLETE in memory — not a pending item.
+
+### Next session
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override and pick up the rebuilt skills (`claude-rules`, `verify-service`).
+
+**Commits**: `1a207f3..ace485c` (4 commits)
+
+---
+
 ## Session: 2026-06-15 (session 7) — claude-rules: add "Use Existing Skills First" rule
 
 **Focus**: Decide whether the `claude-rules` skill should also enforce skill *usage*, then add the rule.
@@ -92,96 +122,3 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 **Commits**: `f929196..1555a2d` (3 commits)
 
 ---
-
-## Session: 2026-06-15 (session 4) — Make the repo public via sops-nix secrets
-
-**Duration Estimate**: ~1.5 hours
-**Session Focus**: Make the NixOS config repository public without exposing any sensitive data — by migrating in-repo secrets to sops-nix and scrubbing history.
-
-### What Was Accomplished
-
-- **Full-repo secret scan** — identified the one true in-repo secret (the `bosko`/`natty` `$6$` password hashes in `users.nix`) plus judgment-call items (Oracle endpoint IP, SSH/WG public keys, LAN IPs, UUIDs). Confirmed WG **private** keys were already out of the repo (`/etc/wireguard/private.key`).
-- **Adopted sops-nix** — added the flake input, `dotfiles/common/modules/sops.nix` (in `commonModules`), and `.sops.yaml`. Each host's age recipient key is derived from its existing SSH ed25519 host key via `ssh-to-age`; a personal admin age key was generated at `~/.config/sops/age/keys.txt` (kept out of repo).
-- **Encrypted secrets committed** — `secrets/common.yaml` (both password hashes, `neededForUsers`) encrypted to admin + all hosts; `secrets/hosts/<host>.yaml` (each host's WG private key) encrypted to admin + that host only.
-- **Rewired consumers** — `users.nix` → `hashedPasswordFile`; `vpn.nix` and `hosts/vpn-server/configuration.nix` → `privateKeyFile = config.sops.secrets."wg-private-key".path`.
-- **Verified identity-preserving** — decrypted each WG private key and confirmed its derived pubkey matches the server's registered peer (all 4 MATCH) before any rebuild.
-- **Rebuilt + verified all four hosts** — vpn-server first (canary, passwordless sudo, done over SSH), then gaming/laptop/natalie-laptop (user-run, password sudo). Confirmed via server-side `wg show`: live handshakes on every peer within seconds of each rebuild; `sudo`/login intact everywhere.
-- **History rewrite** — `git filter-repo --replace-text` purged both plaintext hashes from all commits (183 occurrences → 0), force-pushed, and realigned the laptop/natalie clones. A pre-rewrite backup bundle is at `~/nixos-pre-sops-rewrite.bundle` (local only).
-- **Documented + published** — added a "Secrets" section to `README.md`, fixed the VPN bullets, superseded the old "agenix deferred" note, then flipped the repo **public** (`gh repo edit … --visibility public`) after a final clean scan.
-
-### Files Changed
-
-- `flake.nix`, `flake.lock` — sops-nix input; `sops.nix` added to `commonModules`
-- `dotfiles/common/modules/sops.nix` — new; imports sops-nix module, declares shared password secrets
-- `.sops.yaml` — new; recipient map (admin + 4 host age keys)
-- `secrets/common.yaml`, `secrets/hosts/{gaming,laptop,natalie-laptop,vpn-server}.yaml` — new; encrypted
-- `dotfiles/common/modules/users.nix` — `hashedPassword` → `hashedPasswordFile`
-- `dotfiles/common/modules/vpn.nix`, `hosts/vpn-server/configuration.nix` — `privateKeyFile` → sops path
-- `README.md` — new Secrets section, VPN bullet fixes, changelog entries
-
-### Commits This Session
-
-- `a2c2a52` — feat(sops): manage password hashes and WireGuard keys with sops-nix
-- `ab1396d` — docs(readme): document sops-nix secrets setup
-- `af330e2` — docs(readme): mark the 2026-05-20 agenix-deferred note as superseded
-
-### Decisions Made
-
-- **sops-nix over `hashedPasswordFile`-only** — chosen for a self-contained, reproducible public repo (secrets encrypted in-repo) rather than just removing them.
-- **Migrate WG private keys too** (reproducibility) but **leave the endpoint IP in-repo** — it's a public internet endpoint, not a secret, and hiding it (a build-time wg-quick string) would add a VPN failure-mode for no real gain.
-- **Rewrite history** rather than rotate passwords — purges the old hashes from the public-bound history directly.
-- **Per-host least privilege** — each WG key encrypted only to its own host + admin, not shared.
-
-### Issues Encountered
-
-- **Desktop sudo blocks non-interactive ops** — the three desktops require a sudo password, so their WG-key reads and rebuilds had to be user-run in a real terminal (the `!` prefix has no tty for sudo). vpn-server's passwordless sudo let it be driven fully over SSH.
-- **`ssh -t` merged sudo's prompt into the captured key file** — handled by extracting the 43-char base64 key with a regex and validating each before encrypting.
-- **`gh` not authenticated** — `git push` works via SSH key, but the visibility flip needed `gh auth login` (user ran it).
-
-### Remaining / Next Session
-
-- **Back up `~/.config/sops/age/keys.txt`** (admin key) and **delete `~/nixos-pre-sops-rewrite.bundle`** once confident (it contains the old hashes).
-- Optional: rotate the two login passwords for belt-and-suspenders (not required — history is clean).
-- Carried over from prior sessions: rebuild+reboot laptop and natalie-laptop to activate the managed Claude Code policy / Plasma switch; activate SDDM auto-login disable on gaming; interface-scope Avahi mDNS in `printing.nix`.
-
----
-
-**Duration Estimate**: ~15 minutes
-**Session Focus**: Replace the one-shot `~/.claude/trim-after-managed.sh` script (deleted earlier today) with a permanent, per-rebuild-automatic declarative solution in `bosko-claude.nix`.
-
-### What Was Accomplished
-
-- **`home.activation.trimClaudeSettings` added to `dotfiles/bosko/bosko-claude.nix`** — Home Manager activation script that, on every rebuild, checks whether `/etc/claude-code/managed-settings.json` exists, and if so, uses `jq` to strip `permissions.deny`, `permissions.ask`, and `hooks` from `~/.claude/settings.json` while leaving `permissions.allow`, `model`, and `enabledPlugins` intact. The file stays writable so interactive `/model` and plugin toggles persist across sessions. Idempotent: if the target keys are already absent, `jq -e` exits non-zero and the trim is skipped. No-op until the managed file exists.
-- **Module signature updated** — `{ self, ... }` changed to `{ self, pkgs, lib, ... }` to bring in `pkgs.jq`, `pkgs.coreutils`, and `lib.hm.dag`.
-- **Replaces the deleted one-shot trim script** — `~/.claude/trim-after-managed.sh` was deleted earlier this session after running successfully on gaming. This activation script provides the same cleanup automatically on all future rebuilds.
-- **Scoped to bosko only** — Lives in `dotfiles/bosko/bosko-claude.nix`, which natty does not import. If natty ever starts using Claude Code, the trim logic can be added for her then.
-- **Verified via dry-run** — `nh os boot . --dry` evaluated cleanly; activation-script node present in the build graph. jq logic unit-tested for both the no-op case (already-clean file) and the trim case (keys present and correctly removed).
-
-### Files Changed
-
-- `dotfiles/bosko/bosko-claude.nix` — updated module signature; added `home.activation.trimClaudeSettings` (24 lines)
-
-### Commits This Session
-
-- `af831b6` — feat(bosko): replace trim script with declarative HM activation script
-
-### Decisions Made
-
-- **HM activation script over a systemd service or login hook** — Activation runs in the correct user context, is guaranteed to execute on every generation switch, and integrates cleanly with the HM DAG (`entryAfter [ "writeBoundary" ]`). No separate unit file needed.
-- **Scoped to bosko only** — natty does not use Claude Code; no managed file exists for her. Adding the trim logic to a shared module would be premature.
-- **`jq -e` for the conditional check** — Skips temp-file creation and `mv` entirely when the file is already clean, avoiding spurious writes to `settings.json`.
-
-### Issues Encountered
-
-None. Dry-run clean; jq logic verified for both the no-op and trim paths.
-
-### Remaining / Next Session
-
-- **Apply rebuild + reboot on gaming** — activates the new trim activation script and the SDDM auto-login disable committed 2026-06-03; trim will also run automatically on all future rebuilds.
-- **Apply rebuild + reboot on laptop** — activates managed Claude Code policy, package consolidation, and other pending changes.
-- **Apply rebuild + reboot on natalie-laptop** — activates DE switch to Plasma, managed Claude Code policy, FinanceGuru, and other pending changes.
-- **Interface-scope Avahi mDNS firewall** — replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface.
-- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list.
-
----
-

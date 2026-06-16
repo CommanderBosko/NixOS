@@ -1,8 +1,10 @@
 # NixOS Project State
 
-_Last updated: 2026-06-15 (session 7)_
+_Last updated: 2026-06-16 (session 8)_
 
 ## Current Project State
+
+**Jellyfin media server live on gaming — confirmed working on all devices (2026-06-16, session 8).** New `hosts/gaming/jellyfin-server.nix` runs native `services.jellyfin` backed by the spare 1TB Samsung SSD (reformatted ext4, mounted at `/mnt/media`, pinned by UUID), with NVENC hardware transcoding via the RTX 3070 (jellyfin user in `render`/`video`). Firewall is scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — **no internet-facing ports**. A shared `media` group with setgid Movies/Shows dirs keeps manual drops readable by the scanner. `jellyfin-media-player` was added to `desktopModules` (`dotfiles/common/modules/jellyfin-client.nix`) so every desktop host ships the client. The user **confirmed playback on all client devices on 2026-06-16** — this is COMPLETE, not a pending item. In the same session, the headless `qbittorrent-nox` service (localhost Web UI, finding H-6) was replaced with the `qbittorrent` desktop GUI app to drop the listening Web UI, saving to `/mnt/media/downloads` (setgid `bosko:media`) so finished torrents stay readable by Jellyfin. A new project-local **`verify-service`** skill (read-only post-rebuild service health sweep) was distilled from the by-hand verification done this session. Commits `1a207f3..ace485c` (4), all pushed.
 
 **`claude-rules` skill gained a fourth standing rule (2026-06-15, session 7).** Added **Use Existing Skills First** to the global `claude-rules` skill source (`dotfiles/bosko/claude/skills/claude-rules/SKILL.md`) and to this repo's `CLAUDE.md`: reach for an existing skill before doing a task by hand. The skill's count/ordering and Step-2 heading-match list were updated so the new section is detected and inserted last. It is distinct from the existing "Skill Awareness" section (which is about *authoring* a skill when a pattern repeats) — this one is about *using* one that already exists. Committed (`411acfc`). The skill's `SKILL.md` only reaches `~/.claude` after a rebuild (it's a `/nix/store` symlink); the `CLAUDE.md` change is live now.
 
@@ -64,7 +66,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; Ollama CUDA + Hermes Agent (mistral-nemo:12b) deployed; **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; **Jellyfin media server live** (`/mnt/media`, NVENC, LAN+wg0-only firewall) — confirmed working on all devices 2026-06-16; **qBittorrent desktop GUI** (replaced nox service); **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; `wg-quick-wg0` running; dbus-broker COMPLETE; **managed Claude Code policy pending** (rebuild+reboot needed) | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; DNS conflict fixed; dbus-broker COMPLETE; **DE switched to Plasma** (rebuild+reboot needed); **managed Claude Code policy pending** (rebuild+reboot needed) | plasma.nix (pending rebuild) |
