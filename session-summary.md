@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-15 (session 7) — claude-rules: add "Use Existing Skills First" rule
+
+**Focus**: Decide whether the `claude-rules` skill should also enforce skill *usage*, then add the rule.
+
+### What changed (and why)
+- Added a fourth standing rule, **Use Existing Skills First**, to the `claude-rules` skill source (`dotfiles/bosko/claude/skills/claude-rules/SKILL.md`) and to this repo's `CLAUDE.md`. The rule: reach for an existing skill before doing a task by hand. Rationale — the existing three rules cover scope → verify → parallelize but say nothing about *consuming* the tooling already built, and this repo ships ~30 task-specific skills that are easy to reimplement by accident.
+- Updated the skill's count (three → four), canonical ordering, and the Step-2 heading-match list so the new section is detected and inserted last.
+- The CLAUDE.md variant names concrete repo skills and chains back to the existing "Skill Awareness" (create-a-skill) section — consume vs. author.
+
+### Decisions
+- Kept the new rule distinct from "Skill Awareness": that one is about *authoring* a skill when a pattern repeats; this one is about *using* one that already exists. They complement rather than duplicate.
+
+### Issues / surprises
+- None. The skill's `SKILL.md` change won't reach `~/.claude` until a rebuild (it's a `/nix/store` symlink); the `CLAUDE.md` change is live immediately.
+
+### Next session
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override (and to pick up the rebuilt claude-rules skill).
+
+**Commits**: `411acfc` (1 commit)
+
+---
+
 ## Session: 2026-06-15 (session 6) — ssh.nix famdash login fix
 
 **Focus**: Correct an incorrect SSH host login in the shared ssh config.
@@ -163,95 +185,3 @@ None. Dry-run clean; jq logic verified for both the no-op and trim paths.
 
 ---
 
-## Session: 2026-06-09 — Claude Code managed policy activated; personal settings trimmed
-
-**Duration Estimate**: ~30 minutes
-**Session Focus**: Activate the NixOS-managed Claude Code policy deployed in the previous session, verify it was live, then trim the now-redundant duplicate rules from the personal `~/.claude/settings.json`.
-
-### What Was Accomplished
-
-- **Rebuilt and rebooted to activate the managed Claude Code policy** — The `dotfiles/common/modules/claude-code.nix` module (committed as `92e0358`) deploys `/etc/claude-code/managed-settings.json` system-wide via `environment.etc`. After rebooting, confirmed the managed file was present and active.
-- **Ran `~/.claude/trim-after-managed.sh`** — The trim script removed from `~/.claude/settings.json` all permission rules (deny/ask) and the fork bomb `PreToolUse` hook that were now redundant, because those same rules are enforced at the system level via the managed file. The personal settings file now contains only personal preferences: the `allow` permission list, `enabledPlugins`, and `model`.
-- **Backup saved** — The pre-trim settings were backed up to `~/.claude/settings.json.bak.1781041160` before modification.
-- **Trim script deleted** — The one-shot trim script was deleted per the user's request after successful execution.
-
-### Files Changed
-
-All changes were outside the git repo:
-
-- `~/.claude/settings.json` — trimmed: deny/ask permission rules and fork bomb hook removed; only personal prefs remain
-- `~/.claude/settings.json.bak.1781041160` — backup of pre-trim settings (created by trim script)
-- `~/.claude/trim-after-managed.sh` — deleted after use
-
-### Commits This Session
-
-None. The repo was clean at session start. All work was on files outside `/home/bosko/NixOS`.
-
-### Decisions Made
-
-- **Personal settings file should only hold personal preferences** — Now that deny/ask rules and the fork bomb hook are enforced at the system level (via the managed file that applies to all users on all rebuilt hosts), duplicating them in the personal file adds maintenance noise. The managed file takes precedence and cannot be overridden by the personal file, so the personal copies were vestigial.
-- **Trim script is single-use** — Once applied, there is no reason to keep the script. Deleted to keep `~/.claude/` clean.
-
-### Issues Encountered
-
-None. The managed file was present and correctly formatted after the reboot. The trim script ran cleanly.
-
-### Remaining / Next Session
-
-- **Apply rebuilds on laptop and natalie-laptop** — to deploy the managed Claude Code policy on those hosts.
-- **Apply rebuilds on desktop hosts** — gaming (activates auto-login disable), laptop, and natalie-laptop; remove hand-maintained `~/.ssh/config` on each host afterward.
-- **Interface-scope Avahi mDNS firewall** — replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface.
-- **AMD card swap on gaming** — when the physical card arrives, remove `nvidia.nix` from gaming's module list; run `rebuild` and reboot.
-- **Re-enable `lutris` on gaming** — once `openldap-2.6.13-i686-linux` has a binary cache entry in nixpkgs-unstable.
-
----
-
-## Session: 2026-06-09 (earlier) — Managed Claude Code policy; natty gets gemini-cli; package consolidation
-
-**Duration Estimate**: ~1.5 hours
-**Session Focus**: Deploy a NixOS-managed Claude Code settings file that enforces security policy globally across all hosts, add gemini-cli for the natty user, and consolidate common packages from per-host environment files into the shared shell module.
-
-### What Was Accomplished
-
-- **`dotfiles/common/modules/claude-code.nix` created** — New NixOS module that deploys `/etc/claude-code/managed-settings.json` via `environment.etc`. The managed file encodes deny rules for destructive commands (`rm -rf`, `mkfs`, `dd`, etc.), ask rules for sensitive operations (`git push --force`, `sudo` commands, etc.), and a `PreToolUse` fork bomb guard using `jq` pinned to its Nix store path so it resolves regardless of `PATH`. Added to `commonModules` in `flake.nix` so all five hosts share the enforced, tamper-resistant policy. Managed settings layer over each user's writable `~/.claude/settings.json`; users cannot override managed rules.
-- **`gemini-cli` added to natty's user packages** — `pkgs.gemini-cli` added to `users.users.natty.packages` in `dotfiles/common/modules/users.nix`, mirroring bosko's existing package.
-- **Package consolidation into `shell.nix`** — `nodejs`, `pnpm`, and `p7zip` moved out of per-host `environment.nix` files (gaming, laptop, natalie-laptop) and into `dotfiles/common/modules/shell.nix` `systemPackages`. `jq` also added. These now apply consistently across all hosts instead of being duplicated.
-- **Flake inputs bumped** — Four `flake.lock` updates (2026-06-07 and 2026-06-09) bumped nixpkgs-unstable, home-manager, nix-flatpak, and other inputs.
-
-### Files Changed
-
-- `dotfiles/common/modules/claude-code.nix` — new; 101-line module deploying managed-settings.json with deny/ask rules and fork bomb hook
-- `flake.nix` — added `claude-code.nix` to `commonModules` list
-- `dotfiles/common/modules/users.nix` — added `pkgs.gemini-cli` to `users.users.natty.packages`
-- `dotfiles/common/modules/shell.nix` — added `jq`, `nodejs`, `pnpm`, `p7zip` to `systemPackages`
-- `hosts/gaming/environment.nix` — removed `nodejs`, `pnpm`, `p7zip` (now in shell.nix)
-- `hosts/laptop/environment.nix` — removed `nodejs`, `pnpm` (now in shell.nix)
-- `hosts/natalie-laptop/environment.nix` — removed `p7zip` (now in shell.nix)
-- `flake.lock` — updated inputs (four bump commits)
-
-### Commits This Session
-
-- `26635e4` — refactor(packages): consolidate node toolchain, jq, p7zip into shell.nix
-- `8105995` — feat(users): add gemini-cli to natty's user packages
-- `92e0358` — feat(claude-code): enforce Claude Code policy via managed settings
-- `1870d93` — Revert "chore(memory): add nixos-agent memory to repo for cross-machine sharing"
-- `b3ba202` — chore(memory): add nixos-agent memory to repo for cross-machine sharing
-- `fbddcb0`, `f6ef70a`, `1bf7d9c`, `24efd1f` — flake lock bumps (2026-06-07 – 2026-06-09)
-
-### Decisions Made
-
-- **`jq` pinned to its Nix store path in managed-settings.json** — The `PreToolUse` fork bomb hook runs in a restricted environment where `$PATH` may not include `jq`. Interpolating the absolute store path at build time ensures the hook resolves regardless of shell environment.
-- **Managed settings via `environment.etc`** — Using `environment.etc."claude-code/managed-settings.json".text` generates the file at activation time from the Nix expression. The file content is always in sync with the flake; no manual file management needed.
-- **Package consolidation to `shell.nix` `commonModules`** — `nodejs`, `pnpm`, and `p7zip` are general-purpose tools useful on any machine. Moving them removes three-way duplication and ensures consistency across hosts.
-
-### Issues Encountered
-
-None. All three substantive commits built cleanly.
-
-### Remaining / Next Session
-
-- **Rebuild and reboot to activate managed policy** — until then, the personal settings still have the old redundant rules.
-- **Trim personal `~/.claude/settings.json`** — after confirming the managed file is active, run `~/.claude/trim-after-managed.sh` to remove duplicate rules.
-- **Apply rebuilds on other desktop hosts** (laptop, natalie-laptop) to deploy the managed policy there too.
-
----

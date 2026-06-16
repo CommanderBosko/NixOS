@@ -1,8 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-06-15 (session 5)_
+_Last updated: 2026-06-15 (session 7)_
 
 ## Current Project State
+
+**`claude-rules` skill gained a fourth standing rule (2026-06-15, session 7).** Added **Use Existing Skills First** to the global `claude-rules` skill source (`dotfiles/bosko/claude/skills/claude-rules/SKILL.md`) and to this repo's `CLAUDE.md`: reach for an existing skill before doing a task by hand. The skill's count/ordering and Step-2 heading-match list were updated so the new section is detected and inserted last. It is distinct from the existing "Skill Awareness" section (which is about *authoring* a skill when a pattern repeats) — this one is about *using* one that already exists. Committed (`411acfc`). The skill's `SKILL.md` only reaches `~/.claude` after a rebuild (it's a `/nix/store` symlink); the `CLAUDE.md` change is live now.
+
+**ssh.nix famdash login corrected (2026-06-15, session 6).** `dotfiles/common/configs/ssh.nix` `famdash` host: `User = "natalie"` → `User = "natty"` (the valid account). Committed `5a5b58e`.
 
 The configuration manages five NixOS hosts from a single flake. **The repository is now public** (`github.com/CommanderBosko/NixOS`). The WireGuard VPN is fully deployed and operational: Oracle Cloud ARM vpn-server is live, all three client hosts (gaming, laptop, natalie-laptop) have the shared `vpn.nix` module imported, and each host's private key is now supplied by sops-nix (encrypted in-repo). All three client interfaces are active.
 
