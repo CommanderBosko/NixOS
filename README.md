@@ -217,6 +217,8 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 ## Recent Changes
 
+**2026-06-16 (later)** — Enabled sudo **password masking** fleet-wide: `security.sudo.extraConfig = "Defaults pwfeedback";` in `dotfiles/common/modules/security.nix` (part of `commonModules`) so the sudo prompt now prints a `*` per typed character. The historical pwfeedback CVE (CVE-2019-18634) is fixed in the shipped sudo, noted inline. Confirmed working on gaming.
+
 **2026-06-16** — Stood up a **Jellyfin media server** on gaming (`hosts/gaming/jellyfin-server.nix`): native `services.jellyfin` backed by the spare 1TB Samsung SSD (ext4, mounted at `/mnt/media`, pinned by UUID), NVENC hardware transcoding via the RTX 3070, and a firewall scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — no internet-facing ports. A shared `media` group with setgid library dirs keeps manual drops readable by the scanner. `jellyfin-media-player` added to `desktopModules` so every desktop host ships the client. **Confirmed working on all devices.** Replaced the headless `qbittorrent-nox` service with the `qbittorrent` desktop GUI app (drops the listening Web UI; saves to `/mnt/media/downloads` so finished torrents stay scannable). Added a project-local `verify-service` skill — a read-only post-rebuild service health sweep — distilled from this session's by-hand verification.
 
 **2026-06-15 (later)** — Added a fourth standing workflow rule, **Use Existing Skills First**, to the global `claude-rules` skill and to `CLAUDE.md`: prefer an existing skill over doing a task by hand (complements the existing "Skill Awareness" create-a-skill guidance). Also corrected the `famdash` SSH host login in `dotfiles/common/configs/ssh.nix` (`natalie` → `natty`).

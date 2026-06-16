@@ -1,8 +1,10 @@
 # NixOS Project State
 
-_Last updated: 2026-06-16 (session 8)_
+_Last updated: 2026-06-16 (session 9)_
 
 ## Current Project State
+
+**Sudo password masking enabled fleet-wide (2026-06-16, session 9).** Added `security.sudo.extraConfig = "Defaults pwfeedback";` to `dotfiles/common/modules/security.nix` so the sudo prompt prints a `*` per typed character — the entered length is now visible. Because `security.nix` is in `commonModules`, this applies to all hosts. A comment notes CVE-2019-18634 (the historical `pwfeedback` stack overflow) is fixed in sudo ≥ 1.8.31, so current sudo is unaffected. Dry-run clean (regenerated `sudoers`, +10.4 KiB, no kernel/service changes). The user ran `switch` on gaming and **confirmed the `*` masking works**; committed and pushed (`eeb03bc`).
 
 **Jellyfin media server live on gaming — confirmed working on all devices (2026-06-16, session 8).** New `hosts/gaming/jellyfin-server.nix` runs native `services.jellyfin` backed by the spare 1TB Samsung SSD (reformatted ext4, mounted at `/mnt/media`, pinned by UUID), with NVENC hardware transcoding via the RTX 3070 (jellyfin user in `render`/`video`). Firewall is scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — **no internet-facing ports**. A shared `media` group with setgid Movies/Shows dirs keeps manual drops readable by the scanner. `jellyfin-media-player` was added to `desktopModules` (`dotfiles/common/modules/jellyfin-client.nix`) so every desktop host ships the client. The user **confirmed playback on all client devices on 2026-06-16** — this is COMPLETE, not a pending item. In the same session, the headless `qbittorrent-nox` service (localhost Web UI, finding H-6) was replaced with the `qbittorrent` desktop GUI app to drop the listening Web UI, saving to `/mnt/media/downloads` (setgid `bosko:media`) so finished torrents stay readable by Jellyfin. A new project-local **`verify-service`** skill (read-only post-rebuild service health sweep) was distilled from the by-hand verification done this session. Commits `1a207f3..ace485c` (4), all pushed.
 
@@ -66,7 +68,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; **Jellyfin media server live** (`/mnt/media`, NVENC, LAN+wg0-only firewall) — confirmed working on all devices 2026-06-16; **qBittorrent desktop GUI** (replaced nox service); **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; **sudo pwfeedback `*` masking live** (switched 2026-06-16); binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; **Jellyfin media server live** (`/mnt/media`, NVENC, LAN+wg0-only firewall) — confirmed working on all devices 2026-06-16; **qBittorrent desktop GUI** (replaced nox service); **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; `wg-quick-wg0` running; dbus-broker COMPLETE; **managed Claude Code policy pending** (rebuild+reboot needed) | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; DNS conflict fixed; dbus-broker COMPLETE; **DE switched to Plasma** (rebuild+reboot needed); **managed Claude Code policy pending** (rebuild+reboot needed) | plasma.nix (pending rebuild) |
@@ -103,7 +105,6 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **Apply rebuilds on laptop and natalie-laptop** — run `rebuild` + reboot on both hosts to activate: managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru package, package consolidation changes; remove old hand-maintained `~/.ssh/config` on each host afterward
 - **Apply rebuild on gaming** — reboot to activate SDDM auto-login disable (committed 2026-06-03 but not yet rebooted)
 - **Interface-scope Avahi mDNS firewall** — `dotfiles/common/modules/printing.nix:12`: replace `openFirewall = true` with per-interface rules so UDP 5353 is only reachable on the LAN interface, not on all interfaces
-- **Verify Hermes Agent operational post-rebuild** — confirm Ollama pulls `mistral-nemo:12b`, `services.hermes-agent` starts cleanly, and the `hermes` CLI works as bosko
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
 
@@ -195,7 +196,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 1. **Apply rebuild + reboot on laptop**: activate managed Claude Code policy, package consolidation, and other pending changes. Remove old hand-maintained `~/.ssh/config` afterward.
 2. **Apply rebuild + reboot on natalie-laptop**: activate DE switch to Plasma, managed Claude Code policy, FinanceGuru package, and other pending changes. Remove old `~/.ssh/config` afterward.
-3. **Apply rebuild + reboot on gaming**: activate SDDM auto-login disable (committed 2026-06-03); verify Hermes Agent and Ollama start cleanly post-rebuild.
+3. **Apply rebuild + reboot on gaming**: activate SDDM auto-login disable (committed 2026-06-03).
 4. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
 5. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
 6. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
