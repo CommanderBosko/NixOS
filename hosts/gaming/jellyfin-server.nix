@@ -47,8 +47,9 @@
   # Library folder layout the Jellyfin scanner expects. setgid (2775) so new
   # files inherit the media group; owned by bosko so manual drops are writable.
   systemd.tmpfiles.rules = [
-    "d /mnt/media        2775 bosko media - "
-    "d /mnt/media/Movies 2775 bosko media - "
-    "d /mnt/media/Shows  2775 bosko media - "
+    "d /mnt/media           2775 bosko media - "
+    "d /mnt/media/Movies    2775 bosko media - "
+    "d /mnt/media/Shows     2775 bosko media - "
+    "d /mnt/media/downloads 2775 bosko media - " # qBittorrent save path
   ];
 }

@@ -7,18 +7,6 @@
     displayManager = {
       autoLogin.enable = false;
     };
-
-    # Enable Qbittorrent (Web UI bound to localhost only — H-6)
-    qbittorrent = {
-      enable = true;
-      serverConfig = {
-        Preferences = {
-          WebUI = {
-            Address = "127.0.0.1";
-          };
-        };
-      };
-    };
   };
 
   # Hardware
@@ -66,6 +54,7 @@
     obs-studio
     onlyoffice-desktopeditors
     qalculate-qt
+    qbittorrent
     tmux
     tor-browser
     vesktop
