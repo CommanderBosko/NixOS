@@ -37,7 +37,7 @@ The configuration manages five NixOS hosts from a single flake. **The repository
 **Security hardening pass completed 2026-06-03.** A multi-agent security audit found three real findings. Two were remediated immediately:
 
 1. **Root SSH on vpn-server disabled** (`hosts/vpn-server/configuration.nix`) — `PermitRootLogin` set to `"no"`. `security.sudo.wheelNeedsPassword = false` added so `nixos-rebuild --use-remote-sudo` works non-interactively as `bosko`. Deployed and verified: root SSH is blocked; passwordless sudo for bosko confirmed working.
-2. **SDDM auto-login on gaming disabled** (`hosts/gaming/environment.nix`) — `autoLogin.enable = false`. A rebuild + reboot on gaming is required to activate this change.
+2. **SDDM auto-login on gaming disabled** (`hosts/gaming/environment.nix`) — `autoLogin.enable = false`. Activated on gaming and confirmed working — DONE, not pending.
 3. **Avahi mDNS `openFirewall = true` in printing.nix** — deferred; closing it breaks printer discovery. Proper fix (interface-scoped firewall rules) is tracked in Known Issues.
 
 The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` instead of `root@150.136.232.63`.
@@ -68,7 +68,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 | Host | Status | DE |
 |------|--------|----|
-| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; **sudo pwfeedback `*` masking live** (switched 2026-06-16); binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; **Jellyfin media server live** (`/mnt/media`, NVENC, LAN+wg0-only firewall) — confirmed working on all devices 2026-06-16; **qBittorrent desktop GUI** (replaced nox service); **auto-login disabled** (rebuild+reboot pending to activate); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
+| `gaming` | **LIVE** — VPN client active (full-tunnel); private key via sops; **sudo pwfeedback `*` masking live** (switched 2026-06-16); binfmt/aarch64 emulation for offline ARM builds; dbus-broker COMPLETE; **Jellyfin media server live** (`/mnt/media`, NVENC, LAN+wg0-only firewall) — confirmed working on all devices 2026-06-16; **qBittorrent desktop GUI** (replaced nox service); **SDDM auto-login disabled** (active/confirmed); **managed Claude Code policy active** (rebuild+reboot done 2026-06-09); personal settings.json trimmed; **declarative trim script in bosko-claude.nix** (committed; next rebuild will also apply trim automatically) | plasma.nix |
 | `laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; `wg-quick-wg0` running; dbus-broker COMPLETE; **managed Claude Code policy pending** (rebuild+reboot needed) | niri.nix |
 | `server` | **DEFERRED** — placeholder removed; no physical hardware yet; re-add via `/new-host` when hardware arrives | — |
 | `natalie-laptop` | **LIVE** — VPN client active (full-tunnel); private key via sops; DNS conflict fixed; dbus-broker COMPLETE; **DE switched to Plasma** (rebuild+reboot needed); **managed Claude Code policy pending** (rebuild+reboot needed) | plasma.nix (pending rebuild) |
@@ -103,7 +103,6 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 ### Short-term (next 1-3 sessions)
 
 - **Apply rebuilds on laptop and natalie-laptop** — run `rebuild` + reboot on both hosts to activate: managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru package, package consolidation changes; remove old hand-maintained `~/.ssh/config` on each host afterward
-- **Apply rebuild on gaming** — reboot to activate SDDM auto-login disable (committed 2026-06-03 but not yet rebooted)
 - **Interface-scope Avahi mDNS firewall** — `dotfiles/common/modules/printing.nix:12`: replace `openFirewall = true` with per-interface rules so UDP 5353 is only reachable on the LAN interface, not on all interfaces
 - **AMD card swap on gaming** — when the physical card is swapped, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot
 - **Re-add `server` host when hardware arrives** — use `/new-host` skill to scaffold; the pinning to `nixpkgs-25.05` via `nixpkgs-stable` input is the established pattern
@@ -125,7 +124,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **krohnkite added to shared `plasma.nix` (2026-06-05)** — Any Plasma host should get the tiling script automatically; keeping it per-host creates duplication. Added directly to `plasma.nix` `systemPackages`.
 - **lutris re-enabled (2026-06-03)** — The `openldap-2.6.13-i686-linux` binary cache regression that blocked `lutris` since May 2026 is resolved in nixpkgs-unstable. Un-commented in `gaming.nix` and flake lock bumped.
 - **Root SSH disabled on vpn-server (2026-06-03)** — `PermitRootLogin = "no"` replaces `"prohibit-password"`. Rationale: the server is internet-facing (TCP 22 open); key-based root login still presents an elevated-privilege surface. `bosko` with passwordless sudo is the new deploy path. `wheelNeedsPassword = false` is safe because bosko requires SSH key auth to reach the machine at all.
-- **SDDM auto-login disabled on gaming (2026-06-03)** — `autoLogin.enable = false`. Gaming is a physically accessible workstation; an unauthenticated session from physical access is a meaningful risk. Rebuild + reboot required to activate.
+- **SDDM auto-login disabled on gaming (2026-06-03)** — `autoLogin.enable = false`. Gaming is a physically accessible workstation; an unauthenticated session from physical access is a meaningful risk. Now active on gaming and confirmed working.
 - **Avahi `openFirewall` deferred (2026-06-03)** — Closing UDP 5353 would break mDNS-based printer discovery on all three desktop hosts. The correct fix (interface-scoped rules) requires careful testing. Accepted as a known risk for now; tracked in Known Issues.
 - **remote-rebuild skill updated to bosko@ (2026-06-03)** — All skill documentation now targets `bosko@150.136.232.63`. The old `root@` path is permanently blocked as of this session's deploy.
 - **`mistral-nemo:12b` selected as Hermes Agent model (2026-05-26)** — The only evaluated model satisfying all three constraints: 128K context (above Hermes Agent's hard 64K minimum), excellent tool-calling support, and ~7GB Q4 quantisation within the RTX 3070's 8GB VRAM. `qwen2.5:7b` (32K context), `llama3.1:8b` (poor tool-calling), and `qwen2.5:14b` (~9GB, VRAM OOM) were all rejected. `hermes-3-llama-3.1:8b` was rejected by Hermes Agent's context-window gate at startup.
@@ -187,7 +186,6 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 ## Known Issues / Tech Debt
 
 - **Avahi mDNS `openFirewall = true` in printing.nix** — `dotfiles/common/modules/printing.nix:12` exposes UDP 5353 on all interfaces (not just the LAN interface). Closing it would break mDNS-based printer discovery. Proper fix: interface-scoped firewall rules (e.g., `networking.firewall.interfaces.<lan-if>.allowedUDPPorts = [ 5353 ]`). Deferred from 2026-06-03 security audit.
-- **gaming auto-login change not yet activated** — `autoLogin.enable = false` is committed (2026-06-03) but requires a `rebuild` + reboot on the gaming host to take effect.
 - **laptop and natalie-laptop pending multiple rebuild activations** — Several changes require `rebuild` + reboot: managed Claude Code policy, natalie-laptop DE switch to Plasma, FinanceGuru package, package consolidation.
 - **dbus-broker journal warnings are benign** — After the dbus-broker transition, three warning classes appear in journald: duplicate dbus service name entries (stricter parser), `Invalid group-name 'netdev'` in avahi-dbus.conf, `Invalid user-name 'systemd-timesync'` in timesync1.conf. All confirmed harmless; services function normally.
 - **`server` host has no hardware** — Removed placeholder from flake; will be re-added via `/new-host` when physical hardware is available.
@@ -196,7 +194,6 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 1. **Apply rebuild + reboot on laptop**: activate managed Claude Code policy, package consolidation, and other pending changes. Remove old hand-maintained `~/.ssh/config` afterward.
 2. **Apply rebuild + reboot on natalie-laptop**: activate DE switch to Plasma, managed Claude Code policy, FinanceGuru package, and other pending changes. Remove old `~/.ssh/config` afterward.
-3. **Apply rebuild + reboot on gaming**: activate SDDM auto-login disable (committed 2026-06-03).
-4. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
-5. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
-6. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.
+3. **Interface-scope Avahi mDNS firewall**: edit `dotfiles/common/modules/printing.nix` to replace `services.avahi.openFirewall = true` with interface-scoped rules restricting UDP 5353 to the LAN interface only.
+4. **AMD card swap on gaming**: when the physical card arrives, remove `nvidia.nix` from gaming's module list in `flake.nix`; run `rebuild` in terminal and reboot; verify `amd.nix` is sufficient on its own.
+5. **Re-add `server` host when hardware arrives**: use `/new-host` skill to scaffold; pin to `nixpkgs-stable` (`nixos-25.05`) using the established pattern from vpn-server.

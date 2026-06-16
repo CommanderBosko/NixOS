@@ -22,7 +22,7 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - User ran `switch` on gaming and confirmed the `*` masking works at the sudo prompt.
 
 ### Next session
-- Same standing rebuild backlog as session 8 (laptop + natalie-laptop activations; gaming auto-login reboot).
+- Standing backlog: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall. (gaming SDDM auto-login is already disabled and confirmed — not pending.)
 
 **Commits**: `eeb03bc` (1 commit)
 
