@@ -33,7 +33,7 @@
 
       "famdash" = {
         Hostname = "10.0.0.21";
-        User = "natalie";
+        User = "natty";
       };
     };
   };
