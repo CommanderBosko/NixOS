@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-17 (session 11) — wg-quick failure from leftover `::/0`; mcp-nixos server
+
+**Focus**: A `rebuild` on gaming failed with `wg-quick-wg0.service` erroring out — diagnose and fix.
+
+### What changed (and why)
+- **Dropped `::/0` from the WireGuard peer's `allowedIPs` in `dotfiles/common/modules/vpn.nix`** (`2f67083`), leaving `[ "0.0.0.0/0" ]`. Session 10 disabled IPv6 but kept `::/0`; wg-quick installs a route per allowedIP, so `ip -6 route add ::/0 dev wg0` failed ("IPv6 is disabled on nexthop device") and wg-quick tore the interface down — the tunnel had been failing on every boot since session 10, not just warning. Added a `NOTE:` comment so `::/0` isn't re-added while IPv6 is off.
+- **Added project-scoped mcp-nixos MCP server** (`720fe36`) — `pkgs.mcp-nixos` in bosko's packages + `.mcp.json` so Claude Code can query live NixOS package/option data; plus a routine `nix flake update` (`56983dd`). _(Both predate this conversation in the session-11 range.)_
+
+### Decisions
+- **The IPv6 disable and the `::/0` removal belong together** — this corrects session 10's recorded decision to keep `::/0`. With IPv6 off there's no stack to leak, so v4-only `0.0.0.0/0` is still a full tunnel. If IPv6 is ever restored on the server, flip `enableIPv6 = true` *and* re-add `::/0` as a pair, never one alone.
+
+### Issues / surprises
+- The rebuild "succeeded" (config activated) but reported the unit as failed — easy to misread as cosmetic. The journal's `ip link delete dev wg0` was the tell that the tunnel was actually down, not merely warning.
+
+### Next session
+- **gaming `rebuild` + reboot (user doing this next)** — then confirm `wg-quick-wg0` is *active* and the handshake is live (`/vpn-status`), and re-check Jellyfin artwork.
+- Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
+
+**Commits**: `9c31511..2f67083` (3 commits: `56983dd`, `720fe36`, `2f67083`)
+
+---
+
 ## Session: 2026-06-17 (session 10) — Jellyfin image black-hole → IPv6 disabled on VPN clients
 
 **Focus**: Figure out why Jellyfin artwork/metadata wouldn't load on gaming, and fix it.
@@ -98,23 +120,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override (and to pick up the rebuilt claude-rules skill).
 
 **Commits**: `411acfc` (1 commit)
-
----
-
-## Session: 2026-06-15 (session 6) — ssh.nix famdash login fix
-
-**Focus**: Correct an incorrect SSH host login in the shared ssh config.
-
-### What changed (and why)
-- Fixed the `famdash` host alias in `dotfiles/common/configs/ssh.nix`: `User = "natalie"` → `User = "natty"`. `natalie` is not a valid account on that box; `natty` is the correct login (matching the `natty` user used across the fleet).
-
-### Issues / surprises
-- None. One-line fix, self-contained.
-
-### Next session
-- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override.
-
-**Commits**: `5a5b58e` (1 commit)
 
 ---
 

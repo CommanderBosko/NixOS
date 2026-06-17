@@ -3,6 +3,23 @@
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
 
+## Session: 2026-06-15 (session 6) — ssh.nix famdash login fix
+
+**Focus**: Correct an incorrect SSH host login in the shared ssh config.
+
+### What changed (and why)
+- Fixed the `famdash` host alias in `dotfiles/common/configs/ssh.nix`: `User = "natalie"` → `User = "natty"`. `natalie` is not a valid account on that box; `natty` is the correct login (matching the `natty` user used across the fleet).
+
+### Issues / surprises
+- None. One-line fix, self-contained.
+
+### Next session
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override.
+
+**Commits**: `5a5b58e` (1 commit)
+
+---
+
 ## Session: 2026-06-15 (session 5) — fwupd ESP: prior fix was a no-op, override removed
 
 **Focus**: Verify the fwupd ESP fix on gaming after rebuild+reboot, and decide whether the remaining warning is worth chasing.
