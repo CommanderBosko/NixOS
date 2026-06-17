@@ -109,3 +109,10 @@ On failure:
 - server SSH login: `bosko@nixos-server` (hostname set in `hosts/server/networking.nix`).
 - Never attempt to remote-rebuild a desktop host — those use `nh os boot` locally.
 - Do not reboot the remote host after the rebuild unless the user explicitly requests it. `nixos-rebuild switch` activates the new generation immediately without a reboot.
+
+---
+
+## Gotchas
+
+- **`switch` over SSH gets killed mid-activation on vpn-server.** `nixos-rebuild-ng` runs `switch-to-configuration` as a `systemd-run --pipe` unit tied to the SSH connection. vpn-server's activation restarts networking (`network-setup`, `resolvconf`, `wg-quick-wg0`), which drops the SSH session — the broken pipe tears the activation down half-applied, leaving the firewall/NAT inconsistent (symptom: `MASQUERADE` present but FORWARD/conntrack at zero; clients connect but get no routing). **Deploy vpn-server with `nixos-rebuild boot` + reboot** (boot sets the bootloader default with no runtime activation, so SSH never drops; the reboot does a clean boot-time activation), or activate via a detached `systemd-run --collect … switch-to-configuration switch` on the host. An `exit 255` from a `switch` deploy almost always means this, not a sudo-password problem.
+- **Rebooting/restarting vpn-server drops every client's WireGuard handshake.** The server loses session state, so each full-tunnel client black-holes all off-LAN traffic (kill-switch) until it re-handshakes — symptom: 100% packet loss to anything off-LAN, DNS hangs. After a server reboot, restart the tunnel on each affected client (`sudo systemctl restart wg-quick-wg0`); don't assume keepalive recovers it promptly.
