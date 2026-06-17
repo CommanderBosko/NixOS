@@ -32,6 +32,13 @@
     privateKeyFile = config.sops.secrets."wg-private-key".path;
     dns = [ "1.1.1.1" "8.8.8.8" ];
 
+    # wg-quick defaults to MTU 1420, but the underlying path to the Oracle
+    # endpoint can only carry ~1400-byte inner packets. With PMTU discovery
+    # black-holed, full-size packets are silently dropped, which truncates large
+    # downloads (e.g. nars from cache.nixos.org) while pings/small packets pass.
+    # Clamp to 1380 to stay safely under the path MTU.
+    mtu = 1380;
+
     peers = [
       {
         # vpn-server (Oracle Cloud ARM — 150.136.232.63)
