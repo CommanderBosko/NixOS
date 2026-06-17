@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-17 (session 13) — nixpkgs-stable → 25.11; vpn-server redeployed
+
+**Focus**: Move the EOL `nixos-25.05` stable input to current stable `nixos-25.11` and get vpn-server running on it.
+
+### What changed (and why)
+- **`nixpkgs-stable` bumped `nixos-25.05` → `nixos-25.11`** (`d2a245d`). 25.05 reached EOL; the live channels API confirmed 25.11 (Xantusia) is current stable (the proposed "26.05" doesn't exist yet). vpn-server is the only consumer; stateVersion was already 25.11.
+- **`wg0 mtu = 1380` clamp** (`eb69c43`) — the Oracle tunnel path carries only ~1400-byte inner packets; wg-quick's default 1420 + black-holed PMTUD silently dropped full-size packets, corrupting large cache.nixos.org downloads. Fixed in shared `vpn.nix`.
+- **`remote-rebuild` skill hardened** (`80c5b9c`, `8b3429e`) — `--use-remote-sudo` → `--elevate=sudo`, added `--build-host` for the aarch64 target, and a Gotchas section for the two failure modes below.
+- **vpn-server redeployed to 25.11 via `boot` + reboot** and verified live (no failed units, forwarding/NAT/wg all healthy; user confirmed VPN works).
+
+### Decisions
+- **Deploy vpn-server with `boot` + reboot, not `switch`** — `switch` over SSH ties activation to the SSH pipe (`systemd-run --pipe`); the network restart drops SSH and corrupts the half-applied firewall/NAT. `boot` + reboot does a clean boot-time activation.
+- **Rolled back via detached `systemd-run --collect`** to restore service fast, then redeployed — rather than debugging 25.11 live while the fleet was down.
+
+### Issues / surprises
+- The first `switch` deploy's `exit 255` (SSH drop mid-activation) — not a sudo issue — corrupted the firewall/NAT and took the whole VPN down. Static-diffing gen 17 vs gen 18 proved 25.11 was **not** the culprit (configs byte-identical bar store paths); the interrupted activation was.
+- Rebooting vpn-server drops every client's WireGuard handshake — each client must restart `wg-quick-wg0`. Bit us mid-session when a push couldn't resolve DNS through a stale tunnel.
+- Cross-arch: x86_64 laptop can't build the aarch64 closure → needs `--build-host`.
+
+### Next session
+- `rebuild` desktop clients (laptop first) to make `wg0 mtu = 1380` permanent.
+- Continue pending laptop/natalie-laptop rebuild activations (Claude policy, Plasma, FinanceGuru).
+
+**Commits**: `d2a245d..8b3429e` (4 commits)
+
+---
+
 ## Session: 2026-06-17 (session 12) — promote nixos MCP server to user scope (reproducible)
 
 **Focus**: Confirm the freshly-installed mcp-nixos server works post-reboot, then make it global and reproducible.
@@ -92,36 +119,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Standing backlog: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall. (gaming SDDM auto-login is already disabled and confirmed — not pending.)
 
 **Commits**: `eeb03bc` (1 commit)
-
----
-
-## Session: 2026-06-16 (session 8) — Jellyfin media server on gaming
-
-**Focus**: Stand up a Jellyfin media server on the gaming host with hardware transcoding, get media reachable from every device, and capture the verification workflow as a skill.
-
-### What changed (and why)
-- **Jellyfin server on gaming** (`hosts/gaming/jellyfin-server.nix`, new): native `services.jellyfin` backed by the spare 1TB Samsung SSD reformatted ext4 and mounted at `/mnt/media` (pinned by UUID). NVENC hardware transcoding via the RTX 3070 (jellyfin user added to `render`/`video`). Firewall scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — no internet-facing ports. Shared `media` group + setgid Movies/Shows dirs so manual file drops stay readable by the scanner.
-- **jellyfin-media-player client** for all desktop hosts (`dotfiles/common/modules/jellyfin-client.nix`, added to `desktopModules` in `flake.nix`).
-- **qBittorrent: service → desktop GUI** (`refactor`): swapped the headless `qbittorrent-nox` service (localhost Web UI, finding H-6) for the `qbittorrent` desktop app, removing the listening Web UI to harden. Added `/mnt/media/downloads` (setgid `bosko:media`) as the save path so finished downloads stay readable by Jellyfin's scanner.
-- **verify-service skill** (`.claude/skills/verify-service/`, new project-local): read-only post-rebuild health sweep for one systemd service on a host (unit active, listening ports, optional mount/data-dir ownership), distilled from the by-hand Jellyfin/qBittorrent verification done this session. Listed in CLAUDE.md.
-- **flake update** (`1a207f3`): routine `flake.lock` bump.
-
-### Decisions
-- **NVENC over CPU transcoding** — RTX 3070 is already in the box; offloads transcoding for free.
-- **Firewall scoped to LAN + wg0, never the internet** — media is reachable from the fleet (incl. remote over the VPN) without exposing Jellyfin publicly.
-- **qBittorrent desktop GUI over the nox service** — eliminates the localhost-bound Web UI as an attack surface rather than hardening it.
-- **Shared `media` group + setgid dirs** — manual drops and torrent downloads both stay group-readable by the Jellyfin scanner without per-file chmod.
-
-### Issues / surprises
-- None blocking. Verification was done by hand, which prompted distilling it into the `verify-service` skill so future service stand-ups are repeatable.
-
-### Verified
-- **Jellyfin confirmed working on all client devices (2026-06-16).** Server up on gaming with NVENC; playback confirmed across the fleet. Recorded as COMPLETE in memory — not a pending item.
-
-### Next session
-- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override and pick up the rebuilt skills (`claude-rules`, `verify-service`).
-
-**Commits**: `1a207f3..ace485c` (4 commits)
 
 ---
 
