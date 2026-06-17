@@ -30,6 +30,7 @@
       packages = with pkgs; [
         claude-code
         gemini-cli
+        mcp-nixos # MCP server backing the project-scoped nixos server in /home/bosko/NixOS/.mcp.json
       ];
     };
 
