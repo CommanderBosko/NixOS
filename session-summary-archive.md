@@ -3,6 +3,29 @@
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
 
+## Session: 2026-06-15 (session 5) — fwupd ESP: prior fix was a no-op, override removed
+
+**Focus**: Verify the fwupd ESP fix on gaming after rebuild+reboot, and decide whether the remaining warning is worth chasing.
+
+### What changed (and why)
+- Removed the `uefiCapsuleSettings.OverrideESPMountPoint` block from `firmware.nix`. Verified on the running 2.1.4 binaries that this key is dead (only in bash-completion stubs, not in any library), and that `EspLocation` no longer overrides 2.x's partition-type-based ESP enumeration — so the session-4 "fix" never worked. `fwupdtool esp-list` still reported "No ESP or BDP found".
+- Replaced the override with a comment documenting why the warning is intentionally left unaddressed. Dry-run clean (−88 bytes).
+
+### Decisions
+- **Declined the only real fix** (relabel ESP from MBR type `0x0c` → `0xEF` via `parted ... set 1 esp on`). Grounded the call in the actual hardware: ASRock X570 ships no LVFS firmware (`get-updates` → "No updatable devices"), Secure Boot is off (dbx updates moot), and the one updatable device (Samsung 870 EVO) updates over ATA, not the capsule path. Zero benefit vs. touching the boot partition table.
+
+### Issues / surprises
+- The session-4 note claiming `[uefi_capsule] OverrideESPMountPoint` is "the key the plugin actually reads" was wrong — that key is removed in fwupd 2.1.4. Corrected here.
+- Disk is MBR (`dos`), not GPT — relevant if Secure Boot/lanzaboote is ever pursued.
+
+### Next session
+- No fwupd follow-up needed; the warning is cosmetic and documented. Reboot gaming at convenience to drop the override from `/etc/fwupd/fwupd.conf` (already staged via `nh os boot`).
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall.
+
+**Commits**: `c40b702` (1 commit)
+
+---
+
 ## Session: 2026-06-15 (session 4, continued) — Post-sops skills + fwupd ESP fix
 
 **Focus**: Tooling and follow-ups after the sops/public work — NixOS skills for the new secrets setup, plus fixing gaming's fwupd ESP detection.

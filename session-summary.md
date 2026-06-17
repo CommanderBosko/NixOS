@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-17 (session 10) — Jellyfin image black-hole → IPv6 disabled on VPN clients
+
+**Focus**: Figure out why Jellyfin artwork/metadata wouldn't load on gaming, and fix it.
+
+### What changed (and why)
+- **`networking.enableIPv6 = false` added to the shared `dotfiles/common/modules/vpn.nix`** (`81cf1a2`). Jellyfin's TMDb provider was timing out (100s `HttpClient.Timeout` on `TMDbClient.GetConfigAsync()`) because TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0` (no IPv6 address; Oracle server doesn't route v6) — so all IPv6 black-holed. Disabling IPv6 forces IPv4 fallback through the tunnel. Applies to all three VPN clients (gaming, laptop, natalie-laptop).
+
+### Decisions
+- **Disable IPv6 rather than drop `::/0` from `allowedIPs`** — the disable fixes the black-hole while keeping the full-tunnel guarantee intact; dropping `::/0` would have leaked IPv6 traffic around the VPN (real IP exposed). Left `::/0` in `allowedIPs` so the config stays correct if the server ever gains IPv6.
+
+### Issues / surprises
+- Symptom presented as a Jellyfin/metadata-refresh problem but was a VPN routing issue. `curl -4` worked (<0.1s) while `curl -6` failed instantly — the tell that isolated it to IPv6.
+
+### Next session
+- **Run `rebuild` + reboot on gaming**, then re-run the Jellyfin metadata refresh (Replace all metadata + Replace existing images) to confirm artwork loads. laptop/natalie-laptop inherit the fix on their next rebuild.
+- Standing backlog unchanged: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall.
+
+**Commits**: `81cf1a2` (1 commit)
+
+---
+
 ## Session: 2026-06-16 (session 9) — Sudo password masking (pwfeedback)
 
 **Focus**: Make the sudo password prompt show a `*` per typed character so entered length is visible.
@@ -97,25 +118,3 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
-## Session: 2026-06-15 (session 5) — fwupd ESP: prior fix was a no-op, override removed
-
-**Focus**: Verify the fwupd ESP fix on gaming after rebuild+reboot, and decide whether the remaining warning is worth chasing.
-
-### What changed (and why)
-- Removed the `uefiCapsuleSettings.OverrideESPMountPoint` block from `firmware.nix`. Verified on the running 2.1.4 binaries that this key is dead (only in bash-completion stubs, not in any library), and that `EspLocation` no longer overrides 2.x's partition-type-based ESP enumeration — so the session-4 "fix" never worked. `fwupdtool esp-list` still reported "No ESP or BDP found".
-- Replaced the override with a comment documenting why the warning is intentionally left unaddressed. Dry-run clean (−88 bytes).
-
-### Decisions
-- **Declined the only real fix** (relabel ESP from MBR type `0x0c` → `0xEF` via `parted ... set 1 esp on`). Grounded the call in the actual hardware: ASRock X570 ships no LVFS firmware (`get-updates` → "No updatable devices"), Secure Boot is off (dbx updates moot), and the one updatable device (Samsung 870 EVO) updates over ATA, not the capsule path. Zero benefit vs. touching the boot partition table.
-
-### Issues / surprises
-- The session-4 note claiming `[uefi_capsule] OverrideESPMountPoint` is "the key the plugin actually reads" was wrong — that key is removed in fwupd 2.1.4. Corrected here.
-- Disk is MBR (`dos`), not GPT — relevant if Secure Boot/lanzaboote is ever pursued.
-
-### Next session
-- No fwupd follow-up needed; the warning is cosmetic and documented. Reboot gaming at convenience to drop the override from `/etc/fwupd/fwupd.conf` (already staged via `nh os boot`).
-- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall.
-
-**Commits**: `c40b702` (1 commit)
-
----

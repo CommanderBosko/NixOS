@@ -211,11 +211,13 @@ WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
 - **laptop**: `10.10.0.3/32` — private key via sops, `wg-quick-wg0` active
 - **natalie-laptop**: `10.10.0.4/32` — private key via sops, `wg-quick-wg0` active
 
-All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/0"]`). `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
+All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0" "::/0"]`). The tunnel is **IPv4-only** — `networking.enableIPv6 = false` in `vpn.nix` disables IPv6 on all clients so traffic to IPv6-only hosts falls back to IPv4 through the tunnel instead of black-holing in the v4-only `wg0` (this is what was breaking Jellyfin's TMDb artwork fetches). `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
 
 Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
+
+**2026-06-17** — Fixed Jellyfin artwork/metadata failing to load on gaming. The cause was a VPN routing issue, not Jellyfin: TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0`, so all IPv6 traffic black-holed and TMDb requests hung the 100s HTTP timeout. Added `networking.enableIPv6 = false` to the shared `dotfiles/common/modules/vpn.nix` to force IPv4 fallback through the tunnel — fixes the black-hole while keeping the full-tunnel guarantee (no IPv6 leak). Applies to all three VPN clients (gaming, laptop, natalie-laptop); gaming needs a rebuild + reboot to activate.
 
 **2026-06-16 (later)** — Enabled sudo **password masking** fleet-wide: `security.sudo.extraConfig = "Defaults pwfeedback";` in `dotfiles/common/modules/security.nix` (part of `commonModules`) so the sudo prompt now prints a `*` per typed character. The historical pwfeedback CVE (CVE-2019-18634) is fixed in the shipped sudo, noted inline. Confirmed working on gaming.
 
