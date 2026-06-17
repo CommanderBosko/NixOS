@@ -53,19 +53,22 @@ For `vpn-server`:
 ```
 nixos-rebuild switch \
   --target-host bosko@150.136.232.63 \
-  --use-remote-sudo \
+  --build-host bosko@150.136.232.63 \
+  --elevate=sudo \
   --flake /home/bosko/NixOS#vpn-server
 ```
+
+`--build-host` is required for vpn-server: it is aarch64 and the local machine is x86_64 with no emulation, so the ARM host must build its own closure. (`server` is x86_64, so it builds locally and omits `--build-host`.)
 
 For `server`:
 ```
 nixos-rebuild switch \
   --target-host bosko@nixos-server \
-  --use-remote-sudo \
+  --elevate=sudo \
   --flake /home/bosko/NixOS#server
 ```
 
-Note to the user: "This will take several minutes — it builds locally then copies the closure to the remote host and activates it."
+Note to the user: "This will take several minutes. For `server` it builds locally then copies the closure; for `vpn-server` (`--build-host`) it evaluates locally but builds on the ARM host, which fetches cached paths over its own connection."
 
 ## Step 4 — Run the rebuild
 
@@ -73,12 +76,12 @@ Run the appropriate command. This is long-running (can take 5–15 minutes depen
 
 For `vpn-server`:
 ```bash
-nixos-rebuild switch --target-host bosko@150.136.232.63 --use-remote-sudo --flake /home/bosko/NixOS#vpn-server
+nixos-rebuild switch --target-host bosko@150.136.232.63 --build-host bosko@150.136.232.63 --elevate=sudo --flake /home/bosko/NixOS#vpn-server
 ```
 
 For `server`:
 ```bash
-nixos-rebuild switch --target-host bosko@nixos-server --use-remote-sudo --flake /home/bosko/NixOS#server
+nixos-rebuild switch --target-host bosko@nixos-server --elevate=sudo --flake /home/bosko/NixOS#server
 ```
 
 ## Step 5 — Report result
@@ -94,7 +97,8 @@ On failure:
   - SSH connectivity lost mid-build: retry after checking the connection
   - `nix copy` fails: store path transfer interrupted; retry
   - Evaluation error: fix the Nix config and re-run
-  - `--use-remote-sudo` rejected: verify bosko is in the wheel group and that `security.sudo.wheelNeedsPassword = false` is set on the remote host
+  - `--elevate=sudo` rejected: verify bosko is in the wheel group and that `security.sudo.wheelNeedsPassword = false` is set on the remote host
+  - `platform mismatch ... Required system: 'aarch64-linux'`: the local x86_64 machine can't build vpn-server's aarch64 derivations. Use `--build-host bosko@150.136.232.63` so the ARM host builds its own closure natively (already included in the vpn-server command above)
 
 ---
 
