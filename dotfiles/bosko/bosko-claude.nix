@@ -144,6 +144,40 @@
       ''
     );
 
+  # Declaratively register the user-scope `nixos` MCP server (mcp-nixos) in
+  # ~/.claude.json, making it available in every project rather than only this
+  # repo. ~/.claude.json is mutable state Claude Code rewrites constantly, so we
+  # can't symlink it read-only; instead we reconcile the single .mcpServers.nixos
+  # key with jq. Idempotent: only rewrites when the entry is missing or differs,
+  # leaving the rest of the file (project history, auth, toggles) untouched.
+  # The mcp-nixos binary is provided as a user package (see users.nix).
+  home.activation.claudeMcpServers =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      let
+        desired = {
+          type = "stdio";
+          command = "mcp-nixos";
+          args = [ ];
+          env = { };
+        };
+      in
+      ''
+        claudejson="$HOME/.claude.json"
+        jq="${pkgs.jq}/bin/jq"
+        desired='${builtins.toJSON desired}'
+        if [ -f "$claudejson" ]; then
+          if ! $jq -e --argjson d "$desired" \
+            '.mcpServers.nixos == $d' "$claudejson" >/dev/null 2>&1; then
+            tmp="$(${pkgs.coreutils}/bin/mktemp)"
+            $jq --argjson d "$desired" '.mcpServers.nixos = $d' \
+              "$claudejson" > "$tmp" \
+              && ${pkgs.coreutils}/bin/mv "$tmp" "$claudejson"
+            $VERBOSE_ECHO "Registered user-scope nixos MCP server in $claudejson"
+          fi
+        fi
+      ''
+    );
+
   # Declaratively install official-marketplace LSP plugins for Claude Code.
   # For each plugin: populate the cache from the already-cloned official marketplace,
   # register in installed_plugins.json, and enable in settings.json.
