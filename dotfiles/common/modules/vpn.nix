@@ -13,12 +13,14 @@
   #   laptop:      10.10.0.3
 
   # The tunnel is full-tunnel but IPv4-only (no IPv6 address on wg0, and the
-  # Oracle Cloud server does not route IPv6). With IPv6 enabled, the "::/0"
-  # allowedIPs below pulls all IPv6 traffic into a tunnel that can't carry it,
-  # black-holing any IPv6-only destination (e.g. TMDb image fetches in Jellyfin
-  # hung the full 100s HttpClient timeout). Disabling IPv6 forces DNS/connections
-  # to fall back to IPv4 through the tunnel — fixes the black-hole AND keeps the
-  # full-tunnel guarantee intact (no IPv6 leak around the VPN).
+  # Oracle Cloud server does not route IPv6). IPv6 is disabled system-wide so
+  # IPv6-only destinations fall back to IPv4 through the tunnel instead of being
+  # black-holed (e.g. TMDb image fetches in Jellyfin hung the full 100s
+  # HttpClient timeout). With IPv6 disabled there is no IPv6 stack to leak, so a
+  # v4-only allowedIPs (0.0.0.0/0 below) still gives a full tunnel. NOTE: do NOT
+  # add "::/0" to allowedIPs — wg-quick would try `ip -6 route add ::/0 dev wg0`,
+  # which fails ("IPv6 is disabled on nexthop device") and tears the whole tunnel
+  # down.
   networking.enableIPv6 = false;
 
   environment.systemPackages = [ pkgs.wireguard-tools ];
@@ -36,8 +38,8 @@
         publicKey = "ijhN7KUmHx5TOLpKgyzJpzSvp49TkD0c2CTf32Cyu1U=";
         endpoint = "150.136.232.63:51820";
 
-        # Full tunnel: route all traffic through the VPN
-        allowedIPs = [ "0.0.0.0/0" "::/0" ];
+        # Full tunnel: route all IPv4 traffic through the VPN (v4-only — see note above)
+        allowedIPs = [ "0.0.0.0/0" ];
 
         # Oracle Cloud silently drops idle UDP after ~30s; keep-alive prevents that
         persistentKeepalive = 25;
