@@ -6,7 +6,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Stable nixpkgs — used by server and vpn-server for stability
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
 
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
@@ -129,7 +129,7 @@
         ];
       };
 
-      # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.05 for stability
+      # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.11 for stability
       vpn-server = self.lib.mkSystem {
         inherit inputs;
         nixpkgs = nixpkgs-stable;
