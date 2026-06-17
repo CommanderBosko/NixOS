@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-17 (session 12) — promote nixos MCP server to user scope (reproducible)
+
+**Focus**: Confirm the freshly-installed mcp-nixos server works post-reboot, then make it global and reproducible.
+
+### What changed (and why)
+- **Verified mcp-nixos is live** — after the reboot, a live `stats` call returned 134,973 packages, confirming the session-11 project-scoped server connects.
+- **Promoted the server from project scope to user scope** (`f9a66e8`) so it's available in every project, not just this repo. `claude mcp add nixos mcp-nixos --scope user` writes the entry to `~/.claude.json`; the redundant project `.mcp.json` was `git rm`'d.
+- **Made it reproducible** — added `home.activation.claudeMcpServers` to `dotfiles/bosko/bosko-claude.nix`: an idempotent jq reconcile of `.mcpServers.nixos` in `~/.claude.json` on every rebuild, mirroring the existing `claudeAllowList`/`claudeNixdPlugin` activation pattern. Repointed the `mcp-nixos` comment in `users.nix` at the new location.
+
+### Decisions
+- **Reconcile `~/.claude.json` with jq rather than symlink it read-only** — Claude Code rewrites that file constantly (auth, project history, toggles), so a `/nix/store` symlink would break it. The activation block touches only the single `.mcpServers.nixos` key, leaving everything else intact. Same trade-off already made for `settings.json` in this module.
+- **User scope over project scope** — the value of live NixOS data isn't repo-specific; one global registration beats per-repo `.mcp.json` files.
+
+### Issues / surprises
+- None. Dry-run clean (1.80 KiB diff). The `enabledMcpjsonServers` entry in `.claude/settings.local.json` from session 11 is now a harmless no-op (it only gated the deleted `.mcp.json`).
+
+### Next session
+- It's global now via the `claude mcp add` write; a `rebuild` makes the activation block the source of truth (survives a `~/.claude.json` reset). No blocker.
+- Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
+
+**Commits**: `f9a66e8` (1 commit)
+
+---
+
 ## Session: 2026-06-17 (session 11) — wg-quick failure from leftover `::/0`; mcp-nixos server
 
 **Focus**: A `rebuild` on gaming failed with `wg-quick-wg0.service` erroring out — diagnose and fix.
@@ -98,28 +122,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override and pick up the rebuilt skills (`claude-rules`, `verify-service`).
 
 **Commits**: `1a207f3..ace485c` (4 commits)
-
----
-
-## Session: 2026-06-15 (session 7) — claude-rules: add "Use Existing Skills First" rule
-
-**Focus**: Decide whether the `claude-rules` skill should also enforce skill *usage*, then add the rule.
-
-### What changed (and why)
-- Added a fourth standing rule, **Use Existing Skills First**, to the `claude-rules` skill source (`dotfiles/bosko/claude/skills/claude-rules/SKILL.md`) and to this repo's `CLAUDE.md`. The rule: reach for an existing skill before doing a task by hand. Rationale — the existing three rules cover scope → verify → parallelize but say nothing about *consuming* the tooling already built, and this repo ships ~30 task-specific skills that are easy to reimplement by accident.
-- Updated the skill's count (three → four), canonical ordering, and the Step-2 heading-match list so the new section is detected and inserted last.
-- The CLAUDE.md variant names concrete repo skills and chains back to the existing "Skill Awareness" (create-a-skill) section — consume vs. author.
-
-### Decisions
-- Kept the new rule distinct from "Skill Awareness": that one is about *authoring* a skill when a pattern repeats; this one is about *using* one that already exists. They complement rather than duplicate.
-
-### Issues / surprises
-- None. The skill's `SKILL.md` change won't reach `~/.claude` until a rebuild (it's a `/nix/store` symlink); the `CLAUDE.md` change is live immediately.
-
-### Next session
-- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override (and to pick up the rebuilt claude-rules skill).
-
-**Commits**: `411acfc` (1 commit)
 
 ---
 

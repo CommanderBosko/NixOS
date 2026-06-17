@@ -3,6 +3,28 @@
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
 
+## Session: 2026-06-15 (session 7) — claude-rules: add "Use Existing Skills First" rule
+
+**Focus**: Decide whether the `claude-rules` skill should also enforce skill *usage*, then add the rule.
+
+### What changed (and why)
+- Added a fourth standing rule, **Use Existing Skills First**, to the `claude-rules` skill source (`dotfiles/bosko/claude/skills/claude-rules/SKILL.md`) and to this repo's `CLAUDE.md`. The rule: reach for an existing skill before doing a task by hand. Rationale — the existing three rules cover scope → verify → parallelize but say nothing about *consuming* the tooling already built, and this repo ships ~30 task-specific skills that are easy to reimplement by accident.
+- Updated the skill's count (three → four), canonical ordering, and the Step-2 heading-match list so the new section is detected and inserted last.
+- The CLAUDE.md variant names concrete repo skills and chains back to the existing "Skill Awareness" (create-a-skill) section — consume vs. author.
+
+### Decisions
+- Kept the new rule distinct from "Skill Awareness": that one is about *authoring* a skill when a pattern repeats; this one is about *using* one that already exists. They complement rather than duplicate.
+
+### Issues / surprises
+- None. The skill's `SKILL.md` change won't reach `~/.claude` until a rebuild (it's a `/nix/store` symlink); the `CLAUDE.md` change is live immediately.
+
+### Next session
+- Carryover (unchanged): rebuild+reboot laptop & natalie-laptop for the managed Claude policy, Plasma switch, FinanceGuru, package consolidation; interface-scope the Avahi mDNS firewall; reboot gaming to drop the fwupd ESP override (and to pick up the rebuilt claude-rules skill).
+
+**Commits**: `411acfc` (1 commit)
+
+---
+
 ## Session: 2026-06-15 (session 6) — ssh.nix famdash login fix
 
 **Focus**: Correct an incorrect SSH host login in the shared ssh config.
