@@ -3,6 +3,32 @@
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
 
+## Session: 2026-06-16 (session 9) — Sudo password masking (pwfeedback)
+
+**Focus**: Make the sudo password prompt show a `*` per typed character so entered length is visible.
+
+### What changed (and why)
+- **Sudo pwfeedback enabled** (`dotfiles/common/modules/security.nix`): added `security.sudo.extraConfig = "Defaults pwfeedback";`. Since `security.nix` is in `commonModules`, the masking applies to every host. A comment records that CVE-2019-18634 (the old pwfeedback stack overflow) was fixed in sudo ≥ 1.8.31, so current sudo is unaffected.
+
+### Decisions
+- **Fleet-wide via commonModules, not per-host** — the behaviour is a global UX preference with no host-specific reason to differ.
+- **Kept pwfeedback despite its CVE history** — the vulnerability is long-patched in the sudo version shipped; documented inline so a future audit doesn't re-flag it.
+
+### Issues / surprises
+- None. Dry-run regenerated `sudoers` cleanly (+10.4 KiB, no kernel/service changes).
+
+### Verified
+- User ran `switch` on gaming and confirmed the `*` masking works at the sudo prompt.
+
+### Next session
+- Standing backlog: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall. (gaming SDDM auto-login is already disabled and confirmed — not pending.)
+
+**Commits**: `eeb03bc` (1 commit)
+
+---
+
+
+
 ## Session: 2026-06-16 (session 8) — Jellyfin media server on gaming
 
 **Focus**: Stand up a Jellyfin media server on the gaming host with hardware transcoding, get media reachable from every device, and capture the verification workflow as a skill.
