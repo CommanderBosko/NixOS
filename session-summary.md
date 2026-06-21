@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-20 (session 15) — `/create-loop` meta-skill
+
+**Focus**: Build a global `/create-loop` skill that interviews the user and generates custom, self-orchestrating loop skills.
+
+### What changed (and why)
+- Added `dotfiles/bosko/claude/skills/create-loop/SKILL.md` and wired it into `bosko-claude.nix` (`b6e5d9d`). It's a *meta-skill*: it interviews for a loop's goal/steps/done-rule, then writes a project-local standalone loop to `.claude/skills/<loop>/SKILL.md` that runs as one command.
+- Every generated loop has Loop Training Mode (top-of-file toggle, ON by default), a retry cap (default 3), dual-file per-run output (`output-<date>.md` + `memory-<date>.md` under `.claude/loops/<loop>/`), and a built-in verification plan.
+
+### Decisions
+- **Generated loops are project-local, not repo-global** — repo-global needs a rebuild per loop (read-only `/nix/store` symlinks); project-local is writable and instant. `/create-loop` itself stays global.
+- **Loops are standalone/self-orchestrating**, not thin `/loop` wrappers — a loop is a complete, inspectable artifact; `/loop` can still wrap it for intervals.
+- **Per-loop log dir** for the two output files, kept separate from the curated `~/.claude/.../memory/` system.
+
+### Issues / surprises
+- `nh os boot` can't run from the agent (no TTY for sudo) — the user activates. For an HM symlink-only change like this, `nh os switch` works with no reboot; a fresh session is needed before `/create-loop` resolves as a command.
+
+### Next session
+- Verify `/create-loop` resolves after `switch` + new session; run it once to generate a real loop and confirm the dual-file output + Training Mode behave as documented.
+
+**Commits**: `b6e5d9d` (1 commit)
+
+---
+
 ## Session: 2026-06-18 (session 14) — make the Parallelize rule actually trigger
 
 **Focus**: Fix the `Parallelize with Sub-Agents` standing rule so it fires reliably instead of being silently ignored.
@@ -99,25 +122,3 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 **Commits**: `9c31511..2f67083` (3 commits: `56983dd`, `720fe36`, `2f67083`)
 
 ---
-
-## Session: 2026-06-17 (session 10) — Jellyfin image black-hole → IPv6 disabled on VPN clients
-
-**Focus**: Figure out why Jellyfin artwork/metadata wouldn't load on gaming, and fix it.
-
-### What changed (and why)
-- **`networking.enableIPv6 = false` added to the shared `dotfiles/common/modules/vpn.nix`** (`81cf1a2`). Jellyfin's TMDb provider was timing out (100s `HttpClient.Timeout` on `TMDbClient.GetConfigAsync()`) because TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0` (no IPv6 address; Oracle server doesn't route v6) — so all IPv6 black-holed. Disabling IPv6 forces IPv4 fallback through the tunnel. Applies to all three VPN clients (gaming, laptop, natalie-laptop).
-
-### Decisions
-- **Disable IPv6 rather than drop `::/0` from `allowedIPs`** — the disable fixes the black-hole while keeping the full-tunnel guarantee intact; dropping `::/0` would have leaked IPv6 traffic around the VPN (real IP exposed). Left `::/0` in `allowedIPs` so the config stays correct if the server ever gains IPv6.
-
-### Issues / surprises
-- Symptom presented as a Jellyfin/metadata-refresh problem but was a VPN routing issue. `curl -4` worked (<0.1s) while `curl -6` failed instantly — the tell that isolated it to IPv6.
-
-### Next session
-- **Run `rebuild` + reboot on gaming**, then re-run the Jellyfin metadata refresh (Replace all metadata + Replace existing images) to confirm artwork loads. laptop/natalie-laptop inherit the fix on their next rebuild.
-- Standing backlog unchanged: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall.
-
-**Commits**: `81cf1a2` (1 commit)
-
----
-

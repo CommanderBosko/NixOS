@@ -3,6 +3,28 @@
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
 
+## Session: 2026-06-17 (session 10) — Jellyfin image black-hole → IPv6 disabled on VPN clients
+
+**Focus**: Figure out why Jellyfin artwork/metadata wouldn't load on gaming, and fix it.
+
+### What changed (and why)
+- **`networking.enableIPv6 = false` added to the shared `dotfiles/common/modules/vpn.nix`** (`81cf1a2`). Jellyfin's TMDb provider was timing out (100s `HttpClient.Timeout` on `TMDbClient.GetConfigAsync()`) because TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0` (no IPv6 address; Oracle server doesn't route v6) — so all IPv6 black-holed. Disabling IPv6 forces IPv4 fallback through the tunnel. Applies to all three VPN clients (gaming, laptop, natalie-laptop).
+
+### Decisions
+- **Disable IPv6 rather than drop `::/0` from `allowedIPs`** — the disable fixes the black-hole while keeping the full-tunnel guarantee intact; dropping `::/0` would have leaked IPv6 traffic around the VPN (real IP exposed). Left `::/0` in `allowedIPs` so the config stays correct if the server ever gains IPv6.
+
+### Issues / surprises
+- Symptom presented as a Jellyfin/metadata-refresh problem but was a VPN routing issue. `curl -4` worked (<0.1s) while `curl -6` failed instantly — the tell that isolated it to IPv6.
+
+### Next session
+- **Run `rebuild` + reboot on gaming**, then re-run the Jellyfin metadata refresh (Replace all metadata + Replace existing images) to confirm artwork loads. laptop/natalie-laptop inherit the fix on their next rebuild.
+- Standing backlog unchanged: laptop + natalie-laptop rebuild activations (managed Claude policy, Plasma switch, FinanceGuru, package consolidation); interface-scope the Avahi mDNS firewall.
+
+**Commits**: `81cf1a2` (1 commit)
+
+---
+
+
 ## Session: 2026-06-16 (session 9) — Sudo password masking (pwfeedback)
 
 **Focus**: Make the sudo password prompt show a `*` per typed character so entered length is visible.
