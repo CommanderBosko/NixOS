@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-21 (session 16) — first three loops via `/create-loop`
+
+**Focus**: Put the session-15 `/create-loop` meta-skill to work — generate the first real loops for the fleet.
+
+### What changed (and why)
+- Generated three project-local self-orchestrating loops (`bdc9434`): **`/fleet-rollout`** (staged per-host deploy: dry-run gate → switch → full health sweep, gaming→laptop→natalie-laptop→vpn-server), **`/flake-update-verify`** (update inputs → flake-check → commit the lock without applying; restore the previous lock if eval breaks), and **`/public-repo-guard`** (secret-scan + audit-config triaged against a seeded baseline allowlist; passes at zero genuine findings).
+- Each verified well-formed before commit: name matches dir, all done-rules machine-checkable, referenced skills resolve, baseline file seeded with this repo's known-intentional exceptions.
+
+### Decisions
+- **Rollout uses dry-run-gate-then-`switch` with a live health sweep**, departing from the repo's `boot`-only convention — health checks are meaningless against an inactive config; the dry-run gate still catches eval breaks before any activation.
+- **`flake-update-verify` commits the lock but never applies; restores the previous lock on failure** via plain `git checkout -- flake.lock` (the loop's clean-tree precondition makes git the reliable revert source). Applying stays a deliberate `/fleet-rollout` step.
+- **`public-repo-guard` converges via a committed baseline-allowlist file**, not run-memory — a durable, diffable list of accepted findings beats re-deriving intentional-vs-genuine each run.
+
+### Issues / surprises
+- None. Confirms the session-15 PENDING item: `/create-loop` resolves in a fresh session and runs end-to-end. Empty `loops/*/` dirs for two loops are untracked (git skips empty dirs) — they populate on first run.
+
+### Next session
+- Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (now runnable via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
+
+**Commits**: `bdc9434` (1 commit)
+
+---
+
 ## Session: 2026-06-20 (session 15) — `/create-loop` meta-skill
 
 **Focus**: Build a global `/create-loop` skill that interviews the user and generates custom, self-orchestrating loop skills.
@@ -98,27 +121,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
 
 **Commits**: `f9a66e8` (1 commit)
-
----
-
-## Session: 2026-06-17 (session 11) — wg-quick failure from leftover `::/0`; mcp-nixos server
-
-**Focus**: A `rebuild` on gaming failed with `wg-quick-wg0.service` erroring out — diagnose and fix.
-
-### What changed (and why)
-- **Dropped `::/0` from the WireGuard peer's `allowedIPs` in `dotfiles/common/modules/vpn.nix`** (`2f67083`), leaving `[ "0.0.0.0/0" ]`. Session 10 disabled IPv6 but kept `::/0`; wg-quick installs a route per allowedIP, so `ip -6 route add ::/0 dev wg0` failed ("IPv6 is disabled on nexthop device") and wg-quick tore the interface down — the tunnel had been failing on every boot since session 10, not just warning. Added a `NOTE:` comment so `::/0` isn't re-added while IPv6 is off.
-- **Added project-scoped mcp-nixos MCP server** (`720fe36`) — `pkgs.mcp-nixos` in bosko's packages + `.mcp.json` so Claude Code can query live NixOS package/option data; plus a routine `nix flake update` (`56983dd`). _(Both predate this conversation in the session-11 range.)_
-
-### Decisions
-- **The IPv6 disable and the `::/0` removal belong together** — this corrects session 10's recorded decision to keep `::/0`. With IPv6 off there's no stack to leak, so v4-only `0.0.0.0/0` is still a full tunnel. If IPv6 is ever restored on the server, flip `enableIPv6 = true` *and* re-add `::/0` as a pair, never one alone.
-
-### Issues / surprises
-- The rebuild "succeeded" (config activated) but reported the unit as failed — easy to misread as cosmetic. The journal's `ip link delete dev wg0` was the tell that the tunnel was actually down, not merely warning.
-
-### Next session
-- **gaming `rebuild` + reboot (user doing this next)** — then confirm `wg-quick-wg0` is *active* and the handshake is live (`/vpn-status`), and re-check Jellyfin artwork.
-- Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
-
-**Commits**: `9c31511..2f67083` (3 commits: `56983dd`, `720fe36`, `2f67083`)
 
 ---
