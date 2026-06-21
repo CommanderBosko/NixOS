@@ -1,6 +1,6 @@
 ---
 name: flake-update-verify
-description: Update flake inputs, prove the result still evaluates, then commit the flake.lock bump WITHOUT applying it — restoring the previous lock if the update breaks eval. Self-orchestrating loop. Use when the user says "/flake-update-verify", "run flake-update-verify", "update and verify the flake", or "bump inputs and check".
+description: Update flake inputs, prove the result still evaluates, then commit and push the flake.lock bump WITHOUT applying it — restoring the previous lock if the update breaks eval. Self-orchestrating loop. Use when the user says "/flake-update-verify", "run flake-update-verify", "update and verify the flake", or "bump inputs and check".
 ---
 
 # Flake Update Verify — Loop
@@ -32,7 +32,7 @@ previous `flake.lock` so the tree is left building again.
 
 At end of run the working tree **evaluates clean**, and exactly one of:
 - **Updated:** inputs changed, `flake-check` passes, and the `flake.lock` bump is
-  committed (no `switch`/`boot` performed); **or**
+  committed **and pushed** to the remote (no `switch`/`boot` performed); **or**
 - **Nothing to do:** `nix flake update` produced no `flake.lock` change; **or**
 - **Reverted:** the update broke eval and `flake.lock` was restored to its previous,
   evaluating state — with the offending input named in the report.
@@ -81,12 +81,22 @@ then stop and report which step blocked.
    - Done-rule: `git log -1 --name-only` shows a new commit touching `flake.lock` and the
      working tree is clean again. **No `switch`/`boot` was run.**
 
+7. **Push the commit (success path only)** — after a successful commit, push the bump to
+   the remote via the `push` skill so the lock change lands on GitHub. Only runs on the
+   **committed** path; skip entirely on "Nothing to do" and "Reverted" (nothing new to
+   push).
+   - Done-rule: `git -C /home/bosko/NixOS status -sb` shows the local branch is **not
+     ahead** of its upstream (the commit from step 6 is on the remote). Still **no
+     `switch`/`boot`.**
+
 ## Verification plan
 
 Before declaring the run done, prove the overall done-rule holds:
 - `nix flake check` (the `flake-check` skill) passes against the final tree state.
 - `git -C /home/bosko/NixOS status --porcelain` is empty (either committed or restored —
   never left dirty).
+- On the **committed** path: `git -C /home/bosko/NixOS status -sb` shows the branch is not
+  ahead of upstream (the bump reached the remote).
 - Confirm no activation happened: no `nh os switch` / `nixos-rebuild switch` was invoked.
 If any check fails, the run is NOT done — record it in the Memory file and stop.
 
@@ -123,6 +133,7 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 
 ## Report
 
-Tell me: the mode, the result (committed / nothing-to-do / reverted), the per-input
-old→new summary, the eval verdict, where the two files were written, and — if reverted —
-which input broke eval and that `/fleet-rollout` is the way to apply once it's healthy.
+Tell me: the mode, the result (committed+pushed / nothing-to-do / reverted), the per-input
+old→new summary, the eval verdict, whether the bump was pushed to the remote, where the two
+files were written, and — if reverted — which input broke eval and that `/fleet-rollout` is
+the way to apply once it's healthy.
