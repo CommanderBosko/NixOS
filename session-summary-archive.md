@@ -2,6 +2,30 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-17 (session 12) — promote nixos MCP server to user scope (reproducible)
+
+**Focus**: Confirm the freshly-installed mcp-nixos server works post-reboot, then make it global and reproducible.
+
+### What changed (and why)
+- **Verified mcp-nixos is live** — after the reboot, a live `stats` call returned 134,973 packages, confirming the session-11 project-scoped server connects.
+- **Promoted the server from project scope to user scope** (`f9a66e8`) so it's available in every project, not just this repo. `claude mcp add nixos mcp-nixos --scope user` writes the entry to `~/.claude.json`; the redundant project `.mcp.json` was `git rm`'d.
+- **Made it reproducible** — added `home.activation.claudeMcpServers` to `dotfiles/bosko/bosko-claude.nix`: an idempotent jq reconcile of `.mcpServers.nixos` in `~/.claude.json` on every rebuild, mirroring the existing `claudeAllowList`/`claudeNixdPlugin` activation pattern. Repointed the `mcp-nixos` comment in `users.nix` at the new location.
+
+### Decisions
+- **Reconcile `~/.claude.json` with jq rather than symlink it read-only** — Claude Code rewrites that file constantly (auth, project history, toggles), so a `/nix/store` symlink would break it. The activation block touches only the single `.mcpServers.nixos` key, leaving everything else intact. Same trade-off already made for `settings.json` in this module.
+- **User scope over project scope** — the value of live NixOS data isn't repo-specific; one global registration beats per-repo `.mcp.json` files.
+
+### Issues / surprises
+- None. Dry-run clean (1.80 KiB diff). The `enabledMcpjsonServers` entry in `.claude/settings.local.json` from session 11 is now a harmless no-op (it only gated the deleted `.mcp.json`).
+
+### Next session
+- It's global now via the `claude mcp add` write; a `rebuild` makes the activation block the source of truth (survives a `~/.claude.json` reset). No blocker.
+- Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
+
+**Commits**: `f9a66e8` (1 commit)
+
+---
+
 ## Session: 2026-06-17 (session 11) — wg-quick failure from leftover `::/0`; mcp-nixos server
 
 **Focus**: A `rebuild` on gaming failed with `wg-quick-wg0.service` erroring out — diagnose and fix.

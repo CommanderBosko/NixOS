@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-22 (session 17) — gitignore loop run-logs; FinanceGuru bump
+
+**Focus**: Commit a user-made FinanceGuru flake update, then stop loop run-logs from cluttering `git status`.
+
+### What changed (and why)
+- **FinanceGuru input bumped `9cb935a` → `6b506fe`** (`889d6bc`) for an upstream FinanceGuru update — lock-only, nothing else moved. Applies on next `/fleet-rollout`.
+- **`.gitignore` rule for loop run-logs** (`90279df`): `.claude/loops/**/output-*.md` and `memory-*.md` are now ignored. Each loop run writes a dated dual-file log there; those are local artifacts, not skills.
+
+### Decisions
+- **Ignore loop run-logs, keep loop config tracked** — the loop *skills* live in `.claude/skills/` and are already tracked (so they're portable to any clone); the ignored files are only the per-run dated logs. Chose a narrow `output-*`/`memory-*` glob over ignoring all of `.claude/loops/` so genuine config like `public-repo-guard/baseline-allowlist.md` stays tracked. Verified with `git check-ignore`.
+
+### Issues / surprises
+- None. The user's question "I like my skills accessible anywhere" was a misread of what the untracked files were — clarified that the skills were already committed; only run-logs needed handling.
+
+### Next session
+- Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (run via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
+
+**Commits**: `889d6bc`, `90279df` (2 commits). (Pre-session, also pushed: `b541303` flake bump via `/flake-update-verify`, `b9e85c2` push-step added to that loop.)
+
+---
+
 ## Session: 2026-06-21 (session 16) — first three loops via `/create-loop`
 
 **Focus**: Put the session-15 `/create-loop` meta-skill to work — generate the first real loops for the fleet.
@@ -97,29 +118,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Continue pending laptop/natalie-laptop rebuild activations (Claude policy, Plasma, FinanceGuru).
 
 **Commits**: `d2a245d..8b3429e` (4 commits)
-
----
-
-## Session: 2026-06-17 (session 12) — promote nixos MCP server to user scope (reproducible)
-
-**Focus**: Confirm the freshly-installed mcp-nixos server works post-reboot, then make it global and reproducible.
-
-### What changed (and why)
-- **Verified mcp-nixos is live** — after the reboot, a live `stats` call returned 134,973 packages, confirming the session-11 project-scoped server connects.
-- **Promoted the server from project scope to user scope** (`f9a66e8`) so it's available in every project, not just this repo. `claude mcp add nixos mcp-nixos --scope user` writes the entry to `~/.claude.json`; the redundant project `.mcp.json` was `git rm`'d.
-- **Made it reproducible** — added `home.activation.claudeMcpServers` to `dotfiles/bosko/bosko-claude.nix`: an idempotent jq reconcile of `.mcpServers.nixos` in `~/.claude.json` on every rebuild, mirroring the existing `claudeAllowList`/`claudeNixdPlugin` activation pattern. Repointed the `mcp-nixos` comment in `users.nix` at the new location.
-
-### Decisions
-- **Reconcile `~/.claude.json` with jq rather than symlink it read-only** — Claude Code rewrites that file constantly (auth, project history, toggles), so a `/nix/store` symlink would break it. The activation block touches only the single `.mcpServers.nixos` key, leaving everything else intact. Same trade-off already made for `settings.json` in this module.
-- **User scope over project scope** — the value of live NixOS data isn't repo-specific; one global registration beats per-repo `.mcp.json` files.
-
-### Issues / surprises
-- None. Dry-run clean (1.80 KiB diff). The `enabledMcpjsonServers` entry in `.claude/settings.local.json` from session 11 is now a harmless no-op (it only gated the deleted `.mcp.json`).
-
-### Next session
-- It's global now via the `claude mcp add` write; a `rebuild` makes the activation block the source of truth (survives a `~/.claude.json` reset). No blocker.
-- Standing backlog unchanged: laptop + natalie-laptop rebuild activations; interface-scope the Avahi mDNS firewall.
-
-**Commits**: `f9a66e8` (1 commit)
 
 ---
