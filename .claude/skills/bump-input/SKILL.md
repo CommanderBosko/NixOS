@@ -1,0 +1,85 @@
+---
+name: bump-input
+description: Triggers when user says "bump an input", "bump <input>", "update just nixpkgs", "update one input", "bump financeguru", "update a single flake input", or "move <input> to latest". Bumps a single named flake input to its latest upstream revision and shows the lock diff — without touching the other inputs.
+version: 0.1.0
+---
+
+# Bump Single Flake Input
+
+Bump exactly **one** named flake input for `/home/bosko/NixOS` to its latest upstream revision and show what changed. This is the single-input counterpart to `/update` (all inputs) and the opposite of `/pin-input` (hold an input back). Do not commit or rebuild automatically — leave those to the user.
+
+(Bucket: Data Enrichment — pulls the latest upstream revision of one input in.)
+
+## Step 1 — Resolve which input
+
+The root inputs live in `flake.nix`. List them live rather than trusting a hardcoded list:
+
+```bash
+nix flake metadata /home/bosko/NixOS --json | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin)['locks']['nodes']['root']['inputs'].keys()))"
+```
+
+- If the user named an input (e.g. "bump financeguru"), match it case-insensitively against that list and use the exact node name.
+- If they didn't name one, show the list and ask which to bump.
+- If the named input isn't in the list, say so and show the available names — do not guess.
+
+Note: inputs with `inputs.nixpkgs.follows = "nixpkgs"` (e.g. `home-manager`, `disko`) track `nixpkgs`'s revision. Bumping `nixpkgs` moves what those inputs see; bumping a follower on its own only moves that follower's own sources. Mention this when the user bumps `nixpkgs`.
+
+## Step 2 — Snapshot the baseline
+
+```bash
+git -C /home/bosko/NixOS diff flake.lock
+git -C /home/bosko/NixOS log --oneline -1
+```
+
+If `flake.lock` already has uncommitted changes, tell the user before proceeding — the post-bump diff will include those too.
+
+## Step 3 — Bump the one input
+
+```bash
+nix flake lock --update-input <name> --flake /home/bosko/NixOS
+```
+
+Always pass `--flake /home/bosko/NixOS`; never rely on cwd, since this skill may be invoked from anywhere. This resolves the input's original URL to its latest upstream rev and rewrites only that input's node in `flake.lock`.
+
+If the command fails (network error, evaluation error), show the full output and stop — do not proceed to the diff.
+
+## Step 4 — Show the diff
+
+```bash
+git -C /home/bosko/NixOS diff flake.lock
+```
+
+Present a focused summary for the bumped input only:
+
+```
+Bumped: financeguru
+  Old rev: a1b2c3d4...
+  New rev: e5f6a7b8...  (2026-06-23)
+```
+
+Extract old/new `rev` (first 8 chars) and the new `lastModified` as a readable date (YYYY-MM-DD) if present.
+
+If the diff is empty, tell the user:
+
+> <name> was already at its latest revision — flake.lock was not modified.
+
+## Step 5 — Remind of next steps
+
+Close with:
+
+> When you are ready:
+> - Run `/nixos-dry-run` to preview what the bumped input would change in your system build.
+> - Run `/commit` to commit the updated `flake.lock`.
+
+Do not run either automatically.
+
+---
+
+## Key constraints
+
+- Bump exactly one input. To bump everything, that's `/update`; to hold one back, that's `/pin-input`.
+- Always use `--flake /home/bosko/NixOS` — never rely on cwd.
+- Never edit `flake.nix` — only `flake.lock` changes.
+- Do not auto-commit, `git add`, or auto-rebuild — suggest, don't invoke.
+- No `Co-Authored-By` trailer here — that belongs only in commit messages.
+- When bumping `nixpkgs`, note the `home-manager` / `disko` follows dependency.

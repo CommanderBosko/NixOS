@@ -22,11 +22,28 @@ Ask the user the following — you can ask them all at once in a numbered list:
 
 If the user already gave some of this information in their request, don't re-ask for it — pre-fill it and confirm.
 
-### 2. Derive the skill name
+### 2. Classify into exactly one bucket (single-responsibility gate)
+
+Every skill must fit cleanly into **one** of these four buckets. The best skills do exactly one job; a skill that straddles two buckets confuses the agent about when to reach for it.
+
+1. **Utility** — one small reusable thing, every time (e.g. format files, stage a commit, tail a log).
+2. **Verification** — checks the quality of a final output (e.g. dry-run gate, health sweep, secret scan).
+3. **Data Enrichment** — pulls **external** data in (e.g. look up a package, bump an input to its latest upstream revision).
+4. **Orchestration** — chains other skills into a multi-step playbook (e.g. update → verify → commit → push).
+
+State which bucket this skill lands in and confirm it with the user. Then apply the gate:
+
+- **If it spans 2+ buckets, stop and split it** (or trim its scope) before drafting. Two independent jobs = two skills.
+- **Exception:** an Orchestration skill that *coordinates* other skills is not straddling — chaining a Utility + a Verification step is exactly its job. The straddle test is whether the skill does two **independent** jobs that could each stand alone, not whether it calls more than one tool.
+- A red flag for a hidden straddle: the description contains "save X **then** synthesize Y" or "do A **and also** B" where A and B don't depend on each other.
+
+Record the chosen bucket — it goes in the draft (see step 4).
+
+### 3. Derive the skill name
 
 From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tests`, `deploy-staging`, `check-coverage`). Confirm with the user if it's not obvious.
 
-### 3. Draft the SKILL.md
+### 4. Draft the SKILL.md
 
 Build the file content using this template:
 
@@ -38,7 +55,7 @@ description: <one-sentence description>. Use when the user says "<phrase 1>", "<
 
 # <Title Case Name>
 
-<One sentence summary of what the skill does.>
+<One sentence summary of what the skill does.> (Bucket: <Utility | Verification | Data Enrichment | Orchestration>)
 
 ## Steps
 
@@ -51,17 +68,18 @@ description: <one-sentence description>. Use when the user says "<phrase 1>", "<
 ```
 
 **Quality rules to apply when drafting:**
+- The skill must do exactly one job in its single bucket (step 2) — if drafting surfaces a second independent job, stop and split
 - Trigger phrases in `description` must match natural speech — include the obvious variants ("run tests", "test", "execute tests")
 - Steps must be actionable with Claude Code's tools (Bash, Read, Edit, Write, WebSearch, etc.)
 - Include what to output/report to the user at the end
 - If a step is conditional, say so explicitly ("if X, do Y; otherwise do Z")
 - Keep steps focused — don't add error handling for things that can't happen
 
-### 4. Show the draft
+### 5. Show the draft
 
 Present the full draft SKILL.md to the user with a brief explanation of any choices you made. Ask for any changes before writing.
 
-### 5. Write the file
+### 6. Write the file
 
 Determine the target path:
 - **Global:** `~/.claude/skills/<name>/SKILL.md`
@@ -75,11 +93,11 @@ ls -la <target-dir>/
 ```
 to confirm the file exists.
 
-### 6. Update CLAUDE.md (project-local only)
+### 7. Update CLAUDE.md (project-local only)
 
 If the skill is project-local and a `CLAUDE.md` exists in the project root, check whether it has a skills or slash-commands section. If it does, add the new skill's name and trigger description. If it doesn't, skip this step — don't add a section unprompted.
 
-### 7. Confirm
+### 8. Confirm
 
 Tell the user:
 - The skill name and where it was written

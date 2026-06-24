@@ -44,6 +44,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/team-member-ingest/SKILL.md";
       force = true;
     };
+    ".claude/skills/team-member-synthesize/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/team-member-synthesize/SKILL.md";
+      force = true;
+    };
     ".claude/skills/ask-team/SKILL.md" = {
       source = "${self}/dotfiles/bosko/claude/skills/ask-team/SKILL.md";
       force = true;
