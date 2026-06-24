@@ -16,7 +16,7 @@ Ask the user the following — you can ask them all at once in a numbered list:
 1. **What should this skill do?** (One sentence goal — what problem does it solve?)
 2. **What would you say to invoke it?** (Give 3–5 example phrases — e.g. "run tests", "check for errors", "deploy to staging")
 3. **Scope — global or project-local?**
-   - Global (`~/.claude/skills/`) — available in every project
+   - Global — available in every project. In this NixOS repo, global skills are **repo-managed**: the source lives in `dotfiles/bosko/claude/skills/` and is symlinked into `~/.claude/skills/` via `bosko-claude.nix` (Home Manager). See step 6 for the wiring this requires.
    - Project-local (`.claude/skills/` in the current working directory) — only this project
 4. **What are the steps?** (Describe the workflow in plain English — tools to run, files to read, decisions to make, output to show)
 
@@ -81,17 +81,23 @@ Present the full draft SKILL.md to the user with a brief explanation of any choi
 
 ### 6. Write the file
 
-Determine the target path:
-- **Global:** `~/.claude/skills/<name>/SKILL.md`
-- **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to current working directory)
+Determine the target path by scope:
 
-For project-local, first check if `.claude/skills/` exists; create it if not (via `mkdir -p`).
+- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). When managed, **do NOT write to `~/.claude/skills/`** — that path is read-only and an untracked file there is wiped on the next rebuild. Instead:
+  1. Write the SKILL.md to `dotfiles/bosko/claude/skills/<name>/SKILL.md`.
+  2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`, mirroring the existing entries:
+     ```nix
+     ".claude/skills/<name>/SKILL.md" = {
+       source = "${self}/dotfiles/bosko/claude/skills/<name>/SKILL.md";
+       force = true;
+     };
+     ```
+  3. `git add dotfiles/bosko/claude/skills/<name>/SKILL.md dotfiles/bosko/bosko-claude.nix` — flake evaluation only sees tracked files, so the new file must be staged before a dry-run/rebuild.
+  4. Optionally run `nh os boot /home/bosko/NixOS --dry` (or the `nixos-dry-run` skill) to confirm the config still evaluates. The `~/.claude/skills/<name>/` symlink appears only **after** a real rebuild (`nh os boot /home/bosko/NixOS`).
+- **Global, plain `~/.claude`** (no Home Manager managing it): write directly to `~/.claude/skills/<name>/SKILL.md`.
+- **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to the current working directory). First check if `.claude/skills/` exists; create it if not (via `mkdir -p`). Auto-discovered immediately — no rebuild.
 
-Write the file. Then run:
-```bash
-ls -la <target-dir>/
-```
-to confirm the file exists.
+Write the file. Then run `ls -la <target-dir>/` to confirm it exists. For the managed-global case, also confirm the `bosko-claude.nix` entry is in place.
 
 ### 7. Update CLAUDE.md (project-local only)
 
@@ -102,4 +108,7 @@ If the skill is project-local and a `CLAUDE.md` exists in the project root, chec
 Tell the user:
 - The skill name and where it was written
 - The exact phrase(s) that will invoke it
-- Whether they need to reload Claude Code for it to appear (global skills: restart or open new session; project-local: available immediately in this project)
+- How it becomes available:
+  - **Managed-global** (repo `dotfiles/` + `bosko-claude.nix`): it appears in `~/.claude/skills/` only after `nh os boot /home/bosko/NixOS` **+ reboot**. The repo copy works in the meantime when invoked from the repo.
+  - **Plain global** (`~/.claude`): restart or open a new session.
+  - **Project-local:** available immediately in this project.
