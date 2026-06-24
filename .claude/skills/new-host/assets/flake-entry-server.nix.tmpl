@@ -1,0 +1,11 @@
+# <Hostname — human-readable description>
+<hostname> = self.lib.mkSystem {
+  inherit inputs system nixpkgs;
+  specialArgs = { inherit inputs self system; };
+  modules = commonModules ++ [
+    # Machine-specific modules
+    "${self}/hosts/<hostname>/hardware-configuration.nix"
+    "${self}/hosts/<hostname>/environment.nix"
+    "${self}/hosts/<hostname>/networking.nix"
+  ];
+};

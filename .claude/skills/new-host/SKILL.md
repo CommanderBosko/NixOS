@@ -1,12 +1,12 @@
 ---
 name: new-host
 description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # New NixOS Host Scaffolder
 
-Interactively gather the information needed, then write all the correctly-structured host files into the right location in this repo. Follow all conventions exactly as described below — do not deviate from them.
+Interactively gather the information needed, then write all the correctly-structured host files into the right location in this repo. The file contents come from byte-exact templates under this skill's `assets/` directory — read and fill them rather than reproducing Nix from memory. Follow all conventions exactly as described below — do not deviate from them.
 
 ## Step 1 — Gather information
 
@@ -47,295 +47,26 @@ Based on host type:
   - `/home/bosko/NixOS/hosts/<hostname>/hardware-configuration.nix`
   - `/home/bosko/NixOS/hosts/<hostname>/configuration.nix`
 
-## Step 3 — Generate the files
+## Step 3 — Generate the files from the asset templates
 
-Use the templates below. Fill them in precisely. Do not add unnecessary abstractions — match the style of existing hosts exactly.
+Read the byte-exact templates from this skill's `assets/` directory and fill the placeholders — do **not** reproduce the Nix from memory. Pick the set matching the host type:
 
----
+| Host type | Write these files | From these asset templates |
+|-----------|-------------------|----------------------------|
+| desktop   | `hardware-configuration.nix`, `environment.nix`, `networking.nix` | `assets/hardware-configuration.nix`, `assets/desktop/environment.nix`, `assets/desktop/networking.nix` |
+| server    | `hardware-configuration.nix`, `environment.nix`, `networking.nix` | `assets/hardware-configuration.nix`, `assets/server/environment.nix`, `assets/server/networking.nix` |
+| remote    | `hardware-configuration.nix`, `configuration.nix` | `assets/hardware-configuration.nix`, `assets/remote/configuration.nix` |
 
-### Template: hardware-configuration.nix (all host types)
+Substitutions when filling a template:
+- Replace every `<hostname>` with the actual hostname.
+- `hardware-configuration.nix` is always written **as-is** (it's a placeholder); the real file is generated on the target machine — see Step 7.
 
-This is always a placeholder. The real file must be generated on the target machine.
+Per-type notes (preserve these — they encode real decisions):
+- **desktop `environment.nix`:** keep `environment.systemPackages` minimal (add real packages later); leave `services.flatpak.packages` an empty list. Do NOT add aarch64 emulation (`boot.binfmt.emulatedSystems`) unless the user asks — that's gaming-specific. Drop the `displayManager.autoLogin` block if the user does not want auto-login.
+- **desktop `networking.nix`:** do NOT add `wg-quick.interfaces.wg0.address` — that's added when the host joins the VPN. Leave a comment noting it can be added later.
+- **remote `configuration.nix`:** the `boot` override block is only for **aarch64** (where the zen kernel + GRUB are unavailable). For an `x86_64` remote host, omit that whole block.
 
-```nix
-# Placeholder — replace with output of: sudo nixos-generate-config --show-hardware-config
-# Run that command on <hostname> and paste the result here, then rebuild.
-{ ... }:
-
-{
-  # Hardware configuration is machine-specific.
-  # Generate with: sudo nixos-generate-config --show-hardware-config
-}
-```
-
----
-
-### Template: environment.nix for desktop hosts
-
-Mirror the gaming/laptop pattern. Use `{ pkgs, ... }:` signature (include `pkgs` since it references `pkgs.*`).
-
-```nix
-{ pkgs, ... }:
-
-{
-  # Services
-  services = {
-    # Display manager settings
-    displayManager = {
-      autoLogin = {
-        enable = true;
-        user = "bosko";
-      };
-    };
-
-    # Enable printing
-    printing.enable = true;
-  };
-
-  # Hardware
-  hardware = {
-    # Bluetooth settings
-    bluetooth = {
-      enable = true;
-      powerOnBoot = false;
-      settings.General = {
-        Enable = "Source,Sink,Media,Socket";
-        Experimental = true;
-      };
-    };
-
-    # Enable graphical interface
-    graphics.enable = true;
-  };
-
-  # System packages
-  environment.systemPackages = with pkgs; [
-    brave
-    firefox
-    kitty
-  ];
-
-  # Flatpaks
-  services.flatpak.packages = [
-  ];
-}
-```
-
-Notes:
-- Keep `environment.systemPackages` minimal; add real packages later.
-- Leave `services.flatpak.packages` as an empty list — the user can populate it later.
-- Do NOT include aarch64 emulation (`boot.binfmt.emulatedSystems`) unless the user specifically asks; that is gaming-specific.
-- Do NOT include `displayManager.autoLogin` if the user says they do not want auto-login.
-
----
-
-### Template: networking.nix for desktop hosts
-
-Mirror the gaming/laptop pattern. Use `{ ... }:` signature (no pkgs or lib needed).
-
-```nix
-{ ... }:
-
-{
-  # Configure networking
-  networking = {
-    # Set host name
-    hostName = "<hostname>";
-
-    # Enable networking
-    networkmanager = {
-      enable = true;
-      dns = "none";
-    };
-
-    # Enable custom DNS servers
-    nameservers = [
-      "10.0.0.20"
-      "1.1.1.1"
-    ];
-
-    # Enable and open ports in the firewall
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
-    };
-  };
-
-  # SSH settings
-  services = {
-    # Network clock sync
-    chrony.enable = true;
-
-    # Enable and configure openssh
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
-        PrintMotd = false;
-        AllowUsers = [ "bosko" ];
-      };
-    };
-  };
-}
-```
-
-Note: Do NOT add `wg-quick.interfaces.wg0.address` — the user adds that when they join the VPN. Leave a comment noting it can be added when ready.
-
----
-
-### Template: environment.nix for server hosts
-
-Mirror the server pattern. Use `{ pkgs, ... }:` signature.
-
-```nix
-{ pkgs, ... }:
-
-{
-  # System
-  system = {
-    # Automatic updating
-    autoUpgrade = {
-      enable = true;
-      dates = "daily";
-      persistent = true;
-    };
-  };
-
-  # Set max journal entries
-  services.journald.extraConfig = ''
-    SystemMaxUse=500M
-  '';
-
-  # Enable sudo for wheel group
-  security.sudo = {
-    enable = true;
-    wheelNeedsPassword = true;
-  };
-
-  # Automatic cleanup
-  nix.gc = {
-    automatic = true;
-    dates = "daily";
-    options = "--delete-older-than 7d";
-    persistent = true;
-  };
-
-  # System packages
-  environment.systemPackages = with pkgs; [
-    tmux
-  ];
-}
-```
-
----
-
-### Template: networking.nix for server hosts
-
-Mirror the server pattern. Use `{ ... }:` signature.
-
-```nix
-{ ... }:
-
-{
-  # Configure networking
-  networking = {
-    # Set host name
-    hostName = "<hostname>";
-
-    # Use DHCP; NetworkManager is unnecessary on a headless server
-    networkmanager.enable = false;
-    useDHCP = true;
-
-    # Enable custom DNS servers
-    nameservers = [
-      "10.0.0.20"
-      "1.1.1.1"
-    ];
-
-    # Enable and open ports in the firewall
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
-    };
-  };
-
-  # SSH settings
-  services = {
-    # Network clock sync
-    chrony.enable = true;
-
-    # Enable and configure openssh
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
-      };
-    };
-  };
-}
-```
-
----
-
-### Template: configuration.nix for remote hosts
-
-Mirror the vpn-server pattern. Use `{ pkgs, lib, ... }:` signature (both `pkgs` and `lib` are needed).
-
-```nix
-{ pkgs, lib, ... }:
-
-{
-  # Bootloader override — commonModules sets up GRUB + zen kernel (x86-only).
-  # For aarch64 hosts, force systemd-boot and the default ARM kernel instead.
-  boot = {
-    kernelPackages = lib.mkForce pkgs.linuxPackages;
-
-    loader = {
-      grub.enable = lib.mkForce false;
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-    };
-  };
-
-  networking = {
-    hostName = "<hostname>";
-
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
-    };
-  };
-
-  services = {
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
-      };
-    };
-
-    journald.extraConfig = "SystemMaxUse=200M";
-  };
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 7d";
-    persistent = true;
-  };
-
-  environment.systemPackages = with pkgs; [
-    tmux
-  ];
-}
-```
-
-Note: If the architecture is `x86_64-linux`, omit the `boot` override block — it is only needed for aarch64 where zen kernel and GRUB are unavailable.
-
----
+The templates follow the repo's Nix conventions exactly (see "Key conventions to preserve" below); don't restyle them.
 
 ## Step 4 — Write the files
 
@@ -353,67 +84,18 @@ This is mandatory. Nix flake evaluation cannot see untracked files. Remind the u
 
 ## Step 6 — Show the flake.nix entry (do NOT edit automatically)
 
-After writing files, show the user the exact `nixosConfigurations.<hostname>` block to add to `flake.nix`. Do NOT edit `flake.nix` automatically — show it, explain where it goes (after the last existing host entry, inside the `nixosConfigurations = {` attrset), and let the user add it or explicitly ask you to do it.
+Show the user the exact `nixosConfigurations.<hostname>` block to add to `flake.nix`. Read the matching template from `assets/` and fill it. Do NOT edit `flake.nix` automatically — show it, explain where it goes (after the last existing host entry, inside the `nixosConfigurations = {` attrset), and let the user add it or explicitly ask you to.
 
-### flake.nix entry for a desktop host
+| Host type | Asset template |
+|-----------|----------------|
+| desktop   | `assets/flake-entry-desktop.nix.tmpl` |
+| server    | `assets/flake-entry-server.nix.tmpl` |
+| remote (aarch64) | `assets/flake-entry-remote.nix.tmpl` |
 
-```nix
-# <Hostname — human-readable description>
-<hostname> = self.lib.mkSystem {
-  inherit inputs system nixpkgs;
-  specialArgs = { inherit inputs self system; };
-  modules = desktopModules ++ [
-    # Machine-specific modules
-    "${self}/hosts/<hostname>/hardware-configuration.nix"
-    "${self}/hosts/<hostname>/environment.nix"
-    "${self}/hosts/<hostname>/networking.nix"
-    "${self}/dotfiles/common/modules/desktop-environments/<de>.nix"
-    # "${self}/dotfiles/common/modules/nvidia.nix"   # uncomment if nvidia GPU
-    # "${self}/dotfiles/common/modules/amd.nix"      # uncomment if amd GPU
-  ];
-};
-```
-
-Populate `<de>` with the chosen DE module name. Include or exclude the GPU lines based on what the user selected in Step 1 — leave them as comments if `none`, include them uncommented if applicable.
-
-### flake.nix entry for a server host
-
-```nix
-# <Hostname — human-readable description>
-<hostname> = self.lib.mkSystem {
-  inherit inputs system nixpkgs;
-  specialArgs = { inherit inputs self system; };
-  modules = commonModules ++ [
-    # Machine-specific modules
-    "${self}/hosts/<hostname>/hardware-configuration.nix"
-    "${self}/hosts/<hostname>/environment.nix"
-    "${self}/hosts/<hostname>/networking.nix"
-  ];
-};
-```
-
-### flake.nix entry for a remote host (aarch64-linux)
-
-```nix
-# <Hostname — human-readable description>
-<hostname> = self.lib.mkSystem {
-  inherit inputs nixpkgs;
-  specialArgs = {
-    inherit inputs self;
-    system = "aarch64-linux";
-  };
-  modules = commonModules ++ [
-    "${self}/hosts/<hostname>/hardware-configuration.nix"
-    "${self}/hosts/<hostname>/configuration.nix"
-  ];
-};
-```
-
-Note the difference: `inherit inputs nixpkgs;` (no `system`) and `system = "aarch64-linux"` in `specialArgs`. This mirrors how vpn-server is defined.
-
-For a remote host with `x86_64-linux`, use the server pattern (inherit system, no explicit specialArgs override).
-
----
+Fill placeholders:
+- Replace `<hostname>` (and the `# <Hostname — …>` comment) throughout.
+- **desktop:** replace `<de>` with the chosen DE module name; include/uncomment the GPU import lines per the user's Step 1 GPU answer — leave them commented if `none`, uncomment the relevant one(s) otherwise.
+- **remote:** the remote template is for `aarch64-linux`. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
 
 ## Step 7 — Remind the user about hardware-configuration.nix
 

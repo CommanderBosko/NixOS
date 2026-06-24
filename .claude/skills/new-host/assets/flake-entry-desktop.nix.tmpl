@@ -1,0 +1,14 @@
+# <Hostname — human-readable description>
+<hostname> = self.lib.mkSystem {
+  inherit inputs system nixpkgs;
+  specialArgs = { inherit inputs self system; };
+  modules = desktopModules ++ [
+    # Machine-specific modules
+    "${self}/hosts/<hostname>/hardware-configuration.nix"
+    "${self}/hosts/<hostname>/environment.nix"
+    "${self}/hosts/<hostname>/networking.nix"
+    "${self}/dotfiles/common/modules/desktop-environments/<de>.nix"
+    # "${self}/dotfiles/common/modules/nvidia.nix"   # uncomment if nvidia GPU
+    # "${self}/dotfiles/common/modules/amd.nix"      # uncomment if amd GPU
+  ];
+};

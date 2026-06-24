@@ -1,0 +1,15 @@
+# <Hostname — human-readable description>
+# Note the difference from the server entry: `inherit inputs nixpkgs;` (no `system`)
+# and `system = "aarch64-linux"` in specialArgs. Mirrors how vpn-server is defined.
+# For an x86_64 remote host, use the server entry instead (inherit system, no override).
+<hostname> = self.lib.mkSystem {
+  inherit inputs nixpkgs;
+  specialArgs = {
+    inherit inputs self;
+    system = "aarch64-linux";
+  };
+  modules = commonModules ++ [
+    "${self}/hosts/<hostname>/hardware-configuration.nix"
+    "${self}/hosts/<hostname>/configuration.nix"
+  ];
+};
