@@ -56,6 +56,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/skill-suggestion/SKILL.md";
       force = true;
     };
+    ".claude/skills/skill-audit/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/skill-audit/SKILL.md";
+      force = true;
+    };
     ".claude/skills/skill-upgrade/SKILL.md" = {
       source = "${self}/dotfiles/bosko/claude/skills/skill-upgrade/SKILL.md";
       force = true;
