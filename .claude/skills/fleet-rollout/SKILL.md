@@ -41,7 +41,7 @@ is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-Fixed, fail-fast order (desktops first so the server is last to receive a bad change):
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). The order below is the rollout policy — fixed, fail-fast, desktops first so the server is last to receive a bad change:
 
 1. `gaming`
 2. `laptop`

@@ -8,28 +8,27 @@ version: 0.1.0
 
 Connect to any host in the NixOS repo by short name, without needing to remember IPs, usernames, or key flags.
 
-## Known hosts
+## Known hosts — single source of truth
 
-| Short name      | SSH command                                                   | Notes                        |
-|-----------------|---------------------------------------------------------------|------------------------------|
-| `gaming`        | `ssh bosko@gaming`                                            | Local, IP: 10.0.0.251        |
-| `laptop`        | `ssh bosko@laptop`                                            | Local, IP: 10.0.0.227        |
-| `natalie-laptop`| `ssh bosko@natalie-laptop`                                    | Local, IP: 10.0.0.103        |
-| `server`        | `ssh bosko@nixos-server`                                      | Local, hostname is nixos-server |
-| `pi-hole`       | `ssh bosko@pi-hole`                                           | Local, IP: 10.0.0.20           |
-| `vpn-server`    | `ssh bosko@150.136.232.63`                                    | Oracle Cloud ARM VM (NixOS)  |
+All host SSH targets and IPs live in `/home/bosko/NixOS/.claude/hosts.json`. **Read that file; never hardcode a copy here.** List them with:
+
+```bash
+jq -r '.hosts | to_entries[] | "\(.key)\t\(.value.ssh)\t\(.value.ip // "-")\t\(.value.notes // "")"' /home/bosko/NixOS/.claude/hosts.json
+```
 
 ## Step 1 — Resolve the target
 
-If the user provided a host name as an argument (e.g., `/ssh-host gaming`), use it directly. Otherwise, present the table above and ask which host to connect to.
+If the user provided a host name (e.g., `/ssh-host gaming`), resolve its SSH target from hosts.json:
 
-Accept these aliases:
-- `gaming` → `ssh bosko@gaming`
-- `laptop` → `ssh bosko@laptop`
-- `natalie-laptop` or `natalie` → `ssh bosko@natalie-laptop`
-- `server` or `nixos-server` → `ssh bosko@nixos-server`
-- `pi-hole` → `ssh bosko@pi-hole`
-- `vpn-server` or `vpn` or `oracle` → `ssh bosko@150.136.232.63`
+```bash
+jq -r '.hosts["<name>"].ssh' /home/bosko/NixOS/.claude/hosts.json
+```
+
+Otherwise, list the hosts (command above) and ask which to connect to.
+
+Accept these aliases before lookup:
+- `natalie` → `natalie-laptop`
+- `vpn` or `oracle` → `vpn-server`
 
 ## Step 2 — Show the command
 
@@ -44,18 +43,9 @@ Connecting to <host>:
 
 Execute the command via the Bash tool with a generous timeout (600000ms), since this is an interactive SSH session.
 
+Use the `.ssh` value resolved from hosts.json directly — no extra IP or key flag needed:
 ```bash
-ssh <resolved args>
-```
-
-For `vpn-server`, always use:
-```bash
-ssh bosko@150.136.232.63
-```
-
-For local hosts, use the NixOS hostname directly — no IP or key flag needed:
-```bash
-ssh bosko@<hostname>
+ssh <resolved .ssh>
 ```
 
 ## Step 4 — Report the result
@@ -69,8 +59,4 @@ After the session ends (or if the connection is refused/timed out), report the e
 - All local hosts have `AllowUsers bosko` (natalie-laptop also allows `natty`).
 - All hosts have password auth disabled — key auth only.
 - vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
-- Local hosts use ~/.ssh/config entries with static IPs (hostname resolution unreliable):
-  - `gaming` → 10.0.0.251
-  - `laptop` → 10.0.0.227
-  - `natalie-laptop` → 10.0.0.103
-  - `pi-hole` → 10.0.0.20
+- Local hosts use `~/.ssh/config` entries with static IPs (hostname resolution unreliable); the IPs are recorded per-host in `.claude/hosts.json` (`.hosts.<name>.ip`).

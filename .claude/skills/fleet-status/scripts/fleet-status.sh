@@ -4,15 +4,19 @@
 # and whether a reboot is pending (booted vs current system differ).
 # Then WireGuard handshake freshness, read from vpn-server (passwordless sudo).
 # Safe: read-only. No sudo on the desktops (all probes are unprivileged).
+#
+# Host list, SSH targets, and the WG peer->host map are read from the single
+# source of truth at .claude/hosts.json — do not re-hardcode them here.
 set -uo pipefail
 
-HOSTS=("gaming" "laptop" "natalie-laptop" "vpn-server")
-declare -A SSH_TARGET=(
-  [gaming]="bosko@gaming"
-  [laptop]="bosko@laptop"
-  [natalie-laptop]="bosko@natalie-laptop"
-  [vpn-server]="bosko@150.136.232.63"
-)
+HOSTS_JSON="/home/bosko/NixOS/.claude/hosts.json"
+
+mapfile -t HOSTS < <(jq -r '.flakeHosts[]' "$HOSTS_JSON")
+declare -A SSH_TARGET
+while IFS=$'\t' read -r name ssh; do
+  SSH_TARGET[$name]="$ssh"
+done < <(jq -r '.hosts | to_entries[] | select(.value.flakeHost) | "\(.key)\t\(.value.ssh)"' "$HOSTS_JSON")
+VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' "$HOSTS_JSON")"
 SELF="$(hostname)"
 
 # Unprivileged probe run on each host; emits one pipe-delimited line.
@@ -51,19 +55,18 @@ done
 
 echo
 echo "==> WireGuard handshakes (from vpn-server)"
-ssh -o BatchMode=yes -o ConnectTimeout=8 bosko@150.136.232.63 '
+raw=$(ssh -o BatchMode=yes -o ConnectTimeout=8 "$VPN_SSH" 'sudo wg show wg0 latest-handshakes' 2>/dev/null)
+if [ -z "${raw:-}" ]; then
+  echo "  vpn-server unreachable"
+else
   now=$(date +%s)
-  sudo wg show wg0 latest-handshakes 2>/dev/null | while read -r peer hs; do
-    case "$peer" in
-      M9KajsVX9wKLyeqz8F4kXbtelJYxYZP2b+cvkYMZ+nA=) n=gaming ;;
-      c4H2dY7dGuvanWpmpChT4vocjDPB+pbC8KeLJ2N8m3s=) n=laptop ;;
-      YRrCAJ44V1y9uVkt7NWk8w61TDlU4o1G0MDLH0GSpSE=) n=natalie-laptop ;;
-      *) n="$peer" ;;
-    esac
+  while read -r peer hs; do
+    [ -z "$peer" ] && continue
+    n=$(jq -r --arg p "$peer" '.vpn.peers[$p] // $p' "$HOSTS_JSON")
     if [ "${hs:-0}" -gt 0 ]; then
       printf "  %-16s %ss ago\n" "$n" "$((now - hs))"
     else
       printf "  %-16s never\n" "$n"
     fi
-  done
-' 2>/dev/null || echo "  vpn-server unreachable"
+  done <<<"$raw"
+fi

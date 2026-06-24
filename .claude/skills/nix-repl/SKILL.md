@@ -12,14 +12,13 @@ Open a nix repl pre-loaded with this repo's flake so the user can interactively 
 
 If the user named a host (e.g. `/nix-repl gaming`), use it. Otherwise ask:
 
-> Which host config do you want to explore?
+> Which host config do you want to explore? (the four flake hosts)
 > - `gaming`
 > - `laptop`
-> - `server`
 > - `natalie-laptop`
 > - `vpn-server`
 
-Accept short aliases: `natalie` → `natalie-laptop`, `vpn` → `vpn-server`.
+Accept short aliases: `natalie` → `natalie-laptop`, `vpn` → `vpn-server`. The valid host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` — these are the only keys under `nixosConfigurations`.
 
 ## Step 2 — Print the repl command
 

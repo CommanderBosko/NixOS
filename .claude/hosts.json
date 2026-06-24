@@ -1,0 +1,22 @@
+{
+  "_comment": "Single source of truth for host SSH targets, IPs, and WireGuard peer identities. Read by the host-touching skills (ssh-host, journal, remote-rebuild, nix-repl, fleet-status, fleet-rollout, vpn-status, verify-service) instead of each re-typing a copy. Update HERE only.",
+  "repo": "/home/bosko/NixOS",
+  "flakeHosts": ["gaming", "laptop", "natalie-laptop", "vpn-server"],
+  "hosts": {
+    "gaming":         { "ssh": "bosko@gaming",          "ip": "10.0.0.251",     "local": true,  "flakeHost": true,  "arch": "x86_64-linux" },
+    "laptop":         { "ssh": "bosko@laptop",          "ip": "10.0.0.227",     "local": true,  "flakeHost": true,  "arch": "x86_64-linux" },
+    "natalie-laptop": { "ssh": "bosko@natalie-laptop",  "ip": "10.0.0.103",     "local": true,  "flakeHost": true,  "arch": "x86_64-linux" },
+    "vpn-server":     { "ssh": "bosko@150.136.232.63",  "ip": "150.136.232.63", "local": false, "flakeHost": true,  "arch": "aarch64-linux", "sudo": "passwordless", "rebuild": "boot", "notes": "Oracle Cloud ARM VM, public-facing. bosko has passwordless sudo; the Oracle ubuntu cloud-init user no longer accepts the key." },
+    "pi-hole":        { "ssh": "bosko@pi-hole",         "ip": "10.0.0.20", "local": true, "flakeHost": false, "notes": "DNS appliance (the nameserver) at 10.0.0.20; NOT a flake host. bosko@ SSH is currently denied (different auth) — shortcut kept for reference." }
+  },
+  "vpn": {
+    "endpoint": "150.136.232.63:51820",
+    "subnet": "10.10.0.0/24",
+    "serverHost": "vpn-server",
+    "peers": {
+      "M9KajsVX9wKLyeqz8F4kXbtelJYxYZP2b+cvkYMZ+nA=": "gaming",
+      "c4H2dY7dGuvanWpmpChT4vocjDPB+pbC8KeLJ2N8m3s=": "laptop",
+      "YRrCAJ44V1y9uVkt7NWk8w61TDlU4o1G0MDLH0GSpSE=": "natalie-laptop"
+    }
+  }
+}

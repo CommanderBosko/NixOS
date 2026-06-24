@@ -26,15 +26,11 @@ journalctl -u <service> -n 50 --no-pager
 
 ### Remote hosts
 
-Use SSH to run journalctl on the remote machine. Host resolution follows the same table as the `ssh-host` skill:
+Use SSH to run journalctl on the remote machine. Resolve the host's SSH target from the single source of truth, `.claude/hosts.json` (do not hardcode a copy):
 
-| Host             | SSH command prefix                                        |
-|------------------|-----------------------------------------------------------|
-| `gaming`         | `ssh bosko@gaming`                                        |
-| `laptop`         | `ssh bosko@laptop`                                        |
-| `natalie-laptop` | `ssh bosko@natalie-laptop`                                |
-| `server`         | `ssh bosko@nixos-server`                                  |
-| `vpn-server`     | `ssh bosko@150.136.232.63`                                |
+```bash
+jq -r '.hosts["<host>"].ssh' /home/bosko/NixOS/.claude/hosts.json
+```
 
 Remote command:
 

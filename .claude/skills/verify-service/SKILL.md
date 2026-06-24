@@ -22,7 +22,7 @@ Parse from the user's request:
 ### 1. Resolve the host
 
 - If no host is given, or the host is the machine you're running on, run all commands **directly** via Bash.
-- If a remote host is named, prefix each command with the repo's `ssh-host` convention (resolve the short host name to the correct `ssh` command — invoke / mirror the `ssh-host` skill). `vpn-server` is reachable over the WireGuard VPN.
+- If a remote host is named, resolve its SSH target from the single source of truth, `/home/bosko/NixOS/.claude/hosts.json` (`jq -r '.hosts["<host>"].ssh' …` — the same data the `ssh-host` skill reads), and prefix each command with it. `vpn-server` is reachable over the WireGuard VPN.
 - Run the checks below in a **single combined command** where possible to keep it to one round-trip.
 
 ### 2. Service check (always)
