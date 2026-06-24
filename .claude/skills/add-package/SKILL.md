@@ -1,12 +1,20 @@
 ---
 name: add-package
 description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/server", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Add Package Workflow
 
 Add a package to the correct location in this NixOS repo. Follow every step in order. Do not make any edits until Step 4.
+
+## Arguments
+
+Parse from the user's request:
+
+- **`<package>`** (required) — the `pkgs.*` attribute name, e.g. `ripgrep`, `kdePackages.kcalc`. If the user gave a plain English name, confirm the nixpkgs attribute before proceeding.
+- **`<host>`** (optional) — one or more of `gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, or `all`. If omitted, ask in Step 1.
+- **tier** (optional) — the destination tier: **System**, **User (bosko)**, or **Home Manager (shared)**. If omitted, ask in Step 1.
 
 ## Step 1 — Gather information
 
@@ -16,7 +24,7 @@ Ask the user the following questions. You may batch them into a single message. 
 
 1. **Package name** — The `pkgs.*` attribute name (e.g. `ripgrep`, `kdePackages.kcalc`). If the user gave a plain English name, confirm the nixpkgs attribute before proceeding — you can reason from your knowledge of nixpkgs or ask the user to verify with `nix search nixpkgs <name>`.
 
-2. **Which host(s)** — One or more of: `gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise ask.
+2. **Which host(s)** — One or more of: `gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per valid host (`gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, `all`) rather than free-form prose. If the user already named a host in their request, skip the question.
 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.
@@ -24,6 +32,8 @@ Ask the user the following questions. You may batch them into a single message. 
    - **Home Manager (shared)** — goes in `home.packages` in `dotfiles/common/configs/home.nix`. Managed by HM; applies to both `bosko` and `natty` on all desktop hosts.
 
    Note: `server` and `vpn-server` do not run Home Manager — only the **system** option applies to those hosts.
+
+   If the user did not already indicate the tier in their request, present this pick via the **AskUserQuestion tool** with these three options (**System**, **User (bosko)**, **Home Manager (shared)**) rather than free-form prose. If the chosen host is `server` or `vpn-server`, only **System** applies — skip the question and use System. If the user already specified the tier, skip the question.
 
 ## Step 2 — Determine the correct file and list
 

@@ -1,7 +1,7 @@
 ---
 name: add-secret
 description: Triggers when the user says "add a secret", "add a sops secret", "edit a secret", "rotate a secret", "new secret", "encrypt a secret", or "change a password hash". Adds, edits, or rotates a sops-nix-managed secret in this repo and reminds the user to wire it up and rebuild.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Add / Edit a sops Secret
@@ -10,6 +10,15 @@ This repo manages secrets with **sops-nix** (adopted 2026-06-15). Secrets are co
 **encrypted**; plaintext must never land in the repo or the Nix store. This skill handles
 the everyday operations: add a new secret, edit/rotate an existing one, or create a new
 per-host secret file.
+
+## Arguments
+
+Invocation inputs (gather any the user didn't already give in Step 1):
+
+- **Secret key name** — the short kebab/snake key (e.g. `restic-password`, `bosko-hashedPassword`).
+- **Scope / target file** — `secrets/common.yaml` (all hosts), `secrets/hosts/<host>.yaml`
+  (one host), or a new file (new grouping).
+- **Value & operation** — the plaintext value, or "edit"/"rotate" an existing key.
 
 ## Repo layout (read this first)
 
@@ -30,12 +39,14 @@ Ask, in one message:
 
 1. **What is the secret?** A short key name (kebab or snake, e.g. `tailscale-authkey`,
    `restic-password`). For a password hash, expect a `$6$…`/`$y$…` string.
-2. **Scope** — who needs to decrypt it?
+2. **Scope** — who needs to decrypt it? Present this as a pick-one via the
+   **AskUserQuestion tool** (skip if the user already specified scope):
    - **All hosts** → `secrets/common.yaml`.
    - **One specific host** → `secrets/hosts/<host>.yaml`.
    - **A new grouping** → a new file; you'll add a `creation_rule` for it (Step 2).
 3. **Value** — the plaintext value, or "edit the existing one" / "rotate it".
-4. **New or existing?** Adding a key, or changing an existing one.
+4. **New or existing?** Adding a key, or changing an existing one. Present this as a
+   pick-one (new key / edit existing) via the **AskUserQuestion tool** if unclear.
 
 If the user is generating a **password hash**, the canonical way is
 `mkpasswd -m sha-512` (`nix shell nixpkgs#mkpasswd --command mkpasswd -m sha-512`).
@@ -48,8 +59,7 @@ If the user is generating a **password hash**, the canonical way is
   intended recipients (always include `*admin`). If it's per-host, include that host's
   anchor. If the host has no anchor yet, derive it first:
   ```bash
-  ssh bosko@<host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' \
-    | nix shell nixpkgs#ssh-to-age --command ssh-to-age
+  /home/bosko/NixOS/.claude/skills/add-secret/scripts/host-age-key.sh <host>
   ```
   Add it under `keys:` as `- &<host> age1...`, then reference it in the rule.
 
@@ -110,13 +120,15 @@ services.foo.passwordFile = config.sops.secrets."new-key-name".path;
 
 ## Step 5 — Verify
 
+Run the verify script — it exports the admin age key, confirms the file decrypts, and
+confirms the values are encrypted on disk (`ENC[`):
+
 ```bash
-export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-# value decrypts:
-nix shell nixpkgs#sops --command sops -d /home/bosko/NixOS/secrets/<file>.yaml
-# file is actually encrypted (must show ENC[ and a sops: block):
-grep -q 'ENC\[' /home/bosko/NixOS/secrets/<file>.yaml && echo encrypted
+/home/bosko/NixOS/.claude/skills/add-secret/scripts/verify-secret.sh secrets/<file>.yaml [host]
 ```
+
+A non-zero exit means the file failed to decrypt or is not encrypted — investigate before
+staging anything.
 
 If you changed nix wiring, evaluate before rebuilding:
 `nix eval .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath --raw >/dev/null && echo OK`
@@ -131,6 +143,13 @@ Then tell the user which hosts need a rebuild for the change to take effect (a s
 `common.yaml` affects all hosts; a per-host file affects just that host). Decryption
 happens at **activation**, so a rebuild — not just an eval — is required on each affected
 host. Do not commit on the user's behalf unless asked; the `commit`/`push` skills handle that.
+
+## Scripts
+
+- `.claude/skills/add-secret/scripts/verify-secret.sh <secret-file> [host]` — decrypts the
+  file with the admin age key and confirms it's encrypted on disk (Step 5).
+- `.claude/skills/add-secret/scripts/host-age-key.sh <host>` — derives a host's age public
+  key from its SSH ed25519 host key, for adding a new anchor to `.sops.yaml` (Step 2).
 
 ## Gotchas
 

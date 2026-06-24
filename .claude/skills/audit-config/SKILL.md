@@ -1,7 +1,7 @@
 ---
 name: audit-config
 description: Use this skill when the user wants to "audit config", "audit the flake", "security audit", "bug audit", "review the whole config", "sweep for security issues", or "check my NixOS config for problems". Runs a structured security + correctness pass over the ENTIRE flake (not just the current diff), aware of this repo's intentional workarounds.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Audit Config
@@ -61,13 +61,12 @@ When in doubt whether something is intentional, read the relevant memory file be
 Walk the config looking for genuine security regressions. Focus areas, in rough priority:
 
 1. **Secrets in the open** — private keys, passwords, tokens, WireGuard private keys, or API keys
-   committed in plaintext. Check `hosts/*/`, the VPN config, and any `*.nix` with `key`/`secret`/
-   `password`/`token` strings.
+   committed in plaintext. Run the sweep script to collect raw hits, then **triage** them:
    ```bash
-   grep -rniE 'private[_-]?key|password|secret|token|presharedkey|api[_-]?key' /home/bosko/NixOS --include=*.nix
+   /home/bosko/NixOS/.claude/skills/audit-config/scripts/audit-sweep.sh
    ```
-   Distinguish *option references* (e.g. `passwordFile = ...`) from *literal embedded secrets*.
-   Only literal embedded secrets are findings.
+   Distinguish *option references* (e.g. `passwordFile = ...`, `.path`) from *literal embedded
+   secrets*. Only literal embedded secrets are findings.
 2. **Hardening regressions** — verify the security.nix guarantees are still in force across hosts:
    AppArmor enabled + `killUnconfinedConfinables`, audit daemon, PAM wheel enforcement for sudo,
    kexec disabled / kernel image protection, `kernel.randomize_va_space = 2` (full ASLR).
@@ -93,10 +92,12 @@ Look for real bugs, not style:
   it (compare the five hosts' `environment.nix` / `networking.nix`).
 - Typos in option paths that Nix won't catch until eval.
 
-To catch eval-level errors objectively, run the flake check:
+To catch eval-level errors objectively, run the flake check. This is slow, so it's run
+separately from the secret sweep — either directly or via the sweep script's optional flag:
 
 ```bash
-nix flake check /home/bosko/NixOS 2>&1
+/home/bosko/NixOS/.claude/skills/audit-config/scripts/audit-sweep.sh --flake-check
+# (equivalent to: nix flake check /home/bosko/NixOS 2>&1)
 ```
 
 Allow up to 5 minutes (300000ms timeout). Report any errors verbatim with file/line.
@@ -118,6 +119,13 @@ End with a one-line bottom line: is the config in good shape, or are there must-
 
 Do **not** auto-apply fixes. List them and let the user choose. If they then say "fix it",
 make the edits and offer to dry-run (`nixos-dry-run` skill) before committing.
+
+## Script
+
+`.claude/skills/audit-config/scripts/audit-sweep.sh [--flake-check]` — runs the deterministic
+secret-pattern grep over all `*.nix` files and emits raw hits for the model to triage. With
+`--flake-check` it also runs the slow `nix flake check`. The script does no triage and changes
+nothing — judgment (Steps 1–4) stays with the model.
 
 ---
 

@@ -1,12 +1,20 @@
 ---
 name: pin-input
 description: Triggers when user says "pin input", "pin nixpkgs", "hold back an input", "lock input to a revision", "pin flake input", "freeze input", or "pin X to a commit". Pins a specific flake input to a particular git revision or tag, useful when upstream breaks something and you need to hold back one input while letting others update freely.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Flake Input Pinning Workflow
 
 Pin a single flake input for `/home/bosko/NixOS` to a specific revision, tag, or branch. Always show the user what will be locked before making any change, and explain which pin method they chose and its durability.
+
+## Arguments
+
+This skill is driven by three inputs (any not supplied in the prompt are asked for in the steps below):
+
+- **input name** — the root flake input to pin (e.g. `nixpkgs`, `home-manager`). Resolved against the live input list in "Current inputs in this repo".
+- **target rev / branch / tag / URL** — what to pin it to: a full or short commit SHA, a branch/tag name, or a full `github:` URL.
+- **pin method** — `temporary` (lock file only) or `permanent` (edit `flake.nix`).
 
 ## Current inputs in this repo
 
@@ -43,9 +51,8 @@ To get each input's locked rev from `flake.lock`, read the file and extract the 
 
 ## Step 2 — Ask which input and what to pin it to
 
-Ask:
+Ask which input to pin via the **AskUserQuestion tool**, offering one option per name from the live input list enumerated above. Then ask what to pin it to:
 
-> Which input would you like to pin? (pick from the live input list enumerated above)
 > What would you like to pin it to? Options:
 >   - A full commit rev (40-char SHA), e.g. `abc123def456...`
 >   - A short rev (Nix will resolve it), e.g. `abc123d`
@@ -62,7 +69,7 @@ Construct the target URL:
 
 ## Step 3 — Ask which pin method
 
-Present the two options clearly:
+Present the two options via the **AskUserQuestion tool** — one option for `temporary`, one for `permanent`:
 
 > **Temporary pin** (lock file only):
 > Updates only `flake.lock` to point to the pinned rev. The `flake.nix` URL is unchanged.
@@ -85,10 +92,8 @@ Before making any change, show the user exactly what will happen:
 > Method: **temporary** — only `flake.lock` will be modified; `nix flake update` will un-pin it.
 >
 > [For nixpkgs] Note: `home-manager` and `disko` both follow `nixpkgs`, so they will also see this pinned revision.
->
-> Proceed? (yes/no)
 
-Do not run any command until the user confirms.
+Then ask the user to confirm via the **AskUserQuestion tool**, with options `Proceed` and `Cancel`. Do not run any command until the user confirms.
 
 ---
 
@@ -132,21 +137,21 @@ nix flake lock \
 
 ## Step 6 — Show the diff
 
-After the command completes, display the `flake.lock` diff:
+After the command completes, run the shared lock-diff script:
 
 ```bash
-git -C /home/bosko/NixOS diff flake.lock
+/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh
 ```
 
-Present a focused summary:
+It prints a single aligned line for the pinned input — `<name>  <old8> -> <new8>  (<YYYY-MM-DD from new lastModified>)`. Present it, then add a line naming the pin target the user chose so the durability context is clear:
 
 ```
 Pinned: nixpkgs
-  Old rev: a1b2c3d4...
-  New rev: abc123de...  (github:nixos/nixpkgs/abc123def456)
+  nixpkgs   a1b2c3d4 -> abc123de   (2026-05-19)
+  -> pinned to github:nixos/nixpkgs/abc123def456
 ```
 
-If the diff is empty (the input was already at that rev), tell the user:
+If the script prints `flake.lock unchanged.` (the input was already at that rev), tell the user:
 
 > nixpkgs was already locked to that revision — flake.lock was not modified.
 
@@ -173,6 +178,10 @@ Then suggest:
 Do not run either of those automatically.
 
 ---
+
+## Shared script
+
+The lock diff in Step 6 is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/bump-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script, then append the human-chosen pin target as a context line.
 
 ## Key constraints
 

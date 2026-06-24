@@ -1,7 +1,7 @@
 ---
 name: save-memory
 description: Triggers when user says "save a memory", "remember this", "write a memory", "save to memory", "add a memory", or "note this for next time". Writes one well-formed memory file (correct frontmatter + body) to the project memory dir and adds its one-line pointer to MEMORY.md.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Save Memory
@@ -38,24 +38,13 @@ If one does, **update that file** instead of creating a duplicate. If a memory t
 
 Pick a short kebab-case `name` slug. The filename convention in this dir is `<type>_<slug>.md` (e.g. `project_vpn_setup.md`, `feedback_use_dry_run_skill.md`) — match the existing naming.
 
-Write `<dir>/<type>_<slug>.md` with this shape:
-
-```markdown
----
-name: <kebab-case-slug>
-description: <one-line summary — used to decide relevance during recall>
-metadata:
-  type: user | feedback | project | reference
----
-
-<the fact. For feedback: follow with a **Why:** line. For project: follow with **Why:** and **How to apply:** lines. Link related memories with [[their-slug]].>
-```
+Read `assets/memory-template.md` and write `<dir>/<type>_<slug>.md` from it, substituting `<kebab-case-slug>`, the `description`, the `type`, and the body. Drop the trailing HTML-comment block (it only documents the index line for Step 4). For feedback, follow the fact with a **Why:** line; for project, follow with **Why:** and **How to apply:** lines.
 
 Link liberally to related memories with `[[slug]]` — a link whose target doesn't exist yet is fine; it marks something worth writing later.
 
 ## Step 4 — Add the index pointer to MEMORY.md
 
-Append (or update, if revising an existing memory) a single line under the index in `MEMORY.md`:
+Append (or update, if revising an existing memory) a single line under the index in `MEMORY.md`, using the index-line format documented in `assets/memory-template.md`:
 
 ```
 - [Title](<type>_<slug>.md) — <short hook of why it matters>
@@ -76,3 +65,7 @@ Tell the user the filename written, its `type`, and the one-line index hook adde
 - Convert relative dates to absolute (YYYY-MM-DD) before writing.
 - Prefer updating an existing file over creating a near-duplicate; delete wrong memories.
 - Write directly to the memory dir — it already exists; do not `mkdir` or guard for its existence.
+
+## Assets
+
+- `assets/memory-template.md` — the memory-file skeleton (frontmatter + body shape) and the `MEMORY.md` index-line format. Read and fill it in Steps 3 and 4.

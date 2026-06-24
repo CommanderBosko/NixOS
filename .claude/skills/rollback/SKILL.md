@@ -1,39 +1,34 @@
 ---
 name: rollback
 description: Use this skill when the user wants to "rollback", "roll back nixos", "revert to previous generation", "undo last rebuild", "go back to previous build", or "nixos rollback". It shows recent generations, confirms with the user, then activates the previous generation immediately via nixos-rebuild switch --rollback.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # NixOS Rollback
 
 Roll the system back to the previous NixOS generation. This activates the previous generation immediately — no reboot required.
 
-## Step 1 — Show recent generations
+## Arguments
 
-Run:
+- **Target generation** (optional) — a specific generation number to roll back to. If omitted,
+  the target is the current generation minus 1.
+
+## Step 1 — List generations and resolve the target
+
+Run the read-only helper. It lists the last 5 generations, marks the current one, and prints the
+rollback target (current minus 1, or the number you pass):
 
 ```bash
-sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+/home/bosko/NixOS/.claude/skills/rollback/scripts/rollback.sh [target-generation]
 ```
 
-Display the last 5 generations in a compact table. Mark the current generation clearly (it has `(current)` in the output). Identify the generation that rollback will activate (current number minus 1).
-
-Example display:
-
-```
-Generation  Date                  Current
-----------  --------------------  -------
-42          2026-05-18 14:32:11
-43          2026-05-19 09:15:44
-44          2026-05-19 21:03:02
-45          2026-05-20 10:47:55   <-- current
-```
-
-Rollback will activate: **generation 44**
+The script only reads — it does **not** activate anything. Show the user the listing, the current
+generation, and the resolved rollback target.
 
 ## Step 2 — Confirm
 
-Ask the user to confirm before proceeding. State clearly:
+Ask the user to confirm before proceeding. This yes/no gate can be presented via the
+**AskUserQuestion tool** (e.g. "Roll back to gen N" / "Cancel"). State clearly:
 
 - Which generation is currently active
 - Which generation will become active after rollback
@@ -59,6 +54,13 @@ sudo nix-env --list-generations --profile /nix/var/nix/profiles/system | tail -5
 ```
 
 Show the user which generation is now marked `(current)` and confirm the rollback succeeded.
+
+## Script
+
+`.claude/skills/rollback/scripts/rollback.sh [target-generation]` — **read-only**: lists recent
+generations and resolves the rollback target (current minus 1, or the number passed). It does NOT
+activate anything; the skill runs the actual `nixos-rebuild switch --rollback` itself (Step 3)
+only after the user confirms.
 
 ---
 

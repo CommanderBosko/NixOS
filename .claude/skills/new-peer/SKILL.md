@@ -1,7 +1,7 @@
 ---
 name: new-peer
 description: Triggers when user says "add a VPN peer", "add a new peer", "add device to VPN", "new wireguard peer", "add phone to VPN", or "add X to wireguard". Guides the user through adding a new WireGuard peer to the VPN — editing the vpn-server configuration and generating the client config snippet for the new device.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # New WireGuard Peer
@@ -67,20 +67,7 @@ networking.wg-quick.interfaces.wg0.address = [ "10.10.0.<n>/24" ];
 
 They also need to place their private key at `/etc/wireguard/private.key` on the new host (not in the repo).
 
-**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app:
-
-```ini
-[Interface]
-PrivateKey = <their-private-key>
-Address = 10.10.0.<n>/24
-DNS = 1.1.1.1, 8.8.8.8
-
-[Peer]
-PublicKey = ijhN7KUmHx5TOLpKgyzJpzSvp49TkD0c2CTf32Cyu1U=
-Endpoint = 150.136.232.63:51820
-AllowedIPs = 0.0.0.0/0, ::/0
-PersistentKeepalive = 25
-```
+**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the live value read from `dotfiles/common/modules/vpn.nix`, not assumed). `Endpoint` and `AllowedIPs` are already correct in the template.
 
 Remind the user that `<their-private-key>` is the private key that stays on their device — it is never shared or stored anywhere else.
 
@@ -107,3 +94,7 @@ Tell the user the following steps are still needed to activate the peer:
 - The server public key must always be read from `dotfiles/common/modules/vpn.nix` at the time of the skill run, not assumed from this file.
 - The VPN subnet is `10.10.0.0/24` (not `10.0.0.0/24`). Double-check the existing peer IPs before assigning a new one.
 - This repo's working directory is always `/home/bosko/NixOS`.
+
+## Assets
+
+- `assets/client.conf.tmpl` — raw `wg-quick` client config for non-NixOS devices. Fill in private key, address, and the server public key (read live from `dotfiles/common/modules/vpn.nix`). Used in Step 4.

@@ -1,18 +1,25 @@
 ---
 name: switch-de
 description: Triggers when user says "switch desktop environment", "change DE", "switch to X", "swap DE", "try X desktop", "change desktop on laptop/gaming", or "switch compositor". Swaps the DE import line in flake.nix for a given desktop host.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Switch Desktop Environment
 
 Swap the active desktop environment module for a desktop host by editing the DE import line in `flake.nix`. Follow every step in order. Do not edit `flake.nix` until the user confirms.
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<host>`** (optional) — one of the desktop hosts `gaming`, `laptop`, `natalie-laptop`. If omitted, ask in Step 1.
+- **`<target-de>`** (optional) — the desktop environment module to switch to, e.g. `niri`, `plasma`, `cosmic`. Must match a module under `dotfiles/common/modules/desktop-environments/`. If omitted, ask in Step 1.
+
 ## Step 1 — Gather information
 
 If the user has not already provided both pieces of information, ask them in a single message:
 
-1. **Host** — Which host to switch? Valid desktop hosts: `gaming`, `laptop`, `natalie-laptop`. (The `server` and `vpn-server` hosts have no DE — reject them with a clear explanation.)
+1. **Host** — Which host to switch? Valid desktop hosts: `gaming`, `laptop`, `natalie-laptop`. If the user did not already name a host, present this pick via the **AskUserQuestion tool** with one option per valid desktop host (`gaming`, `laptop`, `natalie-laptop`) rather than free-form prose; skip the question if the user already supplied the host. (The `server` and `vpn-server` hosts have no DE — reject them with a clear explanation.)
 
 2. **Target DE** — Which desktop environment to switch to?
 
@@ -22,7 +29,7 @@ List the available DE modules so the user can choose. Enumerate them **live** so
 ls /home/bosko/NixOS/dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'
 ```
 
-These are the files in `dotfiles/common/modules/desktop-environments/`.
+These are the files in `dotfiles/common/modules/desktop-environments/`. If the user did not already name a target DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the target DE.
 
 Do not proceed to Step 2 until you have both answers.
 

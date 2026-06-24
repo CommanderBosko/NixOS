@@ -1,22 +1,22 @@
 ---
 name: nix-repl
 description: Use this skill when the user wants to "open nix repl", "nix repl", "explore flake", "inspect config", or "repl for X host". Opens a nix repl with the flake loaded for interactive exploration of any host's configuration.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Nix REPL — Interactive Flake Exploration
 
 Open a nix repl pre-loaded with this repo's flake so the user can interactively explore any host's configuration options, packages, and derivations.
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<host>`** (optional) — one of the four flake hosts `gaming`, `laptop`, `natalie-laptop`, `vpn-server` (the valid set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json`). Aliases `natalie` → `natalie-laptop`, `vpn` → `vpn-server` are accepted. If omitted, ask in Step 1.
+
 ## Step 1 — Resolve the target host
 
-If the user named a host (e.g. `/nix-repl gaming`), use it. Otherwise ask:
-
-> Which host config do you want to explore? (the four flake hosts)
-> - `gaming`
-> - `laptop`
-> - `natalie-laptop`
-> - `vpn-server`
+If the user named a host (e.g. `/nix-repl gaming`), use it. Otherwise present the host pick via the **AskUserQuestion tool** with one option per flake host (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`) rather than asking in free-form prose. Skip the question if the user already named a host.
 
 Accept short aliases: `natalie` → `natalie-laptop`, `vpn` → `vpn-server`. The valid host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` — these are the only keys under `nixosConfigurations`.
 

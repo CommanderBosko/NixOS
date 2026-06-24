@@ -1,12 +1,21 @@
 ---
 name: new-host
 description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
-version: 0.3.0
+version: 0.4.0
 ---
 
 # New NixOS Host Scaffolder
 
 Interactively gather the information needed, then write all the correctly-structured host files into the right location in this repo. The file contents come from byte-exact templates under this skill's `assets/` directory — read and fill them rather than reproducing Nix from memory. Follow all conventions exactly as described below — do not deviate from them.
+
+## Arguments
+
+Parse from the user's request:
+
+- **`<hostname>`** (required) — a short, lowercase, hyphenated name (e.g. `work-laptop`, `homelab`). Becomes the flake attr key, the directory name under `hosts/`, and `networking.hostName`. Free-text; ask in Step 1 if not given.
+- **host type** (optional) — `desktop`, `server`, or `remote`. If omitted, ask in Step 1.
+- **architecture** (optional) — `x86_64-linux` or `aarch64-linux`. If omitted, defaulted/asked in Step 1.
+- **DE / GPU** (optional, desktop only) — the DE module and GPU choice (`nvidia`/`amd`/`both`/`none`). If omitted, asked in Step 1.
 
 ## Step 1 — Gather information
 
@@ -14,18 +23,20 @@ Ask the user the following questions. Batch them into a single message. Do not p
 
 **Required:**
 
-1. **Hostname** — A short, lowercase, hyphenated name (e.g. `work-laptop`, `homelab`). This becomes the flake attr key, the directory name under `hosts/`, and the value of `networking.hostName`.
+1. **Hostname** — A short, lowercase, hyphenated name (e.g. `work-laptop`, `homelab`). This becomes the flake attr key, the directory name under `hosts/`, and the value of `networking.hostName`. Keep this **free-text** — do not present it as an AskUserQuestion pick; just ask for it directly if the user did not supply it.
 
 2. **Host type** — One of:
    - `desktop` — Uses `desktopModules`. Has a display manager, a DE, flatpaks, Home Manager. Follows the gaming/laptop/natalie-laptop pattern.
    - `server` — Headless, uses `commonModules` only. No DE, no flatpaks, no Home Manager. Follows the server pattern.
    - `remote` — Headless, uses `commonModules`, may be a different architecture (e.g. ARM). Uses a single `configuration.nix` rather than separate `environment.nix` + `networking.nix`. Follows the vpn-server pattern.
 
-3. **Architecture** — `x86_64-linux` (default for desktop/server) or `aarch64-linux` (typical for remote ARM). Ask only if relevant; default to `x86_64-linux` for desktop and server types, and ask explicitly for remote type.
+   If the user did not already state the host type, present this pick via the **AskUserQuestion tool** with three options (`desktop`, `server`, `remote`) rather than free-form prose; skip the question if the user already supplied it.
 
-4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Enumerate the available modules **live** (don't trust a hardcoded list — it drifts): `ls dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'`. Ask which one to use.
+3. **Architecture** — `x86_64-linux` (default for desktop/server) or `aarch64-linux` (typical for remote ARM). Default to `x86_64-linux` for desktop and server types. For the remote type (or any case where it is genuinely ambiguous), present this pick via the **AskUserQuestion tool** with the two options (`x86_64-linux`, `aarch64-linux`) rather than free-form prose; skip the question if the user already supplied the architecture or a sensible default applies.
 
-5. **GPU** — Only if type is `desktop`. One of: `nvidia` (import `nvidia.nix`), `amd` (import `amd.nix`), `both` (import both), or `none`. Most machines use one or none.
+4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Enumerate the available modules **live** (don't trust a hardcoded list — it drifts): `ls dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'`. If the user did not already name a DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the DE.
+
+5. **GPU** — Only if type is `desktop`. One of: `nvidia` (import `nvidia.nix`), `amd` (import `amd.nix`), `both` (import both), or `none`. Most machines use one or none. If the user did not already state the GPU, present this pick via the **AskUserQuestion tool** with four options (`nvidia`, `amd`, `both`, `none`) rather than free-form prose; skip the question if the user already supplied it.
 
 6. **State version** — Default `25.11`. Only ask if the user wants to override it.
 

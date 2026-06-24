@@ -1,0 +1,28 @@
+# <one-sentence purpose>
+{ config, lib, pkgs, ... }:
+
+let
+  cfg = config.modules.<name>;
+in
+{
+  options.modules.<name> = {
+    enable = lib.mkEnableOption "<short description of what enabling does>";
+  };
+
+  config = lib.mkIf cfg.enable {
+    services.<name>.enable = true;
+
+    environment.systemPackages = with pkgs; [
+      # <package>
+    ];
+  };
+}
+
+# If the user wants additional configurable options beyond `enable`, add them
+# inside `options.modules.<name>` using `lib.mkOption`:
+#
+#     someValue = lib.mkOption {
+#       type = lib.types.str;
+#       default = "default-value";
+#       description = "What this controls.";
+#     };

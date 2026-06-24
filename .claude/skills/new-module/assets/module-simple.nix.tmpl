@@ -1,0 +1,11 @@
+# <one-sentence purpose>
+{ pkgs, ... }:
+
+{
+  # <section comment>
+  services.<name>.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    # <package>
+  ];
+}

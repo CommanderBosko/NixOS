@@ -1,7 +1,7 @@
 ---
 name: update
 description: Triggers when user says "update flake", "update inputs", "nix flake update", "update nixpkgs", "update all inputs", or "run flake update". Runs nix flake update and shows a readable summary of what changed in flake.lock.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Flake Update Workflow
@@ -33,33 +33,26 @@ Always use `--flake /home/bosko/NixOS` — do not rely on the current working di
 
 This command will take a minute or two while Nix fetches the latest revisions for all inputs. Stream the output to the user so they can see progress.
 
-## Step 3 — Parse and display the diff
+## Step 3 — Display the diff
 
-After the update completes, get the raw diff:
+After the update completes, run the shared lock-diff script and present its output verbatim:
 
 ```bash
-git -C /home/bosko/NixOS diff flake.lock
+/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh
 ```
 
-Parse the diff and present a clean, human-readable summary. For each input that changed, extract and display:
-
-- **Input name** (e.g. `nixpkgs`, `home-manager`, `nix-flatpak`)
-- **Old rev** — first 8 characters of the previous `narHash` or `rev` field
-- **New rev** — first 8 characters of the updated `rev` field
-- **Last modified** — the `lastModified` timestamp converted to a readable date (YYYY-MM-DD) if present in the lock entry
-
-Format the summary as a list like this:
+It compares the committed `flake.lock` (`HEAD:flake.lock`) against the now-updated working-tree `flake.lock` and prints one aligned line per changed root input:
 
 ```
 Updated inputs:
-  nixpkgs          a1b2c3d4 → e5f6g7h8  (2026-05-19)
-  home-manager     11223344 → 55667788  (2026-05-18)
-  nix-flatpak      aabbccdd → eeff0011  (2026-05-17)
+  nixpkgs          a1b2c3d4 -> e5f6a7b8   (2026-05-19)
+  home-manager     11223344 -> 55667788   (2026-05-18)
+  nix-flatpak      aabbccdd -> eeff0011   (2026-05-17)
 ```
 
-If an input's `rev` did not change (same hash before and after), omit it from the list — it did not update.
+Each line is `<name>  <old8> -> <new8>  (<YYYY-MM-DD from new lastModified>)`. Inputs whose `rev` did not change are omitted automatically, and `follows`-only inputs are skipped gracefully.
 
-If **nothing changed** (the diff is empty), tell the user:
+If the script prints `flake.lock unchanged.` (nothing updated), tell the user:
 
 > All inputs are already up to date — flake.lock was not modified.
 
@@ -74,6 +67,10 @@ After presenting the diff summary, always end with:
 Do not run either of those automatically — leave them to the user.
 
 ---
+
+## Shared script
+
+The lock-diff summary is produced by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/bump-input` and `/pin-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not re-derive the parse in prose — call the script.
 
 ## Key constraints
 

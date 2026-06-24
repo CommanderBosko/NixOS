@@ -1,7 +1,7 @@
 ---
 name: new-module
 description: Use this skill when the user wants to "create a new NixOS module", "add a module", "scaffold a module", "write a new nix module", or "add a desktop environment". It generates a well-formed module file in the correct location following the repo's conventions.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # New NixOS Module Scaffolder
@@ -45,27 +45,13 @@ Based on module type:
 
 ## Step 3 — Generate the module
 
-Use the patterns below to generate the file. Choose the right template and fill it in precisely. Do not add unnecessary abstractions — match the style of existing modules.
+Choose the matching template under `assets/`, read it, and fill in the `<placeholders>` precisely. Do not add unnecessary abstractions — match the style of existing modules.
 
 ---
 
-### Template A: Simple always-on module (no options, most common)
+### Template A: Simple always-on module (no options, most common) — `assets/module-simple.nix.tmpl`
 
 Use this when the module is unconditionally active whenever imported. This is the default pattern for `audio.nix`, `gaming.nix`, `virtualisation.nix`, etc.
-
-```nix
-# <one-sentence purpose>
-{ pkgs, ... }:
-
-{
-  # <section comment>
-  services.<name>.enable = true;
-
-  environment.systemPackages = with pkgs; [
-    # <package>
-  ];
-}
-```
 
 Function signature rules:
 - Include `config` only if the module references `config.*` internally (e.g. `config.networking.hostName`, `config.services.displayManager.sddm.enable`).
@@ -76,91 +62,22 @@ Function signature rules:
 
 ---
 
-### Template B: Module with options (conditional/configurable)
+### Template B: Module with options (conditional/configurable) — `assets/module-options.nix.tmpl`
 
-Use this only when the user explicitly asked for options. Mirrors the standard NixOS module pattern.
-
-```nix
-# <one-sentence purpose>
-{ config, lib, pkgs, ... }:
-
-let
-  cfg = config.modules.<name>;
-in
-{
-  options.modules.<name> = {
-    enable = lib.mkEnableOption "<short description of what enabling does>";
-  };
-
-  config = lib.mkIf cfg.enable {
-    services.<name>.enable = true;
-
-    environment.systemPackages = with pkgs; [
-      # <package>
-    ];
-  };
-}
-```
-
-If the user wants additional configurable options beyond `enable`, add them inside `options.modules.<name>` using `lib.mkOption`:
-
-```nix
-    someValue = lib.mkOption {
-      type = lib.types.str;
-      default = "default-value";
-      description = "What this controls.";
-    };
-```
+Use this only when the user explicitly asked for options. Mirrors the standard NixOS module pattern. The template's trailing comment shows how to add extra `lib.mkOption` options beyond `enable`.
 
 ---
 
-### Template C: Desktop environment module
+### Template C: Desktop environment module — `assets/module-de.nix.tmpl`
 
-Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`.
+Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`. The template's trailing comment shows the Home Manager variant.
 
 Key characteristics:
 - Enables the compositor or DE via `services.desktopManager.<de>.enable` or `programs.<compositor>.enable`.
 - Usually enables `services.xserver.enable = true` (required even on Wayland for many DEs).
 - May add Wayland utilities to `environment.systemPackages`.
-- May configure Home Manager for `bosko` if the DE uses HM-side programs (like `niri.nix` does with DMS).
+- May configure Home Manager for `bosko` if the DE uses HM-side programs (like `niri.nix` does with DMS) — use the commented HM variant in the template.
 - Never exposes `options` — always-on when imported.
-
-```nix
-# <one-sentence purpose>
-{ pkgs, ... }:
-
-{
-  services = {
-    desktopManager.<de>.enable = true;
-    xserver.enable = true;
-  };
-
-  environment.systemPackages = with pkgs; [
-    # DE-specific utilities
-  ];
-}
-```
-
-If Home Manager config is needed (e.g. for a compositor that uses HM-side modules):
-
-```nix
-# <one-sentence purpose>
-{ pkgs, inputs, ... }:
-
-{
-  programs.<compositor>.enable = true;
-  services.xserver.enable = true;
-
-  home-manager.users.bosko = {
-    imports = [ inputs.<flake-input>.homeModules.<module> ];
-    programs.<program>.enable = true;
-  };
-
-  environment.systemPackages = with pkgs; [
-    # utilities
-  ];
-}
-```
 
 ---
 
@@ -215,3 +132,9 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `security.nix` already handles AppArmor, audit, PAM wheel, ASLR, and kexec — do not re-add any of those in a new module.
 - `audio.nix` already handles PipeWire — do not add PipeWire config to other modules.
 - Never add `services.dbus` configuration in a new module without checking `security.nix` first.
+
+## Assets
+
+- `assets/module-simple.nix.tmpl` — Template A: simple always-on module.
+- `assets/module-options.nix.tmpl` — Template B: module with `options` (includes commented `lib.mkOption` example).
+- `assets/module-de.nix.tmpl` — Template C: desktop-environment module (includes commented Home Manager variant).

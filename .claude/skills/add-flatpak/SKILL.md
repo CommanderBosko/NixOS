@@ -1,12 +1,19 @@
 ---
 name: add-flatpak
 description: Triggers when user says "add a flatpak", "install a flatpak", "add flatpak app", "add X as a flatpak", or "add X to flatpaks". Interactively adds a Flatpak app to a host's declarative Flatpak list in its environment.nix, following the nix-flatpak module format used in this repo.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Add Flatpak App
 
 Interactively add a Flatpak app to a desktop host's declarative Flatpak list in `environment.nix`. Follow all steps exactly — do not skip ahead.
+
+## Arguments
+
+Parse from the user's request:
+
+- **`<app-id>`** (required) — the Flathub app ID in reverse-domain style, e.g. `com.spotify.Client`. If the user gave only a friendly name, the app ID still has to be resolved before proceeding (see Step 1).
+- **`<host>`** (optional) — one of the desktop hosts `gaming`, `laptop`, `natalie-laptop`. If omitted, ask in Step 1.
 
 ## Step 1 — Gather information
 
@@ -14,7 +21,7 @@ Ask the user the following (batch into one message if both are unknown). Do not 
 
 1. **App** — The app name or Flathub app ID (e.g. `com.spotify.Client`). If the user gave a name but no app ID, note that the Flathub app ID is required and suggest they check [flathub.org](https://flathub.org) to find it. The format is always `com.Publisher.AppName` or similar reverse-domain style.
 
-2. **Host(s)** — Which host(s) to add it to. Valid desktop hosts: `gaming`, `laptop`, `natalie-laptop`. If the user names `server` or `vpn-server`, stop and explain that those hosts are headless and do not support Flatpak — do not proceed for those hosts.
+2. **Host(s)** — Which host(s) to add it to. Valid desktop hosts: `gaming`, `laptop`, `natalie-laptop`. If the user did not already name a host in their request, present this pick via the **AskUserQuestion tool** with one option per valid desktop host (`gaming`, `laptop`, `natalie-laptop`) rather than asking in free-form prose. If the user already supplied the host, skip the question. If the user names `server` or `vpn-server`, stop and explain that those hosts are headless and do not support Flatpak — do not proceed for those hosts.
 
 ## Step 2 — Read the current Flatpak list
 

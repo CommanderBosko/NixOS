@@ -1,0 +1,33 @@
+# <one-sentence purpose>
+{ pkgs, ... }:
+
+{
+  services = {
+    desktopManager.<de>.enable = true;
+    xserver.enable = true;
+  };
+
+  environment.systemPackages = with pkgs; [
+    # DE-specific utilities
+  ];
+}
+
+# If Home Manager config is needed (e.g. for a compositor that uses HM-side
+# modules), use this variant instead:
+#
+# # <one-sentence purpose>
+# { pkgs, inputs, ... }:
+#
+# {
+#   programs.<compositor>.enable = true;
+#   services.xserver.enable = true;
+#
+#   home-manager.users.bosko = {
+#     imports = [ inputs.<flake-input>.homeModules.<module> ];
+#     programs.<program>.enable = true;
+#   };
+#
+#   environment.systemPackages = with pkgs; [
+#     # utilities
+#   ];
+# }

@@ -1,7 +1,7 @@
 ---
 name: commit
 description: Use this skill when the user wants to "commit", "commit my changes", "save a checkpoint", "commit this", "make a commit", or "checkpoint my work". It shows what will be committed, drafts a conventional commit message for confirmation, stages specific files, and creates the commit with a Co-Authored-By trailer.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Git Commit Workflow
@@ -23,28 +23,7 @@ Present the output to the user in a compact form:
 
 ## Step 2 — Draft a commit message
 
-Follow this repo's **conventional commit** format exactly:
-
-```
-type(scope): short description in sentence case
-```
-
-**Types:** `feat`, `fix`, `refactor`, `chore`, `docs`, `style`, `test`, `perf`
-
-**Scope:** use the affected area of the repo — e.g. `gaming`, `laptop`, `security`, `skills`, `vpn`, `memory`, `flake`, `shell`, `users`. Use the most specific scope that fits. If multiple unrelated scopes are touched, pick the dominant one or use no scope.
-
-**Examples from this repo's history:**
-- `feat(skills): add new-module skill for NixOS module scaffolding`
-- `fix(natalie-laptop): add wg0 DNS for full-tunnel VPN routing`
-- `chore(session): end-of-day close 2026-05-18 — WireGuard VPN fully deployed`
-- `refactor(vpn): move DNS into shared vpn.nix, apply to all client hosts`
-- `chore(memory): update vpn-setup memory with natalie-laptop peer status`
-
-Rules:
-- Subject line is lowercase after the colon, no trailing period.
-- Keep it under 72 characters.
-- Focus on *what changed and why*, not *how*.
-- If the change is a session close, use `chore(session): end-of-day close YYYY-MM-DD — <brief summary>`.
+Follow this repo's **conventional commit** format exactly. Read `assets/commit-format.md` for the full reference — the `type(scope): short description` shape, the allowed type list, the scope guidance, repo-history examples, and the formatting rules — and draft the message accordingly.
 
 Present the drafted message to the user and ask them to **confirm or edit** it before proceeding. Do not commit until the user approves the message.
 
@@ -88,3 +67,7 @@ Run `git -C /home/bosko/NixOS log --oneline -3` and show the user the new commit
 - This repo's working directory is always `/home/bosko/NixOS` — always pass `-C /home/bosko/NixOS` to every git command.
 - The `Co-Authored-By` trailer is mandatory on every commit made by this skill.
 - Do not push — pushing is a separate skill (`push`).
+
+## Assets
+
+- `assets/commit-format.md` — conventional-commit reference (type list, scope guidance, repo-history examples, formatting rules). Read it when drafting the message in Step 2.
