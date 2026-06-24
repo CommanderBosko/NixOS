@@ -23,7 +23,7 @@ Ask the user the following questions. Batch them into a single message. Do not p
 
 3. **Architecture** — `x86_64-linux` (default for desktop/server) or `aarch64-linux` (typical for remote ARM). Ask only if relevant; default to `x86_64-linux` for desktop and server types, and ask explicitly for remote type.
 
-4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Available DE modules in `dotfiles/common/modules/desktop-environments/`: `niri`, `plasma`, `cosmic`, `gnome`, `hyprland`, `kde-mobile`, `labwc`, `phosh`, `river`, `sway`, `wayfire`. Ask which one to use.
+4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Enumerate the available modules **live** (don't trust a hardcoded list — it drifts): `ls dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'`. Ask which one to use.
 
 5. **GPU** — Only if type is `desktop`. One of: `nvidia` (import `nvidia.nix`), `amd` (import `amd.nix`), `both` (import both), or `none`. Most machines use one or none.
 

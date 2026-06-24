@@ -17,7 +17,7 @@ Connect to any host in the NixOS repo by short name, without needing to remember
 | `natalie-laptop`| `ssh bosko@natalie-laptop`                                    | Local, IP: 10.0.0.103        |
 | `server`        | `ssh bosko@nixos-server`                                      | Local, hostname is nixos-server |
 | `pi-hole`       | `ssh bosko@pi-hole`                                           | Local, IP: 10.0.0.20           |
-| `vpn-server`    | `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`              | Oracle Cloud ARM VM          |
+| `vpn-server`    | `ssh bosko@150.136.232.63`                                    | Oracle Cloud ARM VM (NixOS)  |
 
 ## Step 1 — Resolve the target
 
@@ -29,7 +29,7 @@ Accept these aliases:
 - `natalie-laptop` or `natalie` → `ssh bosko@natalie-laptop`
 - `server` or `nixos-server` → `ssh bosko@nixos-server`
 - `pi-hole` → `ssh bosko@pi-hole`
-- `vpn-server` or `vpn` or `oracle` → `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`
+- `vpn-server` or `vpn` or `oracle` → `ssh bosko@150.136.232.63`
 
 ## Step 2 — Show the command
 
@@ -50,7 +50,7 @@ ssh <resolved args>
 
 For `vpn-server`, always use:
 ```bash
-ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63
+ssh bosko@150.136.232.63
 ```
 
 For local hosts, use the NixOS hostname directly — no IP or key flag needed:
@@ -68,8 +68,7 @@ After the session ends (or if the connection is refused/timed out), report the e
 
 - All local hosts have `AllowUsers bosko` (natalie-laptop also allows `natty`).
 - All hosts have password auth disabled — key auth only.
-- vpn-server uses the Oracle Cloud default `ubuntu` user; `bosko` does not exist there.
-- Key path for vpn-server: `~/.ssh/id_ed25519`.
+- vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
 - Local hosts use ~/.ssh/config entries with static IPs (hostname resolution unreliable):
   - `gaming` → 10.0.0.251
   - `laptop` → 10.0.0.227

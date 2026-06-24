@@ -4,15 +4,13 @@
 set -euo pipefail
 
 VPN_HOST="150.136.232.63"
-SSH_USER="ubuntu"
-SSH_KEY="${HOME}/.ssh/id_ed25519"
+SSH_USER="bosko"
 
 echo "==> WireGuard VPN status — ${SSH_USER}@${VPN_HOST}"
 echo ""
 
-SSH_AUTH_SOCK="" ssh \
-  -i "${SSH_KEY}" \
-  -o IdentitiesOnly=yes \
+ssh \
+  -o BatchMode=yes \
   -o ConnectTimeout=10 \
   -o StrictHostKeyChecking=accept-new \
   "${SSH_USER}@${VPN_HOST}" \

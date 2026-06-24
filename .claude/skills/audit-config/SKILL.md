@@ -74,7 +74,7 @@ Walk the config looking for genuine security regressions. Focus areas, in rough 
    Report anything silently disabled or overridden.
 3. **Network exposure** — `networking.firewall` disabled or wide-open `allowedTCP/UDPPorts`,
    services bound to `0.0.0.0` that needn't be, SSH `PermitRootLogin`/`PasswordAuthentication`
-   loosened. The server and vpn-server are the highest-stakes here.
+   loosened. vpn-server (public-facing) is the highest-stakes here.
 4. **Trust & privilege** — unexpected `nix.settings.trusted-users`, `security.sudo` wheel rules
    loosened, auto-login on hosts where it shouldn't be (note: SDDM auto-login on **gaming** is
    intentional/known — not a finding).
@@ -126,7 +126,7 @@ make the edits and offer to dry-run (`nixos-dry-run` skill) before committing.
 - Working directory: `/home/bosko/NixOS`
 - Read-only by default — this skill audits and reports; it does not change the system.
 - Scope is the **whole flake**; for diffs use `/security-review` or `/code-review`.
-- Hosts: gaming, laptop, server, natalie-laptop, vpn-server. Shared modules under
+- Hosts: gaming, laptop, natalie-laptop, vpn-server (the four flake hosts). Shared modules under
   `dotfiles/common/`; host-specific files under `hosts/<host>/`.
 - Always cross-check candidate findings against `CLAUDE.md` and the memory index before reporting,
   to avoid flagging this repo's documented intentional workarounds.

@@ -16,14 +16,13 @@ If the user has not already provided both pieces of information, ask them in a s
 
 2. **Target DE** — Which desktop environment to switch to?
 
-List the available DE modules so the user can choose:
+List the available DE modules so the user can choose. Enumerate them **live** so the list can never go stale:
 
-```
-budgie    cinnamon    cosmic    gnome    hyprland
-mate      niri        pantheon  plasma   wayfire    xfce
+```bash
+ls /home/bosko/NixOS/dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'
 ```
 
-These correspond to files in `dotfiles/common/modules/desktop-environments/`.
+These are the files in `dotfiles/common/modules/desktop-environments/`.
 
 Do not proceed to Step 2 until you have both answers.
 

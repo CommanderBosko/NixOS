@@ -34,7 +34,7 @@ Use SSH to run journalctl on the remote machine. Host resolution follows the sam
 | `laptop`         | `ssh bosko@laptop`                                        |
 | `natalie-laptop` | `ssh bosko@natalie-laptop`                                |
 | `server`         | `ssh bosko@nixos-server`                                  |
-| `vpn-server`     | `ssh -i ~/.ssh/id_ed25519 ubuntu@150.136.232.63`          |
+| `vpn-server`     | `ssh bosko@150.136.232.63`                                |
 
 Remote command:
 
@@ -73,5 +73,5 @@ Wait for the user to respond before running anything additional.
 - Default host: local (wherever Claude Code is running — the gaming host in normal use).
 - `--no-pager` is mandatory to get plain text output without interactive paging.
 - For `wg-quick@wg0` style unit names, the `@` is part of the service name — pass it as-is.
-- vpn-server uses the `ubuntu` user, not `bosko`.
+- vpn-server is a NixOS host — log in as `bosko` (not `ubuntu`).
 - All local hosts use static IPs via `~/.ssh/config` — use hostnames, not raw IPs.

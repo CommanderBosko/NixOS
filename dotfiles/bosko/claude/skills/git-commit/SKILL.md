@@ -23,7 +23,7 @@ Stage and commit all current changes with a well-crafted commit message.
 git commit -m "$(cat <<'EOF'
 <message here>
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 EOF
 )"
 ```

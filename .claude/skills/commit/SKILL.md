@@ -68,7 +68,7 @@ Use a HEREDOC to pass the message so formatting is preserved:
 git -C /home/bosko/NixOS commit -m "$(cat <<'EOF'
 type(scope): short description
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 EOF
 )"
 ```

@@ -10,15 +10,13 @@ Pin a single flake input for `/home/bosko/NixOS` to a specific revision, tag, or
 
 ## Current inputs in this repo
 
-```
-nixpkgs       github:nixos/nixpkgs/nixos-unstable
-dms           github:AvengeMedia/DankMaterialShell
-home-manager  github:nix-community/home-manager  (follows nixpkgs)
-nix-flatpak   github:gmodena/nix-flatpak/?ref=latest
-disko         github:nix-community/disko         (follows nixpkgs)
+Never trust a hardcoded roster — it rots. Enumerate the inputs **live**:
+
+```bash
+nix flake metadata /home/bosko/NixOS --json | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin)['locks']['nodes']['root']['inputs'].keys()))"
 ```
 
-Note: `home-manager` and `disko` have `inputs.nixpkgs.follows = "nixpkgs"`, so pinning `nixpkgs` also affects the nixpkgs version those inputs see. Always mention this when the user is pinning `nixpkgs`.
+Some inputs declare `inputs.nixpkgs.follows = "nixpkgs"` (read `flake.nix` to see which — e.g. `home-manager`, `disko`), so pinning `nixpkgs` also moves the nixpkgs revision those inputs see. Always mention this when the user is pinning `nixpkgs`.
 
 ---
 
@@ -35,11 +33,8 @@ Then read `flake.nix` for the current URLs and `flake.lock` for the locked revis
 ```
 Input          URL (flake.nix)                                    Locked rev
 -----------    ------------------------------------------------   ----------
-nixpkgs        github:nixos/nixpkgs/nixos-unstable                a1b2c3d4
-dms            github:AvengeMedia/DankMaterialShell               11223344
-home-manager   github:nix-community/home-manager                  55667788
-nix-flatpak    github:gmodena/nix-flatpak/?ref=latest             aabbccdd
-disko          github:nix-community/disko                         eeff0011
+<input>        <url from flake.nix>                               <rev from flake.lock>
+…              (one row per input from the live list enumerated above)
 ```
 
 To get each input's locked rev from `flake.lock`, read the file and extract the `"rev"` field from each input's node. The nodes for inputs with `follows` may reference another node — follow the reference to find the actual rev.
@@ -50,7 +45,7 @@ To get each input's locked rev from `flake.lock`, read the file and extract the 
 
 Ask:
 
-> Which input would you like to pin? (nixpkgs / dms / home-manager / nix-flatpak / disko)
+> Which input would you like to pin? (pick from the live input list enumerated above)
 > What would you like to pin it to? Options:
 >   - A full commit rev (40-char SHA), e.g. `abc123def456...`
 >   - A short rev (Nix will resolve it), e.g. `abc123d`
