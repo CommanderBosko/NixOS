@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-23 (session 18) — Claude skill-library audit + overhaul
+
+**Focus**: Audit every skill against a quality rubric, fix what's broken, and capture the workflow as a reusable skill.
+
+### What changed (and why)
+- **New skills + `new-skill` gates** (`0a7bd2d`, `dc3e1a4`): added the 4-bucket single-responsibility gate to `new-skill`; created `bump-input` and `save-memory`; split `team-member-ingest` → + `team-member-synthesize`; hardened `new-skill` to auto-wire repo-managed global skills into `bosko-claude.nix`.
+- **Drift bug fixes** (`0853706`): `/vpn-status` was broken (`ubuntu@` denied → `bosko@`, verified live); wrong commit trailer (Sonnet 4.6 → Opus 4.8); phantom `server` host; `new-host`'s DE list named 5 nonexistent modules; stale `pin-input` roster — DE list + roster now enumerate live.
+- **`.claude/hosts.json` single source of truth** (`f179f8b`): host SSH targets/IPs/WG-peer map centralized; rewired 8 skills + 2 scripts to read it; dropped the phantom `nixos-server`; `remote-rebuild` rewritten vpn-server-only with `boot`+reboot.
+- **scripts/ + assets/ + UX** (`a25c339`, `f2e2ec6`): `new-host` 493→180 lines (templates→`assets/`); scripts for diff-generations (fixed a gen-1 baseline bug), fmt, add-secret, audit-config, rollback + shared `.claude/lib/flake-lock-diff.sh`; AskUserQuestion + `## Arguments` across ~11 skills.
+- **`/skill-audit` meta-skill** (`f56b9b1`): reproduces the whole audit — disjoint sub-agent partitions, 6-point rubric, report-not-apply.
+
+### Decisions
+- **One shared `hosts.json`** killed the `bosko`/`ubuntu` drift class; verify constants against the live system before trusting an inline copy (the docs can be the stale side).
+- **Dropped the phantom `nixos-server`, kept `pi-hole`** as a non-flake reference (user choice).
+- **Skipped** global-skill `assets/` extraction (per-file symlink overhead) and the `arguments:` YAML frontmatter field (unconfirmed support — used `## Arguments` prose).
+
+### Issues / surprises
+- Parallelized both the audit *and* the fix pass across disjoint sub-agent partitions (no file overlap) — disjoint ownership is what made a parallel *edit* pass safe.
+- Pure skills-infra session; no NixOS system config touched.
+
+### Next session
+- `nh os boot /home/bosko/NixOS` + reboot to surface the `dotfiles/` skill changes (`new-skill`, `git-commit`, `team-member-*`, new `/skill-audit`) in `~/.claude`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall).
+
+**Commits**: `0a7bd2d..dc3e1a4` (7 commits)
+
+---
+
 ## Session: 2026-06-22 (session 17) — gitignore loop run-logs; FinanceGuru bump
 
 **Focus**: Commit a user-made FinanceGuru flake update, then stop loop run-logs from cluttering `git status`.
@@ -91,32 +118,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Observe whether parallelization actually fires more often in practice; tune the trigger wording if it over- or under-fires.
 
 **Commits**: `ea77515` (1 commit)
-
----
-
-## Session: 2026-06-17 (session 13) — nixpkgs-stable → 25.11; vpn-server redeployed
-
-**Focus**: Move the EOL `nixos-25.05` stable input to current stable `nixos-25.11` and get vpn-server running on it.
-
-### What changed (and why)
-- **`nixpkgs-stable` bumped `nixos-25.05` → `nixos-25.11`** (`d2a245d`). 25.05 reached EOL; the live channels API confirmed 25.11 (Xantusia) is current stable (the proposed "26.05" doesn't exist yet). vpn-server is the only consumer; stateVersion was already 25.11.
-- **`wg0 mtu = 1380` clamp** (`eb69c43`) — the Oracle tunnel path carries only ~1400-byte inner packets; wg-quick's default 1420 + black-holed PMTUD silently dropped full-size packets, corrupting large cache.nixos.org downloads. Fixed in shared `vpn.nix`.
-- **`remote-rebuild` skill hardened** (`80c5b9c`, `8b3429e`) — `--use-remote-sudo` → `--elevate=sudo`, added `--build-host` for the aarch64 target, and a Gotchas section for the two failure modes below.
-- **vpn-server redeployed to 25.11 via `boot` + reboot** and verified live (no failed units, forwarding/NAT/wg all healthy; user confirmed VPN works).
-
-### Decisions
-- **Deploy vpn-server with `boot` + reboot, not `switch`** — `switch` over SSH ties activation to the SSH pipe (`systemd-run --pipe`); the network restart drops SSH and corrupts the half-applied firewall/NAT. `boot` + reboot does a clean boot-time activation.
-- **Rolled back via detached `systemd-run --collect`** to restore service fast, then redeployed — rather than debugging 25.11 live while the fleet was down.
-
-### Issues / surprises
-- The first `switch` deploy's `exit 255` (SSH drop mid-activation) — not a sudo issue — corrupted the firewall/NAT and took the whole VPN down. Static-diffing gen 17 vs gen 18 proved 25.11 was **not** the culprit (configs byte-identical bar store paths); the interrupted activation was.
-- Rebooting vpn-server drops every client's WireGuard handshake — each client must restart `wg-quick-wg0`. Bit us mid-session when a push couldn't resolve DNS through a stale tunnel.
-- Cross-arch: x86_64 laptop can't build the aarch64 closure → needs `--build-host`.
-
-### Next session
-- `rebuild` desktop clients (laptop first) to make `wg0 mtu = 1380` permanent.
-- Continue pending laptop/natalie-laptop rebuild activations (Claude policy, Plasma, FinanceGuru).
-
-**Commits**: `d2a245d..8b3429e` (4 commits)
 
 ---

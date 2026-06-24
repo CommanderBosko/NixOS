@@ -2,6 +2,33 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-17 (session 13) — nixpkgs-stable → 25.11; vpn-server redeployed
+
+**Focus**: Move the EOL `nixos-25.05` stable input to current stable `nixos-25.11` and get vpn-server running on it.
+
+### What changed (and why)
+- **`nixpkgs-stable` bumped `nixos-25.05` → `nixos-25.11`** (`d2a245d`). 25.05 reached EOL; the live channels API confirmed 25.11 (Xantusia) is current stable (the proposed "26.05" doesn't exist yet). vpn-server is the only consumer; stateVersion was already 25.11.
+- **`wg0 mtu = 1380` clamp** (`eb69c43`) — the Oracle tunnel path carries only ~1400-byte inner packets; wg-quick's default 1420 + black-holed PMTUD silently dropped full-size packets, corrupting large cache.nixos.org downloads. Fixed in shared `vpn.nix`.
+- **`remote-rebuild` skill hardened** (`80c5b9c`, `8b3429e`) — `--use-remote-sudo` → `--elevate=sudo`, added `--build-host` for the aarch64 target, and a Gotchas section for the two failure modes below.
+- **vpn-server redeployed to 25.11 via `boot` + reboot** and verified live (no failed units, forwarding/NAT/wg all healthy; user confirmed VPN works).
+
+### Decisions
+- **Deploy vpn-server with `boot` + reboot, not `switch`** — `switch` over SSH ties activation to the SSH pipe (`systemd-run --pipe`); the network restart drops SSH and corrupts the half-applied firewall/NAT. `boot` + reboot does a clean boot-time activation.
+- **Rolled back via detached `systemd-run --collect`** to restore service fast, then redeployed — rather than debugging 25.11 live while the fleet was down.
+
+### Issues / surprises
+- The first `switch` deploy's `exit 255` (SSH drop mid-activation) — not a sudo issue — corrupted the firewall/NAT and took the whole VPN down. Static-diffing gen 17 vs gen 18 proved 25.11 was **not** the culprit (configs byte-identical bar store paths); the interrupted activation was.
+- Rebooting vpn-server drops every client's WireGuard handshake — each client must restart `wg-quick-wg0`. Bit us mid-session when a push couldn't resolve DNS through a stale tunnel.
+- Cross-arch: x86_64 laptop can't build the aarch64 closure → needs `--build-host`.
+
+### Next session
+- `rebuild` desktop clients (laptop first) to make `wg0 mtu = 1380` permanent.
+- Continue pending laptop/natalie-laptop rebuild activations (Claude policy, Plasma, FinanceGuru).
+
+**Commits**: `d2a245d..8b3429e` (4 commits)
+
+---
+
 ## Session: 2026-06-17 (session 12) — promote nixos MCP server to user scope (reproducible)
 
 **Focus**: Confirm the freshly-installed mcp-nixos server works post-reboot, then make it global and reproducible.
