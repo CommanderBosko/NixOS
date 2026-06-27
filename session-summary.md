@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-26 (session 19) — flake update; nixpkgs held back on zen-kernel breakage
+
+**Focus**: Update flake inputs, dry-run, and commit only if it passes.
+
+### What changed (and why)
+- `/update` bumped all 6 inputs; `/nixos-dry-run` **failed** — the new `nixos-unstable` rev (`e73de5b`) ships `linux-zen-7.0.12` with only `vmlinuz` in its output while the derivation still declares `target = bzImage`, so the toplevel bootloader check (`Expecting …/bzImage`) hard-fails. Broken kernel came from `cache.nixos.org` → upstream Hydra regression, not local.
+- Pinned `nixpkgs` back to the prior good rev `567a49d1` **lock-only** (`--override-input`), kept the other 5 bumps (`dms`, `financeguru`, `home-manager`, `nixpkgs-stable`, `sops-nix`). Re-ran the dry-run — passed clean. Committed `flake.lock` (`4598fa0`).
+
+### Decisions
+- **Lock-only pin of just `nixpkgs`** over reverting everything or forcing `kernelFile = "vmlinuz"` — keeps the good updates, and the next `/update` auto-lifts the pin once upstream ships `bzImage` again. Forcing `kernelFile` was rejected: it would mis-name the boot image at activation; the real bug is upstream's target/output mismatch.
+
+### Issues / surprises
+- Affects all three zen-kernel desktop hosts (gaming/laptop/natalie-laptop); vpn-server (standard `linuxPackages`) is immune.
+- Lock bump only — nothing activated. Applies on next `/fleet-rollout` or per-host rebuild.
+
+### Next session
+- Re-run `/update` in a few days; if the zen kernel ships `bzImage` again, the pin lifts and the dry-run passes. Quick check: `ls $(nix eval --raw .#nixosConfigurations.gaming.config.boot.kernelPackages.kernel)/`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall, session-18 global-skill rebuild).
+
+**Commits**: `4598fa0` (1 commit)
+
+---
+
 ## Session: 2026-06-23 (session 18) — Claude skill-library audit + overhaul
 
 **Focus**: Audit every skill against a quality rubric, fix what's broken, and capture the workflow as a reusable skill.
@@ -95,28 +117,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Verify `/create-loop` resolves after `switch` + new session; run it once to generate a real loop and confirm the dual-file output + Training Mode behave as documented.
 
 **Commits**: `b6e5d9d` (1 commit)
-
----
-
-## Session: 2026-06-18 (session 14) — make the Parallelize rule actually trigger
-
-**Focus**: Fix the `Parallelize with Sub-Agents` standing rule so it fires reliably instead of being silently ignored.
-
-### What changed (and why)
-- Rewrote the rule in both the repo `CLAUDE.md` and the global `claude-rules` skill source (`ea77515`). The old wording was an aspirational value with no trigger; the new version is a mandatory pre-task gate with concrete, observable trigger conditions.
-
-### Decisions
-- **Grant explicit standing authorization to spawn agents** ("you do not need to ask first") — the harness's built-in default is "don't spawn unless asked," which was silently suppressing the rule. The standing rule *is* the persistent ask, so make that explicit.
-- **Trigger on independence, not file count** — multi-file edits here are usually coupled (module + its `flake.nix` import + `environment.nix`), which is correctly serial. Named that exception in the rule so it doesn't read as self-contradictory and get ignored wholesale.
-- **Apply to both files** — `CLAUDE.md` for immediate effect in this repo; the skill canonical text so future projects inherit it (after a rebuild reaches `~/.claude`).
-
-### Issues / surprises
-- None. Docs-only change; no rebuild needed for the Markdown itself.
-
-### Next session
-- After the next `rebuild`, the strengthened `claude-rules` skill text reaches `~/.claude` — new projects then inherit the stronger wording.
-- Observe whether parallelization actually fires more often in practice; tune the trigger wording if it over- or under-fires.
-
-**Commits**: `ea77515` (1 commit)
 
 ---

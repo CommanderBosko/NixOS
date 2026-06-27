@@ -2,6 +2,29 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-18 (session 14) — make the Parallelize rule actually trigger
+
+**Focus**: Fix the `Parallelize with Sub-Agents` standing rule so it fires reliably instead of being silently ignored.
+
+### What changed (and why)
+- Rewrote the rule in both the repo `CLAUDE.md` and the global `claude-rules` skill source (`ea77515`). The old wording was an aspirational value with no trigger; the new version is a mandatory pre-task gate with concrete, observable trigger conditions.
+
+### Decisions
+- **Grant explicit standing authorization to spawn agents** ("you do not need to ask first") — the harness's built-in default is "don't spawn unless asked," which was silently suppressing the rule. The standing rule *is* the persistent ask, so make that explicit.
+- **Trigger on independence, not file count** — multi-file edits here are usually coupled (module + its `flake.nix` import + `environment.nix`), which is correctly serial. Named that exception in the rule so it doesn't read as self-contradictory and get ignored wholesale.
+- **Apply to both files** — `CLAUDE.md` for immediate effect in this repo; the skill canonical text so future projects inherit it (after a rebuild reaches `~/.claude`).
+
+### Issues / surprises
+- None. Docs-only change; no rebuild needed for the Markdown itself.
+
+### Next session
+- After the next `rebuild`, the strengthened `claude-rules` skill text reaches `~/.claude` — new projects then inherit the stronger wording.
+- Observe whether parallelization actually fires more often in practice; tune the trigger wording if it over- or under-fires.
+
+**Commits**: `ea77515` (1 commit)
+
+---
+
 ## Session: 2026-06-17 (session 13) — nixpkgs-stable → 25.11; vpn-server redeployed
 
 **Focus**: Move the EOL `nixos-25.05` stable input to current stable `nixos-25.11` and get vpn-server running on it.
