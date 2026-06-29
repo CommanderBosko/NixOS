@@ -8,6 +8,13 @@ version: 0.2.0
 
 Interactively gather the information needed, then edit `hosts/vpn-server/configuration.nix` with the new peer block and give the user the client-side config. Follow all steps in order.
 
+## Arguments
+
+Parse from the user's request before asking anything:
+
+- **device-name** — a short name/description for the peer, taken from the phrasing (e.g. "add my phone to the VPN" → `phone`). Used as the comment above the peer block. If absent, ask in Step 1.
+- **public-key** — the device's WireGuard public key, if the user already pasted one. Only public keys go in the repo — never a private key. If absent, ask in Step 1 (and offer the key-generation command).
+
 ## Step 1 — Gather information
 
 Ask the user the following questions in a single message. Do not proceed to Step 2 until you have answers.

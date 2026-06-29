@@ -81,11 +81,7 @@ If neither DE crosses that boundary, you may omit the note.
 
 ## Step 5 — Confirm before editing
 
-Ask the user explicitly:
-
-> Ready to update `flake.nix`? (yes / no)
-
-Do not touch any file until the user says yes (or an equivalent affirmative).
+Ask the user to confirm via the **AskUserQuestion tool**, with one option `Proceed` (update `flake.nix`) and one option `Cancel` (make no change). Do not touch any file until the user selects `Proceed`. If they select `Cancel`, stop and make no edit.
 
 ## Step 6 — Edit flake.nix
 

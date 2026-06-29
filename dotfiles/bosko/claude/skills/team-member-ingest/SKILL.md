@@ -15,6 +15,12 @@ so it's version-controlled and available from any project. (Note: `knowledge/raw
 
 (Bucket: Utility — save each pasted piece raw, verbatim, every time.)
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<person>`** (required) — the advisor/person the pasted content trains, e.g. *"ingest this for Alex Hormozi"*. This name becomes the `person-slug` (lowercase, spaces → hyphens, punctuation dropped) the raw files are filed under at `knowledge/raw/<person-slug>/`. If it's not in the invocation phrase, ask whose training data this is before saving anything.
+
 ## Steps
 
 ### 1. Identify the person and get the content

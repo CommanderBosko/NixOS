@@ -17,6 +17,12 @@ Knowledge base in the Nix repo:
 
 `knowledge/raw/<person-slug>/` holds the raw source (gitignored, local-only); `knowledge/<person-slug>/team-member.md` is the synthesized profile (committed).
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<person>`** (required) — the advisor/person whose raw corpus to distill, e.g. *"synthesize Alex Hormozi"*. This name becomes the `person-slug` (lowercase, spaces → hyphens, punctuation dropped) whose raw files at `knowledge/raw/<person-slug>/` are read and folded into `knowledge/<person-slug>/team-member.md`. If it's not in the invocation phrase, ask whose profile to build before proceeding.
+
 ## Steps
 
 ### 1. Identify the person

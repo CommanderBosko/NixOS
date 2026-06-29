@@ -86,16 +86,18 @@ current host passes its health sweep.**
      (`nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <host>`).
    - Done-rule: switch completes exit 0 and reports the new generation activated.
 
-6. **Per host — FULL HEALTH SWEEP.** Run the `fleet-status`-style checks against this one
-   host (locally or over `ssh`):
-   - New generation matches the current flake (`nixos-rebuild list-generations` / readlink
-     of `/run/current-system`).
-   - `systemctl --failed` is empty.
-   - No reboot-pending: booted kernel/initrd match `/run/current-system`.
-   - For `vpn-server` only: `wg show` reports a handshake < 3 min old.
-   - Done-rule: all of the above pass. If any fail, **stop the whole loop** at this host,
-     record it, and surface the `rollback` skill as the remediation (do not auto-rollback).
-     Advance to the next host only on full green.
+6. **Per host — FULL HEALTH SWEEP.** Delegate to the **`fleet-status` skill** (which runs
+   `.claude/skills/fleet-status/scripts/fleet-status.sh`) rather than re-spelling the probe
+   here — it already collects generation/`staged`, failed units, and WireGuard handshakes
+   for every host from `hosts.json`. Run it, then read **the row for the host just switched**
+   and check:
+   - New generation matches the current flake, and `staged` is `no` (the built generation is
+     the running one — not staged-but-not-activated).
+   - `failed` is `none` (no failed systemd units).
+   - For `vpn-server` only: its WireGuard handshake is fresh (< 3 min old).
+   - Done-rule: all of the above pass for that host's row. If any fail, **stop the whole loop**
+     at this host, record it, and surface the `rollback` skill as the remediation (do not
+     auto-rollback). Advance to the next host only on full green.
 
 7. **Repeat steps 4–6** for each remaining host in order until all four are green or one
    blocks.

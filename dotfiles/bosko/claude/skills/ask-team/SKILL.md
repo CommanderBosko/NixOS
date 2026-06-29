@@ -13,6 +13,12 @@ Put a question to the user's advisory board and let each member weigh in **in th
 
 (The top-level `knowledge/team-member.md` is the **user's own** profile — context about who's asking, not a board member.)
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<question>`** (optional in the trigger) — the question or topic to put to the board, e.g. *"ask the team whether I should niche down"*. It's often embedded in the invocation phrase; if it's absent, ask for it conversationally (see Step 1) rather than guessing.
+
 ## Steps
 
 ### 1. Get the question

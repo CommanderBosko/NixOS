@@ -8,6 +8,14 @@ version: 0.2.0
 
 Interactively gather the information needed, then write a correctly-structured NixOS module file into the right location in this repo. Follow all conventions exactly as described below — do not deviate from them.
 
+## Arguments
+
+Parse from the user's request before asking anything:
+
+- **module name** — a short, lowercase, hyphenated name taken from the phrasing (e.g. "add a `bluetooth` module" → `bluetooth`). Becomes the filename `<name>.nix`. If absent, ask in Step 1.
+- **type** — `system` or `desktop-environment`, inferred from phrasing ("add a desktop environment" → `desktop-environment`; "scaffold a module" → `system`). Decides the target directory. If not clearly implied, present the pick in Step 1.
+- **purpose** — a one-sentence description of what the module configures, taken from the phrasing if given. Used as the file's top comment. If absent, ask in Step 1.
+
 ## Step 1 — Gather information
 
 Ask the user the following questions (you may batch them into a single message). Do not proceed to Step 2 until you have answers to all required questions.
@@ -20,9 +28,11 @@ Ask the user the following questions (you may batch them into a single message).
    - `system` — A general system-level module. Goes in `dotfiles/common/modules/`.
    - `desktop-environment` — A desktop environment or compositor module. Goes in `dotfiles/common/modules/desktop-environments/`.
 
+   If the type was not already clear from the user's phrasing (see Arguments), present this pick via the **AskUserQuestion tool** with one option per type (`system`, `desktop-environment`) rather than free-form prose. Skip the question if the type is already known.
+
 3. **Purpose** — One sentence describing what this module configures. Used as the top comment in the file.
 
-4. **Hosts** — Which hosts will import this module? Options are the `.flakeHosts` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`), plus `all desktop hosts` (the `"desktop": true` hosts) or `all hosts`. This is informational — it determines where the import line goes in `flake.nix`.
+4. **Hosts** — Which hosts will import this module? Present this pick via the **AskUserQuestion tool** (allow multi-select) rather than free-form prose, with one option per `.flakeHosts` entry in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`), plus an `all desktop hosts` option (the `"desktop": true` hosts) and an `all hosts` option. This is informational — it determines where the import line goes in `flake.nix`. Skip the question if the user already named the host(s).
 
 **Optional (ask only if relevant):**
 

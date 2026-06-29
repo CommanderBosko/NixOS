@@ -8,16 +8,21 @@
       source = "${self}/dotfiles/bosko/claude/skills/repo-creator/SKILL.md";
       force = true;
     };
-    ".claude/skills/session-closer/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/session-closer/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (rotate-session-summary.sh).
+    # New sibling files under this skill need no further wiring.
+    ".claude/skills/session-closer" = {
+      source = "${self}/dotfiles/bosko/claude/skills/session-closer";
+      recursive = true;
       force = true;
     };
     ".claude/skills/interview/SKILL.md" = {
       source = "${self}/dotfiles/bosko/claude/skills/interview/SKILL.md";
       force = true;
     };
-    ".claude/skills/new-skill/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/new-skill/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (skill-template.md).
+    ".claude/skills/new-skill" = {
+      source = "${self}/dotfiles/bosko/claude/skills/new-skill";
+      recursive = true;
       force = true;
     };
     ".claude/skills/git-commit/SKILL.md" = {
@@ -28,8 +33,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/git-push/SKILL.md";
       force = true;
     };
-    ".claude/skills/search-pkg/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/search-pkg/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (search-pkg.sh).
+    ".claude/skills/search-pkg" = {
+      source = "${self}/dotfiles/bosko/claude/skills/search-pkg";
+      recursive = true;
       force = true;
     };
     ".claude/skills/new-team-member/SKILL.md" = {
@@ -56,20 +63,26 @@
       source = "${self}/dotfiles/bosko/claude/skills/skill-suggestion/SKILL.md";
       force = true;
     };
-    ".claude/skills/skill-audit/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/skill-audit/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (enumerate-skills.sh).
+    ".claude/skills/skill-audit" = {
+      source = "${self}/dotfiles/bosko/claude/skills/skill-audit";
+      recursive = true;
       force = true;
     };
     ".claude/skills/skill-upgrade/SKILL.md" = {
       source = "${self}/dotfiles/bosko/claude/skills/skill-upgrade/SKILL.md";
       force = true;
     };
-    ".claude/skills/claude-rules/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/claude-rules/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (rules.md).
+    ".claude/skills/claude-rules" = {
+      source = "${self}/dotfiles/bosko/claude/skills/claude-rules";
+      recursive = true;
       force = true;
     };
-    ".claude/skills/create-loop/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/create-loop/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (loop-template.md).
+    ".claude/skills/create-loop" = {
+      source = "${self}/dotfiles/bosko/claude/skills/create-loop";
+      recursive = true;
       force = true;
     };
     ".claude/skills/improve-system/SKILL.md" = {

@@ -16,28 +16,51 @@ If the user invoked `/search-pkg <query>`, use `<query>` directly. If no argumen
 
 Do not proceed until you have a non-empty query string.
 
-## Step 2 — Run the search
+## Step 2 — Run the search (PRIMARY: `nixos` MCP)
 
-```bash
-nix search nixpkgs#<query> 2>/dev/null
+The `nixos` MCP server is the preferred path for every nixpkgs / option / version
+question — it queries live APIs (search.nixos.org, NixHub) and is faster and more current
+than `nix search`, which is slow (10–30 s) on a cold cache. **Use it first.**
+
+```jsonc
+// Package search — primary
+mcp__nixos__nix  {"action":"search","query":"<query>","type":"packages"}
 ```
 
-The `2>/dev/null` suppresses the evaluation progress spam that nix prints to stderr.
+This returns attribute names, versions, and descriptions directly — no text munging needed.
 
-If the output exceeds 80 lines, truncate at 80 lines and note that results were cut off:
+For **version history** (which nixpkgs commit shipped version X, on which platforms), pair
+it with:
 
-```bash
-nix search nixpkgs#<query> 2>/dev/null | head -80
+```jsonc
+mcp__nixos__nix_versions  {"package":"<name>","version":"<ver>"}
 ```
 
-If the command returns no output (zero results), tell the user no packages matched and suggest:
+If the MCP returns no matches, tell the user no packages matched and suggest:
 - Trying a shorter or different keyword
 - Checking spelling
 - Searching on https://search.nixos.org
 
+### Offline fallback: `nix search`
+
+Only when the `nixos` MCP is unavailable (offline, server down), fall back to the local
+`nix search`. The mechanical part — run the search, strip the
+`legacyPackages.<system>.` prefix, reformat each hit into a `pkgs.<name> (ver)` block, and
+truncate to ~80 lines — is handled by the script:
+
+```bash
+scripts/search-pkg.sh "<query>"
+```
+
+It already emits the `Search results for "<query>":` header, the formatted blocks, and the
+truncation note, so you can relay its output as-is. (The script suppresses nix's stderr
+eval-progress spam and warns when results are cut off.) If you run `nix search` by hand
+instead, the same formatting rules in Step 3 apply.
+
 ## Step 3 — Present the results
 
-The raw output from `nix search` looks like:
+Whether the data came from the MCP or the fallback script, present it in this format. Raw
+`nix search` output (what the fallback script consumes) looks like:
 
 ```
 * legacyPackages.x86_64-linux.firefox (131.0)
@@ -79,7 +102,7 @@ To install a package, use /add-package and provide the pkgs.<name> attribute sho
 ## Key constraints
 
 - Never run `nix build`, `nix-env`, or any command that writes to the store.
-- Do not guess attribute names — only report what `nix search` actually returns.
-- `nix search` can be slow (10–30 s) on a cold cache; warn the user if it seems to be taking a while.
+- Do not guess attribute names — only report what the `nixos` MCP (or the `nix search` fallback) actually returns.
+- Prefer the `nixos` MCP; only reach for the `nix search` fallback when the MCP is unavailable. `nix search` can be slow (10–30 s) on a cold cache — that slowness is the reason the MCP is primary.
 - This search always targets `nixpkgs` (the flake input), not a local overlay or a specific channel.
 - Do not suggest packages from `nur` or other non-nixpkgs sources unless the user explicitly asks.

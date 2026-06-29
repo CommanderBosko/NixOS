@@ -45,27 +45,7 @@ From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tes
 
 ### 4. Draft the SKILL.md
 
-Build the file content using this template:
-
-```
----
-name: <kebab-case-name>
-description: <one-sentence description>. Use when the user says "<phrase 1>", "<phrase 2>", "<phrase 3>".
----
-
-# <Title Case Name>
-
-<One sentence summary of what the skill does.> (Bucket: <Utility | Verification | Data Enrichment | Orchestration>)
-
-## Steps
-
-<Numbered or structured steps based on the user's description. Be specific:>
-- Name exact commands to run (with flags)
-- Name exact file paths to read or write
-- Describe what to look for in output
-- Describe what to report back to the user
-- Note any confirmation steps or edge cases
-```
+Read the scaffold from `assets/skill-template.md` (relative to this skill's directory) and build the file content by filling its `<…>` placeholders from the interview — the goal, name, trigger phrases, bucket, and steps. The template content is the fenced block in that asset (don't include the surrounding code fence in the final file).
 
 **Quality rules to apply when drafting:**
 - The skill must do exactly one job in its single bucket (step 2) — if drafting surfaces a second independent job, stop and split
@@ -112,3 +92,7 @@ Tell the user:
   - **Managed-global** (repo `dotfiles/` + `bosko-claude.nix`): it appears in `~/.claude/skills/` only after `nh os boot /home/bosko/NixOS` **+ reboot**. The repo copy works in the meantime when invoked from the repo.
   - **Plain global** (`~/.claude`): restart or open a new session.
   - **Project-local:** available immediately in this project.
+
+## Assets
+
+- `assets/skill-template.md` — the SKILL.md scaffold. Read it in step 4 and fill its `<…>` placeholders (name, description/trigger phrases, bucket, steps) to draft the new skill. Drop the surrounding code fence from the final written file.

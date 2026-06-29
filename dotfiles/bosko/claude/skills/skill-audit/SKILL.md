@@ -16,14 +16,12 @@ Find all skills and their shape. There are usually two locations:
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (auto-discovered; new sibling `scripts/`/`assets/` files just work).
 - **Global / repo-owned:** if this repo symlinks skills into `~/.claude` (e.g. via Home Manager `home.file`), the source is under `dotfiles/**/claude/skills/<name>/`. **These are symlinked file-by-file** — adding a `scripts/` or `assets/` file to one needs a new symlink entry **plus a rebuild** before it appears. Treat script/asset extraction for global skills as higher-cost (flag it, but don't assume it's free).
 
+The enumeration itself is mechanical (iterate both locations, print each skill's name, its
+`SKILL.md` line count, and any sibling files), so it's handled by the script — run it from
+the repo root:
+
 ```bash
-for base in .claude/skills dotfiles/*/claude/skills; do
-  [ -d "$base" ] || continue
-  for d in "$base"/*/; do
-    n=$(basename "$d"); extras=$(ls "$d" | grep -v '^SKILL.md$' | paste -sd, -)
-    printf '%-24s %4s lines  [%s]\n' "$n" "$(wc -l <"$d/SKILL.md")" "$extras"
-  done
-done
+scripts/enumerate-skills.sh
 ```
 
 Note which skills already have `scripts/`, `assets/`, or a `config.json` — those lenses are already satisfied there.

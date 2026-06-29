@@ -98,12 +98,21 @@ first, never overwrite history. Keep it **short**: skip the exhaustive file list
 ```
 
 **Rotation — keep the active log lean.** After prepending, the active
-`session-summary.md` should hold only the **~5 most recent** session entries. Move older
-entries into `session-summary-archive.md` (same format, most-recent-first), creating it
-on first rotation. Keep a one-line pointer near the top of the active file:
-`_Older entries are in [session-summary-archive.md](session-summary-archive.md)._`
-Splitting on the `## Session:` delimiter with `awk` is the clean way to do this on a large
-file. Stage the archive file in Step 6 if you rotated.
+`session-summary.md` should hold only the **~5 most recent** session entries; older entries
+move into `session-summary-archive.md` (same format, most-recent-first). This is
+deterministic — splitting on the `## Session:` delimiter, keeping 5, archiving the rest,
+and inserting the pointer line — so it's handled by the script:
+
+```bash
+scripts/rotate-session-summary.sh <repo-root>
+```
+
+Pass the current project's repo root (default `.`); set `KEEP=<n>` to keep a different
+count. It's idempotent (a no-op when there are ≤5 entries), creates
+`session-summary-archive.md` on first rotation, prepends newly-archived entries ahead of
+existing ones, and adds the
+`_Older entries are in [session-summary-archive.md](session-summary-archive.md)._` pointer.
+Run it **after** prepending the new entry. Stage the archive file in Step 6 if it rotated.
 
 ---
 
@@ -115,23 +124,14 @@ deliverable, especially for a public repo. Preserve existing sections that are s
 accurate — only update what changed; the **Recent Changes** section should cover the last
 1-3 sessions.
 
-**No sensitive or secret information — the README is public.** Treat it as world-readable
-and write/edit it so it never contains, and actively scrub it of, anything that is a secret
-or aids an attacker, including:
-- Private keys, public keys, or key material of any kind (WireGuard, SSH, age/sops, TLS),
-  password hashes, tokens, API keys.
-- Real network coordinates: public/endpoint IPs, internal IPs and VPN subnets, MAC
-  addresses, specific port numbers for non-standard services, exact hostnames that map to
-  reachable machines.
-- Personal data: full names, email addresses, physical locations, account identifiers.
-- Anything that is already encrypted in-repo (sops-managed secrets) — describe *that* it's
-  sops-managed, never the decrypted value.
-
-Describe the architecture and capabilities at a level that helps a reader understand the
-project without handing them anything operationally sensitive (e.g. "WireGuard mesh VPN
-across four hosts, keys managed via sops-nix" — not the keys, IPs, or peer endpoints).
-If you find any such detail already present in an existing README, **remove or redact it**
-as part of this step and note the redaction in the session summary.
+**No sensitive or secret information — the README is public.** Don't carry a redaction
+rubric here: the repo ships a `secret-scan` skill that owns exactly this. After you finish
+writing/editing the README, **invoke `secret-scan`** for the public-safety pass — it covers
+key material (WireGuard/SSH/age-sops/TLS, password hashes, tokens, API keys), real network
+coordinates (endpoint/internal IPs, VPN subnets, MAC addresses, reachable hostnames), and
+personal data, across both the working tree and git history. Redact anything it flags in
+the README, prefer describing secrets as sops-managed rather than naming values, and note
+any redaction in the session summary.
 
 ```markdown
 # [Project Name]

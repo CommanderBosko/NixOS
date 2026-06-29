@@ -8,6 +8,13 @@ version: 0.1.0
 
 Fetch the last 50 lines of journald output for a named service, either locally or on a remote host.
 
+## Arguments
+
+Parse from the user's request:
+
+- **`<service>`** (required) — the journald unit / service name, e.g. `sddm`, `wg-quick@wg0`, `nginx`, `bluetooth`. For `@`-style template units the `@` is part of the name — pass it as-is. If absent, ask in Step 1.
+- **`<host>`** (optional) — one of `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Default: the **local/current box** (no SSH). Remote targets are resolved from `.claude/hosts.json`.
+
 ## Step 1 — Resolve the service and host
 
 If the user provided a service name (e.g. `/journal sddm`) use it directly. Otherwise ask:
