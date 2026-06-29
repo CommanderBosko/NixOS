@@ -18,6 +18,8 @@ Review everything done so far this session. Look for:
 
 Ignore one-off actions with no reuse value.
 
+**Mine past sessions too.** The strongest reuse signal isn't "done twice this session" — it's a workflow you repeat across *many* sessions. The current project's transcripts live at `~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`). They are large — **never read them whole**; `grep` for recurring command sequences, repeated file-edit patterns, or the same manual steps walked through in multiple sessions. A workflow that shows up across several transcripts is a prime candidate even if it only happened once *this* session.
+
 ### 2. Pick the single best candidate
 
 Choose the one workflow with the highest reuse value. If nothing in the conversation is reusable, say so plainly and stop — do not invent a skill just to have one.

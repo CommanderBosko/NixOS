@@ -19,6 +19,9 @@ Scan the conversation for every skill that was invoked. Flag the ones where some
 
 If no skill caused friction this session, say so plainly and stop.
 
+**Also check past sessions.** A skill that misfires the *same way across multiple sessions* is the highest-value gotcha to add. The current project's transcripts live at
+`~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`). These files are large — **never read them whole**; `grep` them for signals instead (a skill name near `tool_use`/`is_error`, a repeated user correction, the same wrong path). Treat a recurring cross-session failure as a stronger signal than a one-off slip this session.
+
 ### 2. Locate the source file
 
 For each flagged skill, find its source `SKILL.md`. Repo-managed global skills live under
