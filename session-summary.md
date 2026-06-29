@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-28 (session 20) — `/improve-system` skill + public README scrub
+
+**Focus**: Consolidate the Claude-ecosystem maintenance skills into one command, and get sensitive network detail out of the public README.
+
+### What changed (and why)
+- **`/improve-system`** (`31ad852`): new global Orchestration skill chaining `skill-upgrade` + `skill-suggestion` + `claude-rules` + `skill-audit` + `fewer-permission-prompts` into one pass — auto-applies low-risk additive fixes (gotchas, CLAUDE.md rules, allow-list entries), gates structural ones (new skills, audit refactors). Invokes the sub-skills, doesn't reimplement them. Wired into `bosko-claude.nix`.
+- **Public README scrub + `session-closer` guardrail** (`a80664d`): redacted the Oracle endpoint IP + VPN/LAN subnets + per-host addresses from the public `README.md`; added a "no sensitive info — the README is public" rule to `session-closer`'s README step. Updated the `project_sops_secrets` memory so a future close keeps the README clean *and* leaves the IP in the configs.
+
+### Decisions
+- **Build `/improve-system` as a thin orchestrator, not a merged mega-skill** — it chains the five existing skills so each stays single-responsibility and independently runnable; the orchestrator owns only sequencing + the auto-apply/confirm policy.
+- **Scrub scoped to the README only** — the endpoint IP/subnets stay in host configs + `.claude/hosts.json` (wg-quick needs them); a repo-wide scrub was declined to avoid risking VPN functionality for little gain (WG security ≠ endpoint secrecy).
+
+### Issues / surprises
+- The scrub is partial by design: the same values remain visible elsewhere in the public repo (state docs, configs, git history). Flagged to the user, who chose to leave it at the README.
+
+### Next session
+- `/improve-system` and the `session-closer` guardrail reach `~/.claude` only after `nh os boot` + a new session (both are repo-managed global skills). Standing backlog unchanged: laptop/natalie-laptop rebuild activations via `/fleet-rollout`, `wg0 mtu=1380` desktop rebuilds, interface-scope the Avahi mDNS firewall, session-18/19 pending global-skill rebuilds, and re-run `/update` to lift the nixpkgs pin once upstream ships `bzImage`.
+
+**Commits**: `31ad852..a80664d` (2 commits)
+
+---
+
 ## Session: 2026-06-26 (session 19) — flake update; nixpkgs held back on zen-kernel breakage
 
 **Focus**: Update flake inputs, dry-run, and commit only if it passes.
@@ -94,28 +116,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (now runnable via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
 
 **Commits**: `bdc9434` (1 commit)
-
----
-
-## Session: 2026-06-20 (session 15) — `/create-loop` meta-skill
-
-**Focus**: Build a global `/create-loop` skill that interviews the user and generates custom, self-orchestrating loop skills.
-
-### What changed (and why)
-- Added `dotfiles/bosko/claude/skills/create-loop/SKILL.md` and wired it into `bosko-claude.nix` (`b6e5d9d`). It's a *meta-skill*: it interviews for a loop's goal/steps/done-rule, then writes a project-local standalone loop to `.claude/skills/<loop>/SKILL.md` that runs as one command.
-- Every generated loop has Loop Training Mode (top-of-file toggle, ON by default), a retry cap (default 3), dual-file per-run output (`output-<date>.md` + `memory-<date>.md` under `.claude/loops/<loop>/`), and a built-in verification plan.
-
-### Decisions
-- **Generated loops are project-local, not repo-global** — repo-global needs a rebuild per loop (read-only `/nix/store` symlinks); project-local is writable and instant. `/create-loop` itself stays global.
-- **Loops are standalone/self-orchestrating**, not thin `/loop` wrappers — a loop is a complete, inspectable artifact; `/loop` can still wrap it for intervals.
-- **Per-loop log dir** for the two output files, kept separate from the curated `~/.claude/.../memory/` system.
-
-### Issues / surprises
-- `nh os boot` can't run from the agent (no TTY for sudo) — the user activates. For an HM symlink-only change like this, `nh os switch` works with no reboot; a fresh session is needed before `/create-loop` resolves as a command.
-
-### Next session
-- Verify `/create-loop` resolves after `switch` + new session; run it once to generate a real loop and confirm the dual-file output + Training Mode behave as documented.
-
-**Commits**: `b6e5d9d` (1 commit)
 
 ---

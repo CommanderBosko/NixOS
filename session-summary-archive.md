@@ -2,6 +2,29 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-20 (session 15) — `/create-loop` meta-skill
+
+**Focus**: Build a global `/create-loop` skill that interviews the user and generates custom, self-orchestrating loop skills.
+
+### What changed (and why)
+- Added `dotfiles/bosko/claude/skills/create-loop/SKILL.md` and wired it into `bosko-claude.nix` (`b6e5d9d`). It's a *meta-skill*: it interviews for a loop's goal/steps/done-rule, then writes a project-local standalone loop to `.claude/skills/<loop>/SKILL.md` that runs as one command.
+- Every generated loop has Loop Training Mode (top-of-file toggle, ON by default), a retry cap (default 3), dual-file per-run output (`output-<date>.md` + `memory-<date>.md` under `.claude/loops/<loop>/`), and a built-in verification plan.
+
+### Decisions
+- **Generated loops are project-local, not repo-global** — repo-global needs a rebuild per loop (read-only `/nix/store` symlinks); project-local is writable and instant. `/create-loop` itself stays global.
+- **Loops are standalone/self-orchestrating**, not thin `/loop` wrappers — a loop is a complete, inspectable artifact; `/loop` can still wrap it for intervals.
+- **Per-loop log dir** for the two output files, kept separate from the curated `~/.claude/.../memory/` system.
+
+### Issues / surprises
+- `nh os boot` can't run from the agent (no TTY for sudo) — the user activates. For an HM symlink-only change like this, `nh os switch` works with no reboot; a fresh session is needed before `/create-loop` resolves as a command.
+
+### Next session
+- Verify `/create-loop` resolves after `switch` + new session; run it once to generate a real loop and confirm the dual-file output + Training Mode behave as documented.
+
+**Commits**: `b6e5d9d` (1 commit)
+
+---
+
 ## Session: 2026-06-18 (session 14) — make the Parallelize rule actually trigger
 
 **Focus**: Fix the `Parallelize with Sub-Agents` standing rule so it fires reliably instead of being silently ignored.
