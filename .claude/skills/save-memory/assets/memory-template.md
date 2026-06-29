@@ -2,7 +2,9 @@
 name: <kebab-case-slug>
 description: <one-line summary — used to decide relevance during recall>
 metadata:
+  node_type: memory
   type: user | feedback | project | reference
+  originSessionId: <current-session-id>
 ---
 
 <the fact. For feedback: follow with a **Why:** line. For project: follow with **Why:** and **How to apply:** lines. Link related memories with [[their-slug]].>

@@ -24,7 +24,7 @@ Ask the user the following questions. You may batch them into a single message. 
 
 1. **Package name** — The `pkgs.*` attribute name (e.g. `ripgrep`, `kdePackages.kcalc`). If the user gave a plain English name, confirm the nixpkgs attribute before proceeding — you can reason from your knowledge of nixpkgs or ask the user to verify with `nix search nixpkgs <name>`.
 
-2. **Which host(s)** — One or more of: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per valid host (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`, `all`) rather than free-form prose. If the user already named a host in their request, skip the question.
+2. **Which host(s)** — One or more of the `.flakeHosts` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`), or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per flake host plus `all` rather than free-form prose. If the user already named a host in their request, skip the question.
 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.
@@ -41,12 +41,12 @@ Based on the answers from Step 1, resolve the exact file path and the list to mo
 
 | Destination | File |
 |---|---|
-| System packages — gaming | `hosts/gaming/environment.nix` → `environment.systemPackages` |
-| System packages — laptop | `hosts/laptop/environment.nix` → `environment.systemPackages` |
-| System packages — natalie-laptop | `hosts/natalie-laptop/environment.nix` → `environment.systemPackages` |
-| System packages — vpn-server | `hosts/vpn-server/configuration.nix` → `environment.systemPackages` |
+| System packages — any host | the host's `envFile` in `.claude/hosts.json` → `environment.systemPackages` (desktops: `hosts/<host>/environment.nix`; vpn-server: `hosts/vpn-server/configuration.nix`) |
 | User packages — bosko | `dotfiles/common/modules/users.nix` → `users.users.bosko.packages` |
 | HM packages — shared | `dotfiles/common/configs/home.nix` → `home.packages` |
+
+Resolve the system-package file by reading `.hosts.<host>.envFile` from `.claude/hosts.json` (the
+source of truth) rather than assuming a path — that's what keeps this from drifting.
 
 If the user said "all hosts", the package must be added to each host's `environment.nix` (and `vpn-server/configuration.nix`) individually. Consider whether a shared location would be more appropriate and mention it.
 

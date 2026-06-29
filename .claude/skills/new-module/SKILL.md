@@ -22,7 +22,7 @@ Ask the user the following questions (you may batch them into a single message).
 
 3. **Purpose** — One sentence describing what this module configures. Used as the top comment in the file.
 
-4. **Hosts** — Which hosts will import this module? Options: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`, `all desktop hosts`, `all hosts`. This is informational — it determines where the import line goes in `flake.nix`.
+4. **Hosts** — Which hosts will import this module? Options are the `.flakeHosts` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`), plus `all desktop hosts` (the `"desktop": true` hosts) or `all hosts`. This is informational — it determines where the import line goes in `flake.nix`.
 
 **Optional (ask only if relevant):**
 

@@ -12,14 +12,14 @@ Swap the active desktop environment module for a desktop host by editing the DE 
 
 Parse from the user's request:
 
-- **`<host>`** (optional) — one of the desktop hosts `gaming`, `laptop`, `natalie-laptop`. If omitted, ask in Step 1.
+- **`<host>`** (optional) — one of the **desktop hosts** (the hosts with `"desktop": true` in `.claude/hosts.json` — currently `gaming`, `laptop`, `natalie-laptop`). If omitted, ask in Step 1.
 - **`<target-de>`** (optional) — the desktop environment module to switch to, e.g. `niri`, `plasma`, `cosmic`. Must match a module under `dotfiles/common/modules/desktop-environments/`. If omitted, ask in Step 1.
 
 ## Step 1 — Gather information
 
 If the user has not already provided both pieces of information, ask them in a single message:
 
-1. **Host** — Which host to switch? Valid desktop hosts: `gaming`, `laptop`, `natalie-laptop`. If the user did not already name a host, present this pick via the **AskUserQuestion tool** with one option per valid desktop host (`gaming`, `laptop`, `natalie-laptop`) rather than free-form prose; skip the question if the user already supplied the host. (The `server` and `vpn-server` hosts have no DE — reject them with a clear explanation.)
+1. **Host** — Which host to switch? Valid desktop hosts are those with `"desktop": true` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`). If the user did not already name a host, present this pick via the **AskUserQuestion tool** with one option per desktop host rather than free-form prose; skip the question if the user already supplied the host. (Headless hosts like `vpn-server` have no DE — reject them with a clear explanation.)
 
 2. **Target DE** — Which desktop environment to switch to?
 
@@ -119,7 +119,7 @@ Then remind them of the next steps:
 
 ## Key constraints
 
-- **Only desktop hosts** — `gaming`, `laptop`, `natalie-laptop`. Reject `server` and `vpn-server`.
+- **Only desktop hosts** — those with `"desktop": true` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`). Reject headless hosts (`vpn-server`).
 - **One line changed** — only the DE import line for the target host. Nothing else.
 - **Confirm before editing** — never edit `flake.nix` without explicit user approval.
 - **Do not stage or commit** — that is the `/commit` skill's job.
