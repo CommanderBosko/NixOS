@@ -115,6 +115,24 @@ deliverable, especially for a public repo. Preserve existing sections that are s
 accurate — only update what changed; the **Recent Changes** section should cover the last
 1-3 sessions.
 
+**No sensitive or secret information — the README is public.** Treat it as world-readable
+and write/edit it so it never contains, and actively scrub it of, anything that is a secret
+or aids an attacker, including:
+- Private keys, public keys, or key material of any kind (WireGuard, SSH, age/sops, TLS),
+  password hashes, tokens, API keys.
+- Real network coordinates: public/endpoint IPs, internal IPs and VPN subnets, MAC
+  addresses, specific port numbers for non-standard services, exact hostnames that map to
+  reachable machines.
+- Personal data: full names, email addresses, physical locations, account identifiers.
+- Anything that is already encrypted in-repo (sops-managed secrets) — describe *that* it's
+  sops-managed, never the decrypted value.
+
+Describe the architecture and capabilities at a level that helps a reader understand the
+project without handing them anything operationally sensitive (e.g. "WireGuard mesh VPN
+across four hosts, keys managed via sops-nix" — not the keys, IPs, or peer endpoints).
+If you find any such detail already present in an existing README, **remove or redact it**
+as part of this step and note the redaction in the session summary.
+
 ```markdown
 # [Project Name]
 
