@@ -14,7 +14,7 @@ If the user provided a service name (e.g. `/journal sddm`) use it directly. Othe
 
 > Which service do you want to check logs for? (e.g. `sddm`, `wg-quick@wg0`, `nginx`, `bluetooth`)
 
-If the user mentioned a host (gaming/laptop/server/natalie-laptop/vpn-server), use that host. Otherwise default to **local** (the machine the user is on).
+If the user mentioned a host (gaming/laptop/natalie-laptop/vpn-server), use that host. Otherwise default to **local** (the machine the user is on).
 
 ## Step 2 — Run journalctl
 

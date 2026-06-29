@@ -65,7 +65,12 @@ Before presenting it, verify this is still current by reading `dotfiles/common/m
 networking.wg-quick.interfaces.wg0.address = [ "10.10.0.<n>/24" ];
 ```
 
-They also need to place their private key at `/etc/wireguard/private.key` on the new host (not in the repo).
+They also need to wire their WireGuard private key through **sops-nix**, the same way every existing
+host does — `dotfiles/common/modules/vpn.nix` sets `privateKeyFile = config.sops.secrets."wg-private-key".path`,
+sourced from `secrets/hosts/<host>.yaml`. So: encrypt the new host's wg private key into
+`secrets/hosts/<host>.yaml` (use the `/add-secret` skill), register the host as a sops recipient,
+and let the module read it. Do **not** drop a plaintext key at `/etc/wireguard/private.key` — that
+path is not what the module reads and will leave the tunnel down. (This mirrors `/new-host` Step 8.)
 
 **If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the live value read from `dotfiles/common/modules/vpn.nix`, not assumed). `Endpoint` and `AllowedIPs` are already correct in the template.
 

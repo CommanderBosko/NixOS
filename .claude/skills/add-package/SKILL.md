@@ -1,6 +1,6 @@
 ---
 name: add-package
-description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/server", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
+description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/vpn-server", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
 version: 0.2.0
 ---
 
@@ -13,7 +13,7 @@ Add a package to the correct location in this NixOS repo. Follow every step in o
 Parse from the user's request:
 
 - **`<package>`** (required) — the `pkgs.*` attribute name, e.g. `ripgrep`, `kdePackages.kcalc`. If the user gave a plain English name, confirm the nixpkgs attribute before proceeding.
-- **`<host>`** (optional) — one or more of `gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, or `all`. If omitted, ask in Step 1.
+- **`<host>`** (optional) — one or more of `gaming`, `laptop`, `natalie-laptop`, `vpn-server`, or `all`. If omitted, ask in Step 1.
 - **tier** (optional) — the destination tier: **System**, **User (bosko)**, or **Home Manager (shared)**. If omitted, ask in Step 1.
 
 ## Step 1 — Gather information
@@ -24,16 +24,16 @@ Ask the user the following questions. You may batch them into a single message. 
 
 1. **Package name** — The `pkgs.*` attribute name (e.g. `ripgrep`, `kdePackages.kcalc`). If the user gave a plain English name, confirm the nixpkgs attribute before proceeding — you can reason from your knowledge of nixpkgs or ask the user to verify with `nix search nixpkgs <name>`.
 
-2. **Which host(s)** — One or more of: `gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per valid host (`gaming`, `laptop`, `natalie-laptop`, `server`, `vpn-server`, `all`) rather than free-form prose. If the user already named a host in their request, skip the question.
+2. **Which host(s)** — One or more of: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per valid host (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`, `all`) rather than free-form prose. If the user already named a host in their request, skip the question.
 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.
    - **User (bosko)** — goes in `users.users.bosko.packages` in `dotfiles/common/modules/users.nix`. Personal package for bosko only, applies on all hosts.
    - **Home Manager (shared)** — goes in `home.packages` in `dotfiles/common/configs/home.nix`. Managed by HM; applies to both `bosko` and `natty` on all desktop hosts.
 
-   Note: `server` and `vpn-server` do not run Home Manager — only the **system** option applies to those hosts.
+   Note: `vpn-server` does not run Home Manager — only the **system** option applies to that host.
 
-   If the user did not already indicate the tier in their request, present this pick via the **AskUserQuestion tool** with these three options (**System**, **User (bosko)**, **Home Manager (shared)**) rather than free-form prose. If the chosen host is `server` or `vpn-server`, only **System** applies — skip the question and use System. If the user already specified the tier, skip the question.
+   If the user did not already indicate the tier in their request, present this pick via the **AskUserQuestion tool** with these three options (**System**, **User (bosko)**, **Home Manager (shared)**) rather than free-form prose. If the chosen host is `vpn-server`, only **System** applies — skip the question and use System. If the user already specified the tier, skip the question.
 
 ## Step 2 — Determine the correct file and list
 
@@ -44,7 +44,6 @@ Based on the answers from Step 1, resolve the exact file path and the list to mo
 | System packages — gaming | `hosts/gaming/environment.nix` → `environment.systemPackages` |
 | System packages — laptop | `hosts/laptop/environment.nix` → `environment.systemPackages` |
 | System packages — natalie-laptop | `hosts/natalie-laptop/environment.nix` → `environment.systemPackages` |
-| System packages — server | `hosts/server/environment.nix` → `environment.systemPackages` |
 | System packages — vpn-server | `hosts/vpn-server/configuration.nix` → `environment.systemPackages` |
 | User packages — bosko | `dotfiles/common/modules/users.nix` → `users.users.bosko.packages` |
 | HM packages — shared | `dotfiles/common/configs/home.nix` → `home.packages` |
@@ -99,7 +98,7 @@ Do not rebuild. Do not stage files. Leave both of those to the user's own workfl
 
 - Never use `git add` — leave staging entirely to the `/commit` skill.
 - Never run `nh os boot` or `nixos-rebuild` — leave that to the user.
-- `server` and `vpn-server` are headless; never suggest HM or user packages for them.
+- `vpn-server` is headless; never suggest HM or user packages for it.
 - The `vpn-server` host uses `aarch64-linux` — only offer packages that are likely available for that architecture.
 - `natty` has no wheel access and no personal user packages — the only shared user destination for `natty` is the HM shared list (`home.nix`).
 - If the package name is ambiguous (e.g. `discord` vs `vesktop`), note the distinction briefly.

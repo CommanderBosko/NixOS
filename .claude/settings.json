@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
+      "Bash(bash .claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
+      "Bash(./.claude/skills/nixos-dry-run/scripts/dry-run.sh*)"
+    ]
+  }
+}

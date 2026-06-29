@@ -25,7 +25,10 @@ Present the output to the user in a compact form:
 
 Follow this repo's **conventional commit** format exactly. Read `assets/commit-format.md` for the full reference — the `type(scope): short description` shape, the allowed type list, the scope guidance, repo-history examples, and the formatting rules — and draft the message accordingly.
 
-Present the drafted message to the user and ask them to **confirm or edit** it before proceeding. Do not commit until the user approves the message.
+Show the drafted message, then **proceed straight to staging and committing** — do not pause for a
+"confirm or edit?" approval step. This matches the user's standing preference: draft and commit
+immediately without asking for sign-off. (The only exception is if the user explicitly asked to
+review the message first.)
 
 ## Step 3 — Stage files
 

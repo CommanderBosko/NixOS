@@ -49,5 +49,5 @@ Then add a brief diagnosis below the raw output:
 
 - Working directory: `/home/bosko/NixOS`
 - This is a read-only, safe-to-run-anytime operation.
-- `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across all five hosts (gaming, laptop, server, natalie-laptop, vpn-server).
+- `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across all four hosts (gaming, laptop, natalie-laptop, vpn-server).
 - This skill does NOT apply changes; it only validates.

@@ -49,8 +49,9 @@ vpn-server, which is passwordless there.
 - Read-only and side-effect-free; safe to run anytime.
 - Host reachability depends on the LAN (desktops) and the internet (vpn-server). Desktops
   are often powered off — `UNREACHABLE` is normal, not an error.
-- The WireGuard peer→host mapping is hardcoded in the script by public key. If a peer is
-  added or rekeyed, update the `case` block in `scripts/fleet-status.sh`.
+- The WireGuard peer→host mapping is read from `.claude/hosts.json` `.vpn.peers` (a
+  `publicKey → hostname` map). If a peer is added or rekeyed, update it there — not in the
+  script, which consumes `hosts.json` as the source of truth.
 
 ## Script
 

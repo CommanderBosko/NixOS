@@ -18,12 +18,11 @@ Check WireGuard peer connectivity on the Oracle Cloud ARM VPN server at `150.136
    - `latest handshake:` — when the last handshake occurred
    - `transfer:` — bytes received and sent
 
-3. **Peer identity mapping** (by public key or allowed-ips):
-   - `10.0.0.2/32` — gaming
-   - `10.0.0.3/32` — laptop
-   - `10.0.0.4/32` — natalie-laptop
-
-   If allowed-ips is not shown or keys are unfamiliar, list what wg reports and note which IPs correspond to which hosts.
+3. **Peer identity mapping** — resolve each `peer:` public key to a host name by reading
+   `.claude/hosts.json` `.vpn.peers` (a `publicKey → hostname` map; source of truth, shared with
+   `fleet-status`). The VPN subnet is `.vpn.subnet` (`10.10.0.0/24`): vpn-server is `10.10.0.1`,
+   and peers are `10.10.0.2+`. Do **not** hardcode the roster here — it drifts. If a key isn't in
+   `.vpn.peers`, list what `wg` reports verbatim and flag the unknown peer.
 
 4. **Classify each peer's connection status**:
    - **Active** — last handshake within the last 3 minutes (180 seconds). WireGuard re-handshakes every ~2 minutes when traffic is flowing.
