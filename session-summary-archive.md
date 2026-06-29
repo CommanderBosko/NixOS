@@ -2,6 +2,31 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-21 (session 16) — first three loops via `/create-loop`
+
+**Focus**: Put the session-15 `/create-loop` meta-skill to work — generate the first real loops for the fleet.
+
+### What changed (and why)
+- Generated three project-local self-orchestrating loops (`bdc9434`): **`/fleet-rollout`** (staged per-host deploy: dry-run gate → switch → full health sweep, gaming→laptop→natalie-laptop→vpn-server), **`/flake-update-verify`** (update inputs → flake-check → commit the lock without applying; restore the previous lock if eval breaks), and **`/public-repo-guard`** (secret-scan + audit-config triaged against a seeded baseline allowlist; passes at zero genuine findings).
+- Each verified well-formed before commit: name matches dir, all done-rules machine-checkable, referenced skills resolve, baseline file seeded with this repo's known-intentional exceptions.
+
+### Decisions
+- **Rollout uses dry-run-gate-then-`switch` with a live health sweep**, departing from the repo's `boot`-only convention — health checks are meaningless against an inactive config; the dry-run gate still catches eval breaks before any activation.
+- **`flake-update-verify` commits the lock but never applies; restores the previous lock on failure** via plain `git checkout -- flake.lock` (the loop's clean-tree precondition makes git the reliable revert source). Applying stays a deliberate `/fleet-rollout` step.
+- **`public-repo-guard` converges via a committed baseline-allowlist file**, not run-memory — a durable, diffable list of accepted findings beats re-deriving intentional-vs-genuine each run.
+
+### Issues / surprises
+- None. Confirms the session-15 PENDING item: `/create-loop` resolves in a fresh session and runs end-to-end. Empty `loops/*/` dirs for two loops are untracked (git skips empty dirs) — they populate on first run.
+
+### Next session
+- Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (now runnable via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
+
+**Commits**: `bdc9434` (1 commit)
+
+---
+
+---
+
 ## Session: 2026-06-20 (session 15) — `/create-loop` meta-skill
 
 **Focus**: Build a global `/create-loop` skill that interviews the user and generates custom, self-orchestrating loop skills.

@@ -4,6 +4,26 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-28 (session 21) — transcript-history awareness for skill-upgrade + skill-suggestion
+
+**Focus**: Check whether the skills `/improve-system` chains can read the session transcripts at `~/.claude/projects/`, and add it where it helps.
+
+### What changed (and why)
+- **`skill-upgrade` + `skill-suggestion` now mine past transcripts** (`76142e0`): both were scoped only to the live conversation. Added explicit guidance to also `grep` the project's transcript store at `~/.claude/projects/<cwd-slug>/*.jsonl` — `skill-upgrade` treats a misfire recurring across sessions as the top-value gotcha; `skill-suggestion` treats a workflow repeated across many sessions as the strongest reuse signal. Both carry a grep-not-read guard (transcripts are multi-MB).
+
+### Decisions
+- **Only the two session-reactive skills got the addition.** `claude-rules` (edits `CLAUDE.md`) and `skill-audit` (audits skill files) don't benefit; `improve-system` is a pure orchestrator so the work belongs in its sub-skills; `fewer-permission-prompts` already scans transcripts but is a non-editable built-in.
+
+### Issues / surprises
+- None. Dry-run clean (1.14 KiB `home-manager-files` diff, no kernel/service changes).
+
+### Next session
+- The two edits are repo-managed global skills → live in `~/.claude/skills/` only after `nh os boot` + a new session. Rides along with the existing session-18 pending rebuild.
+
+**Commits**: `76142e0` (1 commit, +1 session-close)
+
+---
+
 ## Session: 2026-06-28 (session 20) — `/improve-system` skill + public README scrub
 
 **Focus**: Consolidate the Claude-ecosystem maintenance skills into one command, and get sensitive network detail out of the public README.
@@ -93,28 +113,5 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (run via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
 
 **Commits**: `889d6bc`, `90279df` (2 commits). (Pre-session, also pushed: `b541303` flake bump via `/flake-update-verify`, `b9e85c2` push-step added to that loop.)
-
----
-
-## Session: 2026-06-21 (session 16) — first three loops via `/create-loop`
-
-**Focus**: Put the session-15 `/create-loop` meta-skill to work — generate the first real loops for the fleet.
-
-### What changed (and why)
-- Generated three project-local self-orchestrating loops (`bdc9434`): **`/fleet-rollout`** (staged per-host deploy: dry-run gate → switch → full health sweep, gaming→laptop→natalie-laptop→vpn-server), **`/flake-update-verify`** (update inputs → flake-check → commit the lock without applying; restore the previous lock if eval breaks), and **`/public-repo-guard`** (secret-scan + audit-config triaged against a seeded baseline allowlist; passes at zero genuine findings).
-- Each verified well-formed before commit: name matches dir, all done-rules machine-checkable, referenced skills resolve, baseline file seeded with this repo's known-intentional exceptions.
-
-### Decisions
-- **Rollout uses dry-run-gate-then-`switch` with a live health sweep**, departing from the repo's `boot`-only convention — health checks are meaningless against an inactive config; the dry-run gate still catches eval breaks before any activation.
-- **`flake-update-verify` commits the lock but never applies; restores the previous lock on failure** via plain `git checkout -- flake.lock` (the loop's clean-tree precondition makes git the reliable revert source). Applying stays a deliberate `/fleet-rollout` step.
-- **`public-repo-guard` converges via a committed baseline-allowlist file**, not run-memory — a durable, diffable list of accepted findings beats re-deriving intentional-vs-genuine each run.
-
-### Issues / surprises
-- None. Confirms the session-15 PENDING item: `/create-loop` resolves in a fresh session and runs end-to-end. Empty `loops/*/` dirs for two loops are untracked (git skips empty dirs) — they populate on first run.
-
-### Next session
-- Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (now runnable via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
-
-**Commits**: `bdc9434` (1 commit)
 
 ---
