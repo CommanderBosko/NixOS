@@ -2,6 +2,27 @@
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._
 
+## Session: 2026-06-22 (session 17) — gitignore loop run-logs; FinanceGuru bump
+
+**Focus**: Commit a user-made FinanceGuru flake update, then stop loop run-logs from cluttering `git status`.
+
+### What changed (and why)
+- **FinanceGuru input bumped `9cb935a` → `6b506fe`** (`889d6bc`) for an upstream FinanceGuru update — lock-only, nothing else moved. Applies on next `/fleet-rollout`.
+- **`.gitignore` rule for loop run-logs** (`90279df`): `.claude/loops/**/output-*.md` and `memory-*.md` are now ignored. Each loop run writes a dated dual-file log there; those are local artifacts, not skills.
+
+### Decisions
+- **Ignore loop run-logs, keep loop config tracked** — the loop *skills* live in `.claude/skills/` and are already tracked (so they're portable to any clone); the ignored files are only the per-run dated logs. Chose a narrow `output-*`/`memory-*` glob over ignoring all of `.claude/loops/` so genuine config like `public-repo-guard/baseline-allowlist.md` stays tracked. Verified with `git check-ignore`.
+
+### Issues / surprises
+- None. The user's question "I like my skills accessible anywhere" was a misread of what the untracked files were — clarified that the skills were already committed; only run-logs needed handling.
+
+### Next session
+- Standing backlog unchanged: laptop + natalie-laptop pending rebuild activations (run via `/fleet-rollout`), `wg0 mtu = 1380` on desktop clients, interface-scope the Avahi mDNS firewall.
+
+**Commits**: `889d6bc`, `90279df` (2 commits). (Pre-session, also pushed: `b541303` flake bump via `/flake-update-verify`, `b9e85c2` push-step added to that loop.)
+
+---
+
 ## Session: 2026-06-21 (session 16) — first three loops via `/create-loop`
 
 **Focus**: Put the session-15 `/create-loop` meta-skill to work — generate the first real loops for the fleet.
