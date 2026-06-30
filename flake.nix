@@ -93,7 +93,6 @@
           "${self}/dotfiles/common/modules/gaming.nix"
           "${self}/dotfiles/common/modules/nvidia.nix"
           "${self}/hosts/gaming/virtualisation.nix"
-          "${self}/hosts/gaming/brobot.nix"
           "${self}/hosts/gaming/jellyfin-server.nix"
           "${self}/dotfiles/common/modules/vpn.nix"
         ];
