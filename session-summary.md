@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-29 (session 24) — disko-on-other-hosts review (no code changes)
+
+**Focus**: Answer whether disko is worth adopting on the remaining hosts; correct stale agent memory.
+
+### What changed (and why)
+- **No repo changes.** Discussion + a memory correction only.
+- **Decided to keep disko on `vpn-server` only** — its payoff is at install/reinstall time, so it fits the headless, reproducible cloud host but gives no runtime benefit on the already-installed, data-bearing desktops; retrofitting risks two sources of truth and a layout you'd only discover wrong on a wipe.
+- **Fixed an inaccurate agent memory** (outside the repo, under `~/.claude/.../memory/`): `natalie-laptop` was still flagged as "placeholder hardware config — replace during install." It's been installed and running for some time with a real generated config (Intel host, real UUIDs). Memory + MEMORY.md index updated to match. Repo docs already had this right — no README/state edits needed.
+
+### Decisions
+- **Skip disko on `gaming`, `laptop`, `natalie-laptop`.** Adopt only where wipe-and-redeploy is the workflow (vpn-server). natalie-laptop was briefly a candidate under the (wrong) assumption it was unprovisioned — moot once corrected.
+
+### Issues / surprises
+- The "natalie-laptop unprovisioned" belief came from a 49-day-old memory that never got updated after install — caught and fixed.
+
+### Next session
+- No carryover from this session. Pending-rebuild backlog from session 23 (brobot removal + session-closer transcript edit) still rides the next gaming `nh os boot` + reboot.
+
+**Commits**: docs-only close (0 code commits)
+
+---
+
 ## Session: 2026-06-29 (session 23) — session-closer reads transcripts, brobot dropped, permissions consistency check
 
 **Focus**: Small skills/config maintenance — make `session-closer` more accurate, retire a dead project's module, and verify the permission layers are coherent.
@@ -89,28 +111,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `/improve-system` and the `session-closer` guardrail reach `~/.claude` only after `nh os boot` + a new session (both are repo-managed global skills). Standing backlog unchanged: laptop/natalie-laptop rebuild activations via `/fleet-rollout`, `wg0 mtu=1380` desktop rebuilds, interface-scope the Avahi mDNS firewall, session-18/19 pending global-skill rebuilds, and re-run `/update` to lift the nixpkgs pin once upstream ships `bzImage`.
 
 **Commits**: `31ad852..a80664d` (2 commits)
-
----
-
-## Session: 2026-06-26 (session 19) — flake update; nixpkgs held back on zen-kernel breakage
-
-**Focus**: Update flake inputs, dry-run, and commit only if it passes.
-
-### What changed (and why)
-- `/update` bumped all 6 inputs; `/nixos-dry-run` **failed** — the new `nixos-unstable` rev (`e73de5b`) ships `linux-zen-7.0.12` with only `vmlinuz` in its output while the derivation still declares `target = bzImage`, so the toplevel bootloader check (`Expecting …/bzImage`) hard-fails. Broken kernel came from `cache.nixos.org` → upstream Hydra regression, not local.
-- Pinned `nixpkgs` back to the prior good rev `567a49d1` **lock-only** (`--override-input`), kept the other 5 bumps (`dms`, `financeguru`, `home-manager`, `nixpkgs-stable`, `sops-nix`). Re-ran the dry-run — passed clean. Committed `flake.lock` (`4598fa0`).
-
-### Decisions
-- **Lock-only pin of just `nixpkgs`** over reverting everything or forcing `kernelFile = "vmlinuz"` — keeps the good updates, and the next `/update` auto-lifts the pin once upstream ships `bzImage` again. Forcing `kernelFile` was rejected: it would mis-name the boot image at activation; the real bug is upstream's target/output mismatch.
-
-### Issues / surprises
-- Affects all three zen-kernel desktop hosts (gaming/laptop/natalie-laptop); vpn-server (standard `linuxPackages`) is immune.
-- Lock bump only — nothing activated. Applies on next `/fleet-rollout` or per-host rebuild.
-
-### Next session
-- Re-run `/update` in a few days; if the zen kernel ships `bzImage` again, the pin lifts and the dry-run passes. Quick check: `ls $(nix eval --raw .#nixosConfigurations.gaming.config.boot.kernelPackages.kernel)/`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall, session-18 global-skill rebuild).
-
-**Commits**: `4598fa0` (1 commit)
 
 ---
 

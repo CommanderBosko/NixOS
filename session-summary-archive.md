@@ -1,3 +1,25 @@
+## Session: 2026-06-26 (session 19) — flake update; nixpkgs held back on zen-kernel breakage
+
+**Focus**: Update flake inputs, dry-run, and commit only if it passes.
+
+### What changed (and why)
+- `/update` bumped all 6 inputs; `/nixos-dry-run` **failed** — the new `nixos-unstable` rev (`e73de5b`) ships `linux-zen-7.0.12` with only `vmlinuz` in its output while the derivation still declares `target = bzImage`, so the toplevel bootloader check (`Expecting …/bzImage`) hard-fails. Broken kernel came from `cache.nixos.org` → upstream Hydra regression, not local.
+- Pinned `nixpkgs` back to the prior good rev `567a49d1` **lock-only** (`--override-input`), kept the other 5 bumps (`dms`, `financeguru`, `home-manager`, `nixpkgs-stable`, `sops-nix`). Re-ran the dry-run — passed clean. Committed `flake.lock` (`4598fa0`).
+
+### Decisions
+- **Lock-only pin of just `nixpkgs`** over reverting everything or forcing `kernelFile = "vmlinuz"` — keeps the good updates, and the next `/update` auto-lifts the pin once upstream ships `bzImage` again. Forcing `kernelFile` was rejected: it would mis-name the boot image at activation; the real bug is upstream's target/output mismatch.
+
+### Issues / surprises
+- Affects all three zen-kernel desktop hosts (gaming/laptop/natalie-laptop); vpn-server (standard `linuxPackages`) is immune.
+- Lock bump only — nothing activated. Applies on next `/fleet-rollout` or per-host rebuild.
+
+### Next session
+- Re-run `/update` in a few days; if the zen kernel ships `bzImage` again, the pin lifts and the dry-run passes. Quick check: `ls $(nix eval --raw .#nixosConfigurations.gaming.config.boot.kernelPackages.kernel)/`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall, session-18 global-skill rebuild).
+
+**Commits**: `4598fa0` (1 commit)
+
+---
+
 ## Session: 2026-06-23 (session 18) — Claude skill-library audit + overhaul
 
 **Focus**: Audit every skill against a quality rubric, fix what's broken, and capture the workflow as a reusable skill.
