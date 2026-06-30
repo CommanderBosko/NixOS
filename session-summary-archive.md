@@ -1,3 +1,29 @@
+## Session: 2026-06-23 (session 18) — Claude skill-library audit + overhaul
+
+**Focus**: Audit every skill against a quality rubric, fix what's broken, and capture the workflow as a reusable skill.
+
+### What changed (and why)
+- **New skills + `new-skill` gates** (`0a7bd2d`, `dc3e1a4`): added the 4-bucket single-responsibility gate to `new-skill`; created `bump-input` and `save-memory`; split `team-member-ingest` → + `team-member-synthesize`; hardened `new-skill` to auto-wire repo-managed global skills into `bosko-claude.nix`.
+- **Drift bug fixes** (`0853706`): `/vpn-status` was broken (`ubuntu@` denied → `bosko@`, verified live); wrong commit trailer (Sonnet 4.6 → Opus 4.8); phantom `server` host; `new-host`'s DE list named 5 nonexistent modules; stale `pin-input` roster — DE list + roster now enumerate live.
+- **`.claude/hosts.json` single source of truth** (`f179f8b`): host SSH targets/IPs/WG-peer map centralized; rewired 8 skills + 2 scripts to read it; dropped the phantom `nixos-server`; `remote-rebuild` rewritten vpn-server-only with `boot`+reboot.
+- **scripts/ + assets/ + UX** (`a25c339`, `f2e2ec6`): `new-host` 493→180 lines (templates→`assets/`); scripts for diff-generations (fixed a gen-1 baseline bug), fmt, add-secret, audit-config, rollback + shared `.claude/lib/flake-lock-diff.sh`; AskUserQuestion + `## Arguments` across ~11 skills.
+- **`/skill-audit` meta-skill** (`f56b9b1`): reproduces the whole audit — disjoint sub-agent partitions, 6-point rubric, report-not-apply.
+
+### Decisions
+- **One shared `hosts.json`** killed the `bosko`/`ubuntu` drift class; verify constants against the live system before trusting an inline copy (the docs can be the stale side).
+- **Dropped the phantom `nixos-server`, kept `pi-hole`** as a non-flake reference (user choice).
+- **Skipped** global-skill `assets/` extraction (per-file symlink overhead) and the `arguments:` YAML frontmatter field (unconfirmed support — used `## Arguments` prose).
+
+### Issues / surprises
+- Parallelized both the audit *and* the fix pass across disjoint sub-agent partitions (no file overlap) — disjoint ownership is what made a parallel *edit* pass safe.
+- Pure skills-infra session; no NixOS system config touched.
+
+### Next session
+- `nh os boot /home/bosko/NixOS` + reboot to surface the `dotfiles/` skill changes (`new-skill`, `git-commit`, `team-member-*`, new `/skill-audit`) in `~/.claude`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall).
+
+**Commits**: `0a7bd2d..dc3e1a4` (7 commits)
+
+---
 # Session Summary Log — Archive
 
 _Older sessions, most recent first. Active log: [session-summary.md](session-summary.md)._

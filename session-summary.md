@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-06-29 (session 23) — session-closer reads transcripts, brobot dropped, permissions consistency check
+
+**Focus**: Small skills/config maintenance — make `session-closer` more accurate, retire a dead project's module, and verify the permission layers are coherent.
+
+### What changed (and why)
+- **`session-closer` reads the on-disk transcript (`3cdd88b`)** — STEP 2 now reads the session's JSONL at `~/.claude/projects/<cwd-slug>/*.jsonl` as ground truth, because the live context window summarizes/truncates early turns out of view. Verified the dir-derivation + two `jq` extractors against the live transcript; kept a guard against dumping multi-MB raw JSONL.
+- **`brobot` module dropped (`2ca32be`)** — removed `hosts/gaming/brobot.nix` + its `flake.nix` import (Discord bot discontinued). Dry-run clean, −187 MiB on gaming (`yt-dlp` + closure gone; `ffmpeg`/`nodejs` stay).
+
+### Decisions
+- **Don't sync the managed permission layer with the `/improve-system` allow-list.** The `deny`/`ask`/fork-bomb-hook live in NixOS-managed `/etc/claude-code/managed-settings.json` (highest precedence, not Claude-editable); `/improve-system` only appends `permissions.allow` to the project `.claude/settings.json`. Merging would duplicate guardrails into a lower-precedence editable file — and `trimClaudeSettings` already strips drift on every rebuild. Separation is by design; no drift found.
+- Aside surfaced (not acted on): global `~/.claude/settings.json` has `Bash(*)`, so project allow-list entries are largely redundant and `fewer-permission-prompts` is near-no-op here.
+
+### Issues / surprises
+- This close ran on the **old** `session-closer` — the transcript-reading edit only goes live after a rebuild + new session.
+
+### Next session
+- Fold the brobot removal + the `session-closer` edit into the next gaming `nh os boot` + reboot (rides the existing pending-rebuild backlog).
+
+**Commits**: `3cdd88b..2ca32be` (2 commits)
+
+---
+
 ## Session: 2026-06-28 (session 22) — `/improve-system` first full run: bug-fix + consolidation + global refactors
 
 **Focus**: Run the new `/improve-system` orchestrator end-to-end and act on what it surfaces across the skill library.
@@ -92,29 +114,3 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
-## Session: 2026-06-23 (session 18) — Claude skill-library audit + overhaul
-
-**Focus**: Audit every skill against a quality rubric, fix what's broken, and capture the workflow as a reusable skill.
-
-### What changed (and why)
-- **New skills + `new-skill` gates** (`0a7bd2d`, `dc3e1a4`): added the 4-bucket single-responsibility gate to `new-skill`; created `bump-input` and `save-memory`; split `team-member-ingest` → + `team-member-synthesize`; hardened `new-skill` to auto-wire repo-managed global skills into `bosko-claude.nix`.
-- **Drift bug fixes** (`0853706`): `/vpn-status` was broken (`ubuntu@` denied → `bosko@`, verified live); wrong commit trailer (Sonnet 4.6 → Opus 4.8); phantom `server` host; `new-host`'s DE list named 5 nonexistent modules; stale `pin-input` roster — DE list + roster now enumerate live.
-- **`.claude/hosts.json` single source of truth** (`f179f8b`): host SSH targets/IPs/WG-peer map centralized; rewired 8 skills + 2 scripts to read it; dropped the phantom `nixos-server`; `remote-rebuild` rewritten vpn-server-only with `boot`+reboot.
-- **scripts/ + assets/ + UX** (`a25c339`, `f2e2ec6`): `new-host` 493→180 lines (templates→`assets/`); scripts for diff-generations (fixed a gen-1 baseline bug), fmt, add-secret, audit-config, rollback + shared `.claude/lib/flake-lock-diff.sh`; AskUserQuestion + `## Arguments` across ~11 skills.
-- **`/skill-audit` meta-skill** (`f56b9b1`): reproduces the whole audit — disjoint sub-agent partitions, 6-point rubric, report-not-apply.
-
-### Decisions
-- **One shared `hosts.json`** killed the `bosko`/`ubuntu` drift class; verify constants against the live system before trusting an inline copy (the docs can be the stale side).
-- **Dropped the phantom `nixos-server`, kept `pi-hole`** as a non-flake reference (user choice).
-- **Skipped** global-skill `assets/` extraction (per-file symlink overhead) and the `arguments:` YAML frontmatter field (unconfirmed support — used `## Arguments` prose).
-
-### Issues / surprises
-- Parallelized both the audit *and* the fix pass across disjoint sub-agent partitions (no file overlap) — disjoint ownership is what made a parallel *edit* pass safe.
-- Pure skills-infra session; no NixOS system config touched.
-
-### Next session
-- `nh os boot /home/bosko/NixOS` + reboot to surface the `dotfiles/` skill changes (`new-skill`, `git-commit`, `team-member-*`, new `/skill-audit`) in `~/.claude`. Standing backlog unchanged (VPN MTU rebuilds, Avahi firewall).
-
-**Commits**: `0a7bd2d..dc3e1a4` (7 commits)
-
----
