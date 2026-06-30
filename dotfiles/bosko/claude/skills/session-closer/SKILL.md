@@ -31,6 +31,7 @@ Work in the current project's repository. Run all git commands against that repo
 - `git diff origin/main...HEAD` — changes not yet pushed.
 - `git status` — uncommitted changes.
 - `git log --stat <last-session-commit>..HEAD` — which files changed and how much.
+- This gives you the *what*; STEP 2 reads the session transcript for the *why*.
 - If the range spans more than the current conversation's work (e.g. several prior
   sessions were never closed), say so plainly and **only narrate what you actually did
   this session** — don't invent rationale for commits you weren't part of. Refresh the
@@ -41,6 +42,40 @@ Work in the current project's repository. Run all git commands against that repo
 ---
 
 ## STEP 2 — Identify what git won't tell you
+
+### Read the session transcript first (ground truth)
+
+Don't reconstruct the session from your live context window — it gets summarized and
+truncated as a conversation grows, so decisions, rationale, and surprises from early in
+the session may have scrolled out. The **JSONL transcript on disk is the complete,
+unsummarized record** of this session, so read it for the most accurate close.
+
+Locate the current project's transcript dir and grab the most-recently-modified file (the
+live session is the one still being written):
+
+```bash
+DIR="$HOME/.claude/projects/$(pwd | sed 's#/#-#g')"
+LATEST=$(ls -t "$DIR"/*.jsonl 2>/dev/null | head -1)
+```
+
+Read it **judiciously** — these files run to several MB, so don't dump raw JSONL into
+context. Extract the turns that matter with `jq`:
+
+```bash
+# Every user request this session (what was actually asked, in order)
+jq -r 'select(.type=="user") | .message.content
+       | if type=="string" then . else (.[]? | select(.type=="text") .text) end' "$LATEST"
+
+# Your own narrative/decisions (assistant text, skipping tool calls)
+jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") .text' "$LATEST"
+```
+
+Mine these for the decisions, dead-ends, and gotchas below — the transcript captures the
+*why* behind each commit, which git never records. If the close spans more than one
+session (several `.jsonl` files since the last `chore(session):` commit), read each
+relevant transcript, but only narrate work you can see was actually done.
+
+### Then capture what vanishes otherwise
 
 Git already has the file list and commit messages. Spend your attention on the things
 that vanish otherwise:
