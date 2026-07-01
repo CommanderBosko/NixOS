@@ -1,3 +1,25 @@
+## Session: 2026-06-28 (session 20) — `/improve-system` skill + public README scrub
+
+**Focus**: Consolidate the Claude-ecosystem maintenance skills into one command, and get sensitive network detail out of the public README.
+
+### What changed (and why)
+- **`/improve-system`** (`31ad852`): new global Orchestration skill chaining `skill-upgrade` + `skill-suggestion` + `claude-rules` + `skill-audit` + `fewer-permission-prompts` into one pass — auto-applies low-risk additive fixes (gotchas, CLAUDE.md rules, allow-list entries), gates structural ones (new skills, audit refactors). Invokes the sub-skills, doesn't reimplement them. Wired into `bosko-claude.nix`.
+- **Public README scrub + `session-closer` guardrail** (`a80664d`): redacted the Oracle endpoint IP + VPN/LAN subnets + per-host addresses from the public `README.md`; added a "no sensitive info — the README is public" rule to `session-closer`'s README step. Updated the `project_sops_secrets` memory so a future close keeps the README clean *and* leaves the IP in the configs.
+
+### Decisions
+- **Build `/improve-system` as a thin orchestrator, not a merged mega-skill** — it chains the five existing skills so each stays single-responsibility and independently runnable; the orchestrator owns only sequencing + the auto-apply/confirm policy.
+- **Scrub scoped to the README only** — the endpoint IP/subnets stay in host configs + `.claude/hosts.json` (wg-quick needs them); a repo-wide scrub was declined to avoid risking VPN functionality for little gain (WG security ≠ endpoint secrecy).
+
+### Issues / surprises
+- The scrub is partial by design: the same values remain visible elsewhere in the public repo (state docs, configs, git history). Flagged to the user, who chose to leave it at the README.
+
+### Next session
+- `/improve-system` and the `session-closer` guardrail reach `~/.claude` only after `nh os boot` + a new session (both are repo-managed global skills). Standing backlog unchanged: laptop/natalie-laptop rebuild activations via `/fleet-rollout`, `wg0 mtu=1380` desktop rebuilds, interface-scope the Avahi mDNS firewall, session-18/19 pending global-skill rebuilds, and re-run `/update` to lift the nixpkgs pin once upstream ships `bzImage`.
+
+**Commits**: `31ad852..a80664d` (2 commits)
+
+---
+
 ## Session: 2026-06-26 (session 19) — flake update; nixpkgs held back on zen-kernel breakage
 
 **Focus**: Update flake inputs, dry-run, and commit only if it passes.
