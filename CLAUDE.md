@@ -101,7 +101,7 @@ hosts/
 - **Flatpaks** are managed declaratively via `nix-flatpak`; defined per-host in `environment.nix`.
 - **System architecture** is `x86_64-linux` throughout (vpn-server is `aarch64-linux`); state version `25.11`.
 - `nix-ld` is enabled only on gaming for binary compatibility.
-- Gaming: Plasma 6 / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Cosmic / Wayland.
+- Gaming: Plasma 6 / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Plasma 6 / Wayland.
 
 ### Users
 
