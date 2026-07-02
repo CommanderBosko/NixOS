@@ -15,7 +15,7 @@ Knowledge base in the Nix repo:
 /home/bosko/NixOS/dotfiles/bosko/claude/knowledge/
 ```
 
-`knowledge/raw/<person-slug>/` holds the raw source (gitignored, local-only); `knowledge/<person-slug>/team-member.md` is the synthesized profile (committed).
+`knowledge/raw/<person-slug>/` holds the raw source (gitignored, local-only); `knowledge/<person-slug>/team-member.md` is the synthesized profile (committed). This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.
 
 ## Arguments
 

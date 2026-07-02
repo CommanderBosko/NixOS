@@ -43,7 +43,7 @@ Briefly play back what you heard — their trajectory, core strengths, main bloc
 
 ### 4. Save the profile to the shared knowledge base
 
-Write the profile to the **shared advisory-board knowledge base in the Nix repo** — the absolute path `/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md` — so it's version-controlled and available from any project, not just this one. Use this frontmatter and structure:
+Write the profile to the **shared advisory-board knowledge base in the Nix repo** — the absolute path `/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md` — so it's version-controlled and available from any project, not just this one. (This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.) Use this frontmatter and structure:
 
 ```
 ---

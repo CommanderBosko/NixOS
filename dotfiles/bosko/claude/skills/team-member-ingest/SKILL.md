@@ -11,7 +11,7 @@ Ingest content the user pastes — transcripts, articles, posts, notes, whatever
 /home/bosko/NixOS/dotfiles/bosko/claude/knowledge/
 ```
 
-so it's version-controlled and available from any project. (Note: `knowledge/raw/` is gitignored — raw source stays local; synthesized profiles are committed.)
+so it's version-controlled and available from any project. (Note: `knowledge/raw/` is gitignored — raw source stays local; synthesized profiles are committed.) This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.
 
 (Bucket: Utility — save each pasted piece raw, verbatim, every time.)
 
