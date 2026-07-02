@@ -130,6 +130,6 @@ Then remind them of the next steps:
 |----------------|-------------------|
 | gaming         | plasma.nix        |
 | laptop         | niri.nix          |
-| natalie-laptop | cosmic.nix        |
+| natalie-laptop | plasma.nix        |
 
 These are the defaults at the time this skill was written. Always read `flake.nix` live — don't rely on this table if it may have been changed since.
