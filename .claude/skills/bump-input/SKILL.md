@@ -18,10 +18,11 @@ This skill is driven by a single input:
 
 ## Step 1 — Resolve which input
 
-The root inputs live in `flake.nix`. List them live rather than trusting a hardcoded list:
+The root inputs live in `flake.nix`. List them live rather than trusting a hardcoded list, using
+the shared helper (also used by `/pin-input`):
 
 ```bash
-nix flake metadata /home/bosko/NixOS --json | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin)['locks']['nodes']['root']['inputs'].keys()))"
+/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh
 ```
 
 - If the user named an input (e.g. "bump financeguru"), match it case-insensitively against that list and use the exact node name.
@@ -82,9 +83,10 @@ Do not run either automatically.
 
 ---
 
-## Shared script
+## Shared scripts
 
-The lock diff is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/pin-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script.
+- The lock diff is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/pin-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script.
+- The input list is rendered by `/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh`, shared with `/pin-input`. Do not hand-roll the `nix flake metadata` parse — call the script.
 
 ## Key constraints
 

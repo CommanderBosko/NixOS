@@ -18,10 +18,11 @@ This skill is driven by three inputs (any not supplied in the prompt are asked f
 
 ## Current inputs in this repo
 
-Never trust a hardcoded roster — it rots. Enumerate the inputs **live**:
+Never trust a hardcoded roster — it rots. Enumerate the inputs **live** using the shared helper
+(also used by `/bump-input`):
 
 ```bash
-nix flake metadata /home/bosko/NixOS --json | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin)['locks']['nodes']['root']['inputs'].keys()))"
+/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh
 ```
 
 Some inputs declare `inputs.nixpkgs.follows = "nixpkgs"` (read `flake.nix` to see which — e.g. `home-manager`, `disko`), so pinning `nixpkgs` also moves the nixpkgs revision those inputs see. Always mention this when the user is pinning `nixpkgs`.
@@ -179,9 +180,10 @@ Do not run either of those automatically.
 
 ---
 
-## Shared script
+## Shared scripts
 
-The lock diff in Step 6 is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/bump-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script, then append the human-chosen pin target as a context line.
+- The lock diff in Step 6 is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/bump-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script, then append the human-chosen pin target as a context line.
+- The input list above is rendered by `/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh`, shared with `/bump-input`. Do not hand-roll the `nix flake metadata` parse — call the script.
 
 ## Key constraints
 
