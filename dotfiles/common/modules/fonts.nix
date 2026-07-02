@@ -24,10 +24,16 @@ in
   # the system fonts into the sandbox.
   #
   # OnlyOffice's font scanner (DocumentServer's Directory::GetFiles2) doesn't
-  # follow symlinks (upstream bug: ONLYOFFICE/DocumentServer#1859), so a
-  # symlinkJoin of the font packages is invisible to it — every file in a
-  # symlinkJoin output is itself a symlink. Use a real copy (`cp -L`,
-  # dereferencing) instead so the sandbox sees regular files.
+  # follow symlinks (upstream bug: ONLYOFFICE/DocumentServer#1859). A real
+  # copy (`cp -L`) at the font-package layer isn't enough on its own: even
+  # when this package's own output is real files, buildFHSEnv's internal
+  # rootfs-builder re-symlinks every file from every targetPkgs derivation
+  # when it merges them into the sandbox's /usr (confirmed by inspecting the
+  # built .../fhsenv-rootfs/usr/share/fonts/* — they were symlinks pointing
+  # at our real files). That extra hop is added by buildFHSEnv itself, after
+  # our derivation runs, so it also has to be undone after buildFHSEnv runs —
+  # hence overriding buildFHSEnv to append an extraBuildCommands step that
+  # replaces the symlinks it just created with real copies.
   nixpkgs.overlays = [
     (final: prev: {
       onlyoffice-desktopeditors = prev.onlyoffice-desktopeditors.override {
@@ -39,6 +45,19 @@ in
             fi
           done
         '';
+
+        buildFHSEnv = args: prev.buildFHSEnv (
+          args
+          // {
+            extraBuildCommands = (args.extraBuildCommands or "") + ''
+              find $out/usr/share/fonts -type l -print0 | while IFS= read -r -d "" f; do
+                real="$(readlink -f "$f")"
+                rm -f "$f"
+                cp -L --no-preserve=mode "$real" "$f"
+              done
+            '';
+          }
+        );
       };
     })
   ];
