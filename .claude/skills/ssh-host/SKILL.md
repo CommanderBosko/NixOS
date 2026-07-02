@@ -34,7 +34,7 @@ Otherwise, list the hosts (command above) and present the pick via the **AskUser
 
 Accept these aliases before lookup:
 - `natalie` → `natalie-laptop`
-- `vpn` or `oracle` → `vpn-server`
+- `vpn`, `oracle`, or `server` → `vpn-server`
 
 ## Step 2 — Show the command
 
