@@ -89,6 +89,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/improve-system/SKILL.md";
       force = true;
     };
+    ".claude/skills/research/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/research/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
