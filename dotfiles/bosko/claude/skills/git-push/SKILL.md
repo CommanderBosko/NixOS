@@ -16,14 +16,22 @@ Push the current branch to origin on GitHub.
 
 2. If there are uncommitted changes, warn the user and ask if they want to commit first (suggest `/git-commit`).
 
-3. Determine if the branch has an upstream:
+3. Show which commits are ahead of the upstream (from step 1's log output) before pushing.
+
+4. Confirm:
+   - **Skip confirmation** if the user's original request was an unambiguous push command with no
+     conditions attached (e.g. "push it", "just push", "push now") — proceed straight to step 5.
+   - **Ask for confirmation** in all other cases (e.g. "push", "push my changes"). A one-word
+     reply or `y` is sufficient to proceed.
+
+5. Determine if the branch has an upstream:
    - `git rev-parse --abbrev-ref --symbolic-full-name @{u}` 2>/dev/null
    - If no upstream exists, push with `-u` flag to set it: `git push -u origin <branch>`
    - If upstream exists, push normally: `git push`
 
-4. Run the push.
+6. Run the push.
 
-5. Report: how many commits were pushed, the branch name, and the remote URL.
+7. Report: how many commits were pushed, the branch name, and the remote URL.
 
 ## Rules
 

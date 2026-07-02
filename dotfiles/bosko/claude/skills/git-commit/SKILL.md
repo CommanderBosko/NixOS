@@ -16,8 +16,12 @@ Stage and commit all current changes with a well-crafted commit message.
    - Draft a concise commit message focused on the "why" not the "what"
    - Do NOT commit files that likely contain secrets (.env, .screeps.json, credentials, tokens)
    - Warn the user if any sensitive files are staged
-4. Stage specific changed files by name (avoid `git add -A` or `git add .` unless all changes are clearly safe).
-5. Commit using a HEREDOC to preserve formatting:
+4. Show the drafted message, then **proceed straight to staging and committing** — do not pause for
+   a "confirm or edit?" approval step. Draft and commit immediately without asking for sign-off
+   (standing user preference, not specific to any one project). The only exception is if the user
+   explicitly asked to review the message first.
+5. Stage specific changed files by name (avoid `git add -A` or `git add .` unless all changes are clearly safe).
+6. Commit using a HEREDOC to preserve formatting:
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -32,8 +36,8 @@ Use whatever model name the harness's own Bash-tool commit-message instructions 
 "Claude Sonnet 5") — don't hardcode a specific model name here, it will drift the next time the
 underlying model changes.
 
-6. Run `git status` to confirm the commit succeeded.
-7. Report: what was committed, the commit hash, and the message used.
+7. Run `git status` to confirm the commit succeeded.
+8. Report: what was committed, the commit hash, and the message used.
 
 ## Rules
 
