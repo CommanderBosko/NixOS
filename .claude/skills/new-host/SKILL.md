@@ -126,11 +126,10 @@ After showing the flake entry, tell the user:
 
 Once the machine has booted and `/etc/ssh/ssh_host_ed25519_key` exists:
 
-1. **Derive the host's age recipient key** (public; safe):
+1. **Derive the host's age recipient key** (public; safe) using the shared helper:
 
    ```bash
-   ssh bosko@<hostname> 'cat /etc/ssh/ssh_host_ed25519_key.pub' \
-     | nix shell nixpkgs#ssh-to-age --command ssh-to-age
+   /home/bosko/NixOS/.claude/skills/new-host/scripts/derive-age-key.sh <hostname>
    ```
 
 2. **Add it to `.sops.yaml`** — a new anchor under `keys:` and add the alias to the `secrets/common.yaml` creation rule's `age:` list:
@@ -184,3 +183,8 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `sops.nix` (in `commonModules`) supplies the shared login-password secrets to every host. A new host must be registered as a sops recipient (Step 8) or it cannot decrypt them. Do not add `sops.*` config to host files.
 - `audio.nix` already handles PipeWire for desktop hosts — do not add PipeWire config.
 - Do NOT add `virtualisation.nix`, `gaming.nix`, or `vpn.nix` to the new host entry unless the user explicitly asks — those are optional host-specific modules.
+
+## Script
+
+`scripts/derive-age-key.sh <hostname>` — SSHes to the host and converts its SSH ed25519 host key to
+an age recipient key via `ssh-to-age`. Used in Step 8. Prints only the public key.
