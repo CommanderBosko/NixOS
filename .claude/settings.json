@@ -3,7 +3,12 @@
     "allow": [
       "Bash(/home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
       "Bash(bash .claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
-      "Bash(./.claude/skills/nixos-dry-run/scripts/dry-run.sh*)"
+      "Bash(./.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
+      "Bash(git -C * status)",
+      "Bash(git -C * log *)",
+      "Bash(nix eval *)",
+      "Bash(lsblk*)",
+      "mcp__nixos__nix"
     ]
   }
 }

@@ -71,3 +71,7 @@ only after the user confirms.
 - `switch --rollback` activates immediately; it does NOT require a reboot.
 - If the user wants to roll back further than one generation, they can run `/rollback` again after this one completes.
 - If rollback fails (e.g. no previous generation exists), report the error output and stop — do not attempt workarounds.
+
+## Gotchas
+
+- **`sudo` has no NOPASSWD rule on this host — it always needs an interactive password.** Running `sudo nixos-rebuild switch --rollback` directly via the Bash tool will fail with "a terminal is required to read the password" (observed across 9+ past sessions). Instead, tell the user the exact command to run themselves (suggest the `!` prefix), or ask them to run it — don't attempt it and then report failure.
