@@ -24,6 +24,9 @@ the repo root:
 scripts/enumerate-skills.sh
 ```
 
+Confirm it exits `0` and prints one line per skill before trusting its output — an empty or
+truncated listing means the script broke partway through, not that there are no more skills.
+
 Note which skills already have `scripts/`, `assets/`, or a `config.json` — those lenses are already satisfied there.
 
 ## Step 2 — Fan out the audit over DISJOINT skill sets
