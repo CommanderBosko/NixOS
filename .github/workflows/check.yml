@@ -1,0 +1,29 @@
+name: flake check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push supersedes any in-flight run for the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: evaluate all hosts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: DeterminateSystems/nix-installer-action@v22
+
+      # Eval-only: computes every host's system derivation (gaming, laptop,
+      # natalie-laptop, vpn-server) without building anything. Cross-arch is
+      # fine — evaluating the aarch64 vpn-server needs no aarch64 builder.
+      # sops secrets stay encrypted; eval never decrypts them.
+      - name: nix flake check
+        run: nix flake check --no-build
