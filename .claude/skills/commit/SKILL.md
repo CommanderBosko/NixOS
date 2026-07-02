@@ -50,10 +50,14 @@ Use a HEREDOC to pass the message so formatting is preserved:
 git -C /home/bosko/NixOS commit -m "$(cat <<'EOF'
 type(scope): short description
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: <current model> <noreply@anthropic.com>
 EOF
 )"
 ```
+
+Use whatever model name the harness's own Bash-tool commit-message instructions specify for
+`Co-Authored-By` (e.g. "Claude Sonnet 5") — don't hardcode a specific model name here, it will
+drift the next time the underlying model changes.
 
 - Never use `--no-verify`.
 - Never use `--amend` unless the user explicitly asked to amend.

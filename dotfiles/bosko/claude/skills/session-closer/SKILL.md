@@ -191,8 +191,9 @@ No confirmation needed — draft and execute directly.
 1. Stage the docs: `git add project-state.md README.md session-summary.md`
    (plus `session-summary-archive.md` if you rotated, plus any files touched in Step 1).
 2. Commit: `git commit -m "chore(session): end-of-day close [DATE] — [brief summary]"`
-   End the commit message body with:
-   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
+   End the commit message body with a `Co-Authored-By:` trailer using whatever model name the
+   harness's own Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
+   hardcode a specific model name here, it will drift the next time the underlying model changes.
 3. Push: `git push origin main` (never `--force`, never `--no-verify`).
 4. Confirm the push succeeded and report the final commit hash.
 

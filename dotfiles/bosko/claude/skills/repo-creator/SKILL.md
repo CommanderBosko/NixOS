@@ -80,8 +80,9 @@ Initial commit: <one-line project summary>
 - Add README.md with setup and usage documentation
 - Add .gitignore for <tech stack>
 ```
-End the message body with:
-`Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
+End the message body with a `Co-Authored-By:` trailer using whatever model name the harness's own
+Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't hardcode a specific
+model name here, it will drift the next time the underlying model changes.
 
 ### 9. Commit & push
 ```bash

@@ -23,10 +23,14 @@ Stage and commit all current changes with a well-crafted commit message.
 git commit -m "$(cat <<'EOF'
 <message here>
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: <current model> <noreply@anthropic.com>
 EOF
 )"
 ```
+
+Use whatever model name the harness's own Bash-tool commit-message instructions specify (e.g.
+"Claude Sonnet 5") — don't hardcode a specific model name here, it will drift the next time the
+underlying model changes.
 
 6. Run `git status` to confirm the commit succeeded.
 7. Report: what was committed, the commit hash, and the message used.
