@@ -4,6 +4,55 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-02 (session 27) — `research` skill, plus a real leaked-secret finding on old branches
+
+**Focus**: Build a global skill that web-searches a topic, fans sub-agents out over the top results, and reports a synthesized consensus; the pre-push `secret-scan` during close surfaced an unrelated real finding that got fixed in the same session.
+
+### What changed (and why)
+- **New global skill `research` (`d8d5aef`)** — `WebSearch` a topic, spawn `n` (default 10, overridable via a second argument) fresh `general-purpose` sub-agents in parallel — one per result URL — each `WebFetch`-ing its page and reporting findings/stance/caveats (or "inaccessible: <reason>" if unreadable). Coordinator synthesizes a chat-only consensus report: majority view, notable dissent, per-source takeaways, coverage count.
+- Built via `/new-skill`; classified as **Data Enrichment** (pulls external data in, single job despite the internal sub-agent fan-out).
+- **Deleted 5 leaking public branches (`3.5`, `4.0`, `4.1`, `4.1.1`, `4.1.2`)** — `secret-scan`'s git-history pass (which scans `--all`, not just `main`) found plaintext `bosko`/`natty` `$6$` password hashes still reachable via these old version-tag branches, pushed to the public `origin` remote. The 2026-06-15 sops migration's `filter-repo` purge only ever rewrote `main`; these branches were never touched and were exposing the original commit (`296a2bd`, 2026-05-14) the whole time. Deleted from `origin` and pruned locally; verified clean with `git fetch --prune` + a repo-wide `git log --all -G'\$6\$'` sweep.
+
+### Decisions
+- **Fresh `general-purpose` sub-agents, not forks** (research skill) — each only needs the topic + one URL, not the coordinator's conversation history.
+- **Configurable count, default 10** (research skill) — an optional `<n>` argument avoids paying for a full 10-way fan-out on quick lookups.
+- **Chat-only output, not an Artifact** (research skill) — user's explicit pick over the recommended Artifact option; revisit if reports get long enough to want a scannable page.
+- **Deleted the leaking branches outright rather than scrubbing them** — offered `filter-repo --replace-text` (keep + clean) vs. delete; user chose delete since these were unused old version tags with no value worth a second history rewrite.
+- **Declined password rotation** — offered given the ~7-week public exposure window; user judged the practical risk low and declined. Accepted-risk decision, not an oversight.
+
+### Issues / surprises
+- The `secret-scan` skill's history pass uses `--all`, which is exactly what caught this — a `main`-only check would have missed it. The `project_sops_secrets` memory had wrongly recorded the 2026-06-15 purge as complete; corrected.
+- Research skill: none. Dry-run clean (+5.62 MiB, only the unrelated pending `corefonts` addition from the prior session's font work).
+
+### Next session
+- Repo-managed global skill — the `research` skill reaches `~/.claude/skills/` only after `nh os boot` + a new session; rides the existing pending-rebuild backlog.
+- No carryover on the branch-leak fix — resolved and verified clean this session.
+
+**Commits**: `d8d5aef` (1 commit, +1 session-close); branch deletion was a remote-only operation, not a repo commit
+
+---
+
+## Session: 2026-07-01 (session 26) — niri Xwayland fix; OnlyOffice font fix partially reverted
+
+**Focus**: Fix X11-only apps (OnlyOffice) failing to open on niri, and OnlyOffice not finding system fonts. *(Reconstructed from commit messages only — this session ran without a close at the time, so no transcript rationale beyond what's written in the commits themselves.)*
+
+### What changed (and why)
+- **niri X11 support (`47e332f`, `40a93bd`)** — First added a manual `xwayland-satellite` service + global `DISPLAY=":0"` export (niri has no built-in X server; `onlyoffice-desktopeditors` couldn't connect to any X display). That broke the SDDM greeter — the global `DISPLAY` export leaked into SDDM's Wayland greeter, so Weston loaded its X11 backend instead of DRM and crashed to a black screen at boot. Corrected by dropping the manual service/export entirely: niri ≥ 25.08 (laptop runs 26.04) auto-spawns `xwayland-satellite` and sets `DISPLAY` itself — only the package needs to stay in `systemPackages`. Looks resolved.
+- **OnlyOffice font detection (`10a1faf`, `371e08b`, reverted by `873e824`)** — Enabled `fonts.fontDir.enable` + added `corefonts` (shared `fonts.nix`, all hosts) because OnlyOffice builds its own font cache from fixed FHS directories instead of using fontconfig. A follow-up symlinked `/usr/share/fonts` → the fontDir tree, reasoning OnlyOffice only scans FHS paths (none of which exist on NixOS) — but that commit was **reverted** with no stated reason. Current state: `fontDir` + `corefonts` remain active, the FHS symlink bridge does not — outcome on whether OnlyOffice actually sees fonts is **unverified**.
+
+### Decisions
+- **niri relies on its own built-in Xwayland spawn**, not a manually managed service/export — session variables meant for one session type (a compositor's user session) shouldn't be exported system-wide, since they leak into the display manager's own greeter session too.
+
+### Issues / surprises
+- The font-symlink revert (`873e824`) carries no rationale in its commit message — unknown whether it broke something, was found unnecessary, or was reverted for another reason. Flagged in Known Issues for next-session verification.
+
+### Next session
+- Verify OnlyOffice font rendering on gaming/laptop/natalie-laptop; if still broken, re-investigate a fix.
+
+**Commits**: `47e332f..873e824` (5 commits)
+
+---
+
 ## Session: 2026-06-30 (session 25) — VirtualBox on natalie-laptop for a Windows VM
 
 **Focus**: Add VirtualBox (with everything needed to run a Windows guest) to natalie-laptop.
@@ -67,50 +116,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Fold the brobot removal + the `session-closer` edit into the next gaming `nh os boot` + reboot (rides the existing pending-rebuild backlog).
 
 **Commits**: `3cdd88b..2ca32be` (2 commits)
-
----
-
-## Session: 2026-06-28 (session 22) — `/improve-system` first full run: bug-fix + consolidation + global refactors
-
-**Focus**: Run the new `/improve-system` orchestrator end-to-end and act on what it surfaces across the skill library.
-
-### What changed (and why)
-- **`fix` (`c75e2eb`)** — `skill-audit` (5 sub-agents over 49 skills) found 4 verified bugs: `vpn-status` used the LAN subnet `10.0.0.x` not the WG `10.10.0.x` (broken — now reads `hosts.json` `.vpn.peers`); `add-package` routed to a phantom `hosts/server/`; `new-peer` pointed at `/etc/wireguard/private.key` instead of the sops-nix key path; `flake-check` miscounted hosts. Plus drift fixes (`fleet-status` stale Notes, `journal`/`new-module` phantom `server`, `commit` confirm-gate removed per `feedback_commit_confirmation`), an `improve-system` gotcha, and a `.claude/settings.json` allow entry.
-- **`refactor` (`f418d4e`)** — consolidated the desktop-host roster + config paths (dup'd in 4 skills) into `hosts.json` (`desktop`/`envFile`); fixed `save-memory`'s template to emit `node_type`/`originSessionId`.
-- **`refactor` (`ece81ef`)** — extracted templates→`assets/` (`create-loop`, `claude-rules`, `new-skill`), deterministic work→`scripts/` (`search-pkg`+nixos-MCP-primary, `session-closer`+delegate-to-`secret-scan`, `skill-audit`); AskUserQuestion gates (`new-module`, `switch-de`); `fleet-rollout`→delegate to `fleet-status`; `## Arguments` on 5 skills.
-
-### Decisions
-- **Converted 6 global skills to recursive-directory `home.file` symlinks** (not per-file): the new `assets/`/`scripts/` are covered in one entry and future sibling files need no wiring — killing the per-file friction `skill-audit` flagged.
-- **Skipped the team-`*` `knowledge/config.json`** consolidation: bootstrap paradox (must hardcode the path to read its config) + the repo root is already hardcoded library-wide + zero actual drift → net-negative.
-
-### Issues / surprises
-- `vpn-status` had drifted a *second* time (subnet, after session 18's user bug). Both classes of fix replace an inline roster with a `hosts.json` lookup so it can't drift again.
-- Dry-run passed; HM `check-link-targets.sh` validated the new recursive symlink targets.
-
-### Next session
-- The `dotfiles/`-based global-skill changes go live in `~/.claude` only after `nh os boot` + a new session — rides the existing session-18 pending rebuild. Project-local changes are live now.
-
-**Commits**: `c75e2eb..ece81ef` (3 commits, +1 session-close)
-
----
-
-## Session: 2026-06-28 (session 21) — transcript-history awareness for skill-upgrade + skill-suggestion
-
-**Focus**: Check whether the skills `/improve-system` chains can read the session transcripts at `~/.claude/projects/`, and add it where it helps.
-
-### What changed (and why)
-- **`skill-upgrade` + `skill-suggestion` now mine past transcripts** (`76142e0`): both were scoped only to the live conversation. Added explicit guidance to also `grep` the project's transcript store at `~/.claude/projects/<cwd-slug>/*.jsonl` — `skill-upgrade` treats a misfire recurring across sessions as the top-value gotcha; `skill-suggestion` treats a workflow repeated across many sessions as the strongest reuse signal. Both carry a grep-not-read guard (transcripts are multi-MB).
-
-### Decisions
-- **Only the two session-reactive skills got the addition.** `claude-rules` (edits `CLAUDE.md`) and `skill-audit` (audits skill files) don't benefit; `improve-system` is a pure orchestrator so the work belongs in its sub-skills; `fewer-permission-prompts` already scans transcripts but is a non-editable built-in.
-
-### Issues / surprises
-- None. Dry-run clean (1.14 KiB `home-manager-files` diff, no kernel/service changes).
-
-### Next session
-- The two edits are repo-managed global skills → live in `~/.claude/skills/` only after `nh os boot` + a new session. Rides along with the existing session-18 pending rebuild.
-
-**Commits**: `76142e0` (1 commit, +1 session-close)
 
 ---
 
