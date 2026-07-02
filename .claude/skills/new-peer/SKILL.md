@@ -35,14 +35,24 @@ Do not proceed until you have the public key in hand.
 
 ## Step 2 — Determine the next available IP
 
-Read `hosts/vpn-server/configuration.nix` to find the highest `allowedIPs` entry currently assigned to a peer. The VPN subnet is `10.10.0.0/24`:
+Known hosts' VPN addresses are recorded live in `.claude/hosts.json` (`.hosts.<name>.vpnIp`) — never
+hardcode a copy here. List them:
 
-- vpn-server: `10.10.0.1` (reserved)
-- gaming:      `10.10.0.2`
-- laptop:      `10.10.0.3`
-- natalie-laptop: `10.10.0.4`
+```bash
+jq -r '.hosts | to_entries[] | select(.value.vpnIp) | "\(.value.vpnIp)\t\(.key)"' /home/bosko/NixOS/.claude/hosts.json | sort -t. -k4 -n
+```
 
-Assign the next unused address (currently `10.10.0.5`). If the file has changed since this was written, increment beyond whatever the current highest peer IP is.
+That covers every host that already has a flake entry, but **not** ad-hoc peers added purely via
+`hosts/vpn-server/configuration.nix` (phones, non-NixOS devices — these aren't flake hosts and have
+no `hosts.json` entry). So also grep the actual server config for the true highest assigned
+address, and take whichever is higher:
+
+```bash
+grep -oE '10\.10\.0\.[0-9]+' /home/bosko/NixOS/hosts/vpn-server/configuration.nix | sort -t. -k4 -n | tail -1
+```
+
+Assign the next unused address after the higher of the two. The VPN subnet is `10.10.0.0/24`;
+`10.10.0.1` is reserved for vpn-server itself.
 
 ## Step 3 — Show the server-side peer block
 
