@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-02 (session 28) — OnlyOffice fonts actually fixed; full `/improve-system` skill-audit pass
+
+**Focus**: Finish the OnlyOffice font investigation left unverified in session 26, then run `/improve-system` end-to-end and fix every finding from its skill-audit, one at a time with a commit after each.
+
+### What changed (and why)
+- **OnlyOffice fonts fixed for real (`77c5014`)** — the session-26 fix (real files instead of symlinkJoin) wasn't enough on its own: built the package directly and inspected the actual sandbox rootfs, found `buildFHSEnv`'s own internal rootfs-merge step re-symlinks every file from `targetPkgs` regardless of whether the source was already a real file — so every font was still one symlink hop away from what OnlyOffice's scanner will read (it refuses all symlinks, `ONLYOFFICE/DocumentServer#1859`). Fixed by also overriding the `buildFHSEnv` argument to append a post-merge dereference step. Verified by building the package (286/286 real files, was 286/286 symlinks) and then live: user ran `nh os switch` on gaming and confirmed fonts now appear in the dropdown.
+- **`/improve-system` full run, all 13 skill-audit findings fixed (`a5a0c82`..`07ad1d2`)** — 4 disjoint sub-agents audited all 49 skills. Real bugs fixed: skill-audit's own `enumerate-skills.sh` was silently broken (pipefail + grep -v aborted on 29/49 skills); a stale `Claude Opus 4.8` co-author line was hardcoded in 4 skills; `nixos-gc` had bare `sudo` calls with no user-handoff (added an unprivileged preview script); `git-commit`/`git-push` had drifted from `commit`/`push` (git-push had *no* confirmation gate at all); plus 9 smaller fixes (ssh-host alias, switch-de's stale table, new-peer's hardcoded IP roster → `hosts.json`, a shared script for bump-input/pin-input's duplicated parse, new-host's sops-key-derive script, new-skill's AskUserQuestion gap, two missing `## Arguments` sections, and the team-member family's path cross-reference).
+
+### Decisions
+- Fonts fix verified two ways before calling it done: build-and-inspect the rootfs (proves the mechanism), then live user confirmation (proves the outcome) — matches this repo's standing verification-plan habit.
+- `git-commit`/`git-push` fixed for real gaps but **not** made identical to `commit`/`push` — copying the `-C /home/bosko/NixOS` pinning would break the global pair in the user's other repos.
+- Team-member knowledge-path duplication resolved via cross-reference comments, not a shared `config.json` — same reasoning as session 22's skipped consolidation (separately-symlinked global skills, low actual drift risk).
+- `nh os switch` (not `boot`) confirmed as the right call for a userspace-only package fix — no kernel/initrd/bootloader involved, so no reboot needed.
+
+### Issues / surprises
+- The `buildFHSEnv` symlink-re-creation behavior was invisible from reading `fonts.nix` or the package's `package.nix` alone — only became clear by building the package and directly inspecting the built `.../fhsenv-rootfs/usr/share/fonts/` contents.
+- `enumerate-skills.sh` had apparently never worked correctly (silent zero-output failure) until this session's live run exposed it.
+- Two earlier-session `/improve-system` approvals (the `rollback` sudo gotcha, the permission allowlist) had been applied to disk but never committed — caught and committed (`2f59839`) before starting the numbered fix list, so nothing was lost.
+
+### Next session
+- Rebuild gaming to pick up the global-skill fixes (`git-commit`, `git-push`, `session-closer`, `repo-creator`, `new-skill`, `skill-audit`, team-member family) plus the pending `research` skill and earlier sessions' skill edits.
+- Rebuild/switch laptop and natalie-laptop to pick up the OnlyOffice font fix (both hosts have `onlyoffice-desktopeditors` installed) — no reboot required, `nh os switch` is enough.
+
+**Commits**: `77c5014`..`07ad1d2` (15 commits)
+
+---
+
 ## Session: 2026-07-02 (session 27) — `research` skill, plus a real leaked-secret finding on old branches
 
 **Focus**: Build a global skill that web-searches a topic, fans sub-agents out over the top results, and reports a synthesized consensus; the pre-push `secret-scan` during close surfaced an unrelated real finding that got fixed in the same session.
@@ -94,28 +121,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No carryover from this session. Pending-rebuild backlog from session 23 (brobot removal + session-closer transcript edit) still rides the next gaming `nh os boot` + reboot.
 
 **Commits**: docs-only close (0 code commits)
-
----
-
-## Session: 2026-06-29 (session 23) — session-closer reads transcripts, brobot dropped, permissions consistency check
-
-**Focus**: Small skills/config maintenance — make `session-closer` more accurate, retire a dead project's module, and verify the permission layers are coherent.
-
-### What changed (and why)
-- **`session-closer` reads the on-disk transcript (`3cdd88b`)** — STEP 2 now reads the session's JSONL at `~/.claude/projects/<cwd-slug>/*.jsonl` as ground truth, because the live context window summarizes/truncates early turns out of view. Verified the dir-derivation + two `jq` extractors against the live transcript; kept a guard against dumping multi-MB raw JSONL.
-- **`brobot` module dropped (`2ca32be`)** — removed `hosts/gaming/brobot.nix` + its `flake.nix` import (Discord bot discontinued). Dry-run clean, −187 MiB on gaming (`yt-dlp` + closure gone; `ffmpeg`/`nodejs` stay).
-
-### Decisions
-- **Don't sync the managed permission layer with the `/improve-system` allow-list.** The `deny`/`ask`/fork-bomb-hook live in NixOS-managed `/etc/claude-code/managed-settings.json` (highest precedence, not Claude-editable); `/improve-system` only appends `permissions.allow` to the project `.claude/settings.json`. Merging would duplicate guardrails into a lower-precedence editable file — and `trimClaudeSettings` already strips drift on every rebuild. Separation is by design; no drift found.
-- Aside surfaced (not acted on): global `~/.claude/settings.json` has `Bash(*)`, so project allow-list entries are largely redundant and `fewer-permission-prompts` is near-no-op here.
-
-### Issues / surprises
-- This close ran on the **old** `session-closer` — the transcript-reading edit only goes live after a rebuild + new session.
-
-### Next session
-- Fold the brobot removal + the `session-closer` edit into the next gaming `nh os boot` + reboot (rides the existing pending-rebuild backlog).
-
-**Commits**: `3cdd88b..2ca32be` (2 commits)
 
 ---
 
