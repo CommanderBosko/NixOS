@@ -13,6 +13,13 @@ Persist a single fact as one memory file in this project's memory store, with va
 Memory dir: `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/`
 Index file: `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/MEMORY.md`
 
+## Arguments
+
+- **fact** (required) — the single thing to remember, taken from the user's request (e.g. "save a
+  memory: never re-flag the VPN setup as pending"). Free-text; pin it down in Step 1 if it's vague.
+- **type** (optional) — `user` / `feedback` / `project` / `reference`. If the user doesn't state
+  it, infer it from the fact's shape in Step 1.
+
 ## Step 1 — Establish the fact and its type
 
 Pin down the single fact to store and classify its `type`:
