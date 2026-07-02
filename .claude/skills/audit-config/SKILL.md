@@ -13,6 +13,12 @@ and `/code-review` tools.
 Use the built-in review tooling for diffs; use **this** skill when the user wants the standing
 configuration as a whole examined.
 
+## Arguments
+
+- **scope** (optional) — narrows the audit to one host or area (e.g. "audit the server", "check
+  the security module") instead of the whole flake. Parse it from the user's request if given; if
+  omitted, default to the entire flake (see Step 0).
+
 ## When to prefer something else
 
 - **Reviewing a branch or PR's changes** → use `/security-review` or `/code-review high` instead.
