@@ -11,16 +11,20 @@ Guide the user through creating a well-formed Claude Code skill, then write the 
 
 ### 1. Gather requirements
 
-Ask the user the following — you can ask them all at once in a numbered list:
+Ask the user the following free-form questions — you can ask them all at once in a numbered list:
 
 1. **What should this skill do?** (One sentence goal — what problem does it solve?)
 2. **What would you say to invoke it?** (Give 3–5 example phrases — e.g. "run tests", "check for errors", "deploy to staging")
-3. **Scope — global or project-local?**
-   - Global — available in every project. In this NixOS repo, global skills are **repo-managed**: the source lives in `dotfiles/bosko/claude/skills/` and is symlinked into `~/.claude/skills/` via `bosko-claude.nix` (Home Manager). See step 6 for the wiring this requires.
-   - Project-local (`.claude/skills/` in the current working directory) — only this project
-4. **What are the steps?** (Describe the workflow in plain English — tools to run, files to read, decisions to make, output to show)
+3. **What are the steps?** (Describe the workflow in plain English — tools to run, files to read, decisions to make, output to show)
 
 If the user already gave some of this information in their request, don't re-ask for it — pre-fill it and confirm.
+
+Separately, resolve **scope** — this is a genuine pick-one, not a free-form question, so present it via
+the **AskUserQuestion tool** rather than folding it into the numbered list above. Skip the question
+if the user already stated the scope in their request.
+
+- **Global** — available in every project. In this NixOS repo, global skills are **repo-managed**: the source lives in `dotfiles/bosko/claude/skills/` and is symlinked into `~/.claude/skills/` via `bosko-claude.nix` (Home Manager). See step 6 for the wiring this requires.
+- **Project-local** (`.claude/skills/` in the current working directory) — only this project.
 
 ### 2. Classify into exactly one bucket (single-responsibility gate)
 
