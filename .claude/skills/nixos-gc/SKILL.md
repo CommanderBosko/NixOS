@@ -26,25 +26,34 @@ Present the destructive confirmation as a hard gate via the **AskUserQuestion to
 
 Wait for the response. If the user picks anything other than **Proceed**, abort — do not run the script.
 
-### Step 3 — Run garbage collection
+### Step 3 — Preview what would be deleted (unprivileged, safe to run automatically)
 
-If the user picked **Proceed**, run `scripts/gc.sh`. This keeps the 3 most recent system generations, deletes older ones, then runs `sudo nix-store --gc` to free the actual store paths.
+Run `scripts/gc-preview.sh` and show the user its output. It reads generation info directly from
+`/nix/var/nix/profiles/system-*-link` symlinks — no sudo required — so it's safe to run without
+hand-off, and gives an accurate preview of exactly which generations would be removed before
+anything privileged happens.
 
-### Step 4 — Report results
+### Step 4 — Hand off the actual deletion to the user
 
-After the script completes, parse its output and report:
-- How many store paths were deleted (look for "X paths freed" or similar lines in nix output)
-- How much disk space was freed (look for the MiB/GiB freed line)
-- Confirm that the operation completed successfully
+`scripts/gc.sh` (the destructive script) calls `sudo nix-env --list-generations`, `sudo nix-env
+--delete-generations`, and `sudo nix-store --gc`. There is no NOPASSWD rule for `sudo` on any host,
+so running `scripts/gc.sh` directly via the Bash tool will fail with "a password is required" —
+don't attempt it and then report the failure. Instead, tell the user the exact command
+(`scripts/gc.sh`, or its full path) and ask them to run it themselves (suggest the `!` prefix).
 
-If the script exits with a non-zero code, show the full error output.
+### Step 5 — Report results
+
+Once the user confirms it ran, re-run `scripts/gc-preview.sh` to confirm the old generations are
+actually gone (its output will show only the 3 kept generations remaining). Ask the user for the
+disk-space-freed line from their own terminal output, since Claude never sees it directly.
 
 ## Risk note
 
-This script keeps the 3 most recent system generations and deletes the rest. After running this, rolling back via the bootloader will not be possible for any generation older than the 3 most recent. The currently-booted generation is always among the ones preserved.
+`gc.sh` keeps the 3 most recent system generations and deletes the rest. After running this, rolling back via the bootloader will not be possible for any generation older than the 3 most recent. The currently-booted generation is always among the ones preserved.
 
-## Script
+## Scripts
 
 ```
-scripts/gc.sh
+scripts/gc-preview.sh   # unprivileged — safe to run automatically, preview only
+scripts/gc.sh           # privileged (sudo) — hand off to the user, never run directly
 ```
