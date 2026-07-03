@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-03 (session 30) — natalie-laptop IP drift fixed; project commit/push skills retired
+
+**Focus**: Update all references after natalie-laptop's LAN IP changed (10.0.0.103 → 10.0.0.101), explain why it happened, and de-duplicate the commit/push skill pairs.
+
+### What changed (and why)
+- **IP references updated (`6ceb653`)** — the router's DHCP reassigned natalie-laptop's address; the host has no static IP and no reservation (its Wi-Fi lease is flagged `dynamic`), so nothing on our side changed — leases just aren't guaranteed sticky across lease expiry, router reboots, or another device claiming the slot while the laptop is offline. Fixed `.claude/hosts.json` and the HM SSH alias in `dotfiles/common/configs/ssh.nix`; verified the new address answers as `natalie-laptop` over SSH before editing anything.
+- **Project `commit`/`push` skills deleted (`fb94dfc`)** — near-duplicates of the global `git-commit`/`git-push` with overlapping triggers (selection was a coin flip). Their one unique asset, the commit-format reference, moved into CLAUDE.md as a "Commit Style" section; six skills referencing `/commit`/`/push` retargeted to the global pair.
+
+### Decisions
+- **Keep DHCP on natalie-laptop; fix recurrence at the router if desired** — a static IP in `networking.nix` was rejected for a roaming laptop (breaks on other networks). A router-side DHCP reservation is the right prevention; noted as an optional router-UI task.
+- **Deleted the project skill pair, not the global one** — the global pair must stay cwd-based for the user's other repos (same reasoning as session 28's refusal to copy the `-C` pinning); repo conventions belong in CLAUDE.md, not a duplicate skill.
+
+### Issues / surprises
+- None — both commits dry-ran clean and CI deep-eval certified each (2m2s / 2m24s).
+
+### Next session
+- The `ssh natalie-laptop` alias stays stale (.103) on every host until that host rebuilds; use `bosko@10.0.0.101` directly meanwhile.
+- Fleet-wide activation of the 2026-07-02 lock bump is still the big pending item (zen 7.1.2 ⇒ reboot per desktop).
+
+**Commits**: `6ceb653`..`fb94dfc` (2 commits; `289b8f1`, the dms/financeguru bump, landed between closes but outside this conversation)
+
+---
+
 ## Session: 2026-07-02 (session 29) — nixpkgs unpinned; CI added, then hardened by the pnpm incident it missed
 
 **Focus**: Open-ended "what would you improve?" assessment, then execute the accepted items: lift the zen-kernel nixpkgs pin, add GitHub Actions eval CI, scope (and ultimately scrap) a backup system, and run `/improve-system`.
@@ -105,28 +128,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Verify OnlyOffice font rendering on gaming/laptop/natalie-laptop; if still broken, re-investigate a fix.
 
 **Commits**: `47e332f..873e824` (5 commits)
-
----
-
-## Session: 2026-06-30 (session 25) — VirtualBox on natalie-laptop for a Windows VM
-
-**Focus**: Add VirtualBox (with everything needed to run a Windows guest) to natalie-laptop.
-
-### What changed (and why)
-- **New module `hosts/natalie-laptop/virtualisation.nix` (`3023af2`)** — enables `virtualisation.virtualbox.host` + `enableExtensionPack = true` (USB 2.0/3.0, RDP, disk encryption), adds `natty` + `bosko` to `vboxusers`, imported in the flake entry. Same pattern as `hosts/gaming/virtualisation.nix`. Guest Additions ISO ships with the host package (no extra package).
-- **CLAUDE.md doc fix** (same commit) — architecture note said natalie-laptop runs Cosmic; it's been Plasma 6 since session 3. Corrected.
-
-### Decisions
-- **Both accounts get `vboxusers`** (user choice) — natty as the daily user, bosko as admin.
-- **Include the extension pack** (user choice) despite the from-source build cost, for USB passthrough into the Windows guest.
-
-### Issues / surprises
-- Local host is `gaming`, so the `nixos-dry-run` skill's `nh os boot --dry` would evaluate the wrong host. Verified natalie-laptop specifically with `nix build .#nixosConfigurations.natalie-laptop.config.system.build.toplevel --dry-run` — clean eval, full VBox stack (incl. `virtualbox-modules-7.2.8-7.0.12` for the zen kernel) queued.
-
-### Next session
-- Rebuild natalie-laptop (`nh os boot` + reboot — **long from-source VirtualBox build** due to the ext pack), then have natty/bosko log out/in once for `vboxusers` before creating the VM. Rides alongside the standing natalie-laptop pending-rebuild backlog (Plasma DE, managed Claude policy).
-
-**Commits**: `3023af2` (1 commit)
 
 ---
 

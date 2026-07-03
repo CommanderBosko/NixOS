@@ -1,3 +1,25 @@
+## Session: 2026-06-30 (session 25) — VirtualBox on natalie-laptop for a Windows VM
+
+**Focus**: Add VirtualBox (with everything needed to run a Windows guest) to natalie-laptop.
+
+### What changed (and why)
+- **New module `hosts/natalie-laptop/virtualisation.nix` (`3023af2`)** — enables `virtualisation.virtualbox.host` + `enableExtensionPack = true` (USB 2.0/3.0, RDP, disk encryption), adds `natty` + `bosko` to `vboxusers`, imported in the flake entry. Same pattern as `hosts/gaming/virtualisation.nix`. Guest Additions ISO ships with the host package (no extra package).
+- **CLAUDE.md doc fix** (same commit) — architecture note said natalie-laptop runs Cosmic; it's been Plasma 6 since session 3. Corrected.
+
+### Decisions
+- **Both accounts get `vboxusers`** (user choice) — natty as the daily user, bosko as admin.
+- **Include the extension pack** (user choice) despite the from-source build cost, for USB passthrough into the Windows guest.
+
+### Issues / surprises
+- Local host is `gaming`, so the `nixos-dry-run` skill's `nh os boot --dry` would evaluate the wrong host. Verified natalie-laptop specifically with `nix build .#nixosConfigurations.natalie-laptop.config.system.build.toplevel --dry-run` — clean eval, full VBox stack (incl. `virtualbox-modules-7.2.8-7.0.12` for the zen kernel) queued.
+
+### Next session
+- Rebuild natalie-laptop (`nh os boot` + reboot — **long from-source VirtualBox build** due to the ext pack), then have natty/bosko log out/in once for `vboxusers` before creating the VM. Rides alongside the standing natalie-laptop pending-rebuild backlog (Plasma DE, managed Claude policy).
+
+**Commits**: `3023af2` (1 commit)
+
+---
+
 ## Session: 2026-06-29 (session 24) — disko-on-other-hosts review (no code changes)
 
 **Focus**: Answer whether disko is worth adopting on the remaining hosts; correct stale agent memory.
