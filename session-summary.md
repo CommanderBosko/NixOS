@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-02 (session 29) — nixpkgs unpinned; CI added, then hardened by the pnpm incident it missed
+
+**Focus**: Open-ended "what would you improve?" assessment, then execute the accepted items: lift the zen-kernel nixpkgs pin, add GitHub Actions eval CI, scope (and ultimately scrap) a backup system, and run `/improve-system`.
+
+### What changed (and why)
+- **nixpkgs pin lifted (`48c11d3`)** — `/flake-update-verify` moved all 5 inputs; zen 7.1.2 ships `bzImage` again (verified by building the kernel from cache), so the session-19 hold is gone. Committed + pushed, **not activated** — every host's next rebuild pulls the new kernel + ~2 weeks of unstable.
+- **CI added (`2964759`), then hardened (`3015529`)** — `.github/workflows/check.yml` evals all four hosts on every push. The hardening exists because the first version **passed a broken config**: the new nixpkgs marks vesktop's build tool `pnpm-10.29.2` insecure, killing eval on all three desktop hosts, while `nix flake check` (shallow for nixosConfigurations) stayed green both locally and in CI. Caught only by `/improve-system`'s dry-run certification step. CI now deep-evals each host's `toplevel.drvPath`.
+- **pnpm waiver (`aa3d690`)** — temporary `permittedInsecurePackages` for `pnpm-10.29.2` in `nix.nix` (build-time CVEs only); nixpkgs master already fixed vesktop (`4b3d28a4`) — remove the waiver once nixos-unstable includes it.
+- **6 skill gotchas (`c9b8c08`)** + **new `ci-status` skill (`6cce517`)** — the shallow-flake-check lesson written into flake-check/flake-update-verify, the removed `--update-input` flag into bump-input, the AskUserQuestion timeout into interview, the script path into skill-audit; ci-status wraps the new "is CI green" workflow.
+
+### Decisions
+- **Backups scrapped** — user reviewed the data reality: GitHub holds the projects, photos/videos already cloud-backed, Jellyfin-state loss accepted. Recorded in memory; never re-propose. sops age key confirmed two-copy (gaming + laptop). Auto-GC also declined (manual `cleanup` preferred).
+- **Waiver over re-pin or overlay** for the pnpm breakage — a re-pin discards fresh security updates; an overlay needs a from-source vesktop build; the scoped waiver is the standard mechanism and self-expires at the channel's next vesktop fix.
+- **"flake check passed" ≠ "hosts evaluate"** — adopted deep per-host eval as the real gate, in CI and in the update loop.
+
+### Issues / surprises
+- The pushed lock bump was un-rebuildable for ~2 hours before the dry-run caught it — both verification layers (local flake-check, fresh CI) shared the same blind spot. The incident retroactively justified the CI item it broke.
+- `bump-input`'s documented command (`nix flake lock --update-input`) no longer exists in current nix.
+
+### Next session
+- Activate the lock bump fleet-wide (`/fleet-rollout` or per-host rebuilds; zen kernel ⇒ reboot); big first download.
+- At the next nixpkgs bump, test dropping the pnpm waiver.
+- gaming rebuild also brings the repo-managed skill gotchas (interview, skill-audit) into `~/.claude`.
+
+**Commits**: `48c11d3`..`6cce517` (6 commits)
+
+---
+
 ## Session: 2026-07-02 (session 28) — OnlyOffice fonts actually fixed; full `/improve-system` skill-audit pass
 
 **Focus**: Finish the OnlyOffice font investigation left unverified in session 26, then run `/improve-system` end-to-end and fix every finding from its skill-audit, one at a time with a commit after each.
@@ -99,28 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild natalie-laptop (`nh os boot` + reboot — **long from-source VirtualBox build** due to the ext pack), then have natty/bosko log out/in once for `vboxusers` before creating the VM. Rides alongside the standing natalie-laptop pending-rebuild backlog (Plasma DE, managed Claude policy).
 
 **Commits**: `3023af2` (1 commit)
-
----
-
-## Session: 2026-06-29 (session 24) — disko-on-other-hosts review (no code changes)
-
-**Focus**: Answer whether disko is worth adopting on the remaining hosts; correct stale agent memory.
-
-### What changed (and why)
-- **No repo changes.** Discussion + a memory correction only.
-- **Decided to keep disko on `vpn-server` only** — its payoff is at install/reinstall time, so it fits the headless, reproducible cloud host but gives no runtime benefit on the already-installed, data-bearing desktops; retrofitting risks two sources of truth and a layout you'd only discover wrong on a wipe.
-- **Fixed an inaccurate agent memory** (outside the repo, under `~/.claude/.../memory/`): `natalie-laptop` was still flagged as "placeholder hardware config — replace during install." It's been installed and running for some time with a real generated config (Intel host, real UUIDs). Memory + MEMORY.md index updated to match. Repo docs already had this right — no README/state edits needed.
-
-### Decisions
-- **Skip disko on `gaming`, `laptop`, `natalie-laptop`.** Adopt only where wipe-and-redeploy is the workflow (vpn-server). natalie-laptop was briefly a candidate under the (wrong) assumption it was unprovisioned — moot once corrected.
-
-### Issues / surprises
-- The "natalie-laptop unprovisioned" belief came from a 49-day-old memory that never got updated after install — caught and fixed.
-
-### Next session
-- No carryover from this session. Pending-rebuild backlog from session 23 (brobot removal + session-closer transcript edit) still rides the next gaming `nh os boot` + reboot.
-
-**Commits**: docs-only close (0 code commits)
 
 ---
 

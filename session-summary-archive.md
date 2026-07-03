@@ -1,3 +1,25 @@
+## Session: 2026-06-29 (session 24) — disko-on-other-hosts review (no code changes)
+
+**Focus**: Answer whether disko is worth adopting on the remaining hosts; correct stale agent memory.
+
+### What changed (and why)
+- **No repo changes.** Discussion + a memory correction only.
+- **Decided to keep disko on `vpn-server` only** — its payoff is at install/reinstall time, so it fits the headless, reproducible cloud host but gives no runtime benefit on the already-installed, data-bearing desktops; retrofitting risks two sources of truth and a layout you'd only discover wrong on a wipe.
+- **Fixed an inaccurate agent memory** (outside the repo, under `~/.claude/.../memory/`): `natalie-laptop` was still flagged as "placeholder hardware config — replace during install." It's been installed and running for some time with a real generated config (Intel host, real UUIDs). Memory + MEMORY.md index updated to match. Repo docs already had this right — no README/state edits needed.
+
+### Decisions
+- **Skip disko on `gaming`, `laptop`, `natalie-laptop`.** Adopt only where wipe-and-redeploy is the workflow (vpn-server). natalie-laptop was briefly a candidate under the (wrong) assumption it was unprovisioned — moot once corrected.
+
+### Issues / surprises
+- The "natalie-laptop unprovisioned" belief came from a 49-day-old memory that never got updated after install — caught and fixed.
+
+### Next session
+- No carryover from this session. Pending-rebuild backlog from session 23 (brobot removal + session-closer transcript edit) still rides the next gaming `nh os boot` + reboot.
+
+**Commits**: docs-only close (0 code commits)
+
+---
+
 ## Session: 2026-06-29 (session 23) — session-closer reads transcripts, brobot dropped, permissions consistency check
 
 **Focus**: Small skills/config maintenance — make `session-closer` more accurate, retire a dead project's module, and verify the permission layers are coherent.
