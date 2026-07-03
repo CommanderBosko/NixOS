@@ -96,3 +96,7 @@ Do not run either automatically.
 - Do not auto-commit, `git add`, or auto-rebuild — suggest, don't invoke.
 - No `Co-Authored-By` trailer here — that belongs only in commit messages.
 - When bumping `nixpkgs`, note the `home-manager` / `disko` follows dependency.
+
+## Gotchas
+
+- **`nix flake lock --update-input <name>` no longer exists** (observed 2026-07-02): current nix rejects both `--update-input` (removed deprecated alias) and `--flake` on that subcommand. Use `nix flake update <name> --flake /home/bosko/NixOS` instead.

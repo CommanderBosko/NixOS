@@ -51,3 +51,7 @@ Then add a brief diagnosis below the raw output:
 - This is a read-only, safe-to-run-anytime operation.
 - `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across all four hosts (gaming, laptop, natalie-laptop, vpn-server).
 - This skill does NOT apply changes; it only validates.
+
+## Gotchas
+
+- **`nix flake check` is a SHALLOW check for nixosConfigurations** (proven 2026-07-02): it verifies each host's toplevel is a derivation without forcing full evaluation, so a broken package deep in `environment.systemPackages` (e.g. one newly marked insecure) passes the check but fails every real rebuild. For a real eval gate, force each host: `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`. "Passed" here means "no shallow errors", not "the hosts build".

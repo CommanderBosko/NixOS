@@ -89,3 +89,7 @@ Once confirmed, ask whether they want to (a) save the brief to a file, (b) move 
 - Keep your own talking short; the user should be doing most of the talking.
 - Never skip the key-decisions verification (step 5). Every key decision must get an explicit yes or a correction before the brief — no important choice rides on an unstated assumption.
 - Set the success criteria up front (step 1) and have a second AI check the final brief (step 7) — don't hand off a brief that hasn't been measured against a clear bar and read by an independent reviewer.
+
+## Gotchas
+
+- **AskUserQuestion times out after 60s if the user is away** (observed 2026-07-02, and in one earlier session). A timeout is NOT an answer — never proceed as if defaults were accepted. On timeout, restate the same wave as plain numbered text with a recommended default per question so the user can answer asynchronously in one reply, and mark the interview as paused, not advanced.

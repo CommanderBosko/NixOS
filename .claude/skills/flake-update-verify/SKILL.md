@@ -137,3 +137,8 @@ Tell me: the mode, the result (committed+pushed / nothing-to-do / reverted), the
 old→new summary, the eval verdict, whether the bump was pushed to the remote, where the two
 files were written, and — if reverted — which input broke eval and that `/fleet-rollout` is
 the way to apply once it's healthy.
+
+## Gotchas
+
+- **Pre-approved runs don't need ON-mode pauses** (observed 2026-07-02): if the invoking request already approves the whole flow (e.g. "do the update, then commit and push when complete"), treat that as the explicit approval for every step and run straight through — pausing per-step would stall on approvals the user already gave. State that interpretation in the report. Training Mode ON still applies its done-rule checks and retry cap.
+- **Step 5's `flake-check` is NOT sufficient verification** (proven 2026-07-02, the pnpm/vesktop incident): `nix flake check` verifies nixosConfigurations only shallowly, so this loop once committed+pushed a lock at which no desktop host could evaluate. After flake-check passes, ALSO deep-eval every host — `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath` for each — before declaring the update verified and committing.
