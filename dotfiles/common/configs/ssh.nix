@@ -12,7 +12,7 @@
       };
 
       "natalie-laptop" = {
-        Hostname = "10.0.0.103";
+        Hostname = "10.0.0.101";
         User = "bosko";
       };
 

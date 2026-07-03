@@ -5,7 +5,7 @@
   "hosts": {
     "gaming":         { "ssh": "bosko@gaming",          "ip": "10.0.0.251",     "vpnIp": "10.10.0.2",  "local": true,  "flakeHost": true,  "desktop": true,  "envFile": "hosts/gaming/environment.nix",         "arch": "x86_64-linux" },
     "laptop":         { "ssh": "bosko@laptop",          "ip": "10.0.0.227",     "vpnIp": "10.10.0.3",  "local": true,  "flakeHost": true,  "desktop": true,  "envFile": "hosts/laptop/environment.nix",         "arch": "x86_64-linux" },
-    "natalie-laptop": { "ssh": "bosko@natalie-laptop",  "ip": "10.0.0.103",     "vpnIp": "10.10.0.4",  "local": true,  "flakeHost": true,  "desktop": true,  "envFile": "hosts/natalie-laptop/environment.nix", "arch": "x86_64-linux" },
+    "natalie-laptop": { "ssh": "bosko@natalie-laptop",  "ip": "10.0.0.101",     "vpnIp": "10.10.0.4",  "local": true,  "flakeHost": true,  "desktop": true,  "envFile": "hosts/natalie-laptop/environment.nix", "arch": "x86_64-linux" },
     "vpn-server":     { "ssh": "bosko@150.136.232.63",  "ip": "150.136.232.63", "vpnIp": "10.10.0.1",  "local": false, "flakeHost": true,  "desktop": false, "envFile": "hosts/vpn-server/configuration.nix",   "arch": "aarch64-linux", "sudo": "passwordless", "rebuild": "boot", "notes": "Oracle Cloud ARM VM, public-facing. bosko has passwordless sudo; the Oracle ubuntu cloud-init user no longer accepts the key." },
     "pi-hole":        { "ssh": "bosko@pi-hole",         "ip": "10.0.0.20", "local": true, "flakeHost": false, "notes": "DNS appliance (the nameserver) at 10.0.0.20; NOT a flake host. bosko@ SSH is currently denied (different auth) — shortcut kept for reference." }
   },
