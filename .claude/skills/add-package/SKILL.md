@@ -96,7 +96,7 @@ Do not rebuild. Do not stage files. Leave both of those to the user's own workfl
 
 ## Key constraints
 
-- Never use `git add` — leave staging entirely to the `/commit` skill.
+- Never use `git add` — leave staging entirely to the `/git-commit` skill.
 - Never run `nh os boot` or `nixos-rebuild` — leave that to the user.
 - `vpn-server` is headless; never suggest HM or user packages for it.
 - The `vpn-server` host uses `aarch64-linux` — only offer packages that are likely available for that architecture.

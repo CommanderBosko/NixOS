@@ -71,7 +71,7 @@ After the edit is written, tell the user:
 1. Run `/nixos-dry-run` to preview the change before applying.
 2. Run `/commit` to commit the change.
 
-Do not stage or commit — that is handled by the `/commit` skill.
+Do not stage or commit — that is handled by the `/git-commit` skill.
 
 ---
 

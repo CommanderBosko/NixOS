@@ -22,7 +22,7 @@ The script collects changed (`git diff --name-only HEAD`) and untracked (`git ls
 
 Relay the script's summary. If files were reformatted, remind the user to stage them before committing:
 
-> Files have been formatted. Stage them with the `commit` skill or:
+> Files have been formatted. Stage them with the `git-commit` skill or:
 > `git -C /home/bosko/NixOS add <files>`
 
 If nothing changed, say the changed `.nix` files were already correctly formatted.

@@ -118,7 +118,7 @@ Then remind them of the next steps:
 - **Only desktop hosts** — those with `"desktop": true` in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`). Reject headless hosts (`vpn-server`).
 - **One line changed** — only the DE import line for the target host. Nothing else.
 - **Confirm before editing** — never edit `flake.nix` without explicit user approval.
-- **Do not stage or commit** — that is the `/commit` skill's job.
+- **Do not stage or commit** — that is the `/git-commit` skill's job.
 - **Do not reboot** — rebuilds are staged; the user reboots manually.
 - **Target must exist** — if the `.nix` file is missing, stop and redirect to `/new-module`.
 

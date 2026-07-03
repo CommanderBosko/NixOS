@@ -55,6 +55,16 @@ nh clean all --keep 3
 
 These are also available as shell aliases when running as bosko: `rebuild`, `dry-run`, `update`, `cleanup`.
 
+## Commit Style
+
+Conventional commits: `type(scope): short description` — lowercase after the colon, no trailing period, under 72 characters, focused on what changed and why.
+
+- **Types:** `feat`, `fix`, `refactor`, `chore`, `docs`, `style`, `test`, `perf`
+- **Scopes:** the affected area of the repo — e.g. `gaming`, `laptop`, `security`, `skills`, `vpn`, `memory`, `flake`, `shell`, `users`. Use the most specific scope that fits; if several unrelated scopes are touched, pick the dominant one or drop the scope.
+- Session closes use `chore(session): end-of-day close YYYY-MM-DD — <brief summary>`.
+
+Examples from history: `feat(skills): add new-module skill for NixOS module scaffolding`, `fix(natalie-laptop): add wg0 DNS for full-tunnel VPN routing`, `refactor(vpn): move DNS into shared vpn.nix, apply to all client hosts`.
+
 ## Architecture Overview
 
 Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared modules live under `dotfiles/common/`; host-specific files live under `hosts/<hostname>/`.

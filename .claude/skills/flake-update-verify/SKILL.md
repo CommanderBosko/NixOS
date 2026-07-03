@@ -76,13 +76,13 @@ then stop and report which step blocked.
      just the offender — mention it, don't run it.)
 
 6. **Commit the lock bump (success path only)** — on clean `flake-check`, commit ONLY
-   `flake.lock` via the `commit` skill with a conventional message like
+   `flake.lock` via the `git-commit` skill with a conventional message like
    `chore(flake): bump inputs <YYYY-MM-DD>` summarizing the changed inputs in the body.
    - Done-rule: `git log -1 --name-only` shows a new commit touching `flake.lock` and the
      working tree is clean again. **No `switch`/`boot` was run.**
 
 7. **Push the commit (success path only)** — after a successful commit, push the bump to
-   the remote via the `push` skill so the lock change lands on GitHub. Only runs on the
+   the remote via the `git-push` skill so the lock change lands on GitHub. Only runs on the
    **committed** path; skip entirely on "Nothing to do" and "Reverted" (nothing new to
    push).
    - Done-rule: `git -C /home/bosko/NixOS status -sb` shows the local branch is **not

@@ -142,7 +142,7 @@ git -C /home/bosko/NixOS add .sops.yaml secrets/
 Then tell the user which hosts need a rebuild for the change to take effect (a secret in
 `common.yaml` affects all hosts; a per-host file affects just that host). Decryption
 happens at **activation**, so a rebuild — not just an eval — is required on each affected
-host. Do not commit on the user's behalf unless asked; the `commit`/`push` skills handle that.
+host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-push` skills handle that.
 
 ## Scripts
 
