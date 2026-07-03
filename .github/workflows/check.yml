@@ -21,9 +21,22 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@v22
 
-      # Eval-only: computes every host's system derivation (gaming, laptop,
-      # natalie-laptop, vpn-server) without building anything. Cross-arch is
-      # fine — evaluating the aarch64 vpn-server needs no aarch64 builder.
-      # sops secrets stay encrypted; eval never decrypts them.
+      # nix flake check only SHALLOWLY verifies nixosConfigurations (it checks
+      # the toplevel is a derivation without forcing its full eval) — a broken
+      # package deep in systemPackages sails through it. Proven 2026-07-02:
+      # flake check passed while every desktop host failed to evaluate.
       - name: nix flake check
         run: nix flake check --no-build
+
+      # The real gate: force the FULL system derivation of every host
+      # (gaming, laptop, natalie-laptop, vpn-server). Eval-only, no builds;
+      # cross-arch is fine — evaluating the aarch64 vpn-server needs no
+      # aarch64 builder. sops secrets stay encrypted; eval never decrypts them.
+      - name: deep-evaluate every host
+        run: |
+          for host in $(nix eval --raw --apply 'c: builtins.concatStringsSep " " (builtins.attrNames c)' .#nixosConfigurations); do
+            echo "::group::$host"
+            nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath"
+            echo
+            echo "::endgroup::"
+          done
