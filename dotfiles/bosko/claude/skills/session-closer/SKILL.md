@@ -240,3 +240,12 @@ Keep the channels distinct: `session-summary.md` is the human-facing narrative; 
 your working recall. Don't duplicate the same content into both, and don't save anything
 `git log` already captures. Cross-check existing memory before writing next-session
 reminders so you never re-list completed work as pending.
+
+## Gotchas
+
+- **`secret-scan` isn't available in every project's skill list** (observed in a
+  non-NixOS-repo project with no `secret-scan` skill present). When it's missing, don't
+  skip the public-safety pass — do a manual grep for common secret patterns (private key
+  headers, `password`/`token`/`api_key`/`secret` literals) across the changed files before
+  publishing README changes, and note in the session summary that `secret-scan` wasn't
+  available so a manual check was substituted.
