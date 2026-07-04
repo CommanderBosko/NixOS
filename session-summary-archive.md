@@ -1,3 +1,24 @@
+## Session: 2026-07-01 (session 26) — niri Xwayland fix; OnlyOffice font fix partially reverted
+
+**Focus**: Fix X11-only apps (OnlyOffice) failing to open on niri, and OnlyOffice not finding system fonts. *(Reconstructed from commit messages only — this session ran without a close at the time, so no transcript rationale beyond what's written in the commits themselves.)*
+
+### What changed (and why)
+- **niri X11 support (`47e332f`, `40a93bd`)** — First added a manual `xwayland-satellite` service + global `DISPLAY=":0"` export (niri has no built-in X server; `onlyoffice-desktopeditors` couldn't connect to any X display). That broke the SDDM greeter — the global `DISPLAY` export leaked into SDDM's Wayland greeter, so Weston loaded its X11 backend instead of DRM and crashed to a black screen at boot. Corrected by dropping the manual service/export entirely: niri ≥ 25.08 (laptop runs 26.04) auto-spawns `xwayland-satellite` and sets `DISPLAY` itself — only the package needs to stay in `systemPackages`. Looks resolved.
+- **OnlyOffice font detection (`10a1faf`, `371e08b`, reverted by `873e824`)** — Enabled `fonts.fontDir.enable` + added `corefonts` (shared `fonts.nix`, all hosts) because OnlyOffice builds its own font cache from fixed FHS directories instead of using fontconfig. A follow-up symlinked `/usr/share/fonts` → the fontDir tree, reasoning OnlyOffice only scans FHS paths (none of which exist on NixOS) — but that commit was **reverted** with no stated reason. Current state: `fontDir` + `corefonts` remain active, the FHS symlink bridge does not — outcome on whether OnlyOffice actually sees fonts is **unverified**.
+
+### Decisions
+- **niri relies on its own built-in Xwayland spawn**, not a manually managed service/export — session variables meant for one session type (a compositor's user session) shouldn't be exported system-wide, since they leak into the display manager's own greeter session too.
+
+### Issues / surprises
+- The font-symlink revert (`873e824`) carries no rationale in its commit message — unknown whether it broke something, was found unnecessary, or was reverted for another reason. Flagged in Known Issues for next-session verification.
+
+### Next session
+- Verify OnlyOffice font rendering on gaming/laptop/natalie-laptop; if still broken, re-investigate a fix.
+
+**Commits**: `47e332f..873e824` (5 commits)
+
+---
+
 ## Session: 2026-06-30 (session 25) — VirtualBox on natalie-laptop for a Windows VM
 
 **Focus**: Add VirtualBox (with everything needed to run a Windows guest) to natalie-laptop.

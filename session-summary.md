@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-04 (session 31) — routine flake update
+
+**Focus**: Update flake inputs, dry-run verify, commit and push; also commit an unrelated pre-existing `session-closer` skill edit found sitting uncommitted at session start.
+
+### What changed (and why)
+- **Flake update (`fcac089`)** — `nixpkgs` (`b5aa0fbd`→`65179426`), `home-manager`, `sops-nix`, `dms`, `financeguru` all bumped via the `/update` skill. Dry-run came back clean: KDE Plasma 6.7.2 fleet-wide, `tmux` 3.7, `starship` 1.26.0, `openvino` added, `docutils` removed, no kernel/service changes triggered by this bump alone.
+- **`session-closer` gotcha committed (`b0d3b44`)** — a `secret-scan`-availability note that predated this conversation was found modified-but-uncommitted at session start; committed separately from the flake work since it was unrelated.
+
+### Decisions
+- Kept the two changes in separate commits rather than bundling — the session-closer edit wasn't part of the flake-update task and had its own rationale already written into the diff.
+
+### Issues / surprises
+- None — dry-run and commit both went cleanly on the first pass.
+
+### Next session
+- Fleet-wide activation is now carrying two stacked lock bumps (session 29's zen 7.1.2 + this session's further nixpkgs/home-manager/sops-nix/dms/financeguru move) — still nothing applied to any host.
+- At the next nixpkgs bump, retest removing the `pnpm-10.29.2` insecure waiver in `nix.nix`.
+
+**Commits**: `fcac089`..`b0d3b44` (2 commits)
+
+---
+
 ## Session: 2026-07-03 (session 30) — natalie-laptop IP drift fixed; project commit/push skills retired
 
 **Focus**: Update all references after natalie-laptop's LAN IP changed (10.0.0.103 → 10.0.0.101), explain why it happened, and de-duplicate the commit/push skill pairs.
@@ -107,27 +129,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No carryover on the branch-leak fix — resolved and verified clean this session.
 
 **Commits**: `d8d5aef` (1 commit, +1 session-close); branch deletion was a remote-only operation, not a repo commit
-
----
-
-## Session: 2026-07-01 (session 26) — niri Xwayland fix; OnlyOffice font fix partially reverted
-
-**Focus**: Fix X11-only apps (OnlyOffice) failing to open on niri, and OnlyOffice not finding system fonts. *(Reconstructed from commit messages only — this session ran without a close at the time, so no transcript rationale beyond what's written in the commits themselves.)*
-
-### What changed (and why)
-- **niri X11 support (`47e332f`, `40a93bd`)** — First added a manual `xwayland-satellite` service + global `DISPLAY=":0"` export (niri has no built-in X server; `onlyoffice-desktopeditors` couldn't connect to any X display). That broke the SDDM greeter — the global `DISPLAY` export leaked into SDDM's Wayland greeter, so Weston loaded its X11 backend instead of DRM and crashed to a black screen at boot. Corrected by dropping the manual service/export entirely: niri ≥ 25.08 (laptop runs 26.04) auto-spawns `xwayland-satellite` and sets `DISPLAY` itself — only the package needs to stay in `systemPackages`. Looks resolved.
-- **OnlyOffice font detection (`10a1faf`, `371e08b`, reverted by `873e824`)** — Enabled `fonts.fontDir.enable` + added `corefonts` (shared `fonts.nix`, all hosts) because OnlyOffice builds its own font cache from fixed FHS directories instead of using fontconfig. A follow-up symlinked `/usr/share/fonts` → the fontDir tree, reasoning OnlyOffice only scans FHS paths (none of which exist on NixOS) — but that commit was **reverted** with no stated reason. Current state: `fontDir` + `corefonts` remain active, the FHS symlink bridge does not — outcome on whether OnlyOffice actually sees fonts is **unverified**.
-
-### Decisions
-- **niri relies on its own built-in Xwayland spawn**, not a manually managed service/export — session variables meant for one session type (a compositor's user session) shouldn't be exported system-wide, since they leak into the display manager's own greeter session too.
-
-### Issues / surprises
-- The font-symlink revert (`873e824`) carries no rationale in its commit message — unknown whether it broke something, was found unnecessary, or was reverted for another reason. Flagged in Known Issues for next-session verification.
-
-### Next session
-- Verify OnlyOffice font rendering on gaming/laptop/natalie-laptop; if still broken, re-investigate a fix.
-
-**Commits**: `47e332f..873e824` (5 commits)
 
 ---
 
