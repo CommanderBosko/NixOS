@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-07 (session 32) — routine flake update via `/flake-update-verify`
+
+**Focus**: Update flake inputs, verify eval, commit and push if green.
+
+### What changed (and why)
+- **Flake update (`65e2fb7`)** — `dms`, `financeguru`, `home-manager`, `nixpkgs` all bumped via the `/flake-update-verify` loop (`nixpkgs-stable` unchanged). `nix flake check --no-build` passed for all 4 hosts, then a deep-eval of each host's `config.system.build.toplevel.drvPath` also succeeded — the loop's stricter gate, since flake-check alone is shallow (the session-29 pnpm/vesktop lesson).
+
+### Decisions
+- Followed the loop's "pre-approved run" gotcha — the request already approved the whole update→verify→commit→push flow, so ran straight through without per-step pauses.
+
+### Issues / surprises
+- None — update, both verification layers, commit, and push all succeeded on the first pass.
+
+### Next session
+- Did **not** retest removing the pnpm-10.29.2 waiver in `nix.nix` this bump — still worth trying at the next one.
+- Fleet-wide activation is now carrying three stacked lock bumps (session 29's zen 7.1.2 + session 31's + this session's) — still nothing applied to any host.
+
+**Commits**: `65e2fb7` (1 commit)
+
+---
+
 ## Session: 2026-07-04 (session 31) — routine flake update
 
 **Focus**: Update flake inputs, dry-run verify, commit and push; also commit an unrelated pre-existing `session-closer` skill edit found sitting uncommitted at session start.
@@ -101,34 +122,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild/switch laptop and natalie-laptop to pick up the OnlyOffice font fix (both hosts have `onlyoffice-desktopeditors` installed) — no reboot required, `nh os switch` is enough.
 
 **Commits**: `77c5014`..`07ad1d2` (15 commits)
-
----
-
-## Session: 2026-07-02 (session 27) — `research` skill, plus a real leaked-secret finding on old branches
-
-**Focus**: Build a global skill that web-searches a topic, fans sub-agents out over the top results, and reports a synthesized consensus; the pre-push `secret-scan` during close surfaced an unrelated real finding that got fixed in the same session.
-
-### What changed (and why)
-- **New global skill `research` (`d8d5aef`)** — `WebSearch` a topic, spawn `n` (default 10, overridable via a second argument) fresh `general-purpose` sub-agents in parallel — one per result URL — each `WebFetch`-ing its page and reporting findings/stance/caveats (or "inaccessible: <reason>" if unreadable). Coordinator synthesizes a chat-only consensus report: majority view, notable dissent, per-source takeaways, coverage count.
-- Built via `/new-skill`; classified as **Data Enrichment** (pulls external data in, single job despite the internal sub-agent fan-out).
-- **Deleted 5 leaking public branches (`3.5`, `4.0`, `4.1`, `4.1.1`, `4.1.2`)** — `secret-scan`'s git-history pass (which scans `--all`, not just `main`) found plaintext `bosko`/`natty` `$6$` password hashes still reachable via these old version-tag branches, pushed to the public `origin` remote. The 2026-06-15 sops migration's `filter-repo` purge only ever rewrote `main`; these branches were never touched and were exposing the original commit (`296a2bd`, 2026-05-14) the whole time. Deleted from `origin` and pruned locally; verified clean with `git fetch --prune` + a repo-wide `git log --all -G'\$6\$'` sweep.
-
-### Decisions
-- **Fresh `general-purpose` sub-agents, not forks** (research skill) — each only needs the topic + one URL, not the coordinator's conversation history.
-- **Configurable count, default 10** (research skill) — an optional `<n>` argument avoids paying for a full 10-way fan-out on quick lookups.
-- **Chat-only output, not an Artifact** (research skill) — user's explicit pick over the recommended Artifact option; revisit if reports get long enough to want a scannable page.
-- **Deleted the leaking branches outright rather than scrubbing them** — offered `filter-repo --replace-text` (keep + clean) vs. delete; user chose delete since these were unused old version tags with no value worth a second history rewrite.
-- **Declined password rotation** — offered given the ~7-week public exposure window; user judged the practical risk low and declined. Accepted-risk decision, not an oversight.
-
-### Issues / surprises
-- The `secret-scan` skill's history pass uses `--all`, which is exactly what caught this — a `main`-only check would have missed it. The `project_sops_secrets` memory had wrongly recorded the 2026-06-15 purge as complete; corrected.
-- Research skill: none. Dry-run clean (+5.62 MiB, only the unrelated pending `corefonts` addition from the prior session's font work).
-
-### Next session
-- Repo-managed global skill — the `research` skill reaches `~/.claude/skills/` only after `nh os boot` + a new session; rides the existing pending-rebuild backlog.
-- No carryover on the branch-leak fix — resolved and verified clean this session.
-
-**Commits**: `d8d5aef` (1 commit, +1 session-close); branch deletion was a remote-only operation, not a repo commit
 
 ---
 
