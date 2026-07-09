@@ -45,6 +45,10 @@
     };
   };
 
+  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent) follow DMS's
+  # matugen-generated dark/light theme instead of Qt's default light style
+  environment.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
+
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
     # Replaced by DMS:
@@ -55,6 +59,7 @@
 
     fuzzel # Application launcher
     grim # Screenshot utility
+    kdePackages.qt6ct # Qt theme engine so Qt apps follow DMS's matugen theme
     slurp # Region selection for grim
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
