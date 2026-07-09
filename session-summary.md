@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-09 (session 36) — `/improve-system` run end-to-end for the first time
+
+**Focus**: User said "let's test this out" and ran `/improve-system` cold — the orchestrator's first real full pass across all five sub-skills, no prior scoping.
+
+### What changed (and why)
+- **skill-upgrade**: mined 4+ past sessions' transcripts (not just this one) and added 2 recurring gotchas to `session-closer` — a script invoked with the wrong relative path (fails exit 127 every time before self-correcting), and this file being too large for a bare `Read` (35k tokens vs. a 25k limit).
+- **skill-suggestion**: noticed the transcript-mining logic itself had been hand-rederived in ≥3 prior skill-upgrade runs — built `scripts/find-skill-misfires.sh` so it's called, not reinvented, going forward.
+- **skill-audit**: swept all 49 skills via 4 parallel sub-agents; user approved "everything in the report" — fixed 4 verified bugs (`add-secret` hardcoded the wrong SSH target for vpn-server; `pin-input`'s follows-list was stale; `remote-rebuild` duplicated a hardcoded IP; `switch-de` had a wrong/dead reference table), deduped a path hardcoded across 4 team-member skills into one shared file, extracted templates/scripts on 6 skills, and converted a dozen prose confirm gates to `AskUserQuestion`.
+- **fewer-permission-prompts**: added 3 read-only entries to `.claude/settings.json`, then — asked directly — decided to keep rather than prune the ones already made redundant by the global `Bash(*)` wildcard (see Decisions).
+- Committed (`347cc88`) and pushed to `origin/main`.
+
+### Decisions
+- Split the skill-audit fix pass three ways to parallelize safely: 2 sub-agents for disjoint skill groups with no shared files, plus the coordinator handling every change that touched `bosko-claude.nix` directly (avoids concurrent edits to that one shared wiring file).
+- Kept the 3 new "redundant" permission entries rather than pruning — no functional gain from removing them, and they're a useful already-vetted list if the global wildcard is ever tightened.
+
+### Issues / surprises
+- None — all 3 `nixos-dry-run` checks (one per wiring change) came back clean on the first try.
+
+### Next session
+- **Rebuild + reboot + start a new Claude Code session** to pick up the repo-managed skill changes — this needs a *new session* specifically, not just a rebuild, since the live session keeps resolving the old symlink targets.
+- Spot-check `git-push`/`repo-creator` actually call their new `scripts/` files post-rebuild.
+
+**Commits**: `347cc88` (1 commit, pushed).
+
+---
+
 ## Session: 2026-07-09 (session 35) — qBittorrent/Qt theming under niri+DMS actually fixed
 
 **Focus**: The prior session's qt6ct fix (`8cabb8b`) didn't actually work — qBittorrent was still light-themed. Research and fix the real cause.
@@ -96,28 +122,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Fleet-wide activation is now carrying three stacked lock bumps (session 29's zen 7.1.2 + session 31's + this session's) — still nothing applied to any host.
 
 **Commits**: `65e2fb7` (1 commit)
-
----
-
-## Session: 2026-07-04 (session 31) — routine flake update
-
-**Focus**: Update flake inputs, dry-run verify, commit and push; also commit an unrelated pre-existing `session-closer` skill edit found sitting uncommitted at session start.
-
-### What changed (and why)
-- **Flake update (`fcac089`)** — `nixpkgs` (`b5aa0fbd`→`65179426`), `home-manager`, `sops-nix`, `dms`, `financeguru` all bumped via the `/update` skill. Dry-run came back clean: KDE Plasma 6.7.2 fleet-wide, `tmux` 3.7, `starship` 1.26.0, `openvino` added, `docutils` removed, no kernel/service changes triggered by this bump alone.
-- **`session-closer` gotcha committed (`b0d3b44`)** — a `secret-scan`-availability note that predated this conversation was found modified-but-uncommitted at session start; committed separately from the flake work since it was unrelated.
-
-### Decisions
-- Kept the two changes in separate commits rather than bundling — the session-closer edit wasn't part of the flake-update task and had its own rationale already written into the diff.
-
-### Issues / surprises
-- None — dry-run and commit both went cleanly on the first pass.
-
-### Next session
-- Fleet-wide activation is now carrying two stacked lock bumps (session 29's zen 7.1.2 + this session's further nixpkgs/home-manager/sops-nix/dms/financeguru move) — still nothing applied to any host.
-- At the next nixpkgs bump, retest removing the `pnpm-10.29.2` insecure waiver in `nix.nix`.
-
-**Commits**: `fcac089`..`b0d3b44` (2 commits)
 
 ---
 

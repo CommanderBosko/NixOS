@@ -1,3 +1,25 @@
+## Session: 2026-07-04 (session 31) — routine flake update
+
+**Focus**: Update flake inputs, dry-run verify, commit and push; also commit an unrelated pre-existing `session-closer` skill edit found sitting uncommitted at session start.
+
+### What changed (and why)
+- **Flake update (`fcac089`)** — `nixpkgs` (`b5aa0fbd`→`65179426`), `home-manager`, `sops-nix`, `dms`, `financeguru` all bumped via the `/update` skill. Dry-run came back clean: KDE Plasma 6.7.2 fleet-wide, `tmux` 3.7, `starship` 1.26.0, `openvino` added, `docutils` removed, no kernel/service changes triggered by this bump alone.
+- **`session-closer` gotcha committed (`b0d3b44`)** — a `secret-scan`-availability note that predated this conversation was found modified-but-uncommitted at session start; committed separately from the flake work since it was unrelated.
+
+### Decisions
+- Kept the two changes in separate commits rather than bundling — the session-closer edit wasn't part of the flake-update task and had its own rationale already written into the diff.
+
+### Issues / surprises
+- None — dry-run and commit both went cleanly on the first pass.
+
+### Next session
+- Fleet-wide activation is now carrying two stacked lock bumps (session 29's zen 7.1.2 + this session's further nixpkgs/home-manager/sops-nix/dms/financeguru move) — still nothing applied to any host.
+- At the next nixpkgs bump, retest removing the `pnpm-10.29.2` insecure waiver in `nix.nix`.
+
+**Commits**: `fcac089`..`b0d3b44` (2 commits)
+
+---
+
 ## Session: 2026-07-03 (session 30) — natalie-laptop IP drift fixed; project commit/push skills retired
 
 **Focus**: Update all references after natalie-laptop's LAN IP changed (10.0.0.103 → 10.0.0.101), explain why it happened, and de-duplicate the commit/push skill pairs.
