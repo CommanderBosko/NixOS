@@ -17,25 +17,25 @@ Classify every proposed change before acting:
   - `## Gotchas` entries added by **skill-upgrade**
   - the four standing workflow rules added to `CLAUDE.md` by **claude-rules**
   - `permissions.allow` additions in `settings.json` from **fewer-permission-prompts**
-- **Structural (always confirm first):** anything that creates files, changes behaviour, deletes/rewrites content, or needs new wiring + a rebuild —
+- **Structural (always confirm first via the AskUserQuestion tool):** anything that creates files, changes behaviour, deletes/rewrites content, or needs new wiring + a rebuild —
   - a **new skill** proposed by skill-suggestion (new file + `bosko-claude.nix` symlink + rebuild)
   - skill-audit's "fix it" refactors (script/asset extraction, drift fixes, splits)
   - any `permissions.deny`/`ask` or hook change
 
-When in doubt, treat it as structural and ask.
+For every structural item, use the **AskUserQuestion** tool rather than a prose question — present the specific proposed change with options **Approve** (apply it) and **Skip** (leave it alone), one question per item (or a batched multi-question call when several independent structural items are pending at once). When in doubt, treat it as structural and ask via AskUserQuestion.
 
 ## Step 1 — Session-reactive pass (uses *this* conversation)
 
 These two mine the current session, so run them while it's fresh.
 
 1. **skill-upgrade** — invoke the `skill-upgrade` skill. It finds skills that misfired this session and drafts `## Gotchas`. **Auto-apply** the gotchas (low-risk), then list each skill hardened and the gotcha added. If nothing misfired, it says so — carry that forward.
-2. **skill-suggestion** — invoke the `skill-suggestion` skill. It proposes at most one new skill worth capturing from this session. Building a new skill is **structural** → present its proposal and **confirm** before it hands off to `new-skill`. If the session has no reusable workflow, it stops cleanly.
+2. **skill-suggestion** — invoke the `skill-suggestion` skill. It proposes at most one new skill worth capturing from this session. Building a new skill is **structural** → present its proposal, then use the **AskUserQuestion** tool with options **Approve** (hand off to `new-skill`) and **Skip** (don't build it), and only hand off to `new-skill` on Approve. If the session has no reusable workflow, it stops cleanly.
 
 ## Step 2 — Proactive sweep (whole repo / setup)
 
 3. **claude-rules** — invoke the `claude-rules` skill against this project's `CLAUDE.md`. Adding any missing standing rule is **low-risk** → auto-apply, then report which rules were already present vs added.
-4. **skill-audit** — invoke the `skill-audit` skill. It is report-only by design. Surface its prioritized findings (correctness bugs first). Auto-apply **only** trivially-additive fixes if any; for every structural refactor it recommends, **confirm** before saying "fix it". Do not silently run its full fix pass.
-5. **fewer-permission-prompts** — invoke the `fewer-permission-prompts` skill. Adding entries to `permissions.allow` is **low-risk** → auto-apply, but **show the exact list added** so the user can object. Never auto-add `deny`/`ask` or hooks.
+4. **skill-audit** — invoke the `skill-audit` skill. It is report-only by design. Surface its prioritized findings (correctness bugs first). Auto-apply **only** trivially-additive fixes if any; for every structural refactor it recommends, use the **AskUserQuestion** tool (one question per refactor, or batched per item) with options **Approve** (apply the refactor) and **Skip** (leave it as a reported finding) before saying "fix it". Do not silently run its full fix pass.
+5. **fewer-permission-prompts** — invoke the `fewer-permission-prompts` skill. Adding entries to `permissions.allow` is **low-risk** → auto-apply, but **show the exact list added** so the user can object. Never auto-add `deny`/`ask` or hooks — if such a change is ever surfaced as a candidate, treat it as structural and confirm via **AskUserQuestion** (options **Approve** / **Skip**) rather than applying it silently.
 
 ## Step 3 — One consolidated report
 

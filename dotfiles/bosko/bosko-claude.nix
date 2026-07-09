@@ -4,8 +4,10 @@
   home.sessionPath = [ "$HOME/.local/bin" ];
 
   home.file = {
-    ".claude/skills/repo-creator/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/repo-creator/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (create-repo.sh).
+    ".claude/skills/repo-creator" = {
+      source = "${self}/dotfiles/bosko/claude/skills/repo-creator";
+      recursive = true;
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + scripts/ (rotate-session-summary.sh).
@@ -29,8 +31,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/git-commit/SKILL.md";
       force = true;
     };
-    ".claude/skills/git-push/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/git-push/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (push.sh).
+    ".claude/skills/git-push" = {
+      source = "${self}/dotfiles/bosko/claude/skills/git-push";
+      recursive = true;
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + scripts/ (search-pkg.sh).
@@ -39,8 +43,17 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/new-team-member/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/new-team-member/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (team-member-template.md).
+    ".claude/skills/new-team-member" = {
+      source = "${self}/dotfiles/bosko/claude/skills/new-team-member";
+      recursive = true;
+      force = true;
+    };
+    # Recursive dir symlink: shared cross-skill constants (knowledge-base-path.md),
+    # read by new-team-member, team-meeting, team-member-ingest, team-member-synthesize.
+    ".claude/skills/_shared" = {
+      source = "${self}/dotfiles/bosko/claude/skills/_shared";
+      recursive = true;
       force = true;
     };
     ".claude/skills/team-meeting/SKILL.md" = {
@@ -51,8 +64,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/team-member-ingest/SKILL.md";
       force = true;
     };
-    ".claude/skills/team-member-synthesize/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/team-member-synthesize/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (profile-template.md).
+    ".claude/skills/team-member-synthesize" = {
+      source = "${self}/dotfiles/bosko/claude/skills/team-member-synthesize";
+      recursive = true;
       force = true;
     };
     ".claude/skills/ask-team/SKILL.md" = {
@@ -69,8 +84,10 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/skill-upgrade/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/skill-upgrade/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (find-skill-misfires.sh).
+    ".claude/skills/skill-upgrade" = {
+      source = "${self}/dotfiles/bosko/claude/skills/skill-upgrade";
+      recursive = true;
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + assets/ (rules.md).

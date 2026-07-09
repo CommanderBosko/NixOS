@@ -9,29 +9,28 @@ Push the current branch to origin on GitHub.
 
 ## Steps
 
-1. Run these in parallel:
-   - `git status` — confirm working tree is clean (warn if there are uncommitted changes)
-   - `git log --oneline origin/$(git branch --show-current)..HEAD` — show what commits will be pushed
-   - `git branch --show-current` — get the current branch name
+The status gathering and the push itself are both mechanical (fixed git commands, no
+judgment involved), so they're handled by a script — only the confirm-skip decision in step
+4 needs judgment and stays here.
+
+1. Run `scripts/push.sh status` — prints the current branch, working-tree status, and the
+   commits ahead of upstream (or all commits, if there's no upstream yet).
 
 2. If there are uncommitted changes, warn the user and ask if they want to commit first (suggest `/git-commit`).
 
-3. Show which commits are ahead of the upstream (from step 1's log output) before pushing.
+3. Show which commits are ahead of the upstream (from step 1's output) before pushing.
 
 4. Confirm:
    - **Skip confirmation** if the user's original request was an unambiguous push command with no
      conditions attached (e.g. "push it", "just push", "push now") — proceed straight to step 5.
-   - **Ask for confirmation** in all other cases (e.g. "push", "push my changes"). A one-word
-     reply or `y` is sufficient to proceed.
+   - **Ask for confirmation** in all other cases (e.g. "push", "push my changes"), via the
+     AskUserQuestion tool with options **Proceed** / **Cancel**.
 
-5. Determine if the branch has an upstream:
-   - `git rev-parse --abbrev-ref --symbolic-full-name @{u}` 2>/dev/null
-   - If no upstream exists, push with `-u` flag to set it: `git push -u origin <branch>`
-   - If upstream exists, push normally: `git push`
+5. Run `scripts/push.sh execute` — determines whether the branch has an upstream, pushes
+   accordingly (`git push -u origin <branch>` if not, `git push` if so), and prints the
+   branch name and remote URL.
 
-6. Run the push.
-
-7. Report: how many commits were pushed, the branch name, and the remote URL.
+6. Report: how many commits were pushed, the branch name, and the remote URL (from step 5's output).
 
 ## Rules
 

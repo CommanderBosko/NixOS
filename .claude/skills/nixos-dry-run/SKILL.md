@@ -10,6 +10,10 @@ Run a dry-run build of the NixOS configuration to preview what would change with
 
 (Bucket: Verification — this is the pre-rebuild gate that proves the config still evaluates and shows the change set before anything is applied. It does one job: build-and-report, no writes. File it alongside `/flake-check` and `/verify-service`, not as a general utility.)
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Instructions
 
 1. Run `scripts/dry-run.sh` from the skill's directory (or use the full path).

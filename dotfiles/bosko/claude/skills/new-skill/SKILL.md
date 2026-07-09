@@ -7,6 +7,17 @@ description: Create a new Claude Code skill file interactively. Use when the use
 
 Guide the user through creating a well-formed Claude Code skill, then write the file.
 
+## Arguments
+
+Parse from the user's invocation phrase, if given:
+
+- **goal** — a one-sentence description of what the skill should do, if stated in the request (e.g. "create a skill that tails logs for a service").
+- **name** — a proposed kebab-case skill name, if the user names it directly.
+- **steps** — any workflow detail the user already volunteers (tools to run, files to read, decisions to make).
+- **scope** — `global` or `project-local`, if stated (see step 1).
+
+Pre-fill step 1's questions and step 3's name derivation from whatever is already given, and confirm rather than re-asking. Only ask for what's still missing.
+
 ## Steps
 
 ### 1. Gather requirements

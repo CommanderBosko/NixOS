@@ -8,6 +8,10 @@ version: 0.1.0
 
 Search nixpkgs for a package by name or keyword and present the results clearly so the user can act on them (e.g. with `/add-package`).
 
+## Arguments
+
+- **`<query>`** (optional) — the package name or keyword to search for, e.g. `/search-pkg firefox`. If omitted, Step 1 asks the user for it before proceeding.
+
 ## Step 1 — Get the search query
 
 If the user invoked `/search-pkg <query>`, use `<query>` directly. If no argument was given, ask:

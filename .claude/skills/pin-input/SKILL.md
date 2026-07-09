@@ -25,7 +25,13 @@ Never trust a hardcoded roster — it rots. Enumerate the inputs **live** using 
 /home/bosko/NixOS/.claude/lib/list-flake-inputs.sh
 ```
 
-Some inputs declare `inputs.nixpkgs.follows = "nixpkgs"` (read `flake.nix` to see which — e.g. `home-manager`, `disko`), so pinning `nixpkgs` also moves the nixpkgs revision those inputs see. Always mention this when the user is pinning `nixpkgs`.
+Some inputs declare `inputs.nixpkgs.follows = "nixpkgs"`, so pinning `nixpkgs` also moves the nixpkgs revision those inputs see. Never hardcode the list of followers — it changes as inputs are added. Derive it live:
+
+```bash
+grep -B2 'follows = "nixpkgs"' /home/bosko/NixOS/flake.nix
+```
+
+Always mention the current followers (by name, from the live grep above) when the user is pinning `nixpkgs`.
 
 ---
 
@@ -92,7 +98,7 @@ Before making any change, show the user exactly what will happen:
 > I will pin **nixpkgs** to `abc123def456...` (github:nixos/nixpkgs/abc123def456).
 > Method: **temporary** — only `flake.lock` will be modified; `nix flake update` will un-pin it.
 >
-> [For nixpkgs] Note: `home-manager` and `disko` both follow `nixpkgs`, so they will also see this pinned revision.
+> [For nixpkgs] Note: the inputs that follow `nixpkgs` (run `grep -B2 'follows = "nixpkgs"' flake.nix` to get the current list) will also see this pinned revision.
 
 Then ask the user to confirm via the **AskUserQuestion tool**, with options `Proceed` and `Cancel`. Do not run any command until the user confirms.
 
@@ -192,4 +198,4 @@ Do not run either of those automatically.
 - Never make any change without the user's explicit confirmation in Step 4.
 - Do not auto-commit or auto-rebuild — suggest it, do not invoke it.
 - If the `nix flake lock` command fails (bad rev, network error, evaluation error), show the full error and do not proceed.
-- When pinning `nixpkgs`, always note the `home-manager` and `disko` follows dependency.
+- When pinning `nixpkgs`, always note the follows dependency — derive the current follower list live via `grep -B2 'follows = "nixpkgs"' flake.nix` rather than assuming which inputs follow it.

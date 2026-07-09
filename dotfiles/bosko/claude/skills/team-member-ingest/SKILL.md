@@ -5,13 +5,7 @@ description: Ingest pasted content (transcripts, articles, posts, notes) as trai
 
 # Team Member Ingest
 
-Ingest content the user pastes — transcripts, articles, posts, notes, whatever — as training data for a specific person (usually an advisor from their `team-meeting` board), and save each piece raw under the shared knowledge base. This skill does **one job: store the raw source**. Distilling those raw files into a profile is a separate skill, `/team-member-synthesize`, run after ingest. All data lives in the shared knowledge base in the Nix repo at:
-
-```
-/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/
-```
-
-so it's version-controlled and available from any project. (Note: `knowledge/raw/` is gitignored — raw source stays local; synthesized profiles are committed.) This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.
+Ingest content the user pastes — transcripts, articles, posts, notes, whatever — as training data for a specific person (usually an advisor from their `team-meeting` board), and save each piece raw under the shared knowledge base. This skill does **one job: store the raw source**. Distilling those raw files into a profile is a separate skill, `/team-member-synthesize`, run after ingest. All data lives in the shared knowledge base in the Nix repo — read the canonical base path from `~/.claude/skills/_shared/knowledge-base-path.md` (the single source of truth shared by `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if the knowledge base ever moves, update only that one file), so it's version-controlled and available from any project. (Note: `knowledge/raw/` is gitignored — raw source stays local; synthesized profiles are committed.)
 
 (Bucket: Utility — save each pasted piece raw, verbatim, every time.)
 

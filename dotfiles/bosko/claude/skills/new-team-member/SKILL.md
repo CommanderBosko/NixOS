@@ -43,27 +43,13 @@ Briefly play back what you heard — their trajectory, core strengths, main bloc
 
 ### 4. Save the profile to the shared knowledge base
 
-Write the profile to the **shared advisory-board knowledge base in the Nix repo** — the absolute path `/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md` — so it's version-controlled and available from any project, not just this one. (This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.) Use this frontmatter and structure:
-
-```
----
-name: team-member
-description: The user's personal team-member profile — role, goals, strengths, blockers, trusted advisors. Recall whenever giving career advice.
-metadata:
-  type: user
----
-
-# Team Member Profile
-
-**Current role:** …
-**Building toward:** …
-**Strengths:** …
-**Blockers:** …
-**Trusted advisors:** …
-
-## Notes
-<any nuance, quotes, or context worth keeping>
-```
+Write the profile to `team-member.md` inside the **shared advisory-board knowledge base in
+the Nix repo** — read the canonical base path from `~/.claude/skills/_shared/knowledge-base-path.md`
+(the single source of truth shared by `team-meeting`, `team-member-ingest`,
+`team-member-synthesize`, and this skill — if the knowledge base ever moves, update only
+that one file) — so it's version-controlled and available from any project, not just this
+one. Read the frontmatter/structure template from `assets/team-member-template.md`
+(relative to this skill's directory) and fill its placeholders from the interview.
 
 Create the `knowledge/` directory if it doesn't exist yet. If a `team-member.md` already exists there, update it in place rather than creating a duplicate.
 
@@ -77,3 +63,7 @@ Tell the user where the profile was saved and that from now on you'll draw on it
 - Don't lecture or give advice during the interview; stay curious until the profile is saved.
 - Keep your own talking short; the user should do most of the talking.
 - Always persist the profile to memory before finishing — an unsaved interview is a failed run.
+
+## Assets
+
+- `assets/team-member-template.md` — the frontmatter + section skeleton for the profile file. Read and fill it; never inline the template in prose.

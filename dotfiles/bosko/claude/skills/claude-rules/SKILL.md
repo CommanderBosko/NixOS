@@ -24,11 +24,11 @@ When adding a missing section, **read `assets/rules.md`, find the section whose 
 
 Find `CLAUDE.md` at the root of the current project (the working directory the session was launched in). Do not touch `~/.claude/CLAUDE.md` or any other project's file — only the current project.
 
-- **If no `CLAUDE.md` exists:** stop and tell the user there is no `CLAUDE.md` in this project. Ask whether to create one containing all four rules. Only create it if they say yes. Do not create it silently.
+- **If no `CLAUDE.md` exists:** stop and tell the user there is no `CLAUDE.md` in this project. Use the **AskUserQuestion** tool to ask whether to create one containing all four rules, with options **Create** (write a new `CLAUDE.md` with all four canonical rules) and **Skip** (do nothing). Only create it if the user picks Create. Do not create it silently.
 
 ### 2. Check which rules are present
 
-Read the file and check for each of the four sections by heading. Match on the heading text (`## Scope First`, `## Verification Plan`, `## Parallelize with Sub-Agents`, `## Use Existing Skills First`) — a section counts as present even if its body wording differs from the canonical text above (e.g. a project-specific variant). Treat case-insensitively and tolerate minor heading wording differences; when unsure whether an existing section covers a rule, ask the user rather than duplicating it.
+Read the file and check for each of the four sections by heading. Match on the heading text (`## Scope First`, `## Verification Plan`, `## Parallelize with Sub-Agents`, `## Use Existing Skills First`) — a section counts as present even if its body wording differs from the canonical text above (e.g. a project-specific variant). Treat case-insensitively and tolerate minor heading wording differences; when unsure whether an existing section covers a rule, use the **AskUserQuestion** tool: present the ambiguous existing section (its heading and a short excerpt) alongside the rule it might satisfy, with options **Treat as covering it** (leave the section as-is, don't add the canonical block) and **Add the canonical section anyway** (append the canonical block too). Don't guess or duplicate silently.
 
 ### 3. Add the missing sections
 

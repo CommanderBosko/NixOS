@@ -8,23 +8,28 @@ version: 0.2.0
 
 Deploy the NixOS configuration to the remote headless **vpn-server** host from the local machine. vpn-server is the only valid remote target: it is the single non-local flake host (`gaming`, `laptop`, `natalie-laptop` rebuild locally with `nh os boot`). The old `nixos-server` is not a flake host — reject it.
 
+## Arguments
+
+None — the target is fixed. This skill always deploys to `vpn-server`; there is no user-supplied argument to parse (mirrors `nixos-gc`'s "no arguments" style).
+
 ## Target — from the single source of truth
 
-The vpn-server SSH target and arch live in `/home/bosko/NixOS/.claude/hosts.json` — read it, don't hardcode:
+The vpn-server SSH target and arch live in `/home/bosko/NixOS/.claude/hosts.json` — resolve it **once** into a variable, then reuse that variable for every command below. Don't hardcode the literal IP a second time anywhere in this flow:
 
 ```bash
-jq -r '.hosts["vpn-server"] | "\(.ssh)  \(.arch)  rebuild=\(.rebuild)"' /home/bosko/NixOS/.claude/hosts.json
-# bosko@150.136.232.63  aarch64-linux  rebuild=boot
+VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' /home/bosko/NixOS/.claude/hosts.json)"
+echo "$VPN_SSH"
+# bosko@150.136.232.63
 ```
 
 If the user names any host other than `vpn-server` (a desktop, or the old `server`), explain it is not a valid remote-rebuild target and stop.
 
 ## Step 1 — Verify SSH connectivity
 
-Resolve the SSH target from hosts.json, then:
+Using the `$VPN_SSH` value resolved above:
 
 ```bash
-ssh -o ConnectTimeout=10 -o BatchMode=yes bosko@150.136.232.63 echo ok
+ssh -o ConnectTimeout=10 -o BatchMode=yes "$VPN_SSH" echo ok
 ```
 
 If it fails: "Check that the Oracle VM is running. If WireGuard is down on this machine, reach it via its public IP directly."
@@ -33,12 +38,12 @@ If it fails: "Check that the Oracle VM is running. If WireGuard is down on this 
 
 **vpn-server must be deployed with `nixos-rebuild boot` followed by a reboot, not `switch`** — see Gotchas for why `switch` tears down the SSH session mid-activation. vpn-server is aarch64 while the local machine is x86_64 with no emulation, so `--build-host` is required (the ARM host builds its own closure).
 
-Show the command before running it:
+Show the command before running it (substituting the resolved `$VPN_SSH` value):
 
 ```
 nixos-rebuild boot \
-  --target-host bosko@150.136.232.63 \
-  --build-host bosko@150.136.232.63 \
+  --target-host "$VPN_SSH" \
+  --build-host "$VPN_SSH" \
   --elevate=sudo \
   --flake /home/bosko/NixOS#vpn-server
 ```
@@ -46,13 +51,13 @@ nixos-rebuild boot \
 Run it (long — 5–15 min; stream output so the user sees progress):
 
 ```bash
-nixos-rebuild boot --target-host bosko@150.136.232.63 --build-host bosko@150.136.232.63 --elevate=sudo --flake /home/bosko/NixOS#vpn-server
+nixos-rebuild boot --target-host "$VPN_SSH" --build-host "$VPN_SSH" --elevate=sudo --flake /home/bosko/NixOS#vpn-server
 ```
 
 Then reboot the host to activate the staged generation cleanly:
 
 ```bash
-ssh bosko@150.136.232.63 'sudo systemctl reboot'
+ssh "$VPN_SSH" 'sudo systemctl reboot'
 ```
 
 ## Step 3 — Post-reboot: restore client tunnels

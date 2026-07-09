@@ -35,11 +35,9 @@ If the goal is fuzzy, push for concreteness before generating — a vague done-r
 
 ### 2. Offer a workspace scan (built-in capability)
 
-Offer to scan the current repo for repeatable, loop-worthy tasks before or instead of a from-scratch spec:
+Before or instead of a from-scratch spec, use the **AskUserQuestion** tool to offer a workspace scan for repeatable, loop-worthy tasks, with options **Scan** (scan the workspace for loop-worthy tasks) and **Skip** (proceed straight to the interview spec from step 1).
 
-> "Want me to scan this workspace for tasks you do repeatedly that would make good loops?"
-
-If yes: look at `CLAUDE.md`, existing `.claude/skills/`, recent git history, and any session/close docs for multi-step tasks that recur. For each candidate, propose a one-line loop spec: **task → your preference → what counts as done**. Let the user pick which to generate. If no, proceed with the interview spec from step 1.
+If **Scan**: look at `CLAUDE.md`, existing `.claude/skills/`, recent git history, and any session/close docs for multi-step tasks that recur. For each candidate, propose a one-line loop spec: **task → your preference → what counts as done**. Let the user pick which to generate. If **Skip**, proceed with the interview spec from step 1.
 
 ### 3. Generate the loop skill from the template
 

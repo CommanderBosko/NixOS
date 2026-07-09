@@ -23,9 +23,9 @@ Ask the user the following questions in a single message. Do not proceed to Step
 
 1. **Device name / description** — What is this peer? (e.g. `phone`, `work-laptop`, `tablet`). Used as the comment above the peer block.
 
-2. **Public key** — Does the device already have a WireGuard key pair, or does it need one generated?
-   - If it already has one: ask the user to paste the public key now.
-   - If it needs one: tell the user to run the following command **on the new device** and paste back only the public key:
+2. **Public key** — Ask via the **AskUserQuestion tool** whether the device already has a WireGuard key pair, with options `Already have a public key` and `Need to generate one`, rather than free-form prose.
+   - If **Already have a public key**: ask the user to paste the public key now.
+   - If **Need to generate one**: tell the user to run the following command **on the new device** and paste back only the public key:
      ```
      wg genkey | tee privatekey | wg pubkey > publickey
      ```

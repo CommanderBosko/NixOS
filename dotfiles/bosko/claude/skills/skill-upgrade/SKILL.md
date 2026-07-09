@@ -19,8 +19,13 @@ Scan the conversation for every skill that was invoked. Flag the ones where some
 
 If no skill caused friction this session, say so plainly and stop.
 
-**Also check past sessions.** A skill that misfires the *same way across multiple sessions* is the highest-value gotcha to add. The current project's transcripts live at
-`~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`). These files are large — **never read them whole**; `grep` them for signals instead (a skill name near `tool_use`/`is_error`, a repeated user correction, the same wrong path). Treat a recurring cross-session failure as a stronger signal than a one-off slip this session.
+**Also check past sessions.** A skill that misfires the *same way across multiple sessions* is the highest-value gotcha to add. Run:
+
+```bash
+scripts/find-skill-misfires.sh <repo-root> [max-files]
+```
+
+from this skill's own base directory (the "Base directory for this skill" line shown when it launched — e.g. `~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh`). It scans the current project's transcripts at `~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` and prints every `is_error` tool result alongside the tool call and the `Skill` that was active at the time, across the most recently modified transcripts (default 15). Treat a recurring cross-session failure — the same skill, same tool, same error shape — as a stronger signal than a one-off slip this session.
 
 ### 2. Locate the source file
 

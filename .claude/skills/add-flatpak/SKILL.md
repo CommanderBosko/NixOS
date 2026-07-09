@@ -38,7 +38,7 @@ Present the exact line that will be added:
 "com.Publisher.AppName" # App Name
 ```
 
-Ask the user to confirm before writing. If they gave only a bare app ID with no friendly name, use a shortened version of the app ID as the comment (e.g. `# AppName` from the last segment).
+Ask the user to confirm via the **AskUserQuestion tool**, with one option `Confirm` (write the entry) and one option `Cancel` (make no change), rather than free-form prose. Do not write anything until the user selects `Confirm`. If they gave only a bare app ID with no friendly name, use a shortened version of the app ID as the comment (e.g. `# AppName` from the last segment).
 
 ## Step 4 — Edit the file
 

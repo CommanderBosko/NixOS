@@ -8,6 +8,9 @@
       "Bash(git -C * log *)",
       "Bash(nix eval *)",
       "Bash(lsblk*)",
+      "Bash(nix flake check*)",
+      "Bash(/home/bosko/NixOS/.claude/skills/secret-scan/scripts/secret-scan.sh*)",
+      "Bash(/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh*)",
       "mcp__nixos__nix"
     ]
   }

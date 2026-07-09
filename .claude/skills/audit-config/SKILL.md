@@ -123,8 +123,10 @@ Group by severity, Critical first. If nothing is found in a pass, say so explici
 
 End with a one-line bottom line: is the config in good shape, or are there must-fix items?
 
-Do **not** auto-apply fixes. List them and let the user choose. If they then say "fix it",
-make the edits and offer to dry-run (`nixos-dry-run` skill) before committing.
+Do **not** auto-apply fixes. This skill's job ends at the report — present findings and let the
+user decide. If the user wants fixes applied, that is a separate follow-up action (their own
+edit/commit flow, or a targeted skill like `/add-package` or `/pin-input` where one fits), not
+something this skill does automatically.
 
 ## Script
 

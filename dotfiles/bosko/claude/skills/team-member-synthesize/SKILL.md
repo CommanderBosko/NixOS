@@ -9,13 +9,12 @@ Read **all** raw training data on file for a person and distill it into a durabl
 
 (Bucket: Data Enrichment is *not* it — there is no external fetch; this is local synthesis. Treat it as a standalone build step over saved raw data.)
 
-Knowledge base in the Nix repo:
+Knowledge base in the Nix repo — read the canonical base path from
+`~/.claude/skills/_shared/knowledge-base-path.md` (the single source of truth shared by
+`team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if
+the knowledge base ever moves, update only that one file).
 
-```
-/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/
-```
-
-`knowledge/raw/<person-slug>/` holds the raw source (gitignored, local-only); `knowledge/<person-slug>/team-member.md` is the synthesized profile (committed). This path is shared verbatim across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if it ever moves, update all four.
+`knowledge/raw/<person-slug>/` holds the raw source (gitignored, local-only); `knowledge/<person-slug>/team-member.md` is the synthesized profile (committed).
 
 ## Arguments
 
@@ -32,7 +31,7 @@ Parse from the user's request:
 - Confirm raw data exists:
 
 ```bash
-ls /home/bosko/NixOS/dotfiles/bosko/claude/knowledge/raw/<person-slug>/
+ls "$(cat ~/.claude/skills/_shared/knowledge-base-path.md)raw/<person-slug>/"
 ```
 
 If the directory is missing or empty, tell the user there's nothing to synthesize and point them at `/team-member-ingest` to add raw source first. Stop.
@@ -50,35 +49,8 @@ Distill the raw into `knowledge/<person-slug>/team-member.md`. Create the direct
 - **Stances** — strong positions, what they're for and against, and any notable contrarian takes.
 - **Recurring stories** — anecdotes, case studies, and examples they tell repeatedly.
 
-Use this structure:
-
-```
----
-name: <person-slug>
-description: Synthesized profile of <Person Name> — core ideas, vocabulary, stances, recurring stories. Use to channel their thinking when advising the user.
-metadata:
-  type: reference
----
-
-# <Person Name>
-
-**One-line identity:** …
-
-## Core ideas
-- …
-
-## Vocabulary
-- **<term>** — …
-
-## Stances
-- …
-
-## Recurring stories
-- …
-
-## Sources ingested
-- <list of the raw files under raw/<person-slug>/>
-```
+Read the frontmatter/structure template from `assets/profile-template.md` (relative to this
+skill's directory) and fill its placeholders from the distilled raw corpus.
 
 If `knowledge/<person-slug>/team-member.md` already exists, **merge** — extend and refine rather than overwriting; don't lose prior synthesis. Refresh the "Sources ingested" list to match what's currently under `raw/<person-slug>/`.
 
@@ -92,3 +64,7 @@ Tell the user whose profile you (re)built, how many raw sources fed it, and a 2�
 - Always re-read the full raw corpus; never synthesize from a single file.
 - Never clobber an existing profile — merge into it.
 - One person per run.
+
+## Assets
+
+- `assets/profile-template.md` — the frontmatter + section skeleton for the synthesized profile. Read and fill it; never inline the template in prose.

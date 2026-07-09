@@ -14,6 +14,10 @@ pre-publish check done during the sops migration.
 security posture*; `secret-scan` looks for *leaked secret material* (private keys, password
 hashes, tokens) that should never be committed in plaintext.
 
+## Arguments
+
+None.
+
 ## What it knows about this repo
 
 - **`secrets/`** holds sops-**encrypted** files — expected, not flagged. The scan instead

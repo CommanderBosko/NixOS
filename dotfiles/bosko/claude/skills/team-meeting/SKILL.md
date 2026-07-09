@@ -11,11 +11,12 @@ Convene the user's personal advisory board. Based on everything you know about t
 
 ### 1. Ground yourself in who the user is
 
-Read the user's profile from the shared advisory-board knowledge base in the Nix repo —
-`/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/team-member.md` (this path is shared verbatim
-across `team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if
-it ever moves, update all four). Note their current role, what they're building toward, strengths,
-blockers, and trusted advisors.
+Read the user's profile from `team-member.md` inside the shared advisory-board knowledge
+base in the Nix repo — the base path is the canonical one recorded in
+`~/.claude/skills/_shared/knowledge-base-path.md` (the single source of truth shared by
+`team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if
+the knowledge base ever moves, update only that one file). Note their current role, what
+they're building toward, strengths, blockers, and trusted advisors.
 
 - If that file doesn't exist, say so and suggest running the `new-team-member` skill first — then offer to proceed using whatever you already know about them from the conversation and memory.
 - If any advisor profiles already exist under `knowledge/<person-slug>/team-member.md`, factor in who's already on the board so you don't just repeat them.

@@ -110,27 +110,9 @@ A running, human-facing log at the repo root. **Prepend** the new entry — most
 first, never overwrite history. Keep it **short**: skip the exhaustive file list (git
 `--stat` has it); a one-line commit range is plenty. Focus on narrative and decisions.
 
-```markdown
-## Session: [DATE] — [Brief Session Title]
-
-**Focus**: [one sentence — the primary goal]
-
-### What changed (and why)
-- [the few things that matter, with rationale — not a file-by-file dump]
-
-### Decisions
-- [important decisions + why]
-
-### Issues / surprises
-- [anything that bit you]
-
-### Next session
-- [actionable next steps]
-
-**Commits**: `[oldest]..[newest]` ([n] commits)
-
----
-```
+Read the entry template from `assets/session-summary-template.md` (relative to this
+skill's directory) and fill its `[...]` placeholders from this session's actual work, then
+prepend the filled result to `session-summary.md`.
 
 **Rotation — keep the active log lean.** After prepending, the active
 `session-summary.md` should hold only the **~5 most recent** session entries; older entries
@@ -168,19 +150,9 @@ personal data, across both the working tree and git history. Redact anything it 
 the README, prefer describing secrets as sops-managed rather than naming values, and note
 any redaction in the session summary.
 
-```markdown
-# [Project Name]
-
-[One-paragraph description]
-
-## Current Status
-## Features
-## Getting Started   (Prerequisites / Installation / Configuration / Running)
-## Project Structure
-## Recent Changes
-## Roadmap
-## License
-```
+Read the skeleton from `assets/readme-template.md` (relative to this skill's directory)
+and fill it in (or use it as the section skeleton when updating an existing README),
+preserving existing accurate sections rather than blanking them.
 
 ---
 
@@ -249,3 +221,24 @@ reminders so you never re-list completed work as pending.
   headers, `password`/`token`/`api_key`/`secret` literals) across the changed files before
   publishing README changes, and note in the session summary that `secret-scan` wasn't
   available so a manual check was substituted.
+- **`scripts/rotate-session-summary.sh` is relative to the *skill's* directory, not the
+  project cwd** — running it as `.claude/skills/session-closer/scripts/rotate-session-summary.sh
+  <repo-root>` (or the same path prefixed with the project root) fails with exit 127,
+  because this repo's session-closer isn't project-local — it's symlinked into
+  `~/.claude/skills/session-closer/`. This has recurred across multiple sessions, each time
+  wasting a failed attempt before self-correcting. Always invoke it with the absolute path
+  from the "Base directory for this skill" line shown when the skill launched (e.g.
+  `~/.claude/skills/session-closer/scripts/rotate-session-summary.sh <repo-root>`), never a
+  bare `scripts/...` or project-root-relative path.
+- **`project-state.md` has grown too large for a single `Read`** (currently 381 lines /
+  ~137KB, ~35k tokens against a 25k-token Read limit). Across several sessions, Step 3 first
+  tried a bare `Read project-state.md` (fails), then guessed a large offset/limit window
+  (e.g. 236 or 267 lines) that *still* overflowed, before finally landing on a narrower
+  range — wasting 2+ failed reads each time. Instead, `grep -n '^## '
+  /home/bosko/NixOS/project-state.md` first to find section boundaries, then `Read` only the
+  section(s) being updated (~100-150 lines per call) rather than guessing a wide window.
+
+## Assets
+
+- `assets/session-summary-template.md` — the `## Session: [DATE] — [Brief Session Title]` entry template used in STEP 4. Read it, fill its `[...]` placeholders from this session's actual work, and prepend the result to `session-summary.md`.
+- `assets/readme-template.md` — the `README.md` section skeleton used in STEP 5. Read it and use it to fill/refresh the project's `README.md`, preserving existing accurate sections.

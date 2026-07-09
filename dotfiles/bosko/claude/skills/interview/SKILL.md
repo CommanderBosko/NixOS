@@ -79,7 +79,7 @@ Relay the reviewer's findings to the user plainly. Fold in any fixes you and the
 
 ### 8. Hand off
 
-Once confirmed, ask whether they want to (a) save the brief to a file, (b) move straight into planning/implementation, or (c) stop here. Do only what they choose — don't auto-start building.
+Once confirmed, use the **AskUserQuestion** tool to ask what happens next, with options **Save the brief** (write it to a file), **Move into planning/implementation** (start work now), and **Stop here** (end the session with just the confirmed brief). Do only what they choose — don't auto-start building.
 
 ## Rules
 

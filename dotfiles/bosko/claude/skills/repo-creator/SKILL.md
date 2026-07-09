@@ -42,31 +42,31 @@ files (`.idea/`, `.vscode/` unless intentionally used). For Nix projects exclude
 `.direnv/`, `result`, `result-*`.
 
 ### 5. Initialize git (if needed)
+The init/checkout, repo creation, and final stage-commit-push are all mechanical (fixed
+commands, no judgment) so they're handled by `scripts/create-repo.sh`; only the
+history-pause decision and the commit-message drafting stay here.
+
 ```bash
-git init
-git checkout -b main
+scripts/create-repo.sh init
 ```
-If already a repo, ensure the default branch is `main`. **If the directory already has
-real git history, pause** — this skill is for new projects; confirm the user wants to push
-existing history to a new remote before continuing.
+Initializes git and checks out `main` if this isn't a repo yet; if it already is, ensures
+the branch is `main` and prints `existing-commits: <n>`. **If `existing-commits` is
+non-zero, pause** — this skill is for new projects; use the AskUserQuestion tool (options
+**Push existing history** / **Cancel**) to confirm the user wants to push existing history
+to a new remote before continuing.
 
 ### 6. Create the GitHub repo
 ```bash
-gh repo create CommanderBosko/<repo-name> --public --source=. --remote=origin --push=false
+scripts/create-repo.sh create <repo-name>
 ```
+Runs `gh repo create CommanderBosko/<repo-name> --public --source=. --remote=origin --push=false`,
+then normalizes the remote to SSH format if `gh` left it as HTTPS, and prints `git remote -v`.
 If `gh` is unavailable, fall back to the GitHub REST API via `curl`, or guide the user to
-create it manually and supply the SSH remote. Then verify and force SSH format:
-```bash
-git remote -v
-git remote set-url origin git@github.com:CommanderBosko/<repo-name>.git  # if HTTPS
-```
+create it manually and supply the SSH remote.
 
 ### 7. Stage
-```bash
-git add .
-```
-Review staged files. If anything sensitive or unnecessary is staged, unstage it and update
-`.gitignore` first.
+Review what `git status` would stage. If anything sensitive or unnecessary would be
+staged, update `.gitignore` first — staging itself happens as part of step 9's script call.
 
 ### 8. Craft the initial commit message
 Intelligent and specific — never a bare "Initial commit". Structure:
@@ -85,11 +85,12 @@ Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
 model name here, it will drift the next time the underlying model changes.
 
 ### 9. Commit & push
+Write the crafted message (step 8) to a temp file, then:
 ```bash
-git commit -m "<crafted message>"
-git push -u origin main
+scripts/create-repo.sh push <commit-msg-file>
 ```
-Never `--force`, never `--no-verify`.
+Stages everything (`git add .`), commits with `-F <commit-msg-file>`, and pushes with
+`-u origin main`. Never `--force`, never `--no-verify`.
 
 ### 10. Verify & report
 Confirm the push, output the URL `https://github.com/CommanderBosko/<repo-name>`, and

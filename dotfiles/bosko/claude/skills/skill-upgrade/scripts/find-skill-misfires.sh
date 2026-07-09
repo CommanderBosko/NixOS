@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Scan this project's Claude Code session transcripts for tool errors and report
+# which Skill was active when each one happened, so skill-upgrade can spot
+# misfires that recur across sessions (not just within the current one).
+#
+# Usage: find-skill-misfires.sh [project-dir] [max-files]
+#   project-dir  defaults to $PWD
+#   max-files    most-recently-modified transcripts to scan (default 15)
+
+set -euo pipefail
+
+PROJECT_DIR="${1:-$PWD}"
+MAX_FILES="${2:-15}"
+
+SLUG="$(echo "$PROJECT_DIR" | sed 's/^\///; s/\//-/g')"
+TRANSCRIPT_DIR="$HOME/.claude/projects/-${SLUG}"
+
+if [ ! -d "$TRANSCRIPT_DIR" ]; then
+  echo "No transcript directory found at $TRANSCRIPT_DIR" >&2
+  exit 1
+fi
+
+FILES=$(cd "$TRANSCRIPT_DIR" && ls -t -- *.jsonl 2>/dev/null | head -n "$MAX_FILES")
+
+if [ -z "$FILES" ]; then
+  echo "No .jsonl transcripts found in $TRANSCRIPT_DIR" >&2
+  exit 1
+fi
+
+cd "$TRANSCRIPT_DIR"
+python3 - "$FILES" <<'PYEOF'
+import json, sys
+
+files = sys.argv[1].split("\n")
+
+for fn in files:
+    fn = fn.strip()
+    if not fn:
+        continue
+    tool_uses = {}
+    current_skill = None
+    hits = []
+    try:
+        with open(fn) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                content = obj.get("message", {}).get("content")
+                if not isinstance(content, list):
+                    continue
+                for c in content:
+                    if not isinstance(c, dict):
+                        continue
+                    if c.get("type") == "tool_use":
+                        tool_uses[c.get("id")] = (c.get("name"), c.get("input"))
+                        if c.get("name") == "Skill":
+                            current_skill = c.get("input", {}).get("skill")
+                    elif c.get("type") == "tool_result" and c.get("is_error"):
+                        name, inp = tool_uses.get(c.get("tool_use_id"), ("?", {}))
+                        err = c.get("content")
+                        if isinstance(err, list):
+                            err = " ".join(str(x.get("text", "")) for x in err if isinstance(x, dict))
+                        hits.append((current_skill, name, str(inp)[:150], str(err)[:200]))
+    except OSError:
+        continue
+    if hits:
+        print(f"=== {fn} ===")
+        for skill_ctx, tool, inp, err in hits:
+            print(f"  skill={skill_ctx} tool={tool} input={inp} err={err}")
+PYEOF

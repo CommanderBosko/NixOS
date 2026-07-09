@@ -59,9 +59,11 @@ Read the target file(s). Show the user:
 1. The current `with pkgs;` list (just the list, not the entire file).
 2. The same list with the new package inserted in **alphabetical order**.
 
-State clearly where the package will be inserted. Do not write anything yet — wait for the user to confirm.
+State clearly where the package will be inserted. Do not write anything yet.
 
 If the `home.nix` file does not yet have a `home.packages` block, show the block that will be added.
+
+Ask the user to confirm via the **AskUserQuestion tool**, with one option `Confirm` (make the edit) and one option `Cancel` (make no change), rather than free-form prose. Do not proceed to Step 4 until the user selects `Confirm`.
 
 ## Step 4 — Make the edit
 

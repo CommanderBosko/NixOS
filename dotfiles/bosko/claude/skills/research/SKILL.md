@@ -7,6 +7,13 @@ description: Web-search a topic, fan out parallel sub-agents to review the top r
 
 Runs a web search on a topic, spawns parallel sub-agents to each review one top result in detail, and synthesizes their findings into a consensus report. (Bucket: Data Enrichment)
 
+## Arguments
+
+Invocation shape: `<topic>` or `<topic> <n>`.
+
+- **`<topic>`** (required) — the subject to research. If omitted, ask the user for one before proceeding.
+- **`<n>`** (optional) — the number of top results to review in depth. Defaults to **10** if omitted.
+
 ## Steps
 
 1. **Parse arguments.** The invocation is `<topic>` or `<topic> <n>`, where `<n>` is an optional result count. Default `n` to 10 if omitted. If no topic is given, ask the user for one.
