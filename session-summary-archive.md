@@ -1,3 +1,31 @@
+## Session: 2026-07-02 (session 29) — nixpkgs unpinned; CI added, then hardened by the pnpm incident it missed
+
+**Focus**: Open-ended "what would you improve?" assessment, then execute the accepted items: lift the zen-kernel nixpkgs pin, add GitHub Actions eval CI, scope (and ultimately scrap) a backup system, and run `/improve-system`.
+
+### What changed (and why)
+- **nixpkgs pin lifted (`48c11d3`)** — `/flake-update-verify` moved all 5 inputs; zen 7.1.2 ships `bzImage` again (verified by building the kernel from cache), so the session-19 hold is gone. Committed + pushed, **not activated** — every host's next rebuild pulls the new kernel + ~2 weeks of unstable.
+- **CI added (`2964759`), then hardened (`3015529`)** — `.github/workflows/check.yml` evals all four hosts on every push. The hardening exists because the first version **passed a broken config**: the new nixpkgs marks vesktop's build tool `pnpm-10.29.2` insecure, killing eval on all three desktop hosts, while `nix flake check` (shallow for nixosConfigurations) stayed green both locally and in CI. Caught only by `/improve-system`'s dry-run certification step. CI now deep-evals each host's `toplevel.drvPath`.
+- **pnpm waiver (`aa3d690`)** — temporary `permittedInsecurePackages` for `pnpm-10.29.2` in `nix.nix` (build-time CVEs only); nixpkgs master already fixed vesktop (`4b3d28a4`) — remove the waiver once nixos-unstable includes it.
+- **6 skill gotchas (`c9b8c08`)** + **new `ci-status` skill (`6cce517`)** — the shallow-flake-check lesson written into flake-check/flake-update-verify, the removed `--update-input` flag into bump-input, the AskUserQuestion timeout into interview, the script path into skill-audit; ci-status wraps the new "is CI green" workflow.
+
+### Decisions
+- **Backups scrapped** — user reviewed the data reality: GitHub holds the projects, photos/videos already cloud-backed, Jellyfin-state loss accepted. Recorded in memory; never re-propose. sops age key confirmed two-copy (gaming + laptop). Auto-GC also declined (manual `cleanup` preferred).
+- **Waiver over re-pin or overlay** for the pnpm breakage — a re-pin discards fresh security updates; an overlay needs a from-source vesktop build; the scoped waiver is the standard mechanism and self-expires at the channel's next vesktop fix.
+- **"flake check passed" ≠ "hosts evaluate"** — adopted deep per-host eval as the real gate, in CI and in the update loop.
+
+### Issues / surprises
+- The pushed lock bump was un-rebuildable for ~2 hours before the dry-run caught it — both verification layers (local flake-check, fresh CI) shared the same blind spot. The incident retroactively justified the CI item it broke.
+- `bump-input`'s documented command (`nix flake lock --update-input`) no longer exists in current nix.
+
+### Next session
+- Activate the lock bump fleet-wide (`/fleet-rollout` or per-host rebuilds; zen kernel ⇒ reboot); big first download.
+- At the next nixpkgs bump, test dropping the pnpm waiver.
+- gaming rebuild also brings the repo-managed skill gotchas (interview, skill-audit) into `~/.claude`.
+
+**Commits**: `48c11d3`..`6cce517` (6 commits)
+
+---
+
 ## Session: 2026-07-02 (session 28) — OnlyOffice fonts actually fixed; full `/improve-system` skill-audit pass
 
 **Focus**: Finish the OnlyOffice font investigation left unverified in session 26, then run `/improve-system` end-to-end and fix every finding from its skill-audit, one at a time with a commit after each.

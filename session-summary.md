@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-09 (session 34) — Niri config.kdl moved into dotfiles + keybind/layout tweaks
+
+**Focus**: Niri on gaming is working well; figure out what should move from ad-hoc `$HOME` state into version-controlled dotfiles, then make a few requested tweaks.
+
+### What changed (and why)
+- **`dotfiles/common/configs/niri-config.kdl` (new) + `niri.nix` (`b9913b5`)** — `~/.config/niri/config.kdl` was a plain mutable file with no version history; symlinked it in via Home Manager (`home.file`, `force = true`), scoped to `niri.nix` itself (gaming + laptop only) rather than shared `home.nix`. DMS's own generated state (`DankMaterialShell/settings.json`, `niri/dms/*.kdl`) stays unmanaged on purpose — it's written live by DMS's settings UI.
+- **Removed the stock `spawn-at-startup "waybar"` line (`e38f114`)** — leftover from niri's default template; DMS's own shell is the actual panel here and waybar isn't installed.
+- **Added `Mod+Return` (kitty) and `Mod+B` (browser) keybinds (`0cbeb1d`)** — browser bind is `xdg-open https:// || flatpak run app.zen_browser.zen`; confirmed live that `mimeapps.list` already defaults to Zen, but that file isn't dotfiles-managed, so the flatpak fallback covers a fresh install.
+- **Gaps reduced 16px → 8px (`bf2ba35`)** — user-requested layout tweak.
+
+### Decisions
+- Chose to manage `config.kdl` via Nix despite a real tradeoff: DMS may in future try to auto-inject additional `include` lines into it (only `outputs.kdl` is included today; other generated files like `colors.kdl` expect to be added the same way), and a Nix-managed symlink is read-only so that injection would silently fail. Judged this an acceptable, easily-diagnosed papercut against the alternative of permanently unversioned config state.
+- Left DMS's theme/settings files (`settings.json`, `dms/*.kdl`) unmanaged — forcing those under Nix would break DMS's live theme-picker UI.
+
+### Issues / surprises
+- Discovered the `colors.kdl`/etc. DMS-generated files carry a comment implying DMS itself is meant to add their `include` lines automatically — worth knowing if a future DMS setting toggle doesn't seem to apply after this change.
+- `xdg-open` can't force a browser to open in a genuinely new window (no generic way to pass `--new-window` through a `.desktop` file's `Exec` line) — may open a new tab instead if the browser's already running.
+
+### Next session
+- **Reboot gaming and laptop** to activate the `config.kdl` symlink (rides along with other pending lock-bump reboots) — verify the new keybinds, the 8px gaps, and that DMS's settings UI still writes freely.
+
+**Commits**: `b9913b5`..`bf2ba35` (4 commits, not yet pushed at close)
+
+---
+
 ## Session: 2026-07-08 (session 33) — gaming DE switched to Niri ahead of a gaming test
 
 **Focus**: Switch gaming's desktop environment to Niri and make sure anything the gaming test needs is in place.
@@ -92,34 +117,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Fleet-wide activation of the 2026-07-02 lock bump is still the big pending item (zen 7.1.2 ⇒ reboot per desktop).
 
 **Commits**: `6ceb653`..`fb94dfc` (2 commits; `289b8f1`, the dms/financeguru bump, landed between closes but outside this conversation)
-
----
-
-## Session: 2026-07-02 (session 29) — nixpkgs unpinned; CI added, then hardened by the pnpm incident it missed
-
-**Focus**: Open-ended "what would you improve?" assessment, then execute the accepted items: lift the zen-kernel nixpkgs pin, add GitHub Actions eval CI, scope (and ultimately scrap) a backup system, and run `/improve-system`.
-
-### What changed (and why)
-- **nixpkgs pin lifted (`48c11d3`)** — `/flake-update-verify` moved all 5 inputs; zen 7.1.2 ships `bzImage` again (verified by building the kernel from cache), so the session-19 hold is gone. Committed + pushed, **not activated** — every host's next rebuild pulls the new kernel + ~2 weeks of unstable.
-- **CI added (`2964759`), then hardened (`3015529`)** — `.github/workflows/check.yml` evals all four hosts on every push. The hardening exists because the first version **passed a broken config**: the new nixpkgs marks vesktop's build tool `pnpm-10.29.2` insecure, killing eval on all three desktop hosts, while `nix flake check` (shallow for nixosConfigurations) stayed green both locally and in CI. Caught only by `/improve-system`'s dry-run certification step. CI now deep-evals each host's `toplevel.drvPath`.
-- **pnpm waiver (`aa3d690`)** — temporary `permittedInsecurePackages` for `pnpm-10.29.2` in `nix.nix` (build-time CVEs only); nixpkgs master already fixed vesktop (`4b3d28a4`) — remove the waiver once nixos-unstable includes it.
-- **6 skill gotchas (`c9b8c08`)** + **new `ci-status` skill (`6cce517`)** — the shallow-flake-check lesson written into flake-check/flake-update-verify, the removed `--update-input` flag into bump-input, the AskUserQuestion timeout into interview, the script path into skill-audit; ci-status wraps the new "is CI green" workflow.
-
-### Decisions
-- **Backups scrapped** — user reviewed the data reality: GitHub holds the projects, photos/videos already cloud-backed, Jellyfin-state loss accepted. Recorded in memory; never re-propose. sops age key confirmed two-copy (gaming + laptop). Auto-GC also declined (manual `cleanup` preferred).
-- **Waiver over re-pin or overlay** for the pnpm breakage — a re-pin discards fresh security updates; an overlay needs a from-source vesktop build; the scoped waiver is the standard mechanism and self-expires at the channel's next vesktop fix.
-- **"flake check passed" ≠ "hosts evaluate"** — adopted deep per-host eval as the real gate, in CI and in the update loop.
-
-### Issues / surprises
-- The pushed lock bump was un-rebuildable for ~2 hours before the dry-run caught it — both verification layers (local flake-check, fresh CI) shared the same blind spot. The incident retroactively justified the CI item it broke.
-- `bump-input`'s documented command (`nix flake lock --update-input`) no longer exists in current nix.
-
-### Next session
-- Activate the lock bump fleet-wide (`/fleet-rollout` or per-host rebuilds; zen kernel ⇒ reboot); big first download.
-- At the next nixpkgs bump, test dropping the pnpm waiver.
-- gaming rebuild also brings the repo-managed skill gotchas (interview, skill-audit) into `~/.claude`.
-
-**Commits**: `48c11d3`..`6cce517` (6 commits)
 
 ---
 
