@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, self, ... }:
 
 {
   programs = {
@@ -24,6 +24,14 @@
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
+
+    # Niri config (input, layout, binds, window rules). DMS-generated files under
+    # ~/.config/niri/dms/ (theme/output state driven by its own settings UI) are
+    # left unmanaged on purpose.
+    home.file.".config/niri/config.kdl" = {
+      source = "${self}/dotfiles/common/configs/niri-config.kdl";
+      force = true;
+    };
 
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
