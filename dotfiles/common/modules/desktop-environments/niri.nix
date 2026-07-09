@@ -9,8 +9,15 @@
     xwayland.enable = true;
   };
 
-  # Enable x11
-  services.xserver.enable = true;
+  services = {
+    # Enable x11
+    xserver.enable = true;
+
+    # Plasma auto-enables these two as defaults; bare compositors like Niri
+    # don't, so DMS's System Check flags them as unavailable without this.
+    accounts-daemon.enable = true;
+    power-profiles-daemon.enable = true;
+  };
 
   # Enable Dank Material Shell via Home Manager
   home-manager.users.bosko = {

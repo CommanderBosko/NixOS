@@ -3,7 +3,9 @@
 let
   systemFonts = with pkgs; [
     corefonts
+    fira-code # DMS's expected monospace font
     font-awesome
+    inter # DMS's expected UI font (ships "Inter Variable")
     liberation_ttf
     nerd-fonts.code-new-roman
     noto-fonts
