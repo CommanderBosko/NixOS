@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-08 (session 33) — gaming DE switched to Niri ahead of a gaming test
+
+**Focus**: Switch gaming's desktop environment to Niri and make sure anything the gaming test needs is in place.
+
+### What changed (and why)
+- **`flake.nix` (`34a7dbe`)** — gaming's DE import changed `plasma.nix` → `niri.nix`.
+- **`nvidia.nix` (`34a7dbe`)** — added `GBM_BACKEND`, `__GLX_VENDOR_LIBRARY_NAME`, `LIBVA_DRIVER_NAME` session variables. Niri is Smithay-based, not wlroots, so it doesn't get KWin's automatic nvidia vendor-lib selection; these are the vars that actually matter for Niri (not the wlroots-specific folklore like `WLR_NO_HARDWARE_CURSORS`, which would be a no-op here).
+- Confirmed everything else gaming needs under Niri was already present by reading the modules directly: Steam/gamescope/gamemode/controller support (`gaming.nix`, DE-agnostic), `xwayland-satellite` for Steam's X11-only overlays (already in `niri.nix`), and SDDM+Niri as a session pairing (already proven on `laptop`).
+
+### Decisions
+- Asked before touching anything: confirmed Plasma's **Wayland** session (not X11) was already running on this GPU, so nvidia+Wayland is proven on this hardware rather than untested — lowering the risk of the switch.
+- Added the nvidia+Niri session vars preemptively (user's choice) rather than waiting for a visible glitch — harmless if unneeded.
+- Did a full DE swap (not a dry-run-only preview) — the existing generation-rollback safety net (previous Plasma generation stays at the boot menu) covers the downside; no dual-DE session was set up.
+
+### Issues / surprises
+- None — dry-run passed clean on the first try (niri + its XDG portal + `unit-niri.service` added, KDE removed, ~1.48 GiB smaller closure).
+
+### Next session
+- **Reboot gaming** to actually activate the switch (rides along with the already-pending lock bumps — one reboot covers both), then test Steam/Proton, controller input, and cursor rendering under Niri.
+- If Niri turns out broken for gaming, roll back via the boot menu's previous Plasma generation.
+
+**Commits**: `34a7dbe` (1 commit, not yet pushed at close)
+
+---
+
 ## Session: 2026-07-07 (session 32) — routine flake update via `/flake-update-verify`
 
 **Focus**: Update flake inputs, verify eval, commit and push if green.
@@ -95,33 +120,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - gaming rebuild also brings the repo-managed skill gotchas (interview, skill-audit) into `~/.claude`.
 
 **Commits**: `48c11d3`..`6cce517` (6 commits)
-
----
-
-## Session: 2026-07-02 (session 28) — OnlyOffice fonts actually fixed; full `/improve-system` skill-audit pass
-
-**Focus**: Finish the OnlyOffice font investigation left unverified in session 26, then run `/improve-system` end-to-end and fix every finding from its skill-audit, one at a time with a commit after each.
-
-### What changed (and why)
-- **OnlyOffice fonts fixed for real (`77c5014`)** — the session-26 fix (real files instead of symlinkJoin) wasn't enough on its own: built the package directly and inspected the actual sandbox rootfs, found `buildFHSEnv`'s own internal rootfs-merge step re-symlinks every file from `targetPkgs` regardless of whether the source was already a real file — so every font was still one symlink hop away from what OnlyOffice's scanner will read (it refuses all symlinks, `ONLYOFFICE/DocumentServer#1859`). Fixed by also overriding the `buildFHSEnv` argument to append a post-merge dereference step. Verified by building the package (286/286 real files, was 286/286 symlinks) and then live: user ran `nh os switch` on gaming and confirmed fonts now appear in the dropdown.
-- **`/improve-system` full run, all 13 skill-audit findings fixed (`a5a0c82`..`07ad1d2`)** — 4 disjoint sub-agents audited all 49 skills. Real bugs fixed: skill-audit's own `enumerate-skills.sh` was silently broken (pipefail + grep -v aborted on 29/49 skills); a stale `Claude Opus 4.8` co-author line was hardcoded in 4 skills; `nixos-gc` had bare `sudo` calls with no user-handoff (added an unprivileged preview script); `git-commit`/`git-push` had drifted from `commit`/`push` (git-push had *no* confirmation gate at all); plus 9 smaller fixes (ssh-host alias, switch-de's stale table, new-peer's hardcoded IP roster → `hosts.json`, a shared script for bump-input/pin-input's duplicated parse, new-host's sops-key-derive script, new-skill's AskUserQuestion gap, two missing `## Arguments` sections, and the team-member family's path cross-reference).
-
-### Decisions
-- Fonts fix verified two ways before calling it done: build-and-inspect the rootfs (proves the mechanism), then live user confirmation (proves the outcome) — matches this repo's standing verification-plan habit.
-- `git-commit`/`git-push` fixed for real gaps but **not** made identical to `commit`/`push` — copying the `-C /home/bosko/NixOS` pinning would break the global pair in the user's other repos.
-- Team-member knowledge-path duplication resolved via cross-reference comments, not a shared `config.json` — same reasoning as session 22's skipped consolidation (separately-symlinked global skills, low actual drift risk).
-- `nh os switch` (not `boot`) confirmed as the right call for a userspace-only package fix — no kernel/initrd/bootloader involved, so no reboot needed.
-
-### Issues / surprises
-- The `buildFHSEnv` symlink-re-creation behavior was invisible from reading `fonts.nix` or the package's `package.nix` alone — only became clear by building the package and directly inspecting the built `.../fhsenv-rootfs/usr/share/fonts/` contents.
-- `enumerate-skills.sh` had apparently never worked correctly (silent zero-output failure) until this session's live run exposed it.
-- Two earlier-session `/improve-system` approvals (the `rollback` sudo gotcha, the permission allowlist) had been applied to disk but never committed — caught and committed (`2f59839`) before starting the numbered fix list, so nothing was lost.
-
-### Next session
-- Rebuild gaming to pick up the global-skill fixes (`git-commit`, `git-push`, `session-closer`, `repo-creator`, `new-skill`, `skill-audit`, team-member family) plus the pending `research` skill and earlier sessions' skill edits.
-- Rebuild/switch laptop and natalie-laptop to pick up the OnlyOffice font fix (both hosts have `onlyoffice-desktopeditors` installed) — no reboot required, `nh os switch` is enough.
-
-**Commits**: `77c5014`..`07ad1d2` (15 commits)
 
 ---
 
