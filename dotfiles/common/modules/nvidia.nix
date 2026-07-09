@@ -40,4 +40,14 @@
       package = config.boot.kernelPackages.nvidiaPackages.stable;
     };
   };
+
+  # Niri (Smithay-based, not wlroots) allocates buffers via GBM and doesn't
+  # auto-select the nvidia vendor lib the way KWin does — without these,
+  # XWayland/GLX apps and hardware video decode can silently fall back to
+  # software rendering under a Wayland session on this GPU.
+  environment.sessionVariables = {
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    LIBVA_DRIVER_NAME = "nvidia";
+  };
 }
