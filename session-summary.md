@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-09 (session 35) — qBittorrent/Qt theming under niri+DMS actually fixed
+
+**Focus**: The prior session's qt6ct fix (`8cabb8b`) didn't actually work — qBittorrent was still light-themed. Research and fix the real cause.
+
+### What changed (and why)
+- **Diagnosed via DMS's own logs and settings, not guesswork.** `qt6ct` package + `QT_QPA_PLATFORMTHEME=qt6ct` were necessary but not sufficient. Found `qtThemingEnabled: false` in `~/.config/DankMaterialShell/settings.json` — DMS always generates the matugen Qt color file but only applies it when this flag is on. Flipped it live, then found via `journalctl --user -u dms.service` that DMS's backend only touches an existing `qt6ct.conf`'s mtime — it never creates the file, and none existed on this host (normally seeded once via the `qt6ct` GUI, never run here).
+- **`niri.nix` (`b3bbb47`)** — added `.config/qt6ct/qt6ct.conf` as an HM `home.file` (custom_palette + color_scheme_path pointing at DMS's matugen.conf, templated via `config.home.homeDirectory`), scoped to gaming+laptop.
+- **Verified live before committing**: wrote the same file by hand to gaming, restarted qBittorrent (safe — resumes seeding), and confirmed via `grim` screenshot it actually rendered dark.
+
+### Decisions
+- Pulled `qt6ct.conf` into Nix (static, DMS only touches its mtime — low risk) but explicitly **not** `settings.json` or `matugen.conf` (both rewritten live by DMS itself; a read-only Nix symlink would break DMS's own settings UI / theme regeneration).
+
+### Issues / surprises
+- The original `8cabb8b` fix looked complete (package + env var) but silently wasn't — the actual blocker was two layers of DMS's own runtime state, invisible without reading its logs.
+- `dms ipc call theme light`/`dark` is the way to force DMS to re-run its matugen/apply pipeline on demand (it otherwise skips regeneration when it detects no color change).
+
+### Next session
+- **Reboot gaming and laptop** to pick up the Nix-managed `qt6ct.conf` (gaming's live copy is already hand-identical, so no visible change there; laptop gets it fresh).
+- On laptop, also confirm/flip DMS's `qtThemingEnabled` toggle once post-boot — that half is intentionally unmanaged.
+
+**Commits**: `b3bbb47` (1 commit). `8cabb8b` landed in an unclosed prior session and is not re-narrated here beyond its commit message.
+
+---
+
 ## Session: 2026-07-09 (session 34) — Niri config.kdl moved into dotfiles + keybind/layout tweaks
 
 **Focus**: Niri on gaming is working well; figure out what should move from ad-hoc `$HOME` state into version-controlled dotfiles, then make a few requested tweaks.
@@ -94,29 +118,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - At the next nixpkgs bump, retest removing the `pnpm-10.29.2` insecure waiver in `nix.nix`.
 
 **Commits**: `fcac089`..`b0d3b44` (2 commits)
-
----
-
-## Session: 2026-07-03 (session 30) — natalie-laptop IP drift fixed; project commit/push skills retired
-
-**Focus**: Update all references after natalie-laptop's LAN IP changed (10.0.0.103 → 10.0.0.101), explain why it happened, and de-duplicate the commit/push skill pairs.
-
-### What changed (and why)
-- **IP references updated (`6ceb653`)** — the router's DHCP reassigned natalie-laptop's address; the host has no static IP and no reservation (its Wi-Fi lease is flagged `dynamic`), so nothing on our side changed — leases just aren't guaranteed sticky across lease expiry, router reboots, or another device claiming the slot while the laptop is offline. Fixed `.claude/hosts.json` and the HM SSH alias in `dotfiles/common/configs/ssh.nix`; verified the new address answers as `natalie-laptop` over SSH before editing anything.
-- **Project `commit`/`push` skills deleted (`fb94dfc`)** — near-duplicates of the global `git-commit`/`git-push` with overlapping triggers (selection was a coin flip). Their one unique asset, the commit-format reference, moved into CLAUDE.md as a "Commit Style" section; six skills referencing `/commit`/`/push` retargeted to the global pair.
-
-### Decisions
-- **Keep DHCP on natalie-laptop; fix recurrence at the router if desired** — a static IP in `networking.nix` was rejected for a roaming laptop (breaks on other networks). A router-side DHCP reservation is the right prevention; noted as an optional router-UI task.
-- **Deleted the project skill pair, not the global one** — the global pair must stay cwd-based for the user's other repos (same reasoning as session 28's refusal to copy the `-C` pinning); repo conventions belong in CLAUDE.md, not a duplicate skill.
-
-### Issues / surprises
-- None — both commits dry-ran clean and CI deep-eval certified each (2m2s / 2m24s).
-
-### Next session
-- The `ssh natalie-laptop` alias stays stale (.103) on every host until that host rebuilds; use `bosko@10.0.0.101` directly meanwhile.
-- Fleet-wide activation of the 2026-07-02 lock bump is still the big pending item (zen 7.1.2 ⇒ reboot per desktop).
-
-**Commits**: `6ceb653`..`fb94dfc` (2 commits; `289b8f1`, the dms/financeguru bump, landed between closes but outside this conversation)
 
 ---
 
