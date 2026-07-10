@@ -1,14 +1,15 @@
 # <Hostname — human-readable description>
-<hostname> = self.lib.mkSystem {
-  inherit inputs system nixpkgs;
-  specialArgs = { inherit inputs self system; };
+# mkSystem sets networking.hostName from `name` and injects the shared
+# specialArgs; system defaults to x86_64-linux and nixpkgs to nixos-unstable.
+<hostname> = mkSystem {
+  name = "<hostname>";
   modules = desktopModules ++ [
     # Machine-specific modules
     "${self}/hosts/<hostname>/hardware-configuration.nix"
     "${self}/hosts/<hostname>/environment.nix"
     "${self}/hosts/<hostname>/networking.nix"
-    "${self}/dotfiles/common/modules/desktop-environments/<de>.nix"
-    # "${self}/dotfiles/common/modules/nvidia.nix"   # uncomment if nvidia GPU
-    # "${self}/dotfiles/common/modules/amd.nix"      # uncomment if amd GPU
+    "${self}/modules/desktop-environments/<de>.nix"
+    # "${self}/modules/nvidia.nix"   # uncomment if nvidia GPU
+    # "${self}/modules/amd.nix"      # uncomment if amd GPU
   ];
 };

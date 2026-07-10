@@ -11,9 +11,9 @@
 
   # Add common MATE applications and utilities
   environment.systemPackages = with pkgs; [
-    mate.caja # File manager
-    mate.mate-panel-with-applets
-    mate.mate-terminal
+    caja # File manager
+    mate-panel-with-applets
+    mate-terminal
     # Add other desired MATE applications here
   ];
 }

@@ -1,51 +1,14 @@
 { ... }:
 
 {
-  # Configure networking
-  networking = {
-    # Set host name
-    hostName = "natalie-laptop";
+  # Shared desktop networking (NetworkManager, DNS, firewall, chrony, SSH)
+  # lives in modules/desktop-networking.nix; hostName is set from the flake
+  # attribute name. Only host-specific networking belongs here.
 
-    # Configure network proxy
-    # proxy.default = "http://user:password@proxy:port/";
-    # proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+  # WireGuard VPN client address for full-tunnel routing (DNS set in shared vpn.nix)
+  networking.wg-quick.interfaces.wg0.address = [ "10.10.0.4/24" ];
 
-    # Enable networking
-    networkmanager = {
-      enable = true;
-      dns = "none";
-    };
-
-    # Enable custom DNS servers
-    nameservers = [
-      "10.0.0.20"
-      "1.1.1.1"
-    ];
-
-    # WireGuard VPN client address for full-tunnel routing (DNS set in shared vpn.nix)
-    wg-quick.interfaces.wg0.address = [ "10.10.0.4/24" ];
-
-    # Enable and open ports in the firewall
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
-    };
-  };
-
-  # SSH settings
-  services = {
-    # Network clock sync
-    chrony.enable = true;
-
-    # Enable and configure openssh
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
-        PrintMotd = false;
-        AllowUsers = [ "bosko" "natty" ];
-      };
-    };
-  };
+  # natty also logs in over SSH on this host — list option, merges with the
+  # shared "bosko" entry from desktop-networking.nix
+  services.openssh.settings.AllowUsers = [ "natty" ];
 }

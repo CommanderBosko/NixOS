@@ -34,7 +34,7 @@ Confirm what to audit. Default to the entire flake. If the user named a host or 
 Read these first to ground the audit:
 
 ```bash
-ls /home/bosko/NixOS/dotfiles/common/modules
+ls /home/bosko/NixOS/modules
 ls /home/bosko/NixOS/hosts
 ```
 
@@ -45,7 +45,7 @@ Then read `flake.nix` to understand `mkSystem` and which modules each host compo
 This repo has deliberate, documented deviations. Flagging them as findings is noise. Cross-check
 every candidate finding against this list and against the project's memory files before reporting:
 
-- **AppArmor PAM path workaround** (`dotfiles/common/modules/security.nix`): SDDM `include`
+- **AppArmor PAM path workaround** (`modules/security.nix`): SDDM `include`
   directives are not `.so` paths. The `lib.mkForce` clearing of `rules` for `sddm` /
   `sddm-autologin`, with `text` overrides using `pkgs.linux-pam`, is **intentional** — it works
   around a nixpkgs bug. Not a finding.
@@ -142,7 +142,7 @@ nothing — judgment (Steps 1–4) stays with the model.
 - Working directory: `/home/bosko/NixOS`
 - Read-only by default — this skill audits and reports; it does not change the system.
 - Scope is the **whole flake**; for diffs use `/security-review` or `/code-review`.
-- Hosts: gaming, laptop, natalie-laptop, vpn-server (the four flake hosts). Shared modules under
-  `dotfiles/common/`; host-specific files under `hosts/<host>/`.
+- Hosts: gaming, laptop, natalie-laptop, vpn-server (the four flake hosts). Shared system modules
+  under `modules/`; shared HM configs under `dotfiles/`; host-specific files under `hosts/<host>/`.
 - Always cross-check candidate findings against `CLAUDE.md` and the memory index before reporting,
   to avoid flagging this repo's documented intentional workarounds.

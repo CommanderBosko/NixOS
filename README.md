@@ -1,10 +1,10 @@
 # NixOS Configuration
 
-Bosko's single-flake NixOS configuration for five hosts. Shared modules live under `dotfiles/common/`; bosko-specific Home Manager configs live under `dotfiles/bosko/`; host-specific files (hardware config, environment, networking) live under `hosts/<hostname>/`.
+Bosko's single-flake NixOS configuration for four hosts. Shared system modules live under `modules/`; Home Manager configs live under `dotfiles/` (`common/` shared by both users, `bosko/` user-specific); host-specific files (hardware config, environment, networking) live under `hosts/<hostname>/`.
 
 ## Current Status
 
-Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.11` (Xantusia) for stability (bumped from EOL 25.05 on 2026-06-17). WireGuard full-tunnel VPN is fully operational. A Jellyfin media server runs on gaming (NVENC transcoding, LAN+VPN-only) and is confirmed working across all devices. dbus-broker active on all hosts. SSH config managed declaratively via Home Manager. A managed Claude Code policy is deployed system-wide via `dotfiles/common/modules/claude-code.nix` (active on gaming; laptop and natalie-laptop pending rebuild+reboot). `bosko-claude.nix` now includes a declarative HM activation script that automatically trims redundant deny/ask/hooks keys from `~/.claude/settings.json` on every rebuild once the managed policy file is present. natalie-laptop switched to Plasma 6 (pending rebuild) and gained a VirtualBox host + extension pack for a Windows VM (pending rebuild — long from-source build). FinanceGuru installed on gaming and natalie-laptop. lutris re-enabled on gaming. Security hardening completed 2026-06-03: root SSH disabled on vpn-server, SDDM auto-login disabled on gaming (active/confirmed). niri (laptop) now relies on its own built-in Xwayland spawn for X11-only apps rather than a manual service. OnlyOffice's font detection on NixOS is now **fixed and confirmed working** on gaming (`nh os switch`, 2026-07-02) — a `buildFHSEnv` override dereferences the symlinks the sandbox's rootfs-merge step was re-creating; laptop and natalie-laptop still need their own rebuild/switch to pick it up. **GitHub Actions CI is live** (2026-07-02): every push deep-evaluates all four hosts' system derivations. The zen-kernel nixpkgs pin is lifted (upstream fixed); the 2026-07-02 lock bump awaits activation on every host, and a temporary `permittedInsecurePackages` waiver for vesktop's build-time pnpm rides with it until nixos-unstable picks up the upstream vesktop fix. gaming switched from Plasma 6 to Niri (2026-07-08, pending reboot) ahead of a gaming test on that GPU; `nvidia.nix` gained Niri-specific session variables (`GBM_BACKEND`, `__GLX_VENDOR_LIBRARY_NAME`, `LIBVA_DRIVER_NAME`) since Niri doesn't inherit KWin's automatic nvidia vendor-lib selection.
+Active development, state version `25.11`. Four active hosts (gaming, laptop, natalie-laptop, vpn-server); `server` host placeholder removed pending physical hardware. Desktop hosts (gaming, laptop, natalie-laptop) track `nixos-unstable`; vpn-server is pinned to `nixos-25.11` (Xantusia) for stability (bumped from EOL 25.05 on 2026-06-17). WireGuard full-tunnel VPN is fully operational. A Jellyfin media server runs on gaming (NVENC transcoding, LAN+VPN-only) and is confirmed working across all devices. dbus-broker active on all hosts. SSH config managed declaratively via Home Manager. A managed Claude Code policy is deployed system-wide via `modules/claude-code.nix` (active on gaming; laptop and natalie-laptop pending rebuild+reboot). `bosko-claude.nix` now includes a declarative HM activation script that automatically trims redundant deny/ask/hooks keys from `~/.claude/settings.json` on every rebuild once the managed policy file is present. natalie-laptop switched to Plasma 6 (pending rebuild) and gained a VirtualBox host + extension pack for a Windows VM (pending rebuild — long from-source build). FinanceGuru installed on gaming and natalie-laptop. lutris re-enabled on gaming. Security hardening completed 2026-06-03: root SSH disabled on vpn-server, SDDM auto-login disabled on gaming (active/confirmed). niri (laptop) now relies on its own built-in Xwayland spawn for X11-only apps rather than a manual service. OnlyOffice's font detection on NixOS is now **fixed and confirmed working** on gaming (`nh os switch`, 2026-07-02) — a `buildFHSEnv` override dereferences the symlinks the sandbox's rootfs-merge step was re-creating; laptop and natalie-laptop still need their own rebuild/switch to pick it up. **GitHub Actions CI is live** (2026-07-02): every push deep-evaluates all four hosts' system derivations. The zen-kernel nixpkgs pin is lifted (upstream fixed); the 2026-07-02 lock bump awaits activation on every host, and a temporary `permittedInsecurePackages` waiver for vesktop's build-time pnpm rides with it until nixos-unstable picks up the upstream vesktop fix. gaming switched from Plasma 6 to Niri (2026-07-08, pending reboot) ahead of a gaming test on that GPU; `nvidia.nix` gained Niri-specific session variables (`GBM_BACKEND`, `__GLX_VENDOR_LIBRARY_NAME`, `LIBVA_DRIVER_NAME`) since Niri doesn't inherit KWin's automatic nvidia vendor-lib selection.
 
 ## Features
 
@@ -12,7 +12,7 @@ Active development, state version `25.11`. Four active hosts (gaming, laptop, na
 - **CI on every push/PR** (`.github/workflows/check.yml`): `nix flake check` plus a per-host deep evaluation of each `nixosConfigurations.<host>` system derivation — eval-only (no builds, no secrets needed; the aarch64 vpn-server evaluates on the free x86 runner), catching cross-host eval breakage that a shallow flake check provably misses
 - Home Manager integrated as a NixOS module for both users (`bosko` and `natty`); both users receive the same `home.nix` config — includes Helix editor config and SSH configuration
 - SSH config managed declaratively via `programs.ssh.settings` in `dotfiles/common/configs/ssh.nix`; all five SSH hosts (natalie-laptop, laptop, gaming, pi-hole, famdash) defined with explicit `Hostname` and `User` fields; `enableDefaultConfig = false` suppresses implicit-defaults warnings
-- **Managed Claude Code policy** deployed via `dotfiles/common/modules/claude-code.nix`; generates `/etc/claude-code/managed-settings.json` at activation time via `environment.etc`; enforces deny rules for destructive commands, ask rules for sensitive operations, and a PreToolUse fork bomb guard (`jq` pinned to its Nix store path); part of `commonModules` so all hosts share the same policy; users cannot override managed rules in their personal `~/.claude/settings.json`
+- **Managed Claude Code policy** deployed via `modules/claude-code.nix`; generates `/etc/claude-code/managed-settings.json` at activation time via `environment.etc`; enforces deny rules for destructive commands, ask rules for sensitive operations, and a PreToolUse fork bomb guard (`jq` pinned to its Nix store path); part of `commonModules` so all hosts share the same policy; users cannot override managed rules in their personal `~/.claude/settings.json`
 - Local LLM stack on gaming: Ollama with CUDA acceleration (`pkgs.ollama-cuda`, RTX 3070) serving `mistral-nemo:12b` (128K context, ~7GB Q4, fits in 8GB VRAM); Hermes Agent service configured to use the local Ollama OpenAI-compatible API at `http://localhost:11434/v1`; `hermes` CLI on system PATH; bosko in the `hermes` group for CLI access
 - Jellyfin media server on gaming (`hosts/gaming/jellyfin-server.nix`): native `services.jellyfin` on a dedicated `/mnt/media` SSD with NVENC hardware transcoding (RTX 3070); firewall scoped to LAN + WireGuard only; shared `media` group with setgid library dirs; `jellyfin-media-player` client shipped to all desktop hosts via `desktopModules`
 - FinanceGuru personal finance app installed on gaming and natalie-laptop via the `github:CommanderBosko/FinanceGuru` flake input
@@ -66,36 +66,38 @@ Each host has three files under `hosts/<hostname>/`:
 - `environment.nix` — packages, Flatpaks, display manager defaults
 - `networking.nix` — hostname, DNS, firewall, SSH
 
-Host-specific changes go in those files. Shared changes go in `dotfiles/common/modules/`.
+Host-specific changes go in those files. Shared changes go in `modules/`.
 
 ## Project Structure
 
 ```
-dotfiles/
-└── common/
-    ├── modules/                        # System-level NixOS modules
-    │   ├── desktop-environments/       # 11 swappable DE modules (niri, plasma, cosmic, …)
-    │   ├── security.nix                # AppArmor, auditd, kernel hardening, PAM enforcement
-    │   ├── amd.nix                     # AMD GPU drivers (gaming host only)
-    │   ├── nvidia.nix                  # NVIDIA GPU drivers (all desktop hosts)
-    │   ├── audio.nix                   # Pipewire
-    │   ├── gaming.nix                  # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware (gaming only)
-    │   ├── emulation.nix               # RetroArch
-    │   ├── virtualisation.nix          # Podman (Avahi restricted to virbr0)
-    │   ├── sddm.nix                    # Display manager
-    │   ├── bootloader.nix              # GRUB + zen kernel (desktop hosts)
-    │   ├── firmware.nix                # fwupd
-    │   ├── fonts.nix, localisation.nix, nix.nix, shell.nix, users.nix
-    │   └── home-manager.nix            # HM module entrypoint for bosko and natty
-    └── configs/                        # Home Manager configs shared by both users
-        ├── home.nix                    # HM root — imported by both bosko and natty
-        ├── helix.nix
-        ├── ssh.nix                     # Declarative SSH config (programs.ssh.settings)
-        └── dotfiles (katerc, kitty.conf)
+modules/                                # System-level NixOS modules shared across hosts
+├── desktop-environments/               # 11 swappable DE modules (niri, plasma, cosmic, …)
+├── security.nix                        # AppArmor, auditd, kernel hardening, PAM enforcement
+├── amd.nix                             # AMD GPU drivers (gaming host only)
+├── nvidia.nix                          # NVIDIA GPU drivers (all desktop hosts)
+├── audio.nix                           # Pipewire
+├── gaming.nix                          # Steam, GameMode, Gamescope, MangoHud, nix-ld, steam-hardware (gaming only)
+├── emulation.nix                       # RetroArch
+├── desktop-apps.nix                    # Apps + flatpaks shared by all desktop hosts
+├── desktop-networking.nix              # NetworkManager, DNS, firewall, SSH shared by all desktop hosts
+├── vpn.nix                             # Shared WireGuard client config (all desktop hosts)
+├── sddm.nix                            # Display manager
+├── bootloader.nix                      # GRUB + zen kernel (desktop hosts)
+├── firmware.nix                        # fwupd
+├── fonts.nix, localisation.nix, nix.nix, shell.nix, users.nix
+└── home-manager.nix                    # HM module entrypoint for bosko and natty
 
-dotfiles/bosko/                         # bosko-specific HM configs (not shared with natty)
-├── bosko-claude.nix                    # Symlinks Claude agent definitions into ~/.claude/agents/
-└── claude/agents/                      # Claude agent definitions (repo-creator-agent.md, session-closer.md)
+dotfiles/
+├── common/
+│   └── configs/                        # Home Manager configs shared by both users
+│       ├── home.nix                    # HM root — imported by both bosko and natty
+│       ├── helix.nix
+│       ├── ssh.nix                     # Declarative SSH config (programs.ssh.settings)
+│       └── dotfiles (katerc, kitty.conf)
+└── bosko/                              # bosko-specific HM configs (not shared with natty)
+    ├── bosko-claude.nix                # Symlinks Claude skills into ~/.claude/skills/ + plugin/settings activation
+    └── claude/skills/                  # Repo-owned global Claude Code skills (one dir per skill)
 
 hosts/
 ├── gaming/                             # hardware-configuration.nix, environment.nix, networking.nix
@@ -133,16 +135,18 @@ hosts/
 
 ### Module Composition
 
-`flake.nix` defines a `lib.mkSystem` helper and two module lists:
+`flake.nix` defines a `mkSystem` helper (exported as `lib.mkSystem`) and two module lists. `mkSystem` takes `{ name, system ? "x86_64-linux", nixpkgs ? nixos-unstable, modules }`, sets `networking.hostName` from `name`, and injects the shared `specialArgs`, so each host entry holds only its unique module list:
 
-- **`commonModules`** — base for all hosts: firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + bootloader, home-manager, nix-flatpak, audio, emulation, SDDM
+- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security, sops
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps, desktop-networking, emulation, SDDM, vpn
 
 Each desktop host then adds its own machine-specific modules. Notable per-host additions:
-- **gaming**: `amd.nix`, `gaming.nix`, `nvidia.nix`, `virtualisation.nix`, `niri.nix` (virtualisation is gaming-only, not in desktopModules)
+- **gaming**: `gaming.nix`, `nvidia.nix`, `virtualisation.nix`, `jellyfin-server.nix`, `niri.nix` (virtualisation is gaming-only, not in desktopModules)
 - **laptop**: `nvidia.nix`, `niri.nix`
-- **natalie-laptop**: `nvidia.nix`, `plasma.nix` (switched from cosmic.nix 2026-06-04)
-- **vpn-server**: `commonModules` only (`aarch64-linux`, systemd-boot, disko)
+- **natalie-laptop**: `nvidia.nix`, `virtualisation.nix`, `plasma.nix` (switched from cosmic.nix 2026-06-04)
+- **vpn-server**: `commonModules` only (`aarch64-linux`, systemd-boot, disko, `nixpkgs-stable`)
+
+`flake.nix` also exposes `lib.deSmoke` — the laptop config with each available DE module swapped in. CI's weekly `de-smoke` job deep-evaluates every one so unused DE modules can't rot silently across nixpkgs bumps.
 
 ### Users
 
@@ -155,7 +159,7 @@ Both users share the same Home Manager config (`home.nix`). `homeMode` is `"0700
 
 ## Security
 
-Security hardening is applied via `dotfiles/common/modules/security.nix`, which is part of `commonModules` and applies to all hosts.
+Security hardening is applied via `modules/security.nix`, which is part of `commonModules` and applies to all hosts.
 
 Enabled hardening:
 
@@ -185,7 +189,7 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) and commi
 
 Wiring:
 
-- `dotfiles/common/modules/sops.nix` — imports the sops-nix module and declares the shared password secrets (part of `commonModules`)
+- `modules/sops.nix` — imports the sops-nix module and declares the shared password secrets (part of `commonModules`)
 - `users.nix` — `hashedPasswordFile = config.sops.secrets."<user>-hashedPassword".path`
 - `vpn.nix` and `hosts/vpn-server/configuration.nix` — `privateKeyFile = config.sops.secrets."wg-private-key".path`
 
@@ -218,7 +222,7 @@ WireGuard hub-and-spoke full-tunnel VPN, fully deployed as of 2026-05-18.
 
 All client traffic is routed through the server (`allowedIPs = ["0.0.0.0/0"]`). The tunnel is **IPv4-only** — `networking.enableIPv6 = false` in `vpn.nix` disables IPv6 on all clients so traffic to IPv6-only hosts falls back to IPv4 through the tunnel instead of black-holing in the v4-only `wg0` (this is what was breaking Jellyfin's TMDb artwork fetches). `allowedIPs` is deliberately **v4-only**: with IPv6 disabled there is no stack to leak, and an `"::/0"` entry would make `wg-quick` try to install an IPv6 default route that fails ("IPv6 is disabled on nexthop device") and tears the tunnel down — so IPv6-off and the v4-only `allowedIPs` must always change together. `dns = [1.1.1.1 8.8.8.8]` in `vpn.nix` updates `resolv.conf` on interface up to avoid LAN resolver timeouts under full-tunnel. `persistentKeepalive = 25` prevents Oracle from dropping idle UDP sessions.
 
-Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
+Key files: `modules/vpn.nix` (shared client config), `hosts/vpn-server/configuration.nix` (server config with all peers and iptables MASQUERADE).
 
 ## Recent Changes
 
@@ -272,9 +276,9 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 **2026-06-17 (later)** — Fixed `wg-quick-wg0.service` failing on rebuild. Disabling IPv6 the day before (below) left `"::/0"` in the WireGuard peer's `allowedIPs`; `wg-quick` installs a route per allowedIP, so `ip -6 route add ::/0 dev wg0` failed on the now-IPv6-disabled device and `wg-quick` tore the tunnel down — meaning the VPN had silently failed to come up on every boot since. Dropped `"::/0"`, leaving `allowedIPs = ["0.0.0.0/0"]` (still a full tunnel with no IPv6 to leak), and added a `NOTE:` so it isn't re-added while IPv6 is off. Applies to all three clients via the shared `vpn.nix`. Also added an **mcp-nixos** MCP server (`pkgs.mcp-nixos`) so Claude Code can query live NixOS package/option data (promoted to user scope the same day — see latest entry).
 
-**2026-06-17** — Fixed Jellyfin artwork/metadata failing to load on gaming. The cause was a VPN routing issue, not Jellyfin: TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0`, so all IPv6 traffic black-holed and TMDb requests hung the 100s HTTP timeout. Added `networking.enableIPv6 = false` to the shared `dotfiles/common/modules/vpn.nix` to force IPv4 fallback through the tunnel — fixes the black-hole while keeping the full-tunnel guarantee (no IPv6 leak). Applies to all three VPN clients (gaming, laptop, natalie-laptop); gaming needs a rebuild + reboot to activate.
+**2026-06-17** — Fixed Jellyfin artwork/metadata failing to load on gaming. The cause was a VPN routing issue, not Jellyfin: TMDb resolves to IPv6-only addresses, but the full-tunnel WireGuard client routes `::/0` into a v4-only `wg0`, so all IPv6 traffic black-holed and TMDb requests hung the 100s HTTP timeout. Added `networking.enableIPv6 = false` to the shared `modules/vpn.nix` to force IPv4 fallback through the tunnel — fixes the black-hole while keeping the full-tunnel guarantee (no IPv6 leak). Applies to all three VPN clients (gaming, laptop, natalie-laptop); gaming needs a rebuild + reboot to activate.
 
-**2026-06-16 (later)** — Enabled sudo **password masking** fleet-wide: `security.sudo.extraConfig = "Defaults pwfeedback";` in `dotfiles/common/modules/security.nix` (part of `commonModules`) so the sudo prompt now prints a `*` per typed character. The historical pwfeedback CVE (CVE-2019-18634) is fixed in the shipped sudo, noted inline. Confirmed working on gaming.
+**2026-06-16 (later)** — Enabled sudo **password masking** fleet-wide: `security.sudo.extraConfig = "Defaults pwfeedback";` in `modules/security.nix` (part of `commonModules`) so the sudo prompt now prints a `*` per typed character. The historical pwfeedback CVE (CVE-2019-18634) is fixed in the shipped sudo, noted inline. Confirmed working on gaming.
 
 **2026-06-16** — Stood up a **Jellyfin media server** on gaming (`hosts/gaming/jellyfin-server.nix`): native `services.jellyfin` backed by the spare 1TB Samsung SSD (ext4, mounted at `/mnt/media`, pinned by UUID), NVENC hardware transcoding via the RTX 3070, and a firewall scoped to LAN (`enp4s0`) + WireGuard (`wg0`) only — no internet-facing ports. A shared `media` group with setgid library dirs keeps manual drops readable by the scanner. `jellyfin-media-player` added to `desktopModules` so every desktop host ships the client. **Confirmed working on all devices.** Replaced the headless `qbittorrent-nox` service with the `qbittorrent` desktop GUI app (drops the listening Web UI; saves to `/mnt/media/downloads` so finished torrents stay scannable). Added a project-local `verify-service` skill — a read-only post-rebuild service health sweep — distilled from this session's by-hand verification.
 
@@ -282,7 +286,7 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 **2026-06-15** — Adopted [sops-nix](https://github.com/Mic92/sops-nix) so the repo can be made public without leaking secrets (supersedes the 2026-05-20 decision to defer agenix). Login password hashes (`bosko`, `natty`) and all four per-host WireGuard private keys are now encrypted in `secrets/` and consumed via `hashedPasswordFile` / `privateKeyFile`; `users.nix` no longer contains plaintext hashes. Each host decrypts with an age key derived from its SSH ed25519 host key; the admin key stays at `~/.config/sops/age/keys.txt` (out of repo). WireGuard keys verified identity-preserving (derived pubkeys match the server's registered peers) and all four hosts rebuilt with live handshakes confirmed. Git history was rewritten with `git filter-repo` to purge the old plaintext password hashes from all commits. See the [Secrets](#secrets) section. _(The VPN endpoint address and tunnel subnet, originally noted here as public, are now kept out of this README — see Secrets.)_
 
-**2026-06-09** — Three sessions of Claude Code policy work. (1) `dotfiles/common/modules/claude-code.nix` created to deploy `/etc/claude-code/managed-settings.json` system-wide; also: `gemini-cli` added to natty's user packages; `nodejs`, `pnpm`, `p7zip`, and `jq` consolidated from per-host `environment.nix` files into `shell.nix`. (2) Rebuilt and rebooted gaming to activate the managed policy; trimmed personal `~/.claude/settings.json` manually using the one-shot trim script, then deleted the script. (3) Replaced the deleted script with a declarative `home.activation.trimClaudeSettings` in `dotfiles/bosko/bosko-claude.nix`: on every rebuild, once the managed file exists, the activation script uses `jq` to strip redundant deny/ask/hooks keys while leaving personal prefs intact. Idempotent. laptop and natalie-laptop still need rebuild+reboot to activate the managed policy.
+**2026-06-09** — Three sessions of Claude Code policy work. (1) `modules/claude-code.nix` created to deploy `/etc/claude-code/managed-settings.json` system-wide; also: `gemini-cli` added to natty's user packages; `nodejs`, `pnpm`, `p7zip`, and `jq` consolidated from per-host `environment.nix` files into `shell.nix`. (2) Rebuilt and rebooted gaming to activate the managed policy; trimmed personal `~/.claude/settings.json` manually using the one-shot trim script, then deleted the script. (3) Replaced the deleted script with a declarative `home.activation.trimClaudeSettings` in `dotfiles/bosko/bosko-claude.nix`: on every rebuild, once the managed file exists, the activation script uses `jq` to strip redundant deny/ask/hooks keys while leaving personal prefs intact. Idempotent. laptop and natalie-laptop still need rebuild+reboot to activate the managed policy.
 
 **2026-06-05/04** — natalie-laptop switched from Cosmic to Plasma 6. `krohnkite` (KWin tiling script) added to shared `plasma.nix` so both gaming and natalie-laptop get it automatically. FinanceGuru personal finance app added to gaming and natalie-laptop as a flake input (`github:CommanderBosko/FinanceGuru`). lutris re-enabled on gaming — the upstream `openldap-2.6.13-i686-linux` binary cache regression that blocked it since May 2026 is resolved in nixpkgs-unstable.
 
@@ -302,7 +306,7 @@ Key files: `dotfiles/common/modules/vpn.nix` (shared client config), `hosts/vpn-
 
 **2026-05-20** — Claude Code skill library completed. 18 project-local skills now live under `.claude/skills/`. The second build session added: `ssh-host` (short-name SSH resolver), `remote-rebuild` (headless deployment via `nixos-rebuild switch --target-host` to vpn-server or server), `rollback` (generation listing + confirm + `switch --rollback`), `search-pkg` (`nix search nixpkgs` wrapper with add-package nudge), `new-host` (interactive scaffolder for desktop/server/remote-arm host types with correct template per type), and `pin-input` (flake input pinning to a rev/tag — lock-only or permanent, with home-manager/disko follow-input warnings). The first build session earlier the same day added `nixos-dry-run`, `nixos-rebuild`, `nixos-gc`, `vpn-status`, `new-module`, `commit`, `push`, `update`, `add-package`, `add-flatpak`, `switch-de`, and `new-peer`. agenix for secret management was evaluated and deferred — VPN keys live at `/etc/wireguard/private.key` on each host and are never in the repo. _(Superseded 2026-06-15: secrets are now managed with sops-nix — see the [Secrets](#secrets) section and the 2026-06-15 entry.)_
 
-**2026-05-18** — WireGuard VPN fully deployed. Oracle Cloud ARM vpn-server is live on its public endpoint; `wg0` active on the tunnel subnet with three configured peers (gaming, laptop, natalie-laptop). Shared `dotfiles/common/modules/vpn.nix` client module created with full-tunnel routing, DNS override (`1.1.1.1 8.8.8.8`), and `persistentKeepalive = 25`. Per-host VPN addresses configured in `hosts/*/networking.nix`. ARM build target fixed for `server-rebuild` alias (now builds natively on the server). binfmt aarch64 emulation added to gaming as offline fallback. natalie-laptop added as fourth WireGuard peer with real keys. `gh` added to common system packages.
+**2026-05-18** — WireGuard VPN fully deployed. Oracle Cloud ARM vpn-server is live on its public endpoint; `wg0` active on the tunnel subnet with three configured peers (gaming, laptop, natalie-laptop). Shared `modules/vpn.nix` client module created with full-tunnel routing, DNS override (`1.1.1.1 8.8.8.8`), and `persistentKeepalive = 25`. Per-host VPN addresses configured in `hosts/*/networking.nix`. ARM build target fixed for `server-rebuild` alias (now builds natively on the server). binfmt aarch64 emulation added to gaming as offline fallback. natalie-laptop added as fourth WireGuard peer with real keys. `gh` added to common system packages.
 
 **2026-05-17** — Inlined the Starship prompt configuration from an external `starship.toml` into a native `programs.starship.settings` attrset in `shell.nix`; removed the `xdg.configFile` symlink and deleted the TOML file. Fixed Nerd Font v3 symbol spacing for 9 language/tool glyphs in the inline config. Disabled auto-format globally across all Helix language configurations. Routine flake inputs bump (`lutris` openldap regression still unresolved upstream). Deleted stale `dotfiles/vpn/` directory (NordVPN remnants). Added `tmux` to gaming system packages.
 

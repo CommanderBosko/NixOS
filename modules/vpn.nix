@@ -26,7 +26,7 @@
   environment.systemPackages = [ pkgs.wireguard-tools ];
 
   sops.secrets."wg-private-key".sopsFile =
-    ../../../secrets/hosts/${config.networking.hostName}.yaml;
+    ../secrets/hosts/${config.networking.hostName}.yaml;
 
   networking.wg-quick.interfaces.wg0 = {
     privateKeyFile = config.sops.secrets."wg-private-key".path;

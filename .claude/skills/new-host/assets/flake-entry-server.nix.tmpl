@@ -1,7 +1,8 @@
 # <Hostname — human-readable description>
-<hostname> = self.lib.mkSystem {
-  inherit inputs system nixpkgs;
-  specialArgs = { inherit inputs self system; };
+# mkSystem sets networking.hostName from `name` and injects the shared
+# specialArgs; system defaults to x86_64-linux and nixpkgs to nixos-unstable.
+<hostname> = mkSystem {
+  name = "<hostname>";
   modules = commonModules ++ [
     # Machine-specific modules
     "${self}/hosts/<hostname>/hardware-configuration.nix"

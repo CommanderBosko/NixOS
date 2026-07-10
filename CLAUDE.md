@@ -67,15 +67,15 @@ Examples from history: `feat(skills): add new-module skill for NixOS module scaf
 
 ## Architecture Overview
 
-Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared modules live under `dotfiles/common/`; host-specific files live under `hosts/<hostname>/`.
+Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared system modules live under `modules/`; shared Home Manager configs under `dotfiles/`; host-specific files under `hosts/<hostname>/`.
 
 ### Module Composition
 
-`flake.nix` defines a `lib.mkSystem` helper that composes module lists per host:
+`flake.nix` defines a `mkSystem` helper (also exported as `lib.mkSystem`) that builds each host. It takes `{ name, system ? "x86_64-linux", nixpkgs ? nixos-unstable, modules }`, sets `networking.hostName` from `name`, and injects the shared `specialArgs` — host entries hold only their unique module list. Module lists compose in layers:
 
-- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, emulation, SDDM; used by gaming, laptop, and natalie-laptop
-- Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, `networking.nix`, and any host-specific modules (`amd.nix`, `nvidia.nix`, `gaming.nix`, etc.)
+- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security, sops
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps (shared app/flatpak set), desktop-networking (shared NetworkManager/DNS/firewall/SSH), emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
+- Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, `networking.nix`, and any host-specific modules (`amd.nix`, `nvidia.nix`, `gaming.nix`, etc.). Host `environment.nix`/`networking.nix` files hold only host-specific extras (wg0 address, extra SSH users, host-only packages) on top of the shared desktop modules, plus the host's `system.stateVersion` (frozen at install time — never bump it on upgrades).
 
 `nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) to allow the gaming host to drop it independently when the AMD card is installed. `amd.nix` and `gaming.nix` are gaming-only.
 
@@ -84,11 +84,13 @@ The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, n
 ### Directory Layout
 
 ```
+modules/                  # System-level NixOS modules shared across hosts
+├── desktop-environments/ # 11 swappable DE modules (niri, plasma, cosmic, etc.)
+└── *.nix                 # bootloader, shell, users, amd, nvidia, gaming, sddm, security,
+                          # desktop-apps, desktop-networking, vpn, …
+
 dotfiles/
 ├── common/
-│   ├── modules/          # System-level NixOS modules
-│   │   ├── desktop-environments/   # 11 swappable DE modules (niri, plasma, cosmic, etc.)
-│   │   └── *.nix         # bootloader, shell, users, amd, nvidia, gaming, sddm, security, …
 │   └── configs/          # Home Manager configs shared by both users
 │       ├── home.nix      # HM root — imported by both bosko and natty
 │       ├── helix.nix
@@ -98,9 +100,9 @@ dotfiles/
     └── claude/skills/    # Claude Code skill files (one dir per skill, each with SKILL.md)
 
 hosts/
-├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix
-├── laptop/               # same three files
-├── natalie-laptop/       # same three files
+├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix (+ virtualisation, jellyfin-server)
+├── laptop/               # hardware-configuration.nix, environment.nix, networking.nix
+├── natalie-laptop/       # same three files (+ virtualisation.nix)
 └── vpn-server/           # configuration.nix, disko.nix, hardware-configuration.nix
 ```
 
@@ -108,10 +110,11 @@ hosts/
 
 - **Home Manager** runs as a NixOS module. Both users (`bosko` and `natty`) import the same `dotfiles/common/configs/home.nix`. User-specific HM state (username, homeDirectory, stateVersion) is set per-user in `home-manager.nix`.
 - **Desktop environments** are pluggable — swap by changing which DE module is imported in the host's flake entry.
-- **Flatpaks** are managed declaratively via `nix-flatpak`; defined per-host in `environment.nix`.
-- **System architecture** is `x86_64-linux` throughout (vpn-server is `aarch64-linux`); state version `25.11`.
+- **Flatpaks** are managed declaratively via `nix-flatpak`; the shared set lives in `modules/desktop-apps.nix`, host-only extras in the host's `environment.nix`.
+- **System architecture** is `x86_64-linux` throughout (vpn-server is `aarch64-linux`); `system.stateVersion` is set per-host (all currently `25.11`).
 - `nix-ld` is enabled only on gaming for binary compatibility.
-- Gaming: Plasma 6 / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Plasma 6 / Wayland.
+- Gaming: Niri / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Plasma 6 / Wayland.
+- **DE smoke checks**: `lib.deSmoke` in `flake.nix` exposes the laptop config with each DE module swapped in; CI's weekly `de-smoke` job deep-evaluates them so unused DE modules can't rot silently.
 
 ### Users
 
@@ -124,7 +127,7 @@ Both users share the same Home Manager config. `mumble` is a system package on g
 
 Flake inputs (`home-manager`, `nix-flatpak`, `dms`) are defined once in `flake.nix` and passed to modules via `specialArgs`, ensuring consistency across hosts.
 
-### Security Module (`dotfiles/common/modules/security.nix`)
+### Security Module (`modules/security.nix`)
 
 Part of `commonModules` (applies to all hosts). Enables:
 
@@ -139,8 +142,9 @@ Part of `commonModules` (applies to all hosts). Enables:
 
 ### Adding a New Desktop Environment
 
-1. Create `dotfiles/common/modules/desktop-environments/my-de.nix`
-2. Add it to git: `git add dotfiles/common/modules/desktop-environments/my-de.nix`
-3. Import in the host's flake entry using `"${self}/dotfiles/common/modules/desktop-environments/my-de.nix"` (note: DE modules stay under `dotfiles/common/`, only host-specific files are under `hosts/`)
+1. Create `modules/desktop-environments/my-de.nix`
+2. Add it to git: `git add modules/desktop-environments/my-de.nix`
+3. Import in the host's flake entry using `"${self}/modules/desktop-environments/my-de.nix"` (DE modules live under `modules/`, only host-specific files are under `hosts/`)
 4. Test with `nh os boot /home/bosko/NixOS --dry`
 5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`
+6. `lib.deSmoke` picks the new module up automatically (it enumerates the directory), so CI's weekly de-smoke job will keep evaluating it even while unused

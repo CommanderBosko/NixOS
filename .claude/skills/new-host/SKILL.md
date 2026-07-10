@@ -34,7 +34,7 @@ Ask the user the following questions. Batch them into a single message. Do not p
 
 3. **Architecture** — `x86_64-linux` (default for desktop/server) or `aarch64-linux` (typical for remote ARM). Default to `x86_64-linux` for desktop and server types. For the remote type (or any case where it is genuinely ambiguous), present this pick via the **AskUserQuestion tool** with the two options (`x86_64-linux`, `aarch64-linux`) rather than free-form prose; skip the question if the user already supplied the architecture or a sensible default applies.
 
-4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Enumerate the available modules **live** (don't trust a hardcoded list — it drifts): `ls dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'`. If the user did not already name a DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the DE.
+4. **Desktop environment** — Only if type is `desktop`. Which DE module to import. Enumerate the available modules **live** (don't trust a hardcoded list — it drifts): `ls modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'`. If the user did not already name a DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the DE.
 
 5. **GPU** — Only if type is `desktop`. One of: `nvidia` (import `nvidia.nix`), `amd` (import `amd.nix`), `both` (import both), or `none`. Most machines use one or none. If the user did not already state the GPU, present this pick via the **AskUserQuestion tool** with four options (`nvidia`, `amd`, `both`, `none`) rather than free-form prose; skip the question if the user already supplied it.
 
@@ -120,7 +120,7 @@ After showing the flake entry, tell the user:
 
 ## Step 8 — Register the host with sops-nix (REQUIRED)
 
-`commonModules` includes `dotfiles/common/modules/sops.nix`, which declares the shared login-password secrets (`bosko`/`natty`) with `neededForUsers = true`. **A host can only decrypt those secrets once its age identity is a recipient of `secrets/common.yaml`.** The age identity is derived from the host's SSH ed25519 host key, which only exists after the machine has booted NixOS for the first time. So this step is post-first-boot, like the hardware-config step.
+`commonModules` includes `modules/sops.nix`, which declares the shared login-password secrets (`bosko`/`natty`) with `neededForUsers = true`. **A host can only decrypt those secrets once its age identity is a recipient of `secrets/common.yaml`.** The age identity is derived from the host's SSH ed25519 host key, which only exists after the machine has booted NixOS for the first time. So this step is post-first-boot, like the hardware-config step.
 
 > **Bootstrapping note:** on the very first build the new host is not yet a recipient, so the password hashes won't decrypt — the user accounts come up with no valid password. **Key-based SSH still works** (the install places authorized keys), so the host is reachable and recoverable. Complete this step and rebuild, and password login starts working. Don't be alarmed by sops decrypt failures in the first activation log.
 

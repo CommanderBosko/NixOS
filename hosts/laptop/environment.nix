@@ -1,6 +1,9 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 
 {
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "25.11";
+
   # Services
   services = {
     # Enable touchpad
@@ -38,31 +41,11 @@
   # Qt apps default to Wayland on Niri (no X server running)
   environment.sessionVariables.QT_QPA_PLATFORM = "wayland;xcb";
 
-  # System packages
+  # Host-specific packages, on top of the shared modules/desktop-apps.nix list
   environment.systemPackages = with pkgs; [
-    brave
-    chromium
     element-desktop
-    firefox
-    freetube
-    github-desktop
-    gparted
-    kdePackages.kate
-    kitty
-    megasync
-    onlyoffice-desktopeditors
-    qalculate-qt
     qutebrowser
     rpi-imager
     tor-browser
-    vesktop
-    vlc
-  ];
-
-  # Flatpaks
-  services.flatpak.packages = [
-    "dev.aunetx.deezer" # Deezer
-    "org.kde.digikam" # Digikam
-    "app.zen_browser.zen" # Zen Browser
   ];
 }

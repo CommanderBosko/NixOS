@@ -68,28 +68,28 @@ Present the peer block to add to `hosts/vpn-server/configuration.nix`. It goes i
 
 ## Step 4 — Show the client-side WireGuard config
 
-The server's public key (from `dotfiles/common/modules/vpn.nix`) is:
+The server's public key (from `modules/vpn.nix`) is:
 
 ```
 ijhN7KUmHx5TOLpKgyzJpzSvp49TkD0c2CTf32Cyu1U=
 ```
 
-Before presenting it, verify this is still current by reading `dotfiles/common/modules/vpn.nix` and checking the `publicKey` field in the `peers` list. Use whatever value is actually in the file.
+Before presenting it, verify this is still current by reading `modules/vpn.nix` and checking the `publicKey` field in the `peers` list. Use whatever value is actually in the file.
 
-**If the new device is a NixOS host**, tell the user they can import `dotfiles/common/modules/vpn.nix` and then set the host-specific address in the host's own config:
+**If the new device is a NixOS host**, tell the user they can import `modules/vpn.nix` and then set the host-specific address in the host's own config:
 
 ```nix
 networking.wg-quick.interfaces.wg0.address = [ "10.10.0.<n>/24" ];
 ```
 
 They also need to wire their WireGuard private key through **sops-nix**, the same way every existing
-host does — `dotfiles/common/modules/vpn.nix` sets `privateKeyFile = config.sops.secrets."wg-private-key".path`,
+host does — `modules/vpn.nix` sets `privateKeyFile = config.sops.secrets."wg-private-key".path`,
 sourced from `secrets/hosts/<host>.yaml`. So: encrypt the new host's wg private key into
 `secrets/hosts/<host>.yaml` (use the `/add-secret` skill), register the host as a sops recipient,
 and let the module read it. Do **not** drop a plaintext key at `/etc/wireguard/private.key` — that
 path is not what the module reads and will leave the tunnel down. (This mirrors `/new-host` Step 8.)
 
-**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the live value read from `dotfiles/common/modules/vpn.nix`, not assumed). `Endpoint` and `AllowedIPs` are already correct in the template.
+**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the live value read from `modules/vpn.nix`, not assumed). `Endpoint` and `AllowedIPs` are already correct in the template.
 
 Remind the user that `<their-private-key>` is the private key that stays on their device — it is never shared or stored anywhere else.
 
@@ -113,10 +113,10 @@ Tell the user the following steps are still needed to activate the peer:
 
 - **Never generate, display, or store private keys.** Only public keys go into the repo. If the user accidentally pastes a private key, tell them immediately and do not commit it.
 - **Do not stage or commit** — that is `/commit`'s job.
-- The server public key must always be read from `dotfiles/common/modules/vpn.nix` at the time of the skill run, not assumed from this file.
+- The server public key must always be read from `modules/vpn.nix` at the time of the skill run, not assumed from this file.
 - The VPN subnet is `10.10.0.0/24` (not `10.0.0.0/24`). Double-check the existing peer IPs before assigning a new one.
 - This repo's working directory is always `/home/bosko/NixOS`.
 
 ## Assets
 
-- `assets/client.conf.tmpl` — raw `wg-quick` client config for non-NixOS devices. Fill in private key, address, and the server public key (read live from `dotfiles/common/modules/vpn.nix`). Used in Step 4.
+- `assets/client.conf.tmpl` — raw `wg-quick` client config for non-NixOS devices. Fill in private key, address, and the server public key (read live from `modules/vpn.nix`). Used in Step 4.

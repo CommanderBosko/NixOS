@@ -1,6 +1,9 @@
 { pkgs, ... }:
 
 {
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "<current-nixos-release>";
+
   # System
   system = {
     # Automatic updating

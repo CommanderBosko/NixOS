@@ -1,11 +1,10 @@
 { ... }:
 
 {
+  # hostName is set from the flake attribute name (see mkSystem)
+
   # Configure networking
   networking = {
-    # Set host name
-    hostName = "<hostname>";
-
     # Use DHCP; NetworkManager is unnecessary on a headless server
     networkmanager.enable = false;
     useDHCP = true;

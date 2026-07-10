@@ -25,8 +25,8 @@ Ask the user the following questions (you may batch them into a single message).
 1. **Module name** — A short, lowercase, hyphenated name (e.g. `bluetooth`, `printing`, `cosmic`). This becomes the filename: `<name>.nix`.
 
 2. **Module type** — One of:
-   - `system` — A general system-level module. Goes in `dotfiles/common/modules/`.
-   - `desktop-environment` — A desktop environment or compositor module. Goes in `dotfiles/common/modules/desktop-environments/`.
+   - `system` — A general system-level module. Goes in `modules/`.
+   - `desktop-environment` — A desktop environment or compositor module. Goes in `modules/desktop-environments/`.
 
    If the type was not already clear from the user's phrasing (see Arguments), present this pick via the **AskUserQuestion tool** with one option per type (`system`, `desktop-environment`) rather than free-form prose. Skip the question if the type is already known.
 
@@ -50,8 +50,8 @@ Ask the user the following questions (you may batch them into a single message).
 
 Based on module type:
 
-- `system` → `/home/bosko/NixOS/dotfiles/common/modules/<name>.nix`
-- `desktop-environment` → `/home/bosko/NixOS/dotfiles/common/modules/desktop-environments/<name>.nix`
+- `system` → `/home/bosko/NixOS/modules/<name>.nix`
+- `desktop-environment` → `/home/bosko/NixOS/modules/desktop-environments/<name>.nix`
 
 ## Step 3 — Generate the module
 
@@ -110,9 +110,9 @@ This is mandatory. NixOS flake evaluation will not see the file unless it is tra
 Based on the host(s) the user named in Step 1, tell them exactly where to add the import in `flake.nix`. The import string format is always:
 
 ```nix
-"${self}/dotfiles/common/modules/<name>.nix"
+"${self}/modules/<name>.nix"
 # or for desktop-environment modules:
-"${self}/dotfiles/common/modules/desktop-environments/<name>.nix"
+"${self}/modules/desktop-environments/<name>.nix"
 ```
 
 Identify the correct host block(s) in `/home/bosko/NixOS/flake.nix` and show the user the line to add and where it goes (which list: `commonModules`, `desktopModules`, or the host-specific module list). Do NOT edit `flake.nix` automatically — show the user what to add and where, then let them do it or ask you to do it.

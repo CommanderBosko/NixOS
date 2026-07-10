@@ -12,11 +12,11 @@
   # user accounts are created, hence neededForUsers (decrypted early to
   # /run/secrets-for-users using the host key).
   sops.secrets."bosko-hashedPassword" = {
-    sopsFile = ../../../secrets/common.yaml;
+    sopsFile = ../secrets/common.yaml;
     neededForUsers = true;
   };
   sops.secrets."natty-hashedPassword" = {
-    sopsFile = ../../../secrets/common.yaml;
+    sopsFile = ../secrets/common.yaml;
     neededForUsers = true;
   };
 }

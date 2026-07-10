@@ -1,6 +1,9 @@
 { pkgs, ... }:
 
 {
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "<current-nixos-release>";
+
   # Services
   services = {
     # Display manager settings
@@ -10,9 +13,6 @@
         user = "bosko";
       };
     };
-
-    # Enable printing
-    printing.enable = true;
   };
 
   # Hardware
@@ -31,14 +31,11 @@
     graphics.enable = true;
   };
 
-  # System packages
+  # Host-specific packages, on top of the shared modules/desktop-apps.nix list
   environment.systemPackages = with pkgs; [
-    brave
-    firefox
-    kitty
   ];
 
-  # Flatpaks
+  # Host-specific flatpaks, on top of the shared modules/desktop-apps.nix list
   services.flatpak.packages = [
   ];
 }

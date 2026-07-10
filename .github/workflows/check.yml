@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Weekly de-smoke run (Mondays 06:00 UTC) — see the de-smoke job below
+    - cron: "0 6 * * 1"
 
 # A newer push supersedes any in-flight run for the same ref
 concurrency:
@@ -37,6 +40,28 @@ jobs:
           for host in $(nix eval --raw --apply 'c: builtins.concatStringsSep " " (builtins.attrNames c)' .#nixosConfigurations); do
             echo "::group::$host"
             nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath"
+            echo
+            echo "::endgroup::"
+          done
+
+  # Unused DE modules are never evaluated by the host builds above, so they can
+  # rot silently across nixpkgs bumps. lib.deSmoke exposes the laptop config
+  # with each available DE module swapped in; force-evaluating each one weekly
+  # (eval-only, no builds) catches rot without slowing down push/PR runs.
+  de-smoke:
+    name: smoke-evaluate every desktop environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: DeterminateSystems/nix-installer-action@v22
+
+      - name: deep-evaluate laptop with each DE module
+        run: |
+          for de in $(nix eval --raw --apply 'a: builtins.concatStringsSep " " (builtins.attrNames a)' .#lib.deSmoke); do
+            echo "::group::$de"
+            nix eval --raw ".#lib.deSmoke.$de.config.system.build.toplevel.drvPath"
             echo
             echo "::endgroup::"
           done

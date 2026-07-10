@@ -5,7 +5,7 @@
     # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Stable nixpkgs — used by server and vpn-server for stability
+    # Stable nixpkgs — used by vpn-server for stability
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
 
     # Dank Material Shell
@@ -40,103 +40,116 @@
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
   let
-    # Configure system settings
-    system = "x86_64-linux";
-
-    # Modules shared by all systems (no bootloader — each host provides its own)
+    # Modules shared by all systems. bootloader.nix is GRUB/x86 — vpn-server
+    # overrides it with systemd-boot via mkForce in its configuration.nix.
+    # system.stateVersion is per-host (frozen at each machine's install time).
     commonModules = [
-      { system.stateVersion = "25.11"; }
-      "${self}/dotfiles/common/modules/bootloader.nix"
-      "${self}/dotfiles/common/modules/claude-code.nix"
-      "${self}/dotfiles/common/modules/firmware.nix"
-      "${self}/dotfiles/common/modules/fonts.nix"
-      "${self}/dotfiles/common/modules/localisation.nix"
-      "${self}/dotfiles/common/modules/nix.nix"
-      "${self}/dotfiles/common/modules/security.nix"
-      "${self}/dotfiles/common/modules/shell.nix"
-      "${self}/dotfiles/common/modules/sops.nix"
-      "${self}/dotfiles/common/modules/users.nix"
+      "${self}/modules/bootloader.nix"
+      "${self}/modules/claude-code.nix"
+      "${self}/modules/firmware.nix"
+      "${self}/modules/fonts.nix"
+      "${self}/modules/localisation.nix"
+      "${self}/modules/nix.nix"
+      "${self}/modules/security.nix"
+      "${self}/modules/shell.nix"
+      "${self}/modules/sops.nix"
+      "${self}/modules/users.nix"
     ];
 
     desktopModules = commonModules ++ [
       home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
-      "${self}/dotfiles/common/modules/audio.nix"
-      "${self}/dotfiles/common/modules/emulation.nix"
-      "${self}/dotfiles/common/modules/home-manager.nix"
-      "${self}/dotfiles/common/modules/jellyfin-client.nix"
-      "${self}/dotfiles/common/modules/printing.nix"
-      "${self}/dotfiles/common/modules/sddm.nix"
+      "${self}/modules/audio.nix"
+      "${self}/modules/desktop-apps.nix"
+      "${self}/modules/desktop-networking.nix"
+      "${self}/modules/emulation.nix"
+      "${self}/modules/home-manager.nix"
+      "${self}/modules/jellyfin-client.nix"
+      "${self}/modules/printing.nix"
+      "${self}/modules/sddm.nix"
+      "${self}/modules/vpn.nix"
+    ];
+
+    # Build a host. Sets networking.hostName from the attribute name and
+    # injects the shared specialArgs, so each host entry holds only its
+    # unique module list.
+    mkSystem = { name, system ? "x86_64-linux", nixpkgs ? inputs.nixpkgs, modules }:
+      nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs self system; };
+        modules = [ { networking.hostName = name; } ] ++ modules;
+      };
+
+    # The laptop's module list, parameterised over the desktop-environment
+    # module — reused by lib.deSmoke to evaluate every available DE.
+    laptopModules = de: desktopModules ++ [
+      # Machine-specific modules
+      "${self}/hosts/laptop/hardware-configuration.nix"
+      "${self}/hosts/laptop/environment.nix"
+      "${self}/hosts/laptop/networking.nix"
+      de
+      "${self}/modules/nvidia.nix"
     ];
   in
   {
     # Custom library functions
-    lib.mkSystem = { modules, nixpkgs, specialArgs, ... }:
-      nixpkgs.lib.nixosSystem {
-        inherit specialArgs;
-        system = specialArgs.system;
-        modules = modules;
-      };
+    lib.mkSystem = mkSystem;
+
+    # Smoke-eval targets: the laptop config with each available DE module
+    # swapped in. Unused DE modules are never evaluated by the host builds and
+    # would otherwise rot silently across nixpkgs bumps; CI's de-smoke job
+    # forces each one (eval-only, no builds).
+    lib.deSmoke = nixpkgs.lib.genAttrs
+      (map (f: nixpkgs.lib.removeSuffix ".nix" f)
+        (builtins.attrNames (builtins.readDir ./modules/desktop-environments)))
+      (de: mkSystem {
+        name = "laptop";
+        modules = laptopModules "${self}/modules/desktop-environments/${de}.nix";
+      });
 
     # Configure nix configurations
     nixosConfigurations = {
       # Gaming
-      gaming = self.lib.mkSystem {
-        inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system; };
+      gaming = mkSystem {
+        name = "gaming";
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/hosts/gaming/hardware-configuration.nix"
           "${self}/hosts/gaming/environment.nix"
           "${self}/hosts/gaming/networking.nix"
-          "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
-          "${self}/dotfiles/common/modules/gaming.nix"
-          "${self}/dotfiles/common/modules/nvidia.nix"
+          "${self}/modules/desktop-environments/niri.nix"
+          "${self}/modules/gaming.nix"
+          "${self}/modules/nvidia.nix"
           "${self}/hosts/gaming/virtualisation.nix"
           "${self}/hosts/gaming/jellyfin-server.nix"
-          "${self}/dotfiles/common/modules/vpn.nix"
         ];
       };
 
       # Laptop
-      laptop = self.lib.mkSystem {
-        inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system; };
-        modules = desktopModules ++ [
-          # Machine-specific modules
-          "${self}/hosts/laptop/hardware-configuration.nix"
-          "${self}/hosts/laptop/environment.nix"
-          "${self}/hosts/laptop/networking.nix"
-          "${self}/dotfiles/common/modules/desktop-environments/niri.nix"
-          "${self}/dotfiles/common/modules/nvidia.nix"
-          "${self}/dotfiles/common/modules/vpn.nix"
-        ];
+      laptop = mkSystem {
+        name = "laptop";
+        modules = laptopModules "${self}/modules/desktop-environments/niri.nix";
       };
 
       # Natalie's Laptop
-      natalie-laptop = self.lib.mkSystem {
-        inherit inputs system nixpkgs;
-        specialArgs = { inherit inputs self system; };
+      natalie-laptop = mkSystem {
+        name = "natalie-laptop";
         modules = desktopModules ++ [
           # Machine-specific modules
           "${self}/hosts/natalie-laptop/hardware-configuration.nix"
           "${self}/hosts/natalie-laptop/environment.nix"
           "${self}/hosts/natalie-laptop/networking.nix"
           "${self}/hosts/natalie-laptop/virtualisation.nix"
-          "${self}/dotfiles/common/modules/desktop-environments/plasma.nix"
-          "${self}/dotfiles/common/modules/nvidia.nix"
-          "${self}/dotfiles/common/modules/vpn.nix"
+          "${self}/modules/desktop-environments/plasma.nix"
+          "${self}/modules/nvidia.nix"
         ];
       };
 
       # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.11 for stability
-      vpn-server = self.lib.mkSystem {
-        inherit inputs;
+      vpn-server = mkSystem {
+        name = "vpn-server";
+        system = "aarch64-linux";
         nixpkgs = nixpkgs-stable;
-        specialArgs = {
-          inherit inputs self;
-          system = "aarch64-linux";
-        };
         modules = commonModules ++ [
           disko.nixosModules.disko
           "${self}/hosts/vpn-server/hardware-configuration.nix"

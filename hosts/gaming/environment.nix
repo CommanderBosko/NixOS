@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 
 {
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "25.11";
+
   # Services
   services = {
     # Display manager settings
@@ -37,35 +40,19 @@
     };
   };
 
-  # System packages
+  # Host-specific packages, on top of the shared modules/desktop-apps.nix list
   environment.systemPackages = with pkgs; [
-    inputs.financeguru.packages.x86_64-linux.default
-    brave
-    chromium
+    inputs.financeguru.packages.${pkgs.stdenv.hostPlatform.system}.default
     element-desktop
-    firefox
-    freetube
-    github-desktop
-    gparted
-    kdePackages.kate
-    kitty
-    megasync
     mumble
     obs-studio
-    onlyoffice-desktopeditors
-    qalculate-qt
     qbittorrent
     tmux
     tor-browser
-    vesktop
-    vlc
   ];
 
-  # Flatpaks
+  # Host-specific flatpaks, on top of the shared modules/desktop-apps.nix list
   services.flatpak.packages = [
     "com.albiononline.AlbionOnline" # Albion Online
-    "dev.aunetx.deezer" # Deezer
-    "org.kde.digikam" # Digikam
-    "app.zen_browser.zen" # Zen Browser
   ];
 }

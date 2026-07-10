@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 
 {
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "25.11";
+
   # Services
   services = {
     # Enable touchpad
@@ -35,32 +38,12 @@
     graphics.enable = true;
   };
 
-  # System packages
+  # Host-specific packages, on top of the shared modules/desktop-apps.nix list
   environment.systemPackages = with pkgs; [
-    inputs.financeguru.packages.x86_64-linux.default
+    inputs.financeguru.packages.${pkgs.stdenv.hostPlatform.system}.default
     anki
-    brave
-    chromium
-    firefox
-    freetube
-    github-desktop
-    gparted
-    kdePackages.kate
     kdePackages.okular
-    kitty
-    megasync
-    onlyoffice-desktopeditors
-    qalculate-qt
     qutebrowser
     rpi-imager
-    vesktop
-    vlc
-  ];
-
-  # Flatpaks
-  services.flatpak.packages = [
-    "dev.aunetx.deezer" # Deezer
-    "org.kde.digikam" # Digikam
-    "app.zen_browser.zen" # Zen Browser
   ];
 }

@@ -10,6 +10,6 @@
   # Pantheon installs default applications. If specific ones are needed, they can be added.
   environment.systemPackages = with pkgs; [
     pantheon.elementary-files # Pantheon's file manager
-    pantheon.pantheon-terminal # Pantheon's terminal
+    pantheon.elementary-terminal # Pantheon's terminal (renamed upstream from pantheon-terminal)
   ];
 }

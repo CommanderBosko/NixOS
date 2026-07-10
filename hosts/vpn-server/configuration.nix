@@ -15,9 +15,11 @@
     };
   };
 
-  networking = {
-    hostName = "vpn-server";
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "25.11";
 
+  # hostName is set from the flake attribute name (see mkSystem)
+  networking = {
     firewall = {
       enable = true;
       allowedUDPPorts = [ 51820 ];

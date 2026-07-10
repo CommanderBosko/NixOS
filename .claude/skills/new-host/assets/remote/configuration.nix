@@ -16,9 +16,11 @@
     };
   };
 
-  networking = {
-    hostName = "<hostname>";
+  # Frozen at this machine's install-time NixOS release — never bump on upgrades
+  system.stateVersion = "<current-nixos-release>";
 
+  # hostName is set from the flake attribute name (see mkSystem)
+  networking = {
     firewall = {
       enable = true;
       allowedTCPPorts = [ 22 ];

@@ -13,7 +13,7 @@ Swap the active desktop environment module for a desktop host by editing the DE 
 Parse from the user's request:
 
 - **`<host>`** (optional) — one of the **desktop hosts** (the hosts with `"desktop": true` in `.claude/hosts.json` — currently `gaming`, `laptop`, `natalie-laptop`). If omitted, ask in Step 1.
-- **`<target-de>`** (optional) — the desktop environment module to switch to, e.g. `niri`, `plasma`, `cosmic`. Must match a module under `dotfiles/common/modules/desktop-environments/`. If omitted, ask in Step 1.
+- **`<target-de>`** (optional) — the desktop environment module to switch to, e.g. `niri`, `plasma`, `cosmic`. Must match a module under `modules/desktop-environments/`. If omitted, ask in Step 1.
 
 ## Step 1 — Gather information
 
@@ -26,19 +26,19 @@ If the user has not already provided both pieces of information, ask them in a s
 List the available DE modules so the user can choose. Enumerate them **live** so the list can never go stale:
 
 ```bash
-ls /home/bosko/NixOS/dotfiles/common/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'
+ls /home/bosko/NixOS/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'
 ```
 
-These are the files in `dotfiles/common/modules/desktop-environments/`. If the user did not already name a target DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the target DE.
+These are the files in `modules/desktop-environments/`. If the user did not already name a target DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the target DE.
 
 Do not proceed to Step 2 until you have both answers.
 
 ## Step 2 — Verify the target module exists
 
-Check whether `dotfiles/common/modules/desktop-environments/<target>.nix` exists:
+Check whether `modules/desktop-environments/<target>.nix` exists:
 
 ```bash
-ls /home/bosko/NixOS/dotfiles/common/modules/desktop-environments/<target>.nix
+ls /home/bosko/NixOS/modules/desktop-environments/<target>.nix
 ```
 
 If the file does not exist, stop and tell the user:
@@ -52,7 +52,7 @@ Do not proceed until the target module file exists.
 Read `/home/bosko/NixOS/flake.nix` and locate the DE import line for the requested host. Each desktop host has exactly one line matching this pattern inside its `modules` list:
 
 ```
-"${self}/dotfiles/common/modules/desktop-environments/<current>.nix"
+"${self}/modules/desktop-environments/<current>.nix"
 ```
 
 Present both lines clearly:
@@ -60,8 +60,8 @@ Present both lines clearly:
 ```
 Host:     <host>
 
-Current:  "${self}/dotfiles/common/modules/desktop-environments/<current>.nix"
-Proposed: "${self}/dotfiles/common/modules/desktop-environments/<target>.nix"
+Current:  "${self}/modules/desktop-environments/<current>.nix"
+Proposed: "${self}/modules/desktop-environments/<target>.nix"
 ```
 
 If you cannot find a DE import line for the host, explain what you see and ask the user to verify.
@@ -90,13 +90,13 @@ Using the Edit tool, replace **only** the DE import line for the target host. Do
 The old string to match (replace `<current>` with the actual module name found in Step 3):
 
 ```
-"${self}/dotfiles/common/modules/desktop-environments/<current>.nix"
+"${self}/modules/desktop-environments/<current>.nix"
 ```
 
 The new string (replace `<target>` with the chosen module name):
 
 ```
-"${self}/dotfiles/common/modules/desktop-environments/<target>.nix"
+"${self}/modules/desktop-environments/<target>.nix"
 ```
 
 Use the Edit tool's exact-string replacement. If the old string is not unique in the file (unlikely but possible), include enough surrounding lines to make it unique.
