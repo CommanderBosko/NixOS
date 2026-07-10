@@ -20,7 +20,7 @@
   };
 
   # Enable Dank Material Shell via Home Manager
-  home-manager.users.bosko = { config, ... }: {
+  home-manager.users.bosko = { config, lib, pkgs, ... }: {
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
@@ -71,6 +71,22 @@
       '';
     };
 
+    # Full KDE Frameworks apps (dolphin, and KIO/KConfig apps generally) don't
+    # theme off QT_QPA_PLATFORMTHEME at all — they resolve their palette via
+    # KColorScheme reading kdeglobals, a completely separate path. Outside a
+    # real Plasma session there's no kded daemon keeping kdeglobals' "current
+    # scheme" pointer live, so they silently fall back to the hardcoded Breeze
+    # light default even though qt6ct is correctly themed (as proven by
+    # qBittorrent, a plain Qt app, picking up dark fine with identical env).
+    # `ColorScheme=*` tells KColorScheme to defer to the live Qt platform
+    # theme instead. Applied via kwriteconfig6 (not home.file) because
+    # kdeglobals is actively written back by KDE apps (recent files, window
+    # geometry, KFileDialog state) — force-managing the whole file as a
+    # read-only nix-store symlink would break that.
+    home.activation.kdeColorScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
+    '';
+
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
 
@@ -83,9 +99,18 @@
     };
   };
 
-  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent) follow DMS's
-  # matugen-generated dark/light theme instead of Qt's default light style
+  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, dolphin) follow
+  # DMS's matugen-generated dark/light theme instead of Qt's default light style
   environment.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
+
+  # Without this, apps built outside dolphin/qt6ct's own closure (i.e. anything
+  # not sharing their exact Nix build inputs) can't discover libqt6ct.so at
+  # all: unwrapped Qt binaries only search the plugin dirs baked into their own
+  # RPATH at build time, which never include unrelated packages like qt6ct.
+  # This points every session app at the merged system profile's plugin dir
+  # (which does include qt6ct, since it's in environment.systemPackages below),
+  # so QT_QPA_PLATFORMTHEME=qt6ct above can actually be resolved.
+  environment.profileRelativeSessionVariables.QT_PLUGIN_PATH = [ "/lib/qt-6/plugins" ];
 
   # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
