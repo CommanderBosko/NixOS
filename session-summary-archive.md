@@ -1,3 +1,24 @@
+## Session: 2026-07-07 (session 32) — routine flake update via `/flake-update-verify`
+
+**Focus**: Update flake inputs, verify eval, commit and push if green.
+
+### What changed (and why)
+- **Flake update (`65e2fb7`)** — `dms`, `financeguru`, `home-manager`, `nixpkgs` all bumped via the `/flake-update-verify` loop (`nixpkgs-stable` unchanged). `nix flake check --no-build` passed for all 4 hosts, then a deep-eval of each host's `config.system.build.toplevel.drvPath` also succeeded — the loop's stricter gate, since flake-check alone is shallow (the session-29 pnpm/vesktop lesson).
+
+### Decisions
+- Followed the loop's "pre-approved run" gotcha — the request already approved the whole update→verify→commit→push flow, so ran straight through without per-step pauses.
+
+### Issues / surprises
+- None — update, both verification layers, commit, and push all succeeded on the first pass.
+
+### Next session
+- Did **not** retest removing the pnpm-10.29.2 waiver in `nix.nix` this bump — still worth trying at the next one.
+- Fleet-wide activation is now carrying three stacked lock bumps (session 29's zen 7.1.2 + session 31's + this session's) — still nothing applied to any host.
+
+**Commits**: `65e2fb7` (1 commit)
+
+---
+
 ## Session: 2026-07-04 (session 31) — routine flake update
 
 **Focus**: Update flake inputs, dry-run verify, commit and push; also commit an unrelated pre-existing `session-closer` skill edit found sitting uncommitted at session start.
