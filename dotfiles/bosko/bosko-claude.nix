@@ -17,8 +17,10 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/interview/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/interview/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + assets/ (brief-template.md).
+    ".claude/skills/interview" = {
+      source = "${self}/dotfiles/bosko/claude/skills/interview";
+      recursive = true;
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + assets/ (skill-template.md).

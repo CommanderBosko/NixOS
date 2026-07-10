@@ -32,11 +32,11 @@ Present to the user, concisely:
 - **The steps** it would automate, in plain English, citing the concrete commands/paths from this conversation
 - **Scope** — recommend global (repo-managed) or project-local based on whether the workflow is NixOS-specific or general
 
-Ask the user to approve, tweak, or reject before building anything.
+Use the **AskUserQuestion** tool to ask whether to proceed, with options **Build it as proposed** (hand off to `new-skill` as-is), **Let me tweak it first** (gather the requested changes, then proceed), and **Skip it** (don't build anything). Don't ask this in free-form prose.
 
 ### 4. Build it
 
-On approval, hand off to the `new-skill` skill to draft and write the file, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed.
+On **Build it as proposed** (or after applying the user's tweaks), hand off to the `new-skill` skill to draft and write the file, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed. On **Skip it**, stop cleanly.
 
 ### 5. Confirm
 

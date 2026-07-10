@@ -55,7 +55,7 @@ Create the `knowledge/` directory if it doesn't exist yet. If a `team-member.md`
 
 ### 5. Confirm and set expectations
 
-Tell the user where the profile was saved and that from now on you'll draw on it whenever they ask for career advice, decisions, or check-ins. Offer to start coaching now or stop here — don't auto-launch into coaching.
+Tell the user where the profile was saved and that from now on you'll draw on it whenever they ask for career advice, decisions, or check-ins. Then use the **AskUserQuestion** tool to ask what happens next, with options **Start coaching now** (begin immediately using the saved profile) and **Stop here** (end the session with just the saved profile). Do only what they choose — don't auto-launch into coaching.
 
 ## Rules
 

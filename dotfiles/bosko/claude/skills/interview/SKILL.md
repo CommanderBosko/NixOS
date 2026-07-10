@@ -58,16 +58,8 @@ Require an explicit yes (or a correction) on **each** item. If the user corrects
 
 ### 6. Deliver the brief
 
-When the picture is complete, write a concise **Project Brief** with these sections:
-
-- **Goal** (one or two sentences)
-- **Problem it solves**
-- **Target users**
-- **Must-haves** (bulleted)
-- **Out of scope** (bulleted)
-- **Constraints**
-- **Definition of done**
-- **Open questions / risks** (anything still unresolved)
+When the picture is complete, write a concise **Project Brief**. Read the section skeleton from
+`assets/brief-template.md` (relative to this skill's directory) and fill it in from the interview.
 
 Then ask: *"Does this capture it? Anything to add, cut, or correct?"* Revise until the user confirms.
 
@@ -94,3 +86,7 @@ Once confirmed, use the **AskUserQuestion** tool to ask what happens next, with 
 
 - **AskUserQuestion times out after 60s if the user is away** (observed 2026-07-02, and in one earlier session). A timeout is NOT an answer — never proceed as if defaults were accepted. On timeout, restate the same wave as plain numbered text with a recommended default per question so the user can answer asynchronously in one reply, and mark the interview as paused, not advanced.
 - **A well-scoped, already-diagnosed technical task doesn't need the full ceremony** (observed 2026-07-07: invoked for a Qt platform-plugin bug fix where the root cause was already found via git history — running Steps 3–8 in full would have meant writing a Project Brief and spawning a second-AI review subagent for what was really a 30-minute fix). If the request is a single concrete fix with a clear, already-implied success criterion (a specific error, a known repro, a bounded diagnosis), skip straight to 1–3 blocking clarifying questions via AskUserQuestion, skip the Project Brief and second-AI-review, and proceed once answered. Reserve the full ceremony (angles, brief, independent review) for genuinely fuzzy, multi-part, or open-ended-scope requests.
+
+## Assets
+
+- `assets/brief-template.md` — the Project Brief section skeleton used in Step 6. Read it and fill it from the interview; never inline the template in prose.
