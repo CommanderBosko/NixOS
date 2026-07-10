@@ -1,3 +1,28 @@
+## Session: 2026-07-08 (session 33) — gaming DE switched to Niri ahead of a gaming test
+
+**Focus**: Switch gaming's desktop environment to Niri and make sure anything the gaming test needs is in place.
+
+### What changed (and why)
+- **`flake.nix` (`34a7dbe`)** — gaming's DE import changed `plasma.nix` → `niri.nix`.
+- **`nvidia.nix` (`34a7dbe`)** — added `GBM_BACKEND`, `__GLX_VENDOR_LIBRARY_NAME`, `LIBVA_DRIVER_NAME` session variables. Niri is Smithay-based, not wlroots, so it doesn't get KWin's automatic nvidia vendor-lib selection; these are the vars that actually matter for Niri (not the wlroots-specific folklore like `WLR_NO_HARDWARE_CURSORS`, which would be a no-op here).
+- Confirmed everything else gaming needs under Niri was already present by reading the modules directly: Steam/gamescope/gamemode/controller support (`gaming.nix`, DE-agnostic), `xwayland-satellite` for Steam's X11-only overlays (already in `niri.nix`), and SDDM+Niri as a session pairing (already proven on `laptop`).
+
+### Decisions
+- Asked before touching anything: confirmed Plasma's **Wayland** session (not X11) was already running on this GPU, so nvidia+Wayland is proven on this hardware rather than untested — lowering the risk of the switch.
+- Added the nvidia+Niri session vars preemptively (user's choice) rather than waiting for a visible glitch — harmless if unneeded.
+- Did a full DE swap (not a dry-run-only preview) — the existing generation-rollback safety net (previous Plasma generation stays at the boot menu) covers the downside; no dual-DE session was set up.
+
+### Issues / surprises
+- None — dry-run passed clean on the first try (niri + its XDG portal + `unit-niri.service` added, KDE removed, ~1.48 GiB smaller closure).
+
+### Next session
+- **Reboot gaming** to actually activate the switch (rides along with the already-pending lock bumps — one reboot covers both), then test Steam/Proton, controller input, and cursor rendering under Niri.
+- If Niri turns out broken for gaming, roll back via the boot menu's previous Plasma generation.
+
+**Commits**: `34a7dbe` (1 commit, not yet pushed at close)
+
+---
+
 ## Session: 2026-07-07 (session 32) — routine flake update via `/flake-update-verify`
 
 **Focus**: Update flake inputs, verify eval, commit and push if green.

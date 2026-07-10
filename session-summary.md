@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-10 (session 38) — Dolphin dark-theme fix, then a second full /improve-system pass
+
+**Focus**: User reported the newly-installed Dolphin file manager rendering light despite the system's dark qt6ct theming; root-caused and fixed it live, then ran `/improve-system` end-to-end a second time. (Two commits in the close range, `3f20488` dolphin-add and `42cbb4e` playerctl fix, predate this conversation — no transcript rationale to record; this session's own work starts at `58f44a0`.)
+
+### What changed (and why)
+- **Dolphin theming, root-caused via live screenshot debugging + a 4-agent `/research` pass.** Two stacked causes: unwrapped Qt binaries (dolphin, qbittorrent) can't discover `qt6ct`'s platform-theme plugin without `QT_PLUGIN_PATH` pointing at the merged system profile; and separately, full KDE Frameworks apps read `kdeglobals` via `KColorScheme` — a path entirely independent of `QT_QPA_PLATFORMTHEME` — so Dolphin specifically needed `[UiSettings] ColorScheme=*` on top of the plugin-path fix. Applied both in `modules/desktop-environments/niri.nix`: a session var plus a `kwriteconfig6`-based `home.activation` script (chosen over a `home.file` symlink since KDE apps write real state back into `kdeglobals`). Verified with live screenshots at each step, including catching that a `systemd --user` session doesn't refresh its env on `nixos-rebuild switch` without a new login. Committed `58f44a0`.
+- **Second full `/improve-system` run** — `skill-upgrade` and `claude-rules` came back clean; `skill-suggestion` built a new `wayland-screenshot` skill from the screenshot-verify pattern used 5x this session; `skill-audit` swept all 50 skills via 5 parallel sub-agents, found 14 real issues (6 verified correctness bugs, 1 path-drift fix, 4 structural extractions, 3 UX gate conversions), user approved all 14, applied across 3 commits (`fe6a76d`, `30f8803`, `92fd4f3`); `fewer-permission-prompts` mined 50 transcripts and added 9 allowlist entries (`ea91d32`).
+
+### Decisions
+- `kwriteconfig6` activation script over a `home.file` symlink for `kdeglobals` — the file is actively written back by KDE apps (recent files, window geometry), so a read-only symlink would break that.
+- Kept debugging empirically (live screenshots, actual plugin-path inspection via `strings`/`nix-store -q`) rather than guessing from Qt theming folklore — the first hypothesis (missing `QT_PLUGIN_PATH`) was real but insufficient on its own; only the research pass surfaced the second, KDE-Frameworks-specific cause.
+
+### Issues / surprises
+- `QT_DEBUG_PLUGINS`/`QT_LOGGING_RULES` debug tracing produced zero captured output for GUI apps launched via `nohup ... &` in this sandboxed environment, even when correctly redirected — screenshot-based visual verification was the only reliable signal. Documented as a gotcha in the new `wayland-screenshot` skill.
+- `nix search "nixpkgs#<query>"` (used in `search-pkg`'s offline fallback) has been silently broken — wrong syntax, always erroring and swallowed — so that fallback path returned "no packages matched" for every query until this session's fix.
+
+### Next session
+- Rebuild + reboot + start a new Claude Code session to pick up this session's repo-managed skill fixes (`ask-team`, `search-pkg`, `skill-audit`, `interview`, `new-team-member`, `skill-suggestion`) — see project-state Next Steps 00.
+
+**Commits**: `42cbb4e`..`ea91d32` (7 commits)
+
+---
+
 ## Session: 2026-07-09 (session 37) — Repo layout restructured after an organization review
 
 **Focus**: User asked "how well do I have this repo organized, what would you do differently?" — reviewed the layout, then implemented all five approved recommendations and proved the result is a functional no-op.
@@ -104,31 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **Reboot gaming and laptop** to activate the `config.kdl` symlink (rides along with other pending lock-bump reboots) — verify the new keybinds, the 8px gaps, and that DMS's settings UI still writes freely.
 
 **Commits**: `b9913b5`..`bf2ba35` (4 commits, not yet pushed at close)
-
----
-
-## Session: 2026-07-08 (session 33) — gaming DE switched to Niri ahead of a gaming test
-
-**Focus**: Switch gaming's desktop environment to Niri and make sure anything the gaming test needs is in place.
-
-### What changed (and why)
-- **`flake.nix` (`34a7dbe`)** — gaming's DE import changed `plasma.nix` → `niri.nix`.
-- **`nvidia.nix` (`34a7dbe`)** — added `GBM_BACKEND`, `__GLX_VENDOR_LIBRARY_NAME`, `LIBVA_DRIVER_NAME` session variables. Niri is Smithay-based, not wlroots, so it doesn't get KWin's automatic nvidia vendor-lib selection; these are the vars that actually matter for Niri (not the wlroots-specific folklore like `WLR_NO_HARDWARE_CURSORS`, which would be a no-op here).
-- Confirmed everything else gaming needs under Niri was already present by reading the modules directly: Steam/gamescope/gamemode/controller support (`gaming.nix`, DE-agnostic), `xwayland-satellite` for Steam's X11-only overlays (already in `niri.nix`), and SDDM+Niri as a session pairing (already proven on `laptop`).
-
-### Decisions
-- Asked before touching anything: confirmed Plasma's **Wayland** session (not X11) was already running on this GPU, so nvidia+Wayland is proven on this hardware rather than untested — lowering the risk of the switch.
-- Added the nvidia+Niri session vars preemptively (user's choice) rather than waiting for a visible glitch — harmless if unneeded.
-- Did a full DE swap (not a dry-run-only preview) — the existing generation-rollback safety net (previous Plasma generation stays at the boot menu) covers the downside; no dual-DE session was set up.
-
-### Issues / surprises
-- None — dry-run passed clean on the first try (niri + its XDG portal + `unit-niri.service` added, KDE removed, ~1.48 GiB smaller closure).
-
-### Next session
-- **Reboot gaming** to actually activate the switch (rides along with the already-pending lock bumps — one reboot covers both), then test Steam/Proton, controller input, and cursor rendering under Niri.
-- If Niri turns out broken for gaming, roll back via the boot menu's previous Plasma generation.
-
-**Commits**: `34a7dbe` (1 commit, not yet pushed at close)
 
 ---
 
