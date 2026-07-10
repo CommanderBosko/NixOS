@@ -6,11 +6,20 @@
       "Bash(./.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
       "Bash(git -C * status)",
       "Bash(git -C * log *)",
+      "Bash(git -C * diff*)",
       "Bash(nix eval *)",
+      "Bash(nix flake metadata*)",
       "Bash(lsblk*)",
       "Bash(nix flake check*)",
+      "Bash(nix-store -q*)",
       "Bash(/home/bosko/NixOS/.claude/skills/secret-scan/scripts/secret-scan.sh*)",
       "Bash(/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh*)",
+      "Bash(.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
+      "Bash(bash /home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh*)",
+      "Bash(bash /home/bosko/.claude/skills/skill-audit/scripts/enumerate-skills.sh*)",
+      "Bash(/home/bosko/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh*)",
+      "Bash(gh run watch*)",
+      "Bash(journalctl*)",
       "mcp__nixos__nix"
     ]
   }
