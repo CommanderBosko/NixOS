@@ -8,22 +8,7 @@ version: 0.2.0
 
 Update all flake inputs for `/home/bosko/NixOS` and present a human-readable summary of what changed. Do not commit or rebuild automatically — leave those to the user.
 
-## Step 1 — Capture the current lock state
-
-Before running the update, snapshot the current `flake.lock` so you can diff against it after:
-
-```bash
-git -C /home/bosko/NixOS stash list
-git -C /home/bosko/NixOS diff flake.lock
-```
-
-Also note the current HEAD so you know the baseline:
-
-```bash
-git -C /home/bosko/NixOS log --oneline -1
-```
-
-## Step 2 — Run the update
+## Step 1 — Run the update
 
 ```bash
 nix flake update --flake /home/bosko/NixOS
@@ -33,7 +18,7 @@ Always use `--flake /home/bosko/NixOS` — do not rely on the current working di
 
 This command will take a minute or two while Nix fetches the latest revisions for all inputs. Stream the output to the user so they can see progress.
 
-## Step 3 — Display the diff
+## Step 2 — Display the diff
 
 After the update completes, run the shared lock-diff script and present its output verbatim:
 
@@ -56,7 +41,7 @@ If the script prints `flake.lock unchanged.` (nothing updated), tell the user:
 
 > All inputs are already up to date — flake.lock was not modified.
 
-## Step 4 — Remind the user of next steps
+## Step 3 — Remind the user of next steps
 
 After presenting the diff summary, always end with:
 

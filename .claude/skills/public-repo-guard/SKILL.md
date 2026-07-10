@@ -21,6 +21,10 @@ description: Run secret-scan then audit-config across the whole repo, triage eve
 >
 > **Retry cap:** 3 attempts per failing step, then stop and report.
 
+## Arguments
+
+None — this loop always scans the whole repo (working tree and full git history), never a subset.
+
 ## Goal
 
 Prove this **public** repo is safe to push: run `secret-scan` over the working tree and

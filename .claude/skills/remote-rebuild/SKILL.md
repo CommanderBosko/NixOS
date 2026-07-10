@@ -62,7 +62,13 @@ ssh "$VPN_SSH" 'sudo systemctl reboot'
 
 ## Step 3 — Post-reboot: restore client tunnels
 
-Rebooting vpn-server drops every client's WireGuard handshake (see Gotchas). After it comes back up, on each full-tunnel client run `sudo systemctl restart wg-quick-wg0`, then run `/vpn-status` to confirm the handshakes return.
+Rebooting vpn-server drops every client's WireGuard handshake (see Gotchas). After it comes back up, restart the tunnel on every full-tunnel client:
+
+```bash
+/home/bosko/NixOS/.claude/skills/remote-rebuild/scripts/restore-tunnels.sh
+```
+
+It iterates `.claude/hosts.json`'s `flakeHosts` (skipping `vpn-server` itself) and restarts `wg-quick-wg0` on each via SSH. Then run `/vpn-status` to confirm the handshakes return.
 
 ## Step 4 — Report result
 
