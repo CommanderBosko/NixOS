@@ -43,7 +43,7 @@ If `flake.lock` already has uncommitted changes, tell the user before proceeding
 ## Step 3 — Bump the one input
 
 ```bash
-nix flake lock --update-input <name> --flake /home/bosko/NixOS
+nix flake update <name> --flake /home/bosko/NixOS
 ```
 
 Always pass `--flake /home/bosko/NixOS`; never rely on cwd, since this skill may be invoked from anywhere. This resolves the input's original URL to its latest upstream rev and rewrites only that input's node in `flake.lock`.
@@ -99,4 +99,4 @@ Do not run either automatically.
 
 ## Gotchas
 
-- **`nix flake lock --update-input <name>` no longer exists** (observed 2026-07-02): current nix rejects both `--update-input` (removed deprecated alias) and `--flake` on that subcommand. Use `nix flake update <name> --flake /home/bosko/NixOS` instead.
+- **`nix flake lock --update-input <name>` no longer exists** (observed 2026-07-02): current nix rejects both `--update-input` (removed deprecated alias) and `--flake` on that subcommand. Step 3 above already uses the correct replacement (`nix flake update <name> --flake /home/bosko/NixOS`) — if this alias ever resurfaces in Step 3, that's the fix.

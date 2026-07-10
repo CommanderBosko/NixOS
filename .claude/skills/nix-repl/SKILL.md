@@ -63,7 +63,7 @@ Give the user 5–8 ready-to-paste expressions tailored to the host they chose:
 - `cfg.programs.steam` — Steam config
 
 ### vpn-server only
-- `cfg.networking.wireguard.interfaces.wg0` — WireGuard interface config
+- `cfg.networking.wg-quick.interfaces.wg0` — WireGuard interface config
 
 ## Step 4 — Explain tab-completion
 

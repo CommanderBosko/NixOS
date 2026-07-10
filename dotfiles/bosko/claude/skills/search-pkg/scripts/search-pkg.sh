@@ -17,7 +17,7 @@ query="$1"
 limit=80
 
 # nix search emits eval-progress spam to stderr; drop it.
-raw="$(nix search "nixpkgs#${query}" 2>/dev/null || true)"
+raw="$(nix search nixpkgs "${query}" 2>/dev/null || true)"
 
 if [ -z "$raw" ]; then
   echo "No packages matched \"${query}\"."

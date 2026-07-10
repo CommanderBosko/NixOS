@@ -5,13 +5,12 @@ description: Pose a question to the user's advisory board — each team member a
 
 # Ask Team
 
-Put a question to the user's advisory board and let each member weigh in **in their own voice**, then cut through to a recommendation. The board is the set of synthesized advisor profiles in the shared knowledge base in the Nix repo:
+Put a question to the user's advisory board and let each member weigh in **in their own voice**, then cut through to a recommendation. The board is the set of synthesized advisor profiles in the shared knowledge base — the base path is the canonical one recorded in
+`~/.claude/skills/_shared/knowledge-base-path.md` (the single source of truth shared by
+`team-meeting`, `team-member-ingest`, `team-member-synthesize`, and `new-team-member` — if the
+knowledge base ever moves, update only that one file), at `<base-path>/<person-slug>/team-member.md`.
 
-```
-/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/<person-slug>/team-member.md
-```
-
-(The top-level `knowledge/team-member.md` is the **user's own** profile — context about who's asking, not a board member.)
+(The top-level `<base-path>/team-member.md` is the **user's own** profile — context about who's asking, not a board member.)
 
 ## Arguments
 
@@ -27,8 +26,8 @@ If the user didn't include a question in the invocation, prompt: **"What do you 
 
 ### 2. Load the board
 
-- List the advisor profiles: every `knowledge/<person-slug>/team-member.md` (each subdirectory is one advisor). Read each one — core ideas, vocabulary, stances, recurring stories.
-- Also read the user's own profile at `knowledge/team-member.md` for context on their situation (role, goals, blockers), so the answers and synthesis stay specific to them.
+- List the advisor profiles: every `<base-path>/<person-slug>/team-member.md` (each subdirectory is one advisor). Read each one — core ideas, vocabulary, stances, recurring stories.
+- Also read the user's own profile at `<base-path>/team-member.md` for context on their situation (role, goals, blockers), so the answers and synthesis stay specific to them.
 - If **no advisor profiles** exist yet, say so and point the user to `team-meeting` (to pick advisors) and `team-member-ingest` (to build each advisor's profile) first. Don't invent a board.
 
 ### 3. Each member gives their take
