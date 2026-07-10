@@ -97,6 +97,7 @@
 
     fuzzel # Application launcher
     grim # Screenshot utility
+    kdePackages.dolphin # File manager
     kdePackages.qt6ct # Qt theme engine so Qt apps follow DMS's matugen theme
     playerctl # MPRIS media control, used by niri-config.kdl's XF86Audio media key binds
     slurp # Region selection for grim
