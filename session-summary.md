@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-10 (session 39) — Two new skills mined and shipped via a fresh ship-skill orchestration
+
+**Focus**: User asked "any other `/skill-suggestion`?" cold, with no prior conversation this session — found and shipped one genuine skill gap (`deep-eval-check`), then noticed the propose→build→test→commit→push pattern used to ship it was itself un-skilled, so built an orchestration skill (`ship-skill`) for it, then used a `/loop` to confirm no third gap remains.
+
+### What changed (and why)
+- **`deep-eval-check`** (project-local, `.claude/skills/deep-eval-check/`) — `skill-suggestion` forked a sub-agent to mine 13+ past-session transcripts and found that `nix flake check`'s documented shallow-eval gap (it can pass while a real rebuild fails) had a manual workaround (`nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`) run by hand across a dozen+ sessions but never turned into a skill. Built it, live-tested against all four hosts (gaming/laptop/natalie-laptop/vpn-server) — all PASS.
+- **`ship-skill`** (global, repo-managed: `dotfiles/bosko/claude/skills/ship-skill/`) — after committing+pushing `deep-eval-check` by hand (skill-suggestion → new-skill → test → git-commit → git-push), recognized that exact chain as a recurring, un-skilled orchestration and built it as its own Orchestration-bucket skill, with a deliberate confirmation pause before the push step.
+- **`/loop /ship-skill`** (self-paced, no fixed interval) — ran it once to look for a third gap; the iteration re-invoked `skill-suggestion`, which forked another mining pass (112k tokens, all 76 transcripts + memory + a rejected DankMaterialShell-theming near-miss) and returned a clean "nothing found" verdict. The loop self-stopped after one iteration, exactly per its designed stop condition.
+- **Confirmed a stale assumption from session 38 is wrong**: after the user ran `nh os boot` for `ship-skill`, its `~/.claude/skills/ship-skill/` symlink was immediately live in this same running session — no new session needed, only the rebuild. Updated `project-state.md` to drop the "and a new Claude Code session" requirement it previously carried.
+
+### Decisions
+- `ship-skill` pauses before push, not before commit — by that point in the chain two consequential decisions (built + verified working) have already happened with zero user checkpoint, so push gets an explicit `AskUserQuestion` rather than compounding a third autonomous decision.
+- Used a fork (not inline grep) for both transcript-mining passes — keeps the multi-MB JSONL grepping out of the main conversation's context.
+
+### Issues / surprises
+- `git log --oneline <ref>..HEAD --all` is a footgun in this repo specifically: combining a commit range with `--all` doesn't restrict `--all` to that range — it re-anchors the traversal at every ref in the repo, so in a repo with a long pre-flake, pre-history-purge tail of old commits it dumps hundreds of unrelated lines instead of the 2 actual commits since last close. Plain `git log --oneline <ref>..HEAD` (no `--all`) gave the correct answer. Worth a `session-closer` gotcha if it recurs.
+- `ship-skill`'s own internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) never got exercised end-to-end this session — the one live loop run stopped at Step 1 (`skill-suggestion` found nothing), before reaching Steps 2-6. Each sub-skill works standalone; the orchestration handoffs between them are still unverified in practice.
+
+### Next session
+- Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove out its full internal chain, including the `git-commit`/`git-push` handoffs.
+- Don't re-run a blind `/skill-suggestion` sweep without new session material to mine — this session's pass confirmed the roster (52 skills) currently has no further low-hanging gap.
+
+**Commits**: `cf9e38b`..`fb79baa` (2 commits)
+
+---
+
 ## Session: 2026-07-10 (session 38) — Dolphin dark-theme fix, then a second full /improve-system pass
 
 **Focus**: User reported the newly-installed Dolphin file manager rendering light despite the system's dark qt6ct theming; root-caused and fixed it live, then ran `/improve-system` end-to-end a second time. (Two commits in the close range, `3f20488` dolphin-add and `42cbb4e` playerctl fix, predate this conversation — no transcript rationale to record; this session's own work starts at `58f44a0`.)
@@ -102,31 +128,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - On laptop, also confirm/flip DMS's `qtThemingEnabled` toggle once post-boot — that half is intentionally unmanaged.
 
 **Commits**: `b3bbb47` (1 commit). `8cabb8b` landed in an unclosed prior session and is not re-narrated here beyond its commit message.
-
----
-
-## Session: 2026-07-09 (session 34) — Niri config.kdl moved into dotfiles + keybind/layout tweaks
-
-**Focus**: Niri on gaming is working well; figure out what should move from ad-hoc `$HOME` state into version-controlled dotfiles, then make a few requested tweaks.
-
-### What changed (and why)
-- **`dotfiles/common/configs/niri-config.kdl` (new) + `niri.nix` (`b9913b5`)** — `~/.config/niri/config.kdl` was a plain mutable file with no version history; symlinked it in via Home Manager (`home.file`, `force = true`), scoped to `niri.nix` itself (gaming + laptop only) rather than shared `home.nix`. DMS's own generated state (`DankMaterialShell/settings.json`, `niri/dms/*.kdl`) stays unmanaged on purpose — it's written live by DMS's settings UI.
-- **Removed the stock `spawn-at-startup "waybar"` line (`e38f114`)** — leftover from niri's default template; DMS's own shell is the actual panel here and waybar isn't installed.
-- **Added `Mod+Return` (kitty) and `Mod+B` (browser) keybinds (`0cbeb1d`)** — browser bind is `xdg-open https:// || flatpak run app.zen_browser.zen`; confirmed live that `mimeapps.list` already defaults to Zen, but that file isn't dotfiles-managed, so the flatpak fallback covers a fresh install.
-- **Gaps reduced 16px → 8px (`bf2ba35`)** — user-requested layout tweak.
-
-### Decisions
-- Chose to manage `config.kdl` via Nix despite a real tradeoff: DMS may in future try to auto-inject additional `include` lines into it (only `outputs.kdl` is included today; other generated files like `colors.kdl` expect to be added the same way), and a Nix-managed symlink is read-only so that injection would silently fail. Judged this an acceptable, easily-diagnosed papercut against the alternative of permanently unversioned config state.
-- Left DMS's theme/settings files (`settings.json`, `dms/*.kdl`) unmanaged — forcing those under Nix would break DMS's live theme-picker UI.
-
-### Issues / surprises
-- Discovered the `colors.kdl`/etc. DMS-generated files carry a comment implying DMS itself is meant to add their `include` lines automatically — worth knowing if a future DMS setting toggle doesn't seem to apply after this change.
-- `xdg-open` can't force a browser to open in a genuinely new window (no generic way to pass `--new-window` through a `.desktop` file's `Exec` line) — may open a new tab instead if the browser's already running.
-
-### Next session
-- **Reboot gaming and laptop** to activate the `config.kdl` symlink (rides along with other pending lock-bump reboots) — verify the new keybinds, the 8px gaps, and that DMS's settings UI still writes freely.
-
-**Commits**: `b9913b5`..`bf2ba35` (4 commits, not yet pushed at close)
 
 ---
 

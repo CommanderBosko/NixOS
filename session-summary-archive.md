@@ -1,3 +1,28 @@
+## Session: 2026-07-09 (session 34) — Niri config.kdl moved into dotfiles + keybind/layout tweaks
+
+**Focus**: Niri on gaming is working well; figure out what should move from ad-hoc `$HOME` state into version-controlled dotfiles, then make a few requested tweaks.
+
+### What changed (and why)
+- **`dotfiles/common/configs/niri-config.kdl` (new) + `niri.nix` (`b9913b5`)** — `~/.config/niri/config.kdl` was a plain mutable file with no version history; symlinked it in via Home Manager (`home.file`, `force = true`), scoped to `niri.nix` itself (gaming + laptop only) rather than shared `home.nix`. DMS's own generated state (`DankMaterialShell/settings.json`, `niri/dms/*.kdl`) stays unmanaged on purpose — it's written live by DMS's settings UI.
+- **Removed the stock `spawn-at-startup "waybar"` line (`e38f114`)** — leftover from niri's default template; DMS's own shell is the actual panel here and waybar isn't installed.
+- **Added `Mod+Return` (kitty) and `Mod+B` (browser) keybinds (`0cbeb1d`)** — browser bind is `xdg-open https:// || flatpak run app.zen_browser.zen`; confirmed live that `mimeapps.list` already defaults to Zen, but that file isn't dotfiles-managed, so the flatpak fallback covers a fresh install.
+- **Gaps reduced 16px → 8px (`bf2ba35`)** — user-requested layout tweak.
+
+### Decisions
+- Chose to manage `config.kdl` via Nix despite a real tradeoff: DMS may in future try to auto-inject additional `include` lines into it (only `outputs.kdl` is included today; other generated files like `colors.kdl` expect to be added the same way), and a Nix-managed symlink is read-only so that injection would silently fail. Judged this an acceptable, easily-diagnosed papercut against the alternative of permanently unversioned config state.
+- Left DMS's theme/settings files (`settings.json`, `dms/*.kdl`) unmanaged — forcing those under Nix would break DMS's live theme-picker UI.
+
+### Issues / surprises
+- Discovered the `colors.kdl`/etc. DMS-generated files carry a comment implying DMS itself is meant to add their `include` lines automatically — worth knowing if a future DMS setting toggle doesn't seem to apply after this change.
+- `xdg-open` can't force a browser to open in a genuinely new window (no generic way to pass `--new-window` through a `.desktop` file's `Exec` line) — may open a new tab instead if the browser's already running.
+
+### Next session
+- **Reboot gaming and laptop** to activate the `config.kdl` symlink (rides along with other pending lock-bump reboots) — verify the new keybinds, the 8px gaps, and that DMS's settings UI still writes freely.
+
+**Commits**: `b9913b5`..`bf2ba35` (4 commits, not yet pushed at close)
+
+---
+
 ## Session: 2026-07-08 (session 33) — gaming DE switched to Niri ahead of a gaming test
 
 **Focus**: Switch gaming's desktop environment to Niri and make sure anything the gaming test needs is in place.
