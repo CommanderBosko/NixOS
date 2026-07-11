@@ -85,7 +85,7 @@ The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, n
 
 ```
 modules/                  # System-level NixOS modules shared across hosts
-├── desktop-environments/ # 11 swappable DE modules (niri, plasma, cosmic, etc.)
+├── desktop-environments/ # 12 swappable DE modules (niri, plasma, cosmic, omarchy, etc.)
 └── *.nix                 # bootloader, shell, users, amd, nvidia, gaming, sddm, security,
                           # desktop-apps, desktop-networking, vpn, …
 

@@ -1,3 +1,27 @@
+## Session: 2026-07-09 (session 35) — qBittorrent/Qt theming under niri+DMS actually fixed
+
+**Focus**: The prior session's qt6ct fix (`8cabb8b`) didn't actually work — qBittorrent was still light-themed. Research and fix the real cause.
+
+### What changed (and why)
+- **Diagnosed via DMS's own logs and settings, not guesswork.** `qt6ct` package + `QT_QPA_PLATFORMTHEME=qt6ct` were necessary but not sufficient. Found `qtThemingEnabled: false` in `~/.config/DankMaterialShell/settings.json` — DMS always generates the matugen Qt color file but only applies it when this flag is on. Flipped it live, then found via `journalctl --user -u dms.service` that DMS's backend only touches an existing `qt6ct.conf`'s mtime — it never creates the file, and none existed on this host (normally seeded once via the `qt6ct` GUI, never run here).
+- **`niri.nix` (`b3bbb47`)** — added `.config/qt6ct/qt6ct.conf` as an HM `home.file` (custom_palette + color_scheme_path pointing at DMS's matugen.conf, templated via `config.home.homeDirectory`), scoped to gaming+laptop.
+- **Verified live before committing**: wrote the same file by hand to gaming, restarted qBittorrent (safe — resumes seeding), and confirmed via `grim` screenshot it actually rendered dark.
+
+### Decisions
+- Pulled `qt6ct.conf` into Nix (static, DMS only touches its mtime — low risk) but explicitly **not** `settings.json` or `matugen.conf` (both rewritten live by DMS itself; a read-only Nix symlink would break DMS's own settings UI / theme regeneration).
+
+### Issues / surprises
+- The original `8cabb8b` fix looked complete (package + env var) but silently wasn't — the actual blocker was two layers of DMS's own runtime state, invisible without reading its logs.
+- `dms ipc call theme light`/`dark` is the way to force DMS to re-run its matugen/apply pipeline on demand (it otherwise skips regeneration when it detects no color change).
+
+### Next session
+- **Reboot gaming and laptop** to pick up the Nix-managed `qt6ct.conf` (gaming's live copy is already hand-identical, so no visible change there; laptop gets it fresh).
+- On laptop, also confirm/flip DMS's `qtThemingEnabled` toggle once post-boot — that half is intentionally unmanaged.
+
+**Commits**: `b3bbb47` (1 commit). `8cabb8b` landed in an unclosed prior session and is not re-narrated here beyond its commit message.
+
+---
+
 ## Session: 2026-07-09 (session 34) — Niri config.kdl moved into dotfiles + keybind/layout tweaks
 
 **Focus**: Niri on gaming is working well; figure out what should move from ad-hoc `$HOME` state into version-controlled dotfiles, then make a few requested tweaks.

@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-10 (session 40) — Hyprland DMS parity, then a researched Omarchy DE module
+
+**Focus**: Two user-directed feature asks in one sitting — give Hyprland the same DMS integration niri has, then research and build a new Omarchy-style DE module — both landing as new/changed swappable desktop-environment modules.
+
+### What changed (and why)
+- **`hyprland.nix` (`b7e50a1`, pushed)**: added DMS shell (`programs.dank-material-shell` + systemd autostart), the qt6ct/kdeglobals Qt theming glue, DMS's `accounts-daemon`/`power-profiles-daemon` deps, and switched swaylock/swayidle to HM-managed services — all mirroring `niri.nix`. Mid-task, reading the actual `dms` flake input source revealed it has no declarative NixOS/HM module for Hyprland (unlike niri) — since Hyprland 0.55 DMS manages Hyprland's config imperatively via `dms setup` (Lua-based). Surfaced this back to the user and dropped the "managed hyprland.conf with niri-style binds" part of the original ask rather than shipping something that'd get silently backed up by DMS on first run.
+- **`omarchy.nix` (`7d81c4c`, committed, not yet pushed)**: new DE module researched via a 10-source `/research` fan-out (parallel sub-agents). Confirmed Omarchy (DHH's Arch+Hyprland desktop) has no official NixOS support, and the existing community port `omarchy-nix` — while architecturally clean (importable modules) — hard-assumes greetd+PipeWire+its own network/Bluetooth stack (conflicting with this repo's shared SDDM/desktop-networking) and is ~8 months stale. Built a from-scratch module instead: Waybar+Hyprlock+Walker (Omarchy's real shell, confirmed via research — not DMS), Tokyo Night theming, Omarchy's keybind philosophy, kept this repo's existing app choices (kitty, dolphin) per explicit scope call.
+
+### Decisions
+- Both modules kept independent of each other and of one shared base — Omarchy's shell (Waybar/Hyprlock/Walker) and niri/hyprland's DMS integration are unrelated stacks; sharing a base would mean conditionally disabling pieces rather than clean reuse.
+- Didn't import `omarchy-nix` as a flake input despite it being technically reusable — its hard display-manager/network assumptions would fight this repo's existing shared modules.
+- Caught and fixed a real bug during verification: home-manager's Hyprland module warned its default `configType` is migrating `hyprlang` → `lua`; pinned explicitly since the settings attrset used follows the classic (hyprlang) schema.
+
+### Issues / surprises
+- Discovered a home-manager option-search MCP tool malfunction: `home-manager` source searches returned empty results even for well-known options like `git` (packages/nixos source searches worked fine). Didn't block the work — verified the actual option paths (`programs.waybar`, `programs.hyprlock`, `services.hypridle`, `wayland.windowManager.hyprland`) via real deep-eval instead of the search tool. Worth flagging if it recurs.
+- Neither new module is wired into any host — both verified only via `lib.deSmoke.<name>` deep-eval, same as the repo's other unused DE modules.
+
+### Next session
+- `omarchy.nix` commit (`7d81c4c`) needs pushing (session-closer handles this).
+- If the user wants to actually try either module live, use `switch-de` + `wayland-screenshot` (niether has been booted, only deep-evaluated).
+- `omarchy.nix`'s dolphin has no Qt theming glue (no DMS running to generate a color source) — flagged as a known gap, not yet fixed.
+
+**Commits**: `b7e50a1`..`7d81c4c` (2 commits)
+
+---
+
 ## Session: 2026-07-10 (session 39) — Two new skills mined and shipped via a fresh ship-skill orchestration
 
 **Focus**: User asked "any other `/skill-suggestion`?" cold, with no prior conversation this session — found and shipped one genuine skill gap (`deep-eval-check`), then noticed the propose→build→test→commit→push pattern used to ship it was itself un-skilled, so built an orchestration skill (`ship-skill`) for it, then used a `/loop` to confirm no third gap remains.
@@ -104,30 +130,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Spot-check `git-push`/`repo-creator` actually call their new `scripts/` files post-rebuild.
 
 **Commits**: `347cc88` (1 commit, pushed).
-
----
-
-## Session: 2026-07-09 (session 35) — qBittorrent/Qt theming under niri+DMS actually fixed
-
-**Focus**: The prior session's qt6ct fix (`8cabb8b`) didn't actually work — qBittorrent was still light-themed. Research and fix the real cause.
-
-### What changed (and why)
-- **Diagnosed via DMS's own logs and settings, not guesswork.** `qt6ct` package + `QT_QPA_PLATFORMTHEME=qt6ct` were necessary but not sufficient. Found `qtThemingEnabled: false` in `~/.config/DankMaterialShell/settings.json` — DMS always generates the matugen Qt color file but only applies it when this flag is on. Flipped it live, then found via `journalctl --user -u dms.service` that DMS's backend only touches an existing `qt6ct.conf`'s mtime — it never creates the file, and none existed on this host (normally seeded once via the `qt6ct` GUI, never run here).
-- **`niri.nix` (`b3bbb47`)** — added `.config/qt6ct/qt6ct.conf` as an HM `home.file` (custom_palette + color_scheme_path pointing at DMS's matugen.conf, templated via `config.home.homeDirectory`), scoped to gaming+laptop.
-- **Verified live before committing**: wrote the same file by hand to gaming, restarted qBittorrent (safe — resumes seeding), and confirmed via `grim` screenshot it actually rendered dark.
-
-### Decisions
-- Pulled `qt6ct.conf` into Nix (static, DMS only touches its mtime — low risk) but explicitly **not** `settings.json` or `matugen.conf` (both rewritten live by DMS itself; a read-only Nix symlink would break DMS's own settings UI / theme regeneration).
-
-### Issues / surprises
-- The original `8cabb8b` fix looked complete (package + env var) but silently wasn't — the actual blocker was two layers of DMS's own runtime state, invisible without reading its logs.
-- `dms ipc call theme light`/`dark` is the way to force DMS to re-run its matugen/apply pipeline on demand (it otherwise skips regeneration when it detects no color change).
-
-### Next session
-- **Reboot gaming and laptop** to pick up the Nix-managed `qt6ct.conf` (gaming's live copy is already hand-identical, so no visible change there; laptop gets it fresh).
-- On laptop, also confirm/flip DMS's `qtThemingEnabled` toggle once post-boot — that half is intentionally unmanaged.
-
-**Commits**: `b3bbb47` (1 commit). `8cabb8b` landed in an unclosed prior session and is not re-narrated here beyond its commit message.
 
 ---
 
