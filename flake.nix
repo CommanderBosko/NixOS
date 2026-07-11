@@ -147,6 +147,7 @@
           "${self}/hosts/natalie-laptop/environment.nix"
           "${self}/hosts/natalie-laptop/networking.nix"
           "${self}/hosts/natalie-laptop/virtualisation.nix"
+          "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/desktop-environments/plasma.nix"
           "${self}/modules/nvidia.nix"
         ];
