@@ -148,3 +148,5 @@ Part of `commonModules` (applies to all hosts). Enables:
 4. Test with `nh os boot /home/bosko/NixOS --dry`
 5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`
 6. `lib.deSmoke` picks the new module up automatically (it enumerates the directory), so CI's weekly de-smoke job will keep evaluating it even while unused
+
+**Editing a DE module that isn't currently imported by any host** (true for 9 of the 12 — only niri and plasma are live): step 4's `nh os boot --dry` only exercises whatever DE the target host already has wired in, so it silently verifies nothing about the module you just touched. Use the `de-smoke-check` skill instead — it deep-evaluates that module's `lib.deSmoke` build graph directly (`nix eval --raw .#lib.deSmoke.<name>.config.system.build.toplevel.drvPath`), catching real eval errors a shallow `flake check` would miss.

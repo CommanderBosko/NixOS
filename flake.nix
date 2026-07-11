@@ -11,6 +11,13 @@
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
+    # nix-colors — base16 palettes + Home Manager module, used by omarchy.nix
+    # for Omarchy's real theme-driven styling (one palette feeds Hyprland,
+    # Waybar, Hyprlock, mako). Only depends on a lib-only nixpkgs repackage
+    # and the tinted-theming schemes data repo, not full nixpkgs — no
+    # `follows` needed.
+    nix-colors.url = "github:misterio77/nix-colors";
+
     # Home manager
     home-manager = {
       url = "github:nix-community/home-manager";
