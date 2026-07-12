@@ -25,6 +25,15 @@
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
 
+    # DMS's systemd unit binds to graphical-session.target, which fires for
+    # ANY Wayland/X11 login — not niri specifically. Now that natalie-laptop
+    # can boot into Plasma too, that would start DMS's shell fighting
+    # Plasma's own panel. Gate it on the session that actually launched:
+    # XDG_CURRENT_DESKTOP is set per-session (confirmed live: "niri" under
+    # this compositor, imported into the systemd --user environment before
+    # graphical-session.target is reached) and Plasma sets a different value.
+    systemd.user.services.dms.Unit.ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
+
     # Niri config (input, layout, binds, window rules). DMS-generated files under
     # ~/.config/niri/dms/ (theme/output state driven by its own settings UI) are
     # left unmanaged on purpose.
@@ -83,8 +92,17 @@
     # kdeglobals is actively written back by KDE apps (recent files, window
     # geometry, KFileDialog state) — force-managing the whole file as a
     # read-only nix-store symlink would break that.
+    # Activation scripts run at rebuild/switch time, not at login, so they
+    # can't be gated by a systemd unit condition the way dms/swayidle above
+    # are. This checks the invoking shell's own XDG_CURRENT_DESKTOP instead —
+    # correct as long as `rebuild`/`nh os switch` is run interactively from
+    # inside the live session it's meant to apply to (this repo's normal
+    # workflow). A headless/SSH rebuild has no XDG_CURRENT_DESKTOP at all, so
+    # this safely no-ops rather than guessing.
     home.activation.kdeColorScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
+      if [ "''${XDG_CURRENT_DESKTOP:-}" = "niri" ]; then
+        run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
+      fi
     '';
 
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
@@ -97,6 +115,13 @@
         { timeout = 300; command = "${pkgs.swaylock}/bin/swaylock -f"; }
       ];
     };
+
+    # Home Manager's swayidle module already gates on ConditionEnvironment=
+    # WAYLAND_DISPLAY, but Plasma 6 is Wayland too, so that alone doesn't
+    # exclude it. mkForce swaps in the stricter, niri-specific check instead
+    # of adding a second one — the type here is a single string, not a list,
+    # and XDG_CURRENT_DESKTOP=niri already implies WAYLAND_DISPLAY is set.
+    systemd.user.services.swayidle.Unit.ConditionEnvironment = lib.mkForce "XDG_CURRENT_DESKTOP=niri";
   };
 
   # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, dolphin) follow
