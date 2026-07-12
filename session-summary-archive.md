@@ -1,3 +1,31 @@
+## Session: 2026-07-09 (session 37) — Repo layout restructured after an organization review
+
+**Focus**: User asked "how well do I have this repo organized, what would you do differently?" — reviewed the layout, then implemented all five approved recommendations and proved the result is a functional no-op.
+
+### What changed (and why)
+- **`dotfiles/common/modules/` → top-level `modules/`** (git mv, history preserved) — the old path held system-level NixOS modules, not dotfiles; `dotfiles/` now truthfully contains only Home Manager material. Two depth-dependent sops relative paths adjusted.
+- **Desktop hosts deduped** — the three `networking.nix` files were ~95% identical and already drifting; the shared block moved to `modules/desktop-networking.nix`, the ~13 common packages + 3 flatpaks to `modules/desktop-apps.nix`. Host files now hold only wg0 address, extra SSH users, and host-unique apps.
+- **`mkSystem` reworked** — takes `{ name, system?, nixpkgs?, modules }`, derives `networking.hostName` from the attr name, injects `specialArgs` once. `stateVersion` moved per-host; `vpn.nix` into `desktopModules`; financeguru arch un-hardcoded.
+- **DE-rot protection** — new `lib.deSmoke` output (laptop config × each of the 11 DE modules) + a weekly CI `de-smoke` job. It caught real rot on its first local run: pantheon's terminal attr was renamed upstream and mate used three deprecated aliases — both fixed.
+- **Docs/skills/templates refreshed** — CLAUDE.md, README, six path-referencing skills, the new-host templates (old mkSystem signature), and ten memory files.
+- Committed (`589bece`), pushed, CI green on both jobs (hosts eval 2m51s, de-smoke 4m57s).
+
+### Decisions
+- `vpn.nix` in `desktopModules` accepts a new coupling: future desktop hosts need their sops secrets file at first eval — `new-host` skill updated to say so. `nvidia.nix` deliberately stays per-host (AMD-swap escape hatch).
+- de-smoke runs weekly + on dispatch, not per-push — DE rot moves at nixpkgs-bump speed; push CI stays ~3 min.
+- Verification bar for a reorganization is drvPath comparison, not eval success: vpn-server came back bit-identical; desktops compared field-by-field (`git+file://` HEAD vs. dirty tree) — identical.
+
+### Issues / surprises
+- The smoke check justified itself immediately (pantheon/mate rot predating this session).
+- The push-triggered CI run was cancelled by the workflow's own concurrency group when the dispatch run superseded it — expected behavior, worth remembering when two runs race on main.
+
+### Next session
+- Nothing new to activate — the refactor is a no-op and rides along with the already-pending rebuilds (see project-state Next Steps 00/0a/0b).
+
+**Commits**: `601d824..589bece` (2 commits; `601d824` predates this conversation — niri keybind fix, no transcript rationale).
+
+---
+
 ## Session: 2026-07-09 (session 36) — `/improve-system` run end-to-end for the first time
 
 **Focus**: User said "let's test this out" and ran `/improve-system` cold — the orchestrator's first real full pass across all five sub-skills, no prior scoping.
