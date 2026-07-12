@@ -1,26 +1,10 @@
 { pkgs, inputs, self, ... }:
 
-{
-  programs = {
-    # Enable Niri
-    niri.enable = true;
-
-    # Enable xwayland
-    xwayland.enable = true;
-  };
-
-  services = {
-    # Enable x11
-    xserver.enable = true;
-
-    # Plasma auto-enables these two as defaults; bare compositors like Niri
-    # don't, so DMS's System Check flags them as unavailable without this.
-    accounts-daemon.enable = true;
-    power-profiles-daemon.enable = true;
-  };
-
-  # Enable Dank Material Shell via Home Manager
-  home-manager.users.bosko = { config, lib, pkgs, ... }: {
+let
+  # DMS/niri Home Manager wiring, shared by every user who can log into a niri
+  # session. Defined once and assigned to both bosko and natty below so natty
+  # isn't left with the bare shared home.nix and no DMS at all.
+  niriHomeConfig = { config, lib, pkgs, ... }: {
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
@@ -123,6 +107,31 @@
     # and XDG_CURRENT_DESKTOP=niri already implies WAYLAND_DISPLAY is set.
     systemd.user.services.swayidle.Unit.ConditionEnvironment = lib.mkForce "XDG_CURRENT_DESKTOP=niri";
   };
+in
+{
+  programs = {
+    # Enable Niri
+    niri.enable = true;
+
+    # Enable xwayland
+    xwayland.enable = true;
+  };
+
+  services = {
+    # Enable x11
+    xserver.enable = true;
+
+    # Plasma auto-enables these two as defaults; bare compositors like Niri
+    # don't, so DMS's System Check flags them as unavailable without this.
+    accounts-daemon.enable = true;
+    power-profiles-daemon.enable = true;
+  };
+
+  # Enable Dank Material Shell via Home Manager for every user who can log
+  # into niri. Both bosko and natty have accounts on every niri host
+  # (gaming, laptop, natalie-laptop), so both get the same block.
+  home-manager.users.bosko = niriHomeConfig;
+  home-manager.users.natty = niriHomeConfig;
 
   # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, dolphin) follow
   # DMS's matugen-generated dark/light theme instead of Qt's default light style
