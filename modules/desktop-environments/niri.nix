@@ -76,17 +76,19 @@ let
     # kdeglobals is actively written back by KDE apps (recent files, window
     # geometry, KFileDialog state) — force-managing the whole file as a
     # read-only nix-store symlink would break that.
-    # Activation scripts run at rebuild/switch time, not at login, so they
-    # can't be gated by a systemd unit condition the way dms/swayidle above
-    # are. This checks the invoking shell's own XDG_CURRENT_DESKTOP instead —
-    # correct as long as `rebuild`/`nh os switch` is run interactively from
-    # inside the live session it's meant to apply to (this repo's normal
-    # workflow). A headless/SSH rebuild has no XDG_CURRENT_DESKTOP at all, so
-    # this safely no-ops rather than guessing.
+    # Unconditional, on purpose: this repo's normal workflow is `rebuild`
+    # (`nh os boot`), which only activates at the *next* boot — before any
+    # session exists, so there is no XDG_CURRENT_DESKTOP to gate on (confirmed
+    # via journalctl: hm-activate runs at boot, not at login). Previously this
+    # was gated on XDG_CURRENT_DESKTOP=niri, which only ever fired if someone
+    # ran an interactive `nh os switch` from inside a live niri session —
+    # meaning it silently no-op'd for every boot-based rebuild. Safe to always
+    # run: on a host that boots into Plasma next (natalie-laptop), Plasma's
+    # own session startup re-applies its LookAndFeelPackage's ColorScheme over
+    # this on login anyway (see the kded note above), so writing `*` here
+    # first doesn't stick around to break it.
     home.activation.kdeColorScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      if [ "''${XDG_CURRENT_DESKTOP:-}" = "niri" ]; then
-        run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
-      fi
+      run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
     '';
 
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
