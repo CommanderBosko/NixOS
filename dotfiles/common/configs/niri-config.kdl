@@ -354,7 +354,6 @@ window-rule {
 window-rule {
     match app-id=r#"^kitty$"#
     open-on-workspace "asus-1"
-    open-maximized true
 }
 
 window-rule {
