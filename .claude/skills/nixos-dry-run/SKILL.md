@@ -37,3 +37,12 @@ None — this skill takes no user-supplied arguments.
 ```
 scripts/dry-run.sh
 ```
+
+## Gotchas
+
+- **`nh os boot --dry`'s output is a redrawing TUI tree**, not a flat log — most of it is
+  self-overwriting progress-bar escape sequences, and the actually useful summary (the
+  `<<<`/`>>>` store-path diff plus `PATHS:`/`SIZE:`/`DIFF:` lines) sits at the very end.
+  Piping through a large `tail -N` (e.g. `tail -60`) still surfaces a wall of tree/progress
+  noise. Prefer `tail -8` (the summary is always the last handful of lines) or
+  `grep -E '^(PATHS|SIZE|DIFF):'` to jump straight to the change summary.

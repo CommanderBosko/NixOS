@@ -354,6 +354,7 @@ window-rule {
 window-rule {
     match app-id=r#"^kitty$"#
     open-on-workspace "asus-1"
+    open-maximized true
 }
 
 window-rule {
@@ -369,21 +370,25 @@ window-rule {
 window-rule {
     match app-id=r#"^vesktop$"#
     open-on-workspace "dell-1"
+    open-maximized true
 }
 
 window-rule {
     match app-id=r#"^app\.zen_browser\.zen$"#
     open-on-workspace "dell-2"
+    open-maximized true
 }
 
 window-rule {
     match app-id=r#"^dev\.aunetx\.deezer$"#
     open-on-workspace "dell-3"
+    open-maximized true
 }
 
 window-rule {
     match app-id=r#"^qbittorrent$"#
     open-on-workspace "dell-4"
+    open-maximized true
 }
 
 // Example: block out two password managers from screen capture.

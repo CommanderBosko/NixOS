@@ -1,3 +1,29 @@
+## Session: 2026-07-10 (session 40) — Hyprland DMS parity, then a researched Omarchy DE module
+
+**Focus**: Two user-directed feature asks in one sitting — give Hyprland the same DMS integration niri has, then research and build a new Omarchy-style DE module — both landing as new/changed swappable desktop-environment modules.
+
+### What changed (and why)
+- **`hyprland.nix` (`b7e50a1`, pushed)**: added DMS shell (`programs.dank-material-shell` + systemd autostart), the qt6ct/kdeglobals Qt theming glue, DMS's `accounts-daemon`/`power-profiles-daemon` deps, and switched swaylock/swayidle to HM-managed services — all mirroring `niri.nix`. Mid-task, reading the actual `dms` flake input source revealed it has no declarative NixOS/HM module for Hyprland (unlike niri) — since Hyprland 0.55 DMS manages Hyprland's config imperatively via `dms setup` (Lua-based). Surfaced this back to the user and dropped the "managed hyprland.conf with niri-style binds" part of the original ask rather than shipping something that'd get silently backed up by DMS on first run.
+- **`omarchy.nix` (`7d81c4c`, committed, not yet pushed)**: new DE module researched via a 10-source `/research` fan-out (parallel sub-agents). Confirmed Omarchy (DHH's Arch+Hyprland desktop) has no official NixOS support, and the existing community port `omarchy-nix` — while architecturally clean (importable modules) — hard-assumes greetd+PipeWire+its own network/Bluetooth stack (conflicting with this repo's shared SDDM/desktop-networking) and is ~8 months stale. Built a from-scratch module instead: Waybar+Hyprlock+Walker (Omarchy's real shell, confirmed via research — not DMS), Tokyo Night theming, Omarchy's keybind philosophy, kept this repo's existing app choices (kitty, dolphin) per explicit scope call.
+
+### Decisions
+- Both modules kept independent of each other and of one shared base — Omarchy's shell (Waybar/Hyprlock/Walker) and niri/hyprland's DMS integration are unrelated stacks; sharing a base would mean conditionally disabling pieces rather than clean reuse.
+- Didn't import `omarchy-nix` as a flake input despite it being technically reusable — its hard display-manager/network assumptions would fight this repo's existing shared modules.
+- Caught and fixed a real bug during verification: home-manager's Hyprland module warned its default `configType` is migrating `hyprlang` → `lua`; pinned explicitly since the settings attrset used follows the classic (hyprlang) schema.
+
+### Issues / surprises
+- Discovered a home-manager option-search MCP tool malfunction: `home-manager` source searches returned empty results even for well-known options like `git` (packages/nixos source searches worked fine). Didn't block the work — verified the actual option paths (`programs.waybar`, `programs.hyprlock`, `services.hypridle`, `wayland.windowManager.hyprland`) via real deep-eval instead of the search tool. Worth flagging if it recurs.
+- Neither new module is wired into any host — both verified only via `lib.deSmoke.<name>` deep-eval, same as the repo's other unused DE modules.
+
+### Next session
+- `omarchy.nix` commit (`7d81c4c`) needs pushing (session-closer handles this).
+- If the user wants to actually try either module live, use `switch-de` + `wayland-screenshot` (niether has been booted, only deep-evaluated).
+- `omarchy.nix`'s dolphin has no Qt theming glue (no DMS running to generate a color source) — flagged as a known gap, not yet fixed.
+
+**Commits**: `b7e50a1`..`7d81c4c` (2 commits)
+
+---
+
 ## Session: 2026-07-10 (session 39) — Two new skills mined and shipped via a fresh ship-skill orchestration
 
 **Focus**: User asked "any other `/skill-suggestion`?" cold, with no prior conversation this session — found and shipped one genuine skill gap (`deep-eval-check`), then noticed the propose→build→test→commit→push pattern used to ship it was itself un-skilled, so built an orchestration skill (`ship-skill`) for it, then used a `/loop` to confirm no third gap remains.

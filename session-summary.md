@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-16 (session 45) — qBittorrent autostart-race bug fixed, open-maximized rules added, new fullscreen-rule skill
+
+**Focus**: Chased down why qBittorrent kept opening on the wrong workspace despite a correct window-rule, added fullscreen-on-open to five apps, then closed the loop with a new sibling skill and a dry-run gotcha.
+
+### What changed (and why)
+- **qBittorrent workspace bug root-caused**: the session-44 window-rule was already correct (`StartupWMClass=qbittorrent` matches it exactly) — the real cause was qBittorrent's own "run on startup" preference, which autostarted it ~12s before Mod+G. Being single-instance, Mod+G's `qbittorrent &` just raised that already-misplaced window instead of creating a fresh one the rule could act on. Fixed live: stopped `app-org.qbittorrent.qBittorrent@autostart.service` and removed the autostart `.desktop` file (backed up, not deleted) — outside the nix flake, already in effect, no reboot needed.
+- **`open-maximized true` added to 5 window-rules** (Kitty, Vesktop, Zen Browser, Deezer, qBittorrent) so they launch already-maximized, same as pressing Mod+F. Added the same rule to Steam too, then reverted it per the user's explicit follow-up request.
+- **New `add-niri-fullscreen-rule` skill** (project-local, `/skill-suggestion` → `/new-skill`) — sibling of `add-niri-window-rule`, scoped to just `open-maximized true`. Carries forward this session's two gotchas: Steam-style multi-window-one-app-id apps vs. per-game app-ids with no blanket rule possible, and the autostart-vs-single-instance trap.
+- **`nixos-dry-run` gained a Gotchas section** (`/skill-upgrade`) — its TUI output buries the useful summary at the end; documented `tail -8` / a targeted grep instead of guessing a tail length.
+
+### Decisions
+- Disabled qBittorrent's autostart entirely rather than patching around it — no window-rule edit could fix a race against the app's own pre-existing single-instance window.
+- Kept `add-niri-fullscreen-rule` as its own skill rather than extending `add-niri-window-rule` — different single-purpose property (`open-maximized` vs. `open-on-workspace`/`open-on-output`), same single-responsibility bucket rule as its sibling pair.
+
+### Issues / surprises
+- The qBittorrent bug looked at first like a simple app-id mismatch (same shape as a normal window-rule miss) but turned out to be a login-autostart race — worth remembering for any other single-instance app that seems to ignore a window-rule.
+- Own mistake mid-session: a `mv` meant for the scratchpad landed in the repo's `.claude/` directory instead (path typo); caught immediately via `git status` and moved to the correct location before anything was staged.
+
+### Next session
+- Same pending gaming/laptop reboot as sessions 43-44, now also covering the 5 new `open-maximized` rules — see Next Steps in `project-state.md`.
+- qBittorrent's autostart fix is already live on gaming; nothing pending there.
+
+**Commits**: session-close only (1 commit)
+
+---
+
 ## Session: 2026-07-16 (session 44) — financeguru bump, Deezer/qBittorrent monitor pins, new window-rule skill, Mod+G full-setup launcher
 
 **Focus**: Continuation of the same day's work — bumped one flake input, extended the per-monitor window-rule pattern to two more apps, shipped a proper skill for that pattern after doing it twice by hand, then expanded the Mod+G keybind into a full initial-setup launcher.
@@ -100,32 +126,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `de-smoke-check` has only been run against `omarchy` — worth a spot-check against one of the other 8 unwired DE modules next time one is touched.
 
 **Commits**: `e7031e3` (1 commit)
-
----
-
-## Session: 2026-07-10 (session 40) — Hyprland DMS parity, then a researched Omarchy DE module
-
-**Focus**: Two user-directed feature asks in one sitting — give Hyprland the same DMS integration niri has, then research and build a new Omarchy-style DE module — both landing as new/changed swappable desktop-environment modules.
-
-### What changed (and why)
-- **`hyprland.nix` (`b7e50a1`, pushed)**: added DMS shell (`programs.dank-material-shell` + systemd autostart), the qt6ct/kdeglobals Qt theming glue, DMS's `accounts-daemon`/`power-profiles-daemon` deps, and switched swaylock/swayidle to HM-managed services — all mirroring `niri.nix`. Mid-task, reading the actual `dms` flake input source revealed it has no declarative NixOS/HM module for Hyprland (unlike niri) — since Hyprland 0.55 DMS manages Hyprland's config imperatively via `dms setup` (Lua-based). Surfaced this back to the user and dropped the "managed hyprland.conf with niri-style binds" part of the original ask rather than shipping something that'd get silently backed up by DMS on first run.
-- **`omarchy.nix` (`7d81c4c`, committed, not yet pushed)**: new DE module researched via a 10-source `/research` fan-out (parallel sub-agents). Confirmed Omarchy (DHH's Arch+Hyprland desktop) has no official NixOS support, and the existing community port `omarchy-nix` — while architecturally clean (importable modules) — hard-assumes greetd+PipeWire+its own network/Bluetooth stack (conflicting with this repo's shared SDDM/desktop-networking) and is ~8 months stale. Built a from-scratch module instead: Waybar+Hyprlock+Walker (Omarchy's real shell, confirmed via research — not DMS), Tokyo Night theming, Omarchy's keybind philosophy, kept this repo's existing app choices (kitty, dolphin) per explicit scope call.
-
-### Decisions
-- Both modules kept independent of each other and of one shared base — Omarchy's shell (Waybar/Hyprlock/Walker) and niri/hyprland's DMS integration are unrelated stacks; sharing a base would mean conditionally disabling pieces rather than clean reuse.
-- Didn't import `omarchy-nix` as a flake input despite it being technically reusable — its hard display-manager/network assumptions would fight this repo's existing shared modules.
-- Caught and fixed a real bug during verification: home-manager's Hyprland module warned its default `configType` is migrating `hyprlang` → `lua`; pinned explicitly since the settings attrset used follows the classic (hyprlang) schema.
-
-### Issues / surprises
-- Discovered a home-manager option-search MCP tool malfunction: `home-manager` source searches returned empty results even for well-known options like `git` (packages/nixos source searches worked fine). Didn't block the work — verified the actual option paths (`programs.waybar`, `programs.hyprlock`, `services.hypridle`, `wayland.windowManager.hyprland`) via real deep-eval instead of the search tool. Worth flagging if it recurs.
-- Neither new module is wired into any host — both verified only via `lib.deSmoke.<name>` deep-eval, same as the repo's other unused DE modules.
-
-### Next session
-- `omarchy.nix` commit (`7d81c4c`) needs pushing (session-closer handles this).
-- If the user wants to actually try either module live, use `switch-de` + `wayland-screenshot` (niether has been booted, only deep-evaluated).
-- `omarchy.nix`'s dolphin has no Qt theming glue (no DMS running to generate a color source) — flagged as a known gap, not yet fixed.
-
-**Commits**: `b7e50a1`..`7d81c4c` (2 commits)
 
 ---
 
