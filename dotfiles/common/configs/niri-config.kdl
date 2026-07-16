@@ -301,6 +301,25 @@ animations {
     // slowdown 3.0
 }
 
+// Named workspaces pinned to specific monitors (gaming host outputs:
+// DP-1 = ASUS VG249, HDMI-A-1 = Dell S2419HGF). Used below by window-rules
+// to send specific apps to specific monitor + workspace slots.
+workspace "asus-1" {
+    open-on-output "DP-1"
+}
+workspace "asus-2" {
+    open-on-output "DP-1"
+}
+workspace "asus-3" {
+    open-on-output "DP-1"
+}
+workspace "dell-1" {
+    open-on-output "HDMI-A-1"
+}
+workspace "dell-2" {
+    open-on-output "HDMI-A-1"
+}
+
 // Window rules let you adjust behavior for individual windows.
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Window-Rules
@@ -322,6 +341,33 @@ window-rule {
     // - Flatpak Firefox (app-id is "org.mozilla.firefox")
     match app-id=r#"firefox$"# title="^Picture-in-Picture$"
     open-floating true
+}
+
+// Pin specific apps to specific monitor + workspace slots (see the
+// named workspaces defined above).
+window-rule {
+    match app-id=r#"^kitty$"#
+    open-on-workspace "asus-1"
+}
+
+window-rule {
+    match app-id=r#"^steam$"#
+    open-on-workspace "asus-2"
+}
+
+window-rule {
+    match app-id=r#"^net\.lutris\.Lutris$"#
+    open-on-workspace "asus-3"
+}
+
+window-rule {
+    match app-id=r#"^vesktop$"#
+    open-on-workspace "dell-1"
+}
+
+window-rule {
+    match app-id=r#"^app\.zen_browser\.zen$"#
+    open-on-workspace "dell-2"
 }
 
 // Example: block out two password managers from screen capture.
