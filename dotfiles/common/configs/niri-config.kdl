@@ -319,6 +319,9 @@ workspace "dell-1" {
 workspace "dell-2" {
     open-on-output "HDMI-A-1"
 }
+workspace "dell-3" {
+    open-on-output "HDMI-A-1"
+}
 
 // Window rules let you adjust behavior for individual windows.
 // Find more information on the wiki:
@@ -368,6 +371,11 @@ window-rule {
 window-rule {
     match app-id=r#"^app\.zen_browser\.zen$"#
     open-on-workspace "dell-2"
+}
+
+window-rule {
+    match app-id=r#"^dev\.aunetx\.deezer$"#
+    open-on-workspace "dell-3"
 }
 
 // Example: block out two password managers from screen capture.
