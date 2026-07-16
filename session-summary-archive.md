@@ -1,3 +1,29 @@
+## Session: 2026-07-10 (session 39) — Two new skills mined and shipped via a fresh ship-skill orchestration
+
+**Focus**: User asked "any other `/skill-suggestion`?" cold, with no prior conversation this session — found and shipped one genuine skill gap (`deep-eval-check`), then noticed the propose→build→test→commit→push pattern used to ship it was itself un-skilled, so built an orchestration skill (`ship-skill`) for it, then used a `/loop` to confirm no third gap remains.
+
+### What changed (and why)
+- **`deep-eval-check`** (project-local, `.claude/skills/deep-eval-check/`) — `skill-suggestion` forked a sub-agent to mine 13+ past-session transcripts and found that `nix flake check`'s documented shallow-eval gap (it can pass while a real rebuild fails) had a manual workaround (`nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`) run by hand across a dozen+ sessions but never turned into a skill. Built it, live-tested against all four hosts (gaming/laptop/natalie-laptop/vpn-server) — all PASS.
+- **`ship-skill`** (global, repo-managed: `dotfiles/bosko/claude/skills/ship-skill/`) — after committing+pushing `deep-eval-check` by hand (skill-suggestion → new-skill → test → git-commit → git-push), recognized that exact chain as a recurring, un-skilled orchestration and built it as its own Orchestration-bucket skill, with a deliberate confirmation pause before the push step.
+- **`/loop /ship-skill`** (self-paced, no fixed interval) — ran it once to look for a third gap; the iteration re-invoked `skill-suggestion`, which forked another mining pass (112k tokens, all 76 transcripts + memory + a rejected DankMaterialShell-theming near-miss) and returned a clean "nothing found" verdict. The loop self-stopped after one iteration, exactly per its designed stop condition.
+- **Confirmed a stale assumption from session 38 is wrong**: after the user ran `nh os boot` for `ship-skill`, its `~/.claude/skills/ship-skill/` symlink was immediately live in this same running session — no new session needed, only the rebuild. Updated `project-state.md` to drop the "and a new Claude Code session" requirement it previously carried.
+
+### Decisions
+- `ship-skill` pauses before push, not before commit — by that point in the chain two consequential decisions (built + verified working) have already happened with zero user checkpoint, so push gets an explicit `AskUserQuestion` rather than compounding a third autonomous decision.
+- Used a fork (not inline grep) for both transcript-mining passes — keeps the multi-MB JSONL grepping out of the main conversation's context.
+
+### Issues / surprises
+- `git log --oneline <ref>..HEAD --all` is a footgun in this repo specifically: combining a commit range with `--all` doesn't restrict `--all` to that range — it re-anchors the traversal at every ref in the repo, so in a repo with a long pre-flake, pre-history-purge tail of old commits it dumps hundreds of unrelated lines instead of the 2 actual commits since last close. Plain `git log --oneline <ref>..HEAD` (no `--all`) gave the correct answer. Worth a `session-closer` gotcha if it recurs.
+- `ship-skill`'s own internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) never got exercised end-to-end this session — the one live loop run stopped at Step 1 (`skill-suggestion` found nothing), before reaching Steps 2-6. Each sub-skill works standalone; the orchestration handoffs between them are still unverified in practice.
+
+### Next session
+- Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove out its full internal chain, including the `git-commit`/`git-push` handoffs.
+- Don't re-run a blind `/skill-suggestion` sweep without new session material to mine — this session's pass confirmed the roster (52 skills) currently has no further low-hanging gap.
+
+**Commits**: `cf9e38b`..`fb79baa` (2 commits)
+
+---
+
 ## Session: 2026-07-10 (session 38) — Dolphin dark-theme fix, then a second full /improve-system pass
 
 **Focus**: User reported the newly-installed Dolphin file manager rendering light despite the system's dark qt6ct theming; root-caused and fixed it live, then ran `/improve-system` end-to-end a second time. (Two commits in the close range, `3f20488` dolphin-add and `42cbb4e` playerctl fix, predate this conversation — no transcript rationale to record; this session's own work starts at `58f44a0`.)
