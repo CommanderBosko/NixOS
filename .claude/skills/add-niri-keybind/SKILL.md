@@ -7,6 +7,8 @@ description: Triggers when user says "add a niri keybind", "bind Mod+X to...", "
 
 Check what a key combo is currently bound to, and/or add a new keybind, in the shared niri config `dotfiles/common/configs/niri-config.kdl`. (Bucket: Utility)
 
+For a standalone "always open X on monitor Y" request with **no keybind involved**, use `add-niri-window-rule` instead.
+
 ## Arguments
 
 Parse from the user's request:
