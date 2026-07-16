@@ -9,6 +9,16 @@ Interview the user, then generate a **project-local, self-orchestrating loop ski
 
 This is a *meta-skill*: it writes other skills. It does **not** run the loop itself — it produces the loop file and verifies that file is well-formed.
 
+## Arguments
+
+Parse from the user's invocation phrase, if given:
+
+- **Goal** — a one-sentence description of what a successful run produces or changes, if stated (e.g. "a loop that drafts release notes every Friday").
+- **Loop name** — a proposed kebab-case name, if the user names it directly.
+- **Steps** — any workflow detail already volunteered (commands, files, decisions).
+
+Pre-fill Step 1's interview questions from whatever is already given, and confirm rather than re-asking. Only ask for what's still missing.
+
 ## Key facts (don't re-derive these)
 
 - **Generated loops are project-local:** `<repo-root>/.claude/skills/<loop-name>/SKILL.md`. Immediately runnable, no rebuild, committed with the project.

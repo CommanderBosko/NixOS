@@ -29,8 +29,10 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/git-commit/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/git-commit/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (git-commit.sh).
+    ".claude/skills/git-commit" = {
+      source = "${self}/dotfiles/bosko/claude/skills/git-commit";
+      recursive = true;
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + scripts/ (push.sh).

@@ -12,6 +12,12 @@ Force Nix to fully evaluate one named module under `modules/desktop-environments
 
 Only 3 of the 12 modules under `modules/desktop-environments/` are actually imported by a host (`niri` on gaming/laptop, `plasma` on natalie-laptop) — the other 9 are edited only through `lib.deSmoke`, the laptop config with each DE module swapped in. `nh os boot --dry` on a real host only exercises whatever DE that host already has wired in; it silently verifies nothing about an unwired module you just touched. `nix flake check` is also insufficient here — like the four real hosts, it's a shallow check. This skill closes both gaps for the unwired case.
 
+## Arguments
+
+Parse from the user's request:
+
+- **Module name** (optional) — the DE module under `modules/desktop-environments/` to check, e.g. `omarchy`, `hyprland`. If omitted, resolve it per Step 1 (infer from recent changes, or list and ask).
+
 ## Step 1 — Identify the target module
 
 Resolve which DE module to check, in this order:

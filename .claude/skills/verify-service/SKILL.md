@@ -25,47 +25,23 @@ Parse from the user's request:
 - If a remote host is named, resolve its SSH target from the single source of truth, `/home/bosko/NixOS/.claude/hosts.json` (`jq -r '.hosts["<host>"].ssh' …` — the same data the `ssh-host` skill reads), and prefix each command with it. `vpn-server` is reachable over the WireGuard VPN.
 - Run the checks below in a **single combined command** where possible to keep it to one round-trip.
 
-### 2. Service check (always)
+### 2. Run the check battery
 
-```bash
-systemctl is-active <unit>
-systemctl status <unit> --no-pager -n 5
-```
+Run `scripts/verify-service.sh <unit> [mount-path] [data-dir] [port-pattern]` (relative to
+this skill's directory) — prefixed with the resolved SSH command from Step 1 if remote. It
+runs, in order: the service check (always), the tcp+udp port check (always), the mount check
+(only if a mount path was given), and the data-dir check (only if a dir was given).
+`port-pattern` defaults to the unit name; pass a known port too (e.g. `8096`) if the process
+name doesn't appear verbatim in `ss` output.
 
-- **Normal mode:** `active` → PASS. `inactive`/`failed`/`Unit ... could not be found` → FAIL (show the status tail).
-- **Absent mode:** `Unit ... could not be found` (or inactive) → PASS; still running → FAIL.
+Interpret the raw output — the script does no PASS/FAIL judgment itself, that stays here:
 
-### 3. Port check (always, when the service listens)
+- **Service — Normal mode:** `active` → PASS. `inactive`/`failed`/`Unit ... could not be found` → FAIL (show the status tail). **Absent mode:** `Unit ... could not be found` (or inactive) → PASS; still running → FAIL.
+- **Ports:** report the listening ports found. A service binding `0.0.0.0` is **fine** when the firewall scopes access per-interface — e.g. Jellyfin binds `0.0.0.0:8096` but is only reachable on `enp4s0` (LAN) + `wg0` (WireGuard). Note this rather than flagging it. Some services have **no listening socket by design** (e.g. the qBittorrent *GUI app* has no Web UI daemon) — if so, say "no listening port expected", not a FAIL. Also note: `ss -tlnp`'s process-name column requires root to populate — a "no match" without root doesn't necessarily mean nothing is listening; check the raw `ss` output for the port number too before calling it a FAIL.
+- **Mount:** mounted → PASS; report source device, fstype, and `rw`/`ro`. Not mounted → FAIL. Example: `/mnt/media` should be `/dev/sda1 ext4 rw`.
+- **Data dir:** report `owner:group` and mode. Flag anything that looks wrong for the service to read/write. Reference layout from this repo: `/mnt/media`, `/mnt/media/Movies`, `/mnt/media/Shows`, `/mnt/media/downloads` are all expected to be `bosko:media`, mode `2775` (setgid) so the `jellyfin` user (in the `media` group) can read manually-dropped files.
 
-Detect what the unit is listening on:
-
-```bash
-ss -tlnp 2>/dev/null | grep -E '<unit>|<known-port>'
-ss -ulnp 2>/dev/null | grep -E '<unit>|<known-port>'   # only if UDP is relevant (e.g. DLNA 1900/7359)
-```
-
-- Report the listening ports. A service binding `0.0.0.0` is **fine** when the firewall scopes access per-interface — e.g. Jellyfin binds `0.0.0.0:8096` but is only reachable on `enp4s0` (LAN) + `wg0` (WireGuard). Note this rather than flagging it.
-- Some services have **no listening socket by design** (e.g. the qBittorrent *GUI app* has no Web UI daemon). If so, say "no listening port expected" — not a FAIL.
-
-### 4. Mount check (only if a mount path was given)
-
-```bash
-findmnt <path>
-```
-
-- Mounted → PASS; report source device, fstype, and `rw`/`ro`. Not mounted → FAIL.
-- Example: `/mnt/media` should be `/dev/sda1 ext4 rw`.
-
-### 5. Data-dir check (only if a dir was given)
-
-```bash
-ls -ld <dir> <dir>/* 2>&1
-```
-
-- Report `owner:group` and mode. Flag anything that looks wrong for the service to read/write.
-- Reference layout from this repo: `/mnt/media`, `/mnt/media/Movies`, `/mnt/media/Shows`, `/mnt/media/downloads` are all expected to be `bosko:media`, mode `2775` (setgid) so the `jellyfin` user (in the `media` group) can read manually-dropped files.
-
-### 6. Summarize
+### 3. Summarize
 
 Output a compact checklist — one line per check with PASS/FAIL and a one-line reason — then an overall verdict:
 
@@ -83,3 +59,4 @@ If anything FAILED, suggest the next step (e.g. `journal` skill for the unit's l
 
 - Read-only and safe — no confirmation needed to run.
 - This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No `bosko-claude.nix` symlink or rebuild is required (that only applies to the global, repo-managed skills under `dotfiles/bosko/claude/skills/`).
+- `scripts/verify-service.sh` holds the mechanical check battery; this file keeps only the PASS/FAIL interpretation, which needs context the script can't have (firewall scoping, expected-absent daemons, root-vs-non-root `ss` output).
