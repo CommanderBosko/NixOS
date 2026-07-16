@@ -1,3 +1,26 @@
+## Session: 2026-07-10 (session 38) — Dolphin dark-theme fix, then a second full /improve-system pass
+
+**Focus**: User reported the newly-installed Dolphin file manager rendering light despite the system's dark qt6ct theming; root-caused and fixed it live, then ran `/improve-system` end-to-end a second time. (Two commits in the close range, `3f20488` dolphin-add and `42cbb4e` playerctl fix, predate this conversation — no transcript rationale to record; this session's own work starts at `58f44a0`.)
+
+### What changed (and why)
+- **Dolphin theming, root-caused via live screenshot debugging + a 4-agent `/research` pass.** Two stacked causes: unwrapped Qt binaries (dolphin, qbittorrent) can't discover `qt6ct`'s platform-theme plugin without `QT_PLUGIN_PATH` pointing at the merged system profile; and separately, full KDE Frameworks apps read `kdeglobals` via `KColorScheme` — a path entirely independent of `QT_QPA_PLATFORMTHEME` — so Dolphin specifically needed `[UiSettings] ColorScheme=*` on top of the plugin-path fix. Applied both in `modules/desktop-environments/niri.nix`: a session var plus a `kwriteconfig6`-based `home.activation` script (chosen over a `home.file` symlink since KDE apps write real state back into `kdeglobals`). Verified with live screenshots at each step, including catching that a `systemd --user` session doesn't refresh its env on `nixos-rebuild switch` without a new login. Committed `58f44a0`.
+- **Second full `/improve-system` run** — `skill-upgrade` and `claude-rules` came back clean; `skill-suggestion` built a new `wayland-screenshot` skill from the screenshot-verify pattern used 5x this session; `skill-audit` swept all 50 skills via 5 parallel sub-agents, found 14 real issues (6 verified correctness bugs, 1 path-drift fix, 4 structural extractions, 3 UX gate conversions), user approved all 14, applied across 3 commits (`fe6a76d`, `30f8803`, `92fd4f3`); `fewer-permission-prompts` mined 50 transcripts and added 9 allowlist entries (`ea91d32`).
+
+### Decisions
+- `kwriteconfig6` activation script over a `home.file` symlink for `kdeglobals` — the file is actively written back by KDE apps (recent files, window geometry), so a read-only symlink would break that.
+- Kept debugging empirically (live screenshots, actual plugin-path inspection via `strings`/`nix-store -q`) rather than guessing from Qt theming folklore — the first hypothesis (missing `QT_PLUGIN_PATH`) was real but insufficient on its own; only the research pass surfaced the second, KDE-Frameworks-specific cause.
+
+### Issues / surprises
+- `QT_DEBUG_PLUGINS`/`QT_LOGGING_RULES` debug tracing produced zero captured output for GUI apps launched via `nohup ... &` in this sandboxed environment, even when correctly redirected — screenshot-based visual verification was the only reliable signal. Documented as a gotcha in the new `wayland-screenshot` skill.
+- `nix search "nixpkgs#<query>"` (used in `search-pkg`'s offline fallback) has been silently broken — wrong syntax, always erroring and swallowed — so that fallback path returned "no packages matched" for every query until this session's fix.
+
+### Next session
+- Rebuild + reboot + start a new Claude Code session to pick up this session's repo-managed skill fixes (`ask-team`, `search-pkg`, `skill-audit`, `interview`, `new-team-member`, `skill-suggestion`) — see project-state Next Steps 00.
+
+**Commits**: `42cbb4e`..`ea91d32` (7 commits)
+
+---
+
 ## Session: 2026-07-09 (session 37) — Repo layout restructured after an organization review
 
 **Focus**: User asked "how well do I have this repo organized, what would you do differently?" — reviewed the layout, then implemented all five approved recommendations and proved the result is a functional no-op.

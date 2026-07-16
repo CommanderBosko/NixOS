@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-16 (session 43) — Niri keybinds/window rules, kdeglobals fix, flake bump, improve-system sweep
+
+**Focus**: A grab-bag session — new niri keybinds and per-monitor window rules, a real kdeglobals theming bug found and fixed, a full flake-input bump with an insecure-package waiver swap, and an `/improve-system` maintenance pass.
+
+### What changed (and why)
+- **Niri keybinds**: Mod+G launches Steam, Lutris, and Vesktop together (one keybind, multiple spawns); Mod+E opens dolphin.
+- **Per-monitor window rules** (`3be13bb`): on gaming's two outputs, kitty/steam/lutris pin to the Asus monitor (`DP-1`), vesktop/zen browser pin to the Dell monitor (`HDMI-A-1`) — user asked for niri's equivalent of Hyprland window rules, specified the exact app-to-monitor mapping wanted.
+- **kdeglobals bug fixed** (`4a92d59`): the `ColorScheme` write only fired when `XDG_CURRENT_DESKTOP=niri` was already set at HM-activation time — true only for an interactive live-session switch, never for this repo's real workflow (`nh os boot` + reboot, which activates before any session exists). Confirmed via journalctl. Removed the guard entirely.
+- **Flake bump** (`bacec40`): dms, financeguru, home-manager, nixpkgs — verified via flake-check + deep-eval across all 4 hosts.
+- **Insecure-package waiver swapped** (`6760838`): pnpm-10.29.2's CVE fix landed upstream (vesktop builds against generic `pnpm_10` now), so that waiver was removed; the same nixpkgs bump flagged `electron-40.10.5` (vesktop's runtime, EOL) insecure, so a new waiver was added for it instead — same mechanism, same "retest at next bump" removal condition.
+- **`/improve-system` sweep** (`7c445c5`, `8060832`): new project-local `add-niri-keybind` skill; a `flake-update-verify` gotcha from the waiver-swap incident; `skill-audit` over all 54 skills (4 parallel sub-agents) found zero drift against `hosts.json`/`vpn.nix` — applied low-risk fixes (missing `## Arguments` sections, script extractions for `deep-eval-check`/`verify-service`/`git-commit`); `improve-system`'s new-skill handoff gained a smoke-test step.
+
+### Decisions
+- Electron waiver confirmed safe by the user before adding, mirroring the pnpm waiver's precedent.
+- `improve-system` borrows just `ship-skill`'s smoke-test step rather than switching its new-skill handoff to `ship-skill` outright — keeps one consolidated end-of-run commit instead of fragmenting into `ship-skill`'s per-skill commit+push-confirm flow.
+- kdeglobals write made unconditional rather than fixing the guard's condition — a real Plasma session re-applies its own scheme on login anyway, so the guard added no value.
+
+### Issues / surprises
+- The kdeglobals guard bug is a good example of "tested only interactively, broken in the real deploy path" — the condition was never actually exercised by this repo's `nh os boot`-then-reboot workflow, so it silently no-op'd since it was written.
+
+### Next session
+- **gaming + laptop: rebuild + reboot** to pick up this session's keybinds, window rules, kdeglobals fix, and flake bump. Verify Mod+G/Mod+E, the per-monitor placement on gaming, and that dolphin renders dark without an interactive switch first.
+
+**Commits**: `4211a36`..`8060832` (8 commits)
+
+---
+
 ## Session: 2026-07-12 (session 42) — DMS-on-niri fixed for the natty user
 
 **Focus**: User (on gaming) reported DMS works under niri for `bosko` on natalie-laptop but not for `natty`; diagnosed and fixed the root cause, then closed the session.
@@ -101,29 +128,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Don't re-run a blind `/skill-suggestion` sweep without new session material to mine — this session's pass confirmed the roster (52 skills) currently has no further low-hanging gap.
 
 **Commits**: `cf9e38b`..`fb79baa` (2 commits)
-
----
-
-## Session: 2026-07-10 (session 38) — Dolphin dark-theme fix, then a second full /improve-system pass
-
-**Focus**: User reported the newly-installed Dolphin file manager rendering light despite the system's dark qt6ct theming; root-caused and fixed it live, then ran `/improve-system` end-to-end a second time. (Two commits in the close range, `3f20488` dolphin-add and `42cbb4e` playerctl fix, predate this conversation — no transcript rationale to record; this session's own work starts at `58f44a0`.)
-
-### What changed (and why)
-- **Dolphin theming, root-caused via live screenshot debugging + a 4-agent `/research` pass.** Two stacked causes: unwrapped Qt binaries (dolphin, qbittorrent) can't discover `qt6ct`'s platform-theme plugin without `QT_PLUGIN_PATH` pointing at the merged system profile; and separately, full KDE Frameworks apps read `kdeglobals` via `KColorScheme` — a path entirely independent of `QT_QPA_PLATFORMTHEME` — so Dolphin specifically needed `[UiSettings] ColorScheme=*` on top of the plugin-path fix. Applied both in `modules/desktop-environments/niri.nix`: a session var plus a `kwriteconfig6`-based `home.activation` script (chosen over a `home.file` symlink since KDE apps write real state back into `kdeglobals`). Verified with live screenshots at each step, including catching that a `systemd --user` session doesn't refresh its env on `nixos-rebuild switch` without a new login. Committed `58f44a0`.
-- **Second full `/improve-system` run** — `skill-upgrade` and `claude-rules` came back clean; `skill-suggestion` built a new `wayland-screenshot` skill from the screenshot-verify pattern used 5x this session; `skill-audit` swept all 50 skills via 5 parallel sub-agents, found 14 real issues (6 verified correctness bugs, 1 path-drift fix, 4 structural extractions, 3 UX gate conversions), user approved all 14, applied across 3 commits (`fe6a76d`, `30f8803`, `92fd4f3`); `fewer-permission-prompts` mined 50 transcripts and added 9 allowlist entries (`ea91d32`).
-
-### Decisions
-- `kwriteconfig6` activation script over a `home.file` symlink for `kdeglobals` — the file is actively written back by KDE apps (recent files, window geometry), so a read-only symlink would break that.
-- Kept debugging empirically (live screenshots, actual plugin-path inspection via `strings`/`nix-store -q`) rather than guessing from Qt theming folklore — the first hypothesis (missing `QT_PLUGIN_PATH`) was real but insufficient on its own; only the research pass surfaced the second, KDE-Frameworks-specific cause.
-
-### Issues / surprises
-- `QT_DEBUG_PLUGINS`/`QT_LOGGING_RULES` debug tracing produced zero captured output for GUI apps launched via `nohup ... &` in this sandboxed environment, even when correctly redirected — screenshot-based visual verification was the only reliable signal. Documented as a gotcha in the new `wayland-screenshot` skill.
-- `nix search "nixpkgs#<query>"` (used in `search-pkg`'s offline fallback) has been silently broken — wrong syntax, always erroring and swallowed — so that fallback path returned "no packages matched" for every query until this session's fix.
-
-### Next session
-- Rebuild + reboot + start a new Claude Code session to pick up this session's repo-managed skill fixes (`ask-team`, `search-pkg`, `skill-audit`, `interview`, `new-team-member`, `skill-suggestion`) — see project-state Next Steps 00.
-
-**Commits**: `42cbb4e`..`ea91d32` (7 commits)
 
 ---
 
