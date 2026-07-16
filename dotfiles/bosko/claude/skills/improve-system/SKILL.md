@@ -31,6 +31,8 @@ These two mine the current session, so run them while it's fresh.
 1. **skill-upgrade** — invoke the `skill-upgrade` skill. It finds skills that misfired this session and drafts `## Gotchas`. **Auto-apply** the gotchas (low-risk), then list each skill hardened and the gotcha added. If nothing misfired, it says so — carry that forward.
 2. **skill-suggestion** — invoke the `skill-suggestion` skill. It proposes at most one new skill worth capturing from this session. Building a new skill is **structural** → present its proposal, then use the **AskUserQuestion** tool with options **Approve** (hand off to `new-skill`) and **Skip** (don't build it), and only hand off to `new-skill` on Approve. If the session has no reusable workflow, it stops cleanly.
 
+   After `new-skill` writes the file, **smoke-test it** before folding it into the consolidated report: invoke the new skill once via the Skill tool against a safe, low-risk, or read-only scenario that exercises its documented steps end to end (mirrors `ship-skill`'s Step 3, without adopting its per-skill commit/push). Report pass/fail plainly, including anything that diverged from what the SKILL.md describes. If it fails, fix the skill file and re-test before Step 3's report — don't carry a known-broken skill into the consolidated commit. This is why `new-skill` is used here rather than `ship-skill`: `ship-skill` bundles its own commit and a push-confirmation pause per skill, which would fragment the single end-of-run commit this orchestrator already makes across all its findings, and interrupt the batch flow across the remaining steps.
+
 ## Step 2 — Proactive sweep (whole repo / setup)
 
 3. **claude-rules** — invoke the `claude-rules` skill against this project's `CLAUDE.md`. Adding any missing standing rule is **low-risk** → auto-apply, then report which rules were already present vs added.
@@ -42,7 +44,7 @@ These two mine the current session, so run them while it's fresh.
 After all five, print a single summary, not five scattered ones:
 
 - **Applied (low-risk):** gotchas added, rules added, allow-list entries added — each with the file touched.
-- **Awaiting your call (structural):** new-skill proposal, skill-audit refactors, anything needing a rebuild — listed so the user can approve in one place.
+- **Awaiting your call (structural):** new-skill proposal (with its smoke-test result), skill-audit refactors, anything needing a rebuild — listed so the user can approve in one place.
 - **Clean:** the passes that found nothing (say so explicitly — a clean pass is a result).
 
 ## Step 4 — Certify + remind
