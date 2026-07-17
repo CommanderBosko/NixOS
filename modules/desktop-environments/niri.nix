@@ -4,7 +4,7 @@ let
   # DMS/niri Home Manager wiring, shared by every user who can log into a niri
   # session. Defined once and assigned to both bosko and natty below so natty
   # isn't left with the bare shared home.nix and no DMS at all.
-  niriHomeConfig = { config, lib, pkgs, ... }: {
+  niriHomeConfig = { config, lib, pkgs, osConfig, ... }: {
     imports = [ inputs.dms.homeModules.dank-material-shell ];
     programs.dank-material-shell.enable = true;
     programs.dank-material-shell.systemd.enable = true;
@@ -23,6 +23,15 @@ let
     # left unmanaged on purpose.
     home.file.".config/niri/config.kdl" = {
       source = "${self}/dotfiles/common/configs/niri-config.kdl";
+      force = true;
+    };
+
+    # Per-host overlay (named workspaces / window rules that differ per
+    # host), pulled in by the shared config.kdl via `include "niri-overlay.kdl"`.
+    # osConfig is the top-level NixOS config, injected automatically since
+    # this Home Manager config runs as a NixOS module.
+    home.file.".config/niri/niri-overlay.kdl" = {
+      source = "${self}/hosts/${osConfig.networking.hostName}/niri-overlay.kdl";
       force = true;
     };
 

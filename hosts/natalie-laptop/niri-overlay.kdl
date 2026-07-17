@@ -1,0 +1,5 @@
+// Host-specific niri overlay for natalie-laptop, included by the shared
+// dotfiles/common/configs/niri-config.kdl via `include "niri-overlay.kdl"`.
+// Empty for now: natalie-laptop starts with just the standard window rules
+// and keybinds from the shared base config. Add host-specific workspaces or
+// window-rule { } blocks here as needed.
