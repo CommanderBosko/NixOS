@@ -1,3 +1,25 @@
+## Session: 2026-07-12 (session 42) — DMS-on-niri fixed for the natty user
+
+**Focus**: User (on gaming) reported DMS works under niri for `bosko` on natalie-laptop but not for `natty`; diagnosed and fixed the root cause, then closed the session.
+
+### What changed (and why)
+- **Root cause found by reading `niri.nix`, `modules/home-manager.nix`, and `flake.nix` together**: `niri.nix`'s entire DMS/`config.kdl`/`qt6ct.conf`/kdeglobals Home Manager block only ever targeted `home-manager.users.bosko`. `natty` gets the same shared `dotfiles/common/configs/home.nix` base as bosko, but none of niri.nix's DMS-specific wiring — so DMS never started in natty's niri session on *any* niri host (gaming, laptop, natalie-laptop), not a natalie-laptop-specific issue.
+- **`niri.nix` (`aa8b0c9`, pushed)**: refactored the DMS/config block into a shared `niriHomeConfig` let-binding, assigned to both `home-manager.users.bosko` and `home-manager.users.natty`.
+- Also picked up two commits from a prior, unclosed session that this session's investigation ran into: `ca0c426` (natalie-laptop gained `niri.nix` alongside `plasma.nix`, an SDDM session choice) and `4dd1759` (gated DMS/swayidle/kdeglobals to fire only in a niri session, not Plasma, once natalie-laptop could boot either) — no transcript exists for those beyond their commit messages.
+
+### Decisions
+- Asked the user directly (`AskUserQuestion`) whether the natty fix should apply to all niri hosts or just natalie-laptop, since `niri.nix` is shared by gaming/laptop/natalie-laptop. Chose all niri hosts — consistent with how every other user's HM config is composed in this repo.
+
+### Issues / surprises
+- None — straightforward root-cause-in-shared-module bug, no dead ends this session.
+
+### Next session
+- **natalie-laptop: rebuild + reboot** (user doing this themselves) to activate the niri session choice and the natty DMS fix. Verify live: `natty` under niri gets working DMS; `bosko` under niri unaffected; either user under Plasma still has DMS/swayidle/kdeglobals off.
+
+**Commits**: `ca0c426`, `4dd1759` (prior unclosed session), `aa8b0c9` (this session) — 3 commits total since last close, 1 from this session
+
+---
+
 ## Session: 2026-07-11 (session 41) — Omarchy deep-dive vs. omarchy-nix, theme pipeline rework, de-smoke-check skill
 
 **Focus**: User asked whether session 40's `omarchy.nix` was based on the community `omarchy-nix` flake; turned into a full comparison, a decision not to import it, a rework of `omarchy.nix` onto real theme-switching, and a new verification skill for the repo's unwired DE modules.

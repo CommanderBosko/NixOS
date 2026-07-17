@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-17 — Per-host niri overlay + qBittorrent app-id fix
+
+**Focus**: Split the shared niri config into a common base + per-host overlay so gaming, laptop, and natalie-laptop can each carry their own window rules, then chase down a qBittorrent placement bug the user hit while testing it.
+
+### What changed (and why)
+- Split `dotfiles/common/configs/niri-config.kdl` into a shared base (input/layout/binds/standard rules) plus `hosts/<host>/niri-overlay.kdl` per host, pulled in via niri's native `include` directive. Gaming keeps its 7 named-workspace/window-rule monitor pins in its own overlay; laptop and natalie-laptop start with empty overlays and just the standard rules.
+- `modules/desktop-environments/niri.nix` gained `osConfig` so it can symlink the right overlay file per host.
+- Found and fixed a second, distinct qBittorrent bug: its window rule matched app-id `^qbittorrent$`, but the live window's real app-id is `org.qbittorrent.qBittorrent` — the rule had never actually matched.
+
+### Decisions
+- Corrected course mid-task: initially told the user niri's KDL had no include mechanism and proposed Nix-level text concatenation; found `include "dms/outputs.kdl"` already in the live config, which meant a much simpler native-include approach worked instead. Surfaced this and got a fresh go-ahead before implementing.
+- Keybinds stay identical across all 3 hosts (shared base); only window rules split, per the user's explicit scoping in the interview.
+
+### Issues / surprises
+- The qBittorrent bug looked at first like a tray-restore race (the window had no mapped surface, process alive 7.9h). Live inspection via `niri msg windows`/`niri msg -j workspaces` showed the real cause was a plain wrong app-id in the match regex — worth remembering that "opens on the wrong workspace" symptoms are worth checking against the *live* app-id before assuming a compositor-behavior bug.
+
+### Next session
+- Add real content to `hosts/laptop/niri-overlay.kdl` / `hosts/natalie-laptop/niri-overlay.kdl` whenever host-specific rules are wanted (currently empty placeholders).
+- Laptop and natalie-laptop still need `rebuild` + reboot to pick up the overlay split and the large pile of previously-pending niri changes (now confirmed live on gaming only).
+
+**Commits**: `3960600..2cbe86c` (2 commits)
+
+---
+
 ## Session: 2026-07-16 (session 46) — weekly improve-system cloud routine scheduled
 
 **Focus**: Set up a recurring cloud-scheduled `/improve-system` sweep and worked through what running it unattended actually requires.
@@ -103,28 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **gaming + laptop: rebuild + reboot** to pick up this session's keybinds, window rules, kdeglobals fix, and flake bump. Verify Mod+G/Mod+E, the per-monitor placement on gaming, and that dolphin renders dark without an interactive switch first.
 
 **Commits**: `4211a36`..`8060832` (8 commits)
-
----
-
-## Session: 2026-07-12 (session 42) — DMS-on-niri fixed for the natty user
-
-**Focus**: User (on gaming) reported DMS works under niri for `bosko` on natalie-laptop but not for `natty`; diagnosed and fixed the root cause, then closed the session.
-
-### What changed (and why)
-- **Root cause found by reading `niri.nix`, `modules/home-manager.nix`, and `flake.nix` together**: `niri.nix`'s entire DMS/`config.kdl`/`qt6ct.conf`/kdeglobals Home Manager block only ever targeted `home-manager.users.bosko`. `natty` gets the same shared `dotfiles/common/configs/home.nix` base as bosko, but none of niri.nix's DMS-specific wiring — so DMS never started in natty's niri session on *any* niri host (gaming, laptop, natalie-laptop), not a natalie-laptop-specific issue.
-- **`niri.nix` (`aa8b0c9`, pushed)**: refactored the DMS/config block into a shared `niriHomeConfig` let-binding, assigned to both `home-manager.users.bosko` and `home-manager.users.natty`.
-- Also picked up two commits from a prior, unclosed session that this session's investigation ran into: `ca0c426` (natalie-laptop gained `niri.nix` alongside `plasma.nix`, an SDDM session choice) and `4dd1759` (gated DMS/swayidle/kdeglobals to fire only in a niri session, not Plasma, once natalie-laptop could boot either) — no transcript exists for those beyond their commit messages.
-
-### Decisions
-- Asked the user directly (`AskUserQuestion`) whether the natty fix should apply to all niri hosts or just natalie-laptop, since `niri.nix` is shared by gaming/laptop/natalie-laptop. Chose all niri hosts — consistent with how every other user's HM config is composed in this repo.
-
-### Issues / surprises
-- None — straightforward root-cause-in-shared-module bug, no dead ends this session.
-
-### Next session
-- **natalie-laptop: rebuild + reboot** (user doing this themselves) to activate the niri session choice and the natty DMS fix. Verify live: `natty` under niri gets working DMS; `bosko` under niri unaffected; either user under Plasma still has DMS/swayidle/kdeglobals off.
-
-**Commits**: `ca0c426`, `4dd1759` (prior unclosed session), `aa8b0c9` (this session) — 3 commits total since last close, 1 from this session
 
 ---
 
