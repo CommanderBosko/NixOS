@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-16 (session 46) — weekly improve-system cloud routine scheduled
+
+**Focus**: Set up a recurring cloud-scheduled `/improve-system` sweep and worked through what running it unattended actually requires.
+
+### What changed (and why)
+- **New cloud routine "Weekly improve-system sweep"** (`trig_01QZPjKtQdMtX5bqwtC8oz8g`) via the `schedule` skill — every Sunday 16:00 UTC (noon Eastern in EDT; drifts to 11am Eastern once EST resumes, cron doesn't auto-adjust for DST). Runs entirely in Anthropic's cloud, no local machine or open Claude Code window required.
+- First create attempt hit `HTTP 401` — GitHub account wasn't connected for routines against `CommanderBosko/NixOS`. User installed the Claude GitHub App; retry succeeded.
+- **Rewrote the routine's prompt for the cloud sandbox's actual constraints**: `~/.claude/skills/*` slash commands don't exist there (that symlink layer is local Home-Manager state), so the prompt points directly at the repo-relative `SKILL.md` files for `improve-system` and its four repo-managed sub-skills. Also replaces `improve-system`'s interactive `AskUserQuestion` structural gates with a fixed policy (auto-apply low-risk, report-only for structural) since nobody's there to answer on a schedule, and makes the `nixos-dry-run` verification step skip gracefully if `nh`/`nix` aren't installed in the sandbox.
+- A concurrent local session (not this conversation) made one small fix, folded in here for accuracy: removed `open-maximized true` from kitty's window-rule (`c0005e0`) per the user's request in that session, keeping kitty's `asus-1` pin. The other four session-45 `open-maximized` rules are untouched.
+
+### Decisions
+- Routine opens a PR against `main` rather than pushing directly — first real run of an unattended workflow, wanted a review checkpoint.
+- Declined to build a skill for reviewing/merging the weekly PR yet — existing tools already cover the steps, and the routine has never produced real output to design against.
+
+### Issues / surprises
+- The GitHub-connection requirement wasn't obvious upfront — routine creation failed outright rather than warning softly, good forcing function to get it connected before the schedule needed it.
+
+### Next session
+- Check https://claude.ai/code/routines/trig_01QZPjKtQdMtX5bqwtC8oz8g after 2026-07-19 for the first real run and whatever PR it opens.
+- Same pending gaming/laptop reboot as prior sessions — now also covers the kitty rule reversion alongside the other four `open-maximized` rules.
+
+**Commits**: `c0005e0` + session-close (2 commits)
+
+---
+
 ## Session: 2026-07-16 (session 45) — qBittorrent autostart-race bug fixed, open-maximized rules added, new fullscreen-rule skill
 
 **Focus**: Chased down why qBittorrent kept opening on the wrong workspace despite a correct window-rule, added fullscreen-on-open to five apps, then closed the loop with a new sibling skill and a dry-run gotcha.
@@ -100,32 +125,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **natalie-laptop: rebuild + reboot** (user doing this themselves) to activate the niri session choice and the natty DMS fix. Verify live: `natty` under niri gets working DMS; `bosko` under niri unaffected; either user under Plasma still has DMS/swayidle/kdeglobals off.
 
 **Commits**: `ca0c426`, `4dd1759` (prior unclosed session), `aa8b0c9` (this session) — 3 commits total since last close, 1 from this session
-
----
-
-## Session: 2026-07-11 (session 41) — Omarchy deep-dive vs. omarchy-nix, theme pipeline rework, de-smoke-check skill
-
-**Focus**: User asked whether session 40's `omarchy.nix` was based on the community `omarchy-nix` flake; turned into a full comparison, a decision not to import it, a rework of `omarchy.nix` onto real theme-switching, and a new verification skill for the repo's unwired DE modules.
-
-### What changed (and why)
-- **Deep-dive comparison**: downloaded and read all ~30 files of `github:henrysipp/omarchy-nix` to compare against this repo's independently-built `omarchy.nix`. Confirmed no relation; that repo is architecturally deeper (real `nix-colors` theme-switching, fuller Wayland/Qt env glue, hyprpaper, mako, richer keybinds, window rules) but unmaintained and hard-conflicts with this repo's shared SDDM/networking stack. User then asked for the specific downside of just importing it as a flake input — answered with 6 concrete conflict points — and chose to hand-port instead.
-- **`omarchy.nix` (`e7031e3`, committed, not yet pushed)**: added `nix-colors` as a new flake input and rewired Hyprland/Waybar/Hyprlock/mako to read from one `colorScheme` instead of hand-copied hex — the actual mechanism behind Omarchy's theme-switching feature, not just its look. Ported the "quick wins" from the comparison: Wayland/Qt/GTK env vars, a `swaybg` solid-color background (no wallpaper asset in-repo), `mako` notifications, a fuller keybind set (hyprshot/hyprpicker/clipse, Escape-key session menu), and window/layer rules. Checked Walker's actual Rust source before adding a blur layerrule for it — it does its own blur via a Wayland protocol, so correctly left out.
-- **`de-smoke-check` skill** (project-local, new) + a CLAUDE.md note: realized the documented DE-module verification step (`nh os boot --dry`) silently verifies nothing for the 9 DE modules no host imports. Built the skill, dogfooded it immediately against `omarchy` — passed.
-
-### Decisions
-- Hand-port `omarchy-nix`'s good ideas rather than import it as a dependency — six concrete conflicts (module-shape mismatch, option collisions with shared modules, SDDM replacement, source-built Hyprland, global `allowUnfree`+identity options, unmaintained) outweighed the extra depth it offered.
-- `nix-colors` was worth adding as a new flake input — small, no `follows` needed, and it's the difference between replicating Omarchy's look vs. its actual mechanism.
-- `de-smoke-check` built as its own skill rather than folded into `deep-eval-check` — different target set (unwired DE modules vs. the four real hosts) and a different trigger context.
-
-### Issues / surprises
-- Investigated a hypothesized `XDG_DATA_DIRS` gap for Walker (borrowed from the upstream repo's wofi-specific note) by checking the *live* session's actual environment variable — found this repo's HM-as-NixOS-module setup already covers it via a different path (`/etc/profiles/per-user/bosko/share`), and the line I'd added referenced a path (`~/.nix-profile/share`) that doesn't exist here at all. Removed it rather than propagate a non-fix.
-- `nix eval` auto-updated `flake.lock` to pin `nix-colors` + its transitive inputs — expected side effect of adding a flake input, not a separate change.
-
-### Next session
-- `omarchy.nix` still isn't wired into any host — if ever prioritized, use `switch-de` + `wayland-screenshot` to verify the new theme pipeline and keybinds actually work live (only eval-verified so far).
-- `de-smoke-check` has only been run against `omarchy` — worth a spot-check against one of the other 8 unwired DE modules next time one is touched.
-
-**Commits**: `e7031e3` (1 commit)
 
 ---
 
