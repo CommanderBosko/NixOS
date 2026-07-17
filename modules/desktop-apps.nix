@@ -12,7 +12,10 @@
     freetube
     github-desktop
     gparted
+    kdePackages.ark
+    kdePackages.gwenview
     kdePackages.kate
+    kdePackages.okular
     kitty
     megasync
     onlyoffice-desktopeditors
