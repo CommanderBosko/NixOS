@@ -8,6 +8,7 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
+    doublecmd
     firefox
     freetube
     github-desktop
