@@ -62,7 +62,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^qbittorrent$"#
+    match app-id=r#"^org\.qbittorrent\.qBittorrent$"#
     open-on-workspace "dell-4"
     open-maximized true
 }
