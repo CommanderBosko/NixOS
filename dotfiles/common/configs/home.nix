@@ -26,6 +26,14 @@
   # filetype` and each app's own .desktop MimeType= declaration, not
   # guessed — Nix config files have no dedicated mimetype and fall under
   # text/plain, which Kate already owns.
+  #
+  # force = true on both generated files: HM's xdg.mimeApps module doesn't
+  # force by default, and a real (manually-created) mimeapps.list already
+  # exists on live hosts from before this was managed, which blocks
+  # activation ("Existing file ... would be clobbered") without this.
+  xdg.configFile."mimeapps.list".force = true;
+  xdg.dataFile."applications/mimeapps.list".force = true;
+
   xdg.mimeApps = {
     enable = true;
 
@@ -41,7 +49,6 @@
       "text/x-log" = "org.kde.kate.desktop";
       "text/xml" = "org.kde.kate.desktop";
       "application/xml" = "org.kde.kate.desktop";
-      "text/html" = "org.kde.kate.desktop";
       "text/css" = "org.kde.kate.desktop";
       "text/javascript" = "org.kde.kate.desktop";
       "text/vnd.trolltech.linguist" = "org.kde.kate.desktop"; # .ts (TypeScript) collides with this Qt mimetype
@@ -203,6 +210,29 @@
       "application/x-flash-video" = "vlc.desktop";
       "application/vnd.apple.mpegurl" = "vlc.desktop";
       "application/xspf+xml" = "vlc.desktop";
+
+      # Browser (HTML files + http/https links) -> Zen Browser, matching
+      # what was already live for links before this was managed; firefox
+      # and brave as fallback if zen isn't available.
+      "text/html" = [ "app.zen_browser.zen.desktop" "firefox.desktop" "brave-browser.desktop" ];
+      "application/xhtml+xml" = [ "app.zen_browser.zen.desktop" "firefox.desktop" ];
+      "x-scheme-handler/http" = [ "app.zen_browser.zen.desktop" "firefox.desktop" "brave-browser.desktop" ];
+      "x-scheme-handler/https" = [ "app.zen_browser.zen.desktop" "firefox.desktop" "brave-browser.desktop" ];
+      "x-scheme-handler/chrome" = "firefox.desktop";
+
+      # App-specific URL/protocol handlers, carried forward from the
+      # pre-existing (unmanaged) mimeapps.list so this doesn't regress
+      # working OAuth/deep-link flows. Verified each .desktop still exists
+      # live before including it; "podman-desktop" and "deezer-enhanced"
+      # (old flatpak id) were dropped as dead — Deezer's current flatpak
+      # (dev.aunetx.deezer) self-registers the same x-scheme-handler/deezer.
+      "x-scheme-handler/discord" = "vesktop.desktop";
+      "x-scheme-handler/freetube" = "freetube.desktop";
+      "x-scheme-handler/x-github-client" = "github-desktop.desktop";
+      "x-scheme-handler/x-github-desktop-auth" = "github-desktop.desktop";
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+      "x-scheme-handler/ror2mm" = "r2modman.desktop";
+      "x-scheme-handler/deezer" = "dev.aunetx.deezer.desktop";
     };
   };
 }
