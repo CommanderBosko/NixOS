@@ -1,3 +1,27 @@
+## Session: 2026-07-16 (session 44) — financeguru bump, Deezer/qBittorrent monitor pins, new window-rule skill, Mod+G full-setup launcher
+
+**Focus**: Continuation of the same day's work — bumped one flake input, extended the per-monitor window-rule pattern to two more apps, shipped a proper skill for that pattern after doing it twice by hand, then expanded the Mod+G keybind into a full initial-setup launcher.
+
+### What changed (and why)
+- **`financeguru` bumped** (`d35c5d2`, via `/bump-input`): `50335413` → `652a706b`, verified with a clean dry-run before committing.
+- **Deezer pinned to a new `dell-3` workspace slot** (`c3990a4`) — same pattern as session 43's batch of per-monitor rules, done by hand since no dedicated skill existed yet.
+- **New `add-niri-window-rule` skill** (`e9af675`, via `/ship-skill`): user pointed out this exact workflow (standalone "pin X to monitor Y", no keybind involved) had now been done twice by hand with no skill covering it — `add-niri-keybind` only covers window rules tied to a *new keybind*. Built the sibling skill, cross-referenced both so future requests route correctly. Smoke-tested for real: asked it to pin qBittorrent to the Asus monitor, all 3 Asus slots were already full, so it correctly flagged the conflict via `AskUserQuestion` instead of double-booking — redirected to a new `dell-4` slot on the Dell monitor instead, confirmed, and kept as a real change (not reverted after the test).
+- **`Mod+G` expanded into a 7-app full-setup launcher** (`b635287`) — from "Steam, Lutris, Vesktop" to kitty/steam/lutris/vesktop/zen/deezer/qbittorrent, one shell-spawned bind. Every app already had a monitor pin from this session's work, so the single keybind now spreads the whole setup across both of gaming's outputs.
+
+### Decisions
+- Kept the smoke test's real side effect (qBittorrent→`dell-4`) rather than treating it as throwaway, since the user explicitly confirmed it during the test.
+- Kept `add-niri-window-rule` as a separate skill from `add-niri-keybind` rather than merging them — different trigger, same verification steps, cross-referenced instead of duplicated.
+
+### Issues / surprises
+- None — straightforward extension of session 43's work, no dead ends.
+
+### Next session
+- Same pending item as session 43: **gaming + laptop rebuild + reboot** to pick up everything from both sessions (`4211a36`..`b635287`) — verify Mod+G launches all 7 apps spread correctly across both monitors.
+
+**Commits**: `d35c5d2`..`b635287` (4 commits)
+
+---
+
 ## Session: 2026-07-16 (session 43) — Niri keybinds/window rules, kdeglobals fix, flake bump, improve-system sweep
 
 **Focus**: A grab-bag session — new niri keybinds and per-monitor window rules, a real kdeglobals theming bug found and fixed, a full flake-input bump with an insecure-package waiver swap, and an `/improve-system` maintenance pass.

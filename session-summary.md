@@ -4,6 +4,36 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-18 — Skill model/script paradigm rollout; two real cross-host bugs found
+
+**Focus**: Classify all 52 skills by grunt-vs-judgment work and pin cheap ones to Haiku, run a scoped skill-audit for deterministic work that belongs in scripts, then chase down two real bugs the audit's own verification work surfaced along the way.
+
+### What changed (and why)
+- Classified all 52 skills as grunt (haiku) or judgment (keep top model) via 4 parallel sub-agents; pinned `model: haiku` on the 32 grunt-work skills. Confirmed `SKILL.md`'s `model:` frontmatter field is real and documented. Taught `new-skill`/`create-loop` to apply this to every future skill.
+- Ran `/skill-audit` scoped to just its "deterministic work → scripts/" lens across all 52 skills — 13 findings, implemented 11 across 6 commits: a new shared `.claude/lib/resolve-host.sh` (de-duping `ssh-host`+`journal`), plus script extractions for `session-closer`, `ci-status`, `add-secret`, `pin-input`, `vpn-status`, `switch-de`, `new-peer`, `de-smoke-check`, `add-default-app`. Every script proven against live state before being wired in. Taught `new-skill` to apply this to every future skill too.
+- `switch-de`'s brand-new `current-de.sh` immediately caught a real bug: `natalie-laptop` still imported both `niri.nix` and `plasma.nix` (a leftover SDDM dual-session setup from session 42 that was never actually used) — dropped Plasma, niri-only now.
+- The same sweep's `deep-eval-check` run caught a second, unrelated real bug: `vpn-server`'s flake eval has been broken since the prior session's `rtk` install — `rtk` only exists in nixpkgs-unstable, not the `nixpkgs-25.11` stable channel `vpn-server` pins. Fixed by gating the package and its Claude Code hook on `pkgs ? rtk` instead of hardcoding it.
+- Built `shared-module-check` (new skill) to close the exact gap that let the `vpn-server` bug through — forces a 4-host sweep after any shared-module edit instead of trusting a local dry-run.
+- Found and fixed a bug in the *very script written earlier this session*: `session-closer`'s new `scan-session.sh` used `git log --all` in its range query, which pulls in stash entries and unrelated branch history — the classic already-documented `--all` footgun, reproduced because the sub-agent that wrote it didn't have access to that memory.
+
+### Decisions
+- `vpn-server`'s fix stays unstable-only, not force-installed some other way — user explicitly held off deploying until nixpkgs-25.11 catches up naturally; the existence-guard is the right shape either way.
+- Desktop-host rebuilds (gaming/laptop/natalie-laptop) left to the user — they said they'd handle those three themselves.
+- Skipped Tier 4 of the skill-audit findings (a `claude-rules` grep script, `new-skill`'s scope-detection mechanics) — both global skills, both too small a payoff for the symlink+rebuild overhead.
+
+### Issues / surprises
+- Two real, previously-undetected bugs (`natalie-laptop`'s stale dual-DE import, `vpn-server`'s broken eval) surfaced purely as side effects of building better verification tooling — neither was what the session set out to find. `vpn-server`'s break had been sitting undetected since a prior session's commit, exactly because that commit's own dry-run only exercised the local host.
+- The new `scan-session.sh` script had a real bug on its very first real-world run (this close) — a reminder that a freshly-forked sub-agent writing a script has no access to hard-won repo-specific gotchas already sitting in memory.
+
+### Next session
+- Push all of this session's commits (session-closer handles that now).
+- Check whether `vpn-server` needs anything once a `nixpkgs-25.11` point release ships `rtk` — otherwise no action needed.
+- User is doing the gaming/laptop/natalie-laptop rebuilds themselves; nothing to chase from this side until that's done.
+
+**Commits**: `8222fb5..8507de3` (12 commits, this session)
+
+---
+
 ## Session: 2026-07-17 — Declarative default apps, then off KDE entirely; two live bugs root-caused
 
 **Focus**: Set up declarative default-application associations, hit a wall with KDE apps being unreliable under niri (no `kded6`), swapped the whole stack for lightweight alternatives, then chased down two unrelated live bugs the user hit (broken AppArmor reload, USB not auto-mounting).
@@ -103,30 +133,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - qBittorrent's autostart fix is already live on gaming; nothing pending there.
 
 **Commits**: session-close only (1 commit)
-
----
-
-## Session: 2026-07-16 (session 44) — financeguru bump, Deezer/qBittorrent monitor pins, new window-rule skill, Mod+G full-setup launcher
-
-**Focus**: Continuation of the same day's work — bumped one flake input, extended the per-monitor window-rule pattern to two more apps, shipped a proper skill for that pattern after doing it twice by hand, then expanded the Mod+G keybind into a full initial-setup launcher.
-
-### What changed (and why)
-- **`financeguru` bumped** (`d35c5d2`, via `/bump-input`): `50335413` → `652a706b`, verified with a clean dry-run before committing.
-- **Deezer pinned to a new `dell-3` workspace slot** (`c3990a4`) — same pattern as session 43's batch of per-monitor rules, done by hand since no dedicated skill existed yet.
-- **New `add-niri-window-rule` skill** (`e9af675`, via `/ship-skill`): user pointed out this exact workflow (standalone "pin X to monitor Y", no keybind involved) had now been done twice by hand with no skill covering it — `add-niri-keybind` only covers window rules tied to a *new keybind*. Built the sibling skill, cross-referenced both so future requests route correctly. Smoke-tested for real: asked it to pin qBittorrent to the Asus monitor, all 3 Asus slots were already full, so it correctly flagged the conflict via `AskUserQuestion` instead of double-booking — redirected to a new `dell-4` slot on the Dell monitor instead, confirmed, and kept as a real change (not reverted after the test).
-- **`Mod+G` expanded into a 7-app full-setup launcher** (`b635287`) — from "Steam, Lutris, Vesktop" to kitty/steam/lutris/vesktop/zen/deezer/qbittorrent, one shell-spawned bind. Every app already had a monitor pin from this session's work, so the single keybind now spreads the whole setup across both of gaming's outputs.
-
-### Decisions
-- Kept the smoke test's real side effect (qBittorrent→`dell-4`) rather than treating it as throwaway, since the user explicitly confirmed it during the test.
-- Kept `add-niri-window-rule` as a separate skill from `add-niri-keybind` rather than merging them — different trigger, same verification steps, cross-referenced instead of duplicated.
-
-### Issues / surprises
-- None — straightforward extension of session 43's work, no dead ends.
-
-### Next session
-- Same pending item as session 43: **gaming + laptop rebuild + reboot** to pick up everything from both sessions (`4211a36`..`b635287`) — verify Mod+G launches all 7 apps spread correctly across both monitors.
-
-**Commits**: `d35c5d2`..`b635287` (4 commits)
 
 ---
 
