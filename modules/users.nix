@@ -31,8 +31,12 @@
         claude-code
         gemini-cli
         mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via bosko-claude.nix)
-        rtk # Claude Code token-optimizing Bash proxy (hook wired in claude-code.nix)
-      ];
+      ]
+      # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server pins
+      # stable, so guard on attribute existence rather than hardcoding it and
+      # breaking that host's eval. Picks itself up automatically once a future
+      # stable point-release backports the package.
+      ++ pkgs.lib.optional (pkgs ? rtk) pkgs.rtk; # Claude Code token-optimizing Bash proxy (hook wired in claude-code.nix)
     };
 
     # Natty

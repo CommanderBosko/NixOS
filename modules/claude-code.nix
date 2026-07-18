@@ -100,17 +100,21 @@ let
             }
           ];
         }
-        {
-          matcher = "Bash";
-          hooks = [
-            {
-              type = "command";
-              command = "rtk hook claude";
-              statusMessage = "Routing through rtk";
-            }
-          ];
-        }
-      ];
+      ]
+      # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server
+      # pins stable, so it doesn't get the package (see modules/users.nix).
+      # Only wire the hook where the binary actually exists, or `claude` on
+      # that host would hit "command not found" on every Bash call.
+      ++ pkgs.lib.optional (pkgs ? rtk) {
+        matcher = "Bash";
+        hooks = [
+          {
+            type = "command";
+            command = "rtk hook claude";
+            statusMessage = "Routing through rtk";
+          }
+        ];
+      };
     };
   };
 in
