@@ -12,15 +12,18 @@ case "$MODE" in
     ROOT="${2:-.}"
     cd "$ROOT" || { echo "no such repo root: $ROOT" >&2; exit 1; }
 
-    BASELINE="$(git log --oneline --all | grep "chore(session):" | head -1 | cut -d' ' -f1)"
+    # No --all here: it pulls in stash entries (refs/stash shows up as "WIP on
+    # main:"/"index on main:" commits) and other branches' unrelated history,
+    # flooding the range with noise that has nothing to do with this session.
+    BASELINE="$(git log --oneline | grep "chore(session):" | head -1 | cut -d' ' -f1)"
     if [ -z "$BASELINE" ]; then
       echo "--- no prior chore(session) commit found; falling back to --since=midnight ---"
       echo "--- commits since midnight ---"
-      git log --oneline --since='midnight' --all
+      git log --oneline --since='midnight'
     else
       echo "--- baseline: $BASELINE ---"
       echo "--- commits since baseline ---"
-      git log --oneline "$BASELINE"..HEAD --all
+      git log --oneline "$BASELINE"..HEAD
     fi
 
     echo "--- diff vs origin/main (unpushed) ---"
