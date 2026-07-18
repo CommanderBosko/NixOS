@@ -1,6 +1,7 @@
 ---
 name: fleet-status
 description: Triggers when the user says "fleet status", "host status", "check all hosts", "are all hosts healthy", "status of every machine", "health check", or "sweep the hosts". Runs a read-only health sweep across all four NixOS hosts and reports generation, failed units, reboot-pending, and VPN handshakes.
+model: haiku
 version: 0.1.0
 ---
 

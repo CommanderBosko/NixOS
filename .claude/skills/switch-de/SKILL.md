@@ -1,6 +1,7 @@
 ---
 name: switch-de
 description: Triggers when user says "switch desktop environment", "change DE", "switch to X", "swap DE", "try X desktop", "change desktop on laptop/gaming", or "switch compositor". Swaps the DE import line in flake.nix for a given desktop host.
+model: haiku
 version: 0.2.0
 ---
 

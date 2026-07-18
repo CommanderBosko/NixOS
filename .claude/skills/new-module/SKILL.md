@@ -1,6 +1,7 @@
 ---
 name: new-module
 description: Use this skill when the user wants to "create a new NixOS module", "add a module", "scaffold a module", "write a new nix module", or "add a desktop environment". It generates a well-formed module file in the correct location following the repo's conventions.
+model: haiku
 version: 0.2.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: add-niri-fullscreen-rule
 description: Triggers when user says "add a niri fullscreen rule", "make X open maximized", "have X launch fullscreen", "open X full screen by default", or "maximize X on open". Adds open-maximized true (the Mod+F / maximize-column equivalent) to an app's window-rule in the target host's per-host niri overlay, so the app always opens maximized.
+model: haiku
 ---
 
 # Add Niri Fullscreen Rule

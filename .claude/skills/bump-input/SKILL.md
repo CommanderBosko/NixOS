@@ -1,6 +1,7 @@
 ---
 name: bump-input
 description: Triggers when user says "bump an input", "bump <input>", "update just nixpkgs", "update one input", "bump financeguru", "update a single flake input", or "move <input> to latest". Bumps a single named flake input to its latest upstream revision and shows the lock diff — without touching the other inputs.
+model: haiku
 version: 0.2.0
 ---
 

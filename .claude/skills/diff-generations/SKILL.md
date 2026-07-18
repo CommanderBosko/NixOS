@@ -1,6 +1,7 @@
 ---
 name: diff-generations
 description: Use this skill when the user wants to "diff generations", "what changed after rebuild", "show generation diff", or "what packages changed". Shows what changed between the current NixOS generation and the previous one.
+model: haiku
 version: 0.2.0
 ---
 

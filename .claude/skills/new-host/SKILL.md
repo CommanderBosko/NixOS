@@ -1,6 +1,7 @@
 ---
 name: new-host
 description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
+model: haiku
 version: 0.4.0
 ---
 

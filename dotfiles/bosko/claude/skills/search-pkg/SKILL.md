@@ -1,6 +1,7 @@
 ---
 name: search-pkg
 description: Triggers when user says "search for a package", "find a package", "look up a package", "search nixpkgs", "search-pkg", or "what's the package name for X". Searches nixpkgs for a package by name or keyword and presents clean, actionable output.
+model: haiku
 version: 0.1.0
 ---
 

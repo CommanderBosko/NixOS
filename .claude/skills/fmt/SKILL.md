@@ -1,6 +1,7 @@
 ---
 name: fmt
 description: Use this skill when the user wants to "format nix files", "fmt", "run formatter", "format changed files", "alejandra", or "nixpkgs-fmt". Formats all changed .nix files using alejandra (or nixpkgs-fmt as fallback) before committing.
+model: haiku
 version: 0.2.0
 ---
 

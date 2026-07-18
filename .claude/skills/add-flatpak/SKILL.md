@@ -1,6 +1,7 @@
 ---
 name: add-flatpak
 description: Triggers when user says "add a flatpak", "install a flatpak", "add flatpak app", "add X as a flatpak", or "add X to flatpaks". Interactively adds a Flatpak app to a host's declarative Flatpak list in its environment.nix, following the nix-flatpak module format used in this repo.
+model: haiku
 version: 0.2.0
 ---
 

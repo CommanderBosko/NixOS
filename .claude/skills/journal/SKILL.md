@@ -1,6 +1,7 @@
 ---
 name: journal
 description: Use this skill when the user wants to "check logs for X", "tail journal", "show logs", "journalctl X", or "debug service X". Tails journald logs for a named service, optionally on a remote host.
+model: haiku
 version: 0.1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: secret-scan
 description: Triggers when the user says "secret scan", "scan for secrets", "check for leaked secrets", "is it safe to push", "any secrets in the repo", or "pre-public check". Read-only scan of the working tree and full git history for plaintext secrets, tuned to this repo's sops setup.
+model: haiku
 version: 0.1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: git-push
 description: Push the current branch to the remote GitHub repository. Use when the user says "push", "git push", "push to github", "push my changes", or "send to github".
+model: haiku
 ---
 
 # Git Push Skill

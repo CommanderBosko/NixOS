@@ -1,6 +1,7 @@
 ---
 name: deep-eval-check
 description: Use this skill when the user wants to "deep-eval check", "really check the flake", "does it actually build", "check all hosts deep-eval", or "prove the config builds". Forces a real per-host build-graph evaluation across all four NixOS hosts, catching failures that `nix flake check` misses.
+model: haiku
 version: 0.1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: add-default-app
 description: Triggers when user says "set X as the default for Y files", "make X open with Y", "add a default app", or "change the default PDF/archive/image viewer". Adds or changes a declarative default-application (MIME type) association in the shared Home Manager config, verified against the app's real .desktop file rather than guessed.
+model: haiku
 ---
 
 # Add Default App

@@ -1,6 +1,7 @@
 ---
 name: de-smoke-check
 description: Use this skill when the user wants to "de-smoke check", "check if this DE module still evaluates", "deep-eval this desktop environment", "verify <name> DE module", or "smoke-test this desktop environment". Deep-evaluates a single desktop-environment module via lib.deSmoke — the only real way to verify a DE module that isn't currently imported by any host.
+model: haiku
 version: 0.1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: nix-repl
 description: Use this skill when the user wants to "open nix repl", "nix repl", "explore flake", "inspect config", or "repl for X host". Opens a nix repl with the flake loaded for interactive exploration of any host's configuration.
+model: haiku
 version: 0.2.0
 ---
 

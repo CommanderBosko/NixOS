@@ -1,6 +1,7 @@
 ---
 name: ssh-host
 description: Use this skill when the user wants to "ssh into a host", "connect to gaming/laptop/server/vpn-server", "ssh to a machine", or "open a shell on X". Resolves short host names to the correct SSH command and runs it.
+model: haiku
 version: 0.2.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: add-niri-window-rule
 description: Triggers when user says "add a niri window rule", "pin X to the Dell/Asus monitor", "open X on desktop N", "always open X on monitor Y", or "add a window rule for X". Pins an app to a specific monitor/workspace slot via a standalone niri window-rule in the target host's per-host niri overlay, with no keybind involved.
+model: haiku
 ---
 
 # Add Niri Window Rule

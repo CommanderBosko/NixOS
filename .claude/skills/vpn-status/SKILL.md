@@ -1,6 +1,7 @@
 ---
 name: vpn-status
 description: This skill should be used when the user wants to "check vpn status", "check vpn", "wireguard status", "see if vpn peers are connected", "check wireguard", or "show vpn peers". It SSHes to the Oracle Cloud WireGuard server and reports which peers are active.
+model: haiku
 version: 0.1.0
 ---
 

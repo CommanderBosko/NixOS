@@ -40,6 +40,7 @@ Ask these together as a numbered list. Pre-fill anything the user already gave a
 5. **Output artifact** — what the loop actually produces (a doc, code, a message, a report). This becomes `output-<date>.md`.
 6. **Retry cap** — attempts per failing step before the loop gives up (default **3**).
 7. **Training Mode default** — confirm **ON** unless the user overrides.
+8. **Model tier** — classify the loop's dominant per-run work: **grunt** (fixed commands, fetch/format/relay, deterministic pass/fail against fixed criteria) → pin `model: haiku` in the generated frontmatter; **judgment** (synthesis, deciding what to do next, drafting non-trivial content, evaluating tradeoffs) → leave `model:` unset so it inherits the session's top model. If mixed, default to leaving it unset.
 
 If the goal is fuzzy, push for concreteness before generating — a vague done-rule produces a loop that never knows when it's finished.
 
@@ -51,7 +52,7 @@ If **Scan**: look at `CLAUDE.md`, existing `.claude/skills/`, recent git history
 
 ### 3. Generate the loop skill from the template
 
-Write `<repo-root>/.claude/skills/<loop-name>/SKILL.md` using the **Generated Loop Template** below. Fill every `<…>` placeholder from the interview. Keep the Training Mode block verbatim — it is the contract.
+Write `<repo-root>/.claude/skills/<loop-name>/SKILL.md` using the **Generated Loop Template** below. Fill every `<…>` placeholder from the interview. Keep the Training Mode block verbatim — it is the contract. If step 1's model tier came out **grunt**, add a `model: haiku` line directly after `description:` in the generated frontmatter; if **judgment**, leave the frontmatter as the template has it (no `model:` field).
 
 Create `.claude/skills/` and `.claude/loops/<loop-name>/` with `mkdir -p` if they don't exist.
 

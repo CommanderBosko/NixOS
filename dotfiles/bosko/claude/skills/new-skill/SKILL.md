@@ -54,6 +54,15 @@ State which bucket this skill lands in and confirm it with the user. Then apply 
 
 Record the chosen bucket — it goes in the draft (see step 4).
 
+### 2a. Pick a model tier
+
+Classify the skill's dominant work as one of:
+
+- **grunt** — mechanical: run a fixed command and relay/format the output, fetch data, classify by fixed criteria, template-fill. Pin `model: haiku` in the frontmatter to cut cost/latency.
+- **judgment** — synthesis, auditing for subtle issues, planning/architecture, drafting non-trivial content from scratch, or deciding an action with real consequences (data loss, security, irreversible changes). Omit `model:` so it inherits the session's top model.
+
+If genuinely mixed, default to omitting `model:` — judgment work is the more expensive failure mode to get wrong. Record the tier — it goes in the draft (see step 4).
+
 ### 3. Derive the skill name
 
 From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tests`, `deploy-staging`, `check-coverage`). Confirm with the user if it's not obvious.
@@ -64,6 +73,7 @@ Read the scaffold from `assets/skill-template.md` (relative to this skill's dire
 
 **Quality rules to apply when drafting:**
 - The skill must do exactly one job in its single bucket (step 2) — if drafting surfaces a second independent job, stop and split
+- If step 2a classified this as **grunt**, add a `model: haiku` line directly after `description:` in the frontmatter (matching the convention used by other grunt-work skills in this repo). If **judgment**, omit the field entirely — don't write `model: sonnet` or similar, since that would pin it and stop it from tracking the session's top model over time.
 - Trigger phrases in `description` must match natural speech — include the obvious variants ("run tests", "test", "execute tests")
 - Steps must be actionable with Claude Code's tools (Bash, Read, Edit, Write, WebSearch, etc.)
 - Include what to output/report to the user at the end

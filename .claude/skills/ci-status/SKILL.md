@@ -1,6 +1,7 @@
 ---
 name: ci-status
 description: Check or watch the latest GitHub Actions "flake check" run for this repo and report the verdict. Use when the user says "ci status", "is CI green", "check CI", "watch the run", "did the workflow pass", or "check the actions run".
+model: haiku
 ---
 
 # CI Status

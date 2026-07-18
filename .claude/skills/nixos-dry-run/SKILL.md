@@ -1,6 +1,7 @@
 ---
 name: nixos-dry-run
 description: This skill should be used when the user wants to "dry run", "preview rebuild", "see what would change", "check config", "test build", or "see changes before applying". Use it to preview what nh os boot would change without writing anything to the system.
+model: haiku
 version: 0.1.0
 ---
 

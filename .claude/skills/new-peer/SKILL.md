@@ -1,6 +1,7 @@
 ---
 name: new-peer
 description: Triggers when user says "add a VPN peer", "add a new peer", "add device to VPN", "new wireguard peer", "add phone to VPN", or "add X to wireguard". Guides the user through adding a new WireGuard peer to the VPN — editing the vpn-server configuration and generating the client config snippet for the new device.
+model: haiku
 version: 0.2.0
 ---
 

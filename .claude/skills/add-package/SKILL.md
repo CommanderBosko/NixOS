@@ -1,6 +1,7 @@
 ---
 name: add-package
 description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/vpn-server", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
+model: haiku
 version: 0.2.0
 ---
 

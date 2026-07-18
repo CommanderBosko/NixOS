@@ -1,6 +1,7 @@
 ---
 name: claude-rules
 description: Ensure the current project's CLAUDE.md contains the user's four standing workflow rules — Scope First (Interview), Verification Plan, Parallelize with Sub-Agents, and Use Existing Skills First — adding any that are missing. Use when the user says "claude-rules", "check claude rules", "apply my rules", "add my rules to this project", or "make sure CLAUDE.md has my rules".
+model: haiku
 ---
 
 # Claude Rules

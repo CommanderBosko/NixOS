@@ -1,6 +1,7 @@
 ---
 name: save-memory
 description: Triggers when user says "save a memory", "remember this", "write a memory", "save to memory", "add a memory", or "note this for next time". Writes one well-formed memory file (correct frontmatter + body) to the project memory dir and adds its one-line pointer to MEMORY.md.
+model: haiku
 version: 0.2.0
 ---
 

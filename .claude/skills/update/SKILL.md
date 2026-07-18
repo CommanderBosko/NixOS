@@ -1,6 +1,7 @@
 ---
 name: update
 description: Triggers when user says "update flake", "update inputs", "nix flake update", "update nixpkgs", "update all inputs", or "run flake update". Runs nix flake update and shows a readable summary of what changed in flake.lock.
+model: haiku
 version: 0.2.0
 ---
 

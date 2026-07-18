@@ -1,6 +1,7 @@
 ---
 name: rollback
 description: Use this skill when the user wants to "rollback", "roll back nixos", "revert to previous generation", "undo last rebuild", "go back to previous build", or "nixos rollback". It shows recent generations, confirms with the user, then activates the previous generation immediately via nixos-rebuild switch --rollback.
+model: haiku
 version: 0.2.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: pin-input
 description: Triggers when user says "pin input", "pin nixpkgs", "hold back an input", "lock input to a revision", "pin flake input", "freeze input", or "pin X to a commit". Pins a specific flake input to a particular git revision or tag, useful when upstream breaks something and you need to hold back one input while letting others update freely.
+model: haiku
 version: 0.2.0
 ---
 

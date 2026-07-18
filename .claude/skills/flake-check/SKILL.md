@@ -1,6 +1,7 @@
 ---
 name: flake-check
 description: Use this skill when the user wants to "check flake", "validate flake", "nix flake check", or "check for errors". Validates the flake before committing or rebuilding and surfaces any evaluation errors clearly.
+model: haiku
 version: 0.1.0
 ---
 

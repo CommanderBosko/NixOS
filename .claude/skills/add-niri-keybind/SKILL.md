@@ -1,6 +1,7 @@
 ---
 name: add-niri-keybind
 description: Triggers when user says "add a niri keybind", "bind Mod+X to...", "does Mod+X do anything", or "what's bound to Mod+X". Checks or adds a keybind in the shared niri config, following this repo's spawn/spawn-sh and window-rule conventions.
+model: haiku
 ---
 
 # Add Niri Keybind

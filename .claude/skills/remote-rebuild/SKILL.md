@@ -1,6 +1,7 @@
 ---
 name: remote-rebuild
 description: Use this skill when the user wants to "remote rebuild", "deploy to vpn-server", "rebuild vpn-server", "rebuild vpn-server remotely", or "nixos-rebuild remote". Deploys the NixOS configuration to the remote vpn-server host.
+model: haiku
 version: 0.2.0
 ---
 
