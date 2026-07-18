@@ -38,22 +38,13 @@ Always mention the current followers (by name, from the live grep above) when th
 
 ## Step 1 — Show current state
 
-Read both files to build the display table:
+Run the shared helper (also used by nothing else — this one is `/pin-input`-only, unlike the two below):
 
 ```bash
-grep -E '"rev"' /home/bosko/NixOS/flake.lock | head -20
+/home/bosko/NixOS/.claude/lib/show-pin-state.sh
 ```
 
-Then read `flake.nix` for the current URLs and `flake.lock` for the locked revisions. Present a table like:
-
-```
-Input          URL (flake.nix)                                    Locked rev
------------    ------------------------------------------------   ----------
-<input>        <url from flake.nix>                               <rev from flake.lock>
-…              (one row per input from the live list enumerated above)
-```
-
-To get each input's locked rev from `flake.lock`, read the file and extract the `"rev"` field from each input's node. The nodes for inputs with `follows` may reference another node — follow the reference to find the actual rev.
+It prints one aligned line per root input — `<name>  <original url, e.g. github:owner/repo/ref>  <locked rev, 12 chars>` — reading live from `nix flake metadata --json`, which already resolves any `follows` chain internally. Present its output as the current-state table; don't hand-roll the `flake.lock`/`flake.nix` parse yourself.
 
 ---
 
@@ -191,6 +182,7 @@ Do not run either of those automatically.
 
 - The lock diff in Step 6 is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/bump-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script, then append the human-chosen pin target as a context line.
 - The input list above is rendered by `/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh`, shared with `/bump-input`. Do not hand-roll the `nix flake metadata` parse — call the script.
+- The current-state table in Step 1 is rendered by `/home/bosko/NixOS/.claude/lib/show-pin-state.sh` (used only by `/pin-input`). It resolves each input's `follows` chain and locked rev via `nix flake metadata --json` — do not hand-roll that parse either.
 
 ## Key constraints
 
