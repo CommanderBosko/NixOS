@@ -8,21 +8,21 @@
   environment.systemPackages = with pkgs; [
     brave
     chromium
-    doublecmd
     firefox
     freetube
     github-desktop
     gparted
-    kdePackages.ark
-    kdePackages.gwenview
+    imv
     kdePackages.kate
-    kdePackages.okular
     kitty
     megasync
     onlyoffice-desktopeditors
     qalculate-qt
+    thunar
     vesktop
     vlc
+    xarchiver
+    zathura
   ];
 
   # Flatpaks

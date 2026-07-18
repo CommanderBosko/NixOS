@@ -73,7 +73,7 @@ let
       '';
     };
 
-    # Full KDE Frameworks apps (dolphin, and KIO/KConfig apps generally) don't
+    # Full KDE Frameworks apps (kate, and KIO/KConfig apps generally) don't
     # theme off QT_QPA_PLATFORMTHEME at all — they resolve their palette via
     # KColorScheme reading kdeglobals, a completely separate path. Outside a
     # real Plasma session there's no kded daemon keeping kdeglobals' "current
@@ -144,11 +144,11 @@ in
   home-manager.users.bosko = niriHomeConfig;
   home-manager.users.natty = niriHomeConfig;
 
-  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, dolphin) follow
+  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, kate) follow
   # DMS's matugen-generated dark/light theme instead of Qt's default light style
   environment.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
 
-  # Without this, apps built outside dolphin/qt6ct's own closure (i.e. anything
+  # Without this, apps built outside qt6ct's own closure (i.e. anything
   # not sharing their exact Nix build inputs) can't discover libqt6ct.so at
   # all: unwrapped Qt binaries only search the plugin dirs baked into their own
   # RPATH at build time, which never include unrelated packages like qt6ct.
@@ -167,7 +167,6 @@ in
 
     fuzzel # Application launcher
     grim # Screenshot utility
-    kdePackages.dolphin # File manager
     kdePackages.qt6ct # Qt theme engine so Qt apps follow DMS's matugen theme
     playerctl # MPRIS media control, used by niri-config.kdl's XF86Audio media key binds
     slurp # Region selection for grim

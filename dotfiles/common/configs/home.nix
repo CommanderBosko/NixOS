@@ -66,87 +66,101 @@
       "application/x-ruby" = "org.kde.kate.desktop";
       "application/x-shellscript" = "org.kde.kate.desktop";
 
-      # Archives -> Ark (full mimetype list taken from ark's own .desktop file)
-      "application/x-deb" = "org.kde.ark.desktop";
-      "application/x-cd-image" = "org.kde.ark.desktop";
-      "application/x-bcpio" = "org.kde.ark.desktop";
-      "application/x-cpio" = "org.kde.ark.desktop";
-      "application/x-cpio-compressed" = "org.kde.ark.desktop";
-      "application/x-sv4cpio" = "org.kde.ark.desktop";
-      "application/x-sv4crc" = "org.kde.ark.desktop";
-      "application/x-rpm" = "org.kde.ark.desktop";
-      "application/x-compress" = "org.kde.ark.desktop";
-      "application/gzip" = "org.kde.ark.desktop";
-      "application/x-bzip" = "org.kde.ark.desktop";
-      "application/x-bzip2" = "org.kde.ark.desktop";
-      "application/x-lzma" = "org.kde.ark.desktop";
-      "application/x-xz" = "org.kde.ark.desktop";
-      "application/zlib" = "org.kde.ark.desktop";
-      "application/zstd" = "org.kde.ark.desktop";
-      "application/x-lz4" = "org.kde.ark.desktop";
-      "application/x-lzip" = "org.kde.ark.desktop";
-      "application/x-lrzip" = "org.kde.ark.desktop";
-      "application/x-lzop" = "org.kde.ark.desktop";
-      "application/x-source-rpm" = "org.kde.ark.desktop";
-      "application/vnd.debian.binary-package" = "org.kde.ark.desktop";
-      "application/vnd.efi.iso" = "org.kde.ark.desktop";
-      "application/vnd.ms-cab-compressed" = "org.kde.ark.desktop";
-      "application/x-xar" = "org.kde.ark.desktop";
-      "application/x-iso9660-appimage" = "org.kde.ark.desktop";
-      "application/x-archive" = "org.kde.ark.desktop";
-      "application/x-tar" = "org.kde.ark.desktop";
-      "application/x-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-bzip-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-bzip2-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-tarz" = "org.kde.ark.desktop";
-      "application/x-xz-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-lzma-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-lzip-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-tzo" = "org.kde.ark.desktop";
-      "application/x-lrzip-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-lz4-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-zstd-compressed-tar" = "org.kde.ark.desktop";
-      "application/x-7z-compressed" = "org.kde.ark.desktop";
-      "application/vnd.rar" = "org.kde.ark.desktop";
-      "application/zip" = "org.kde.ark.desktop";
-      "application/x-java-archive" = "org.kde.ark.desktop";
-      "application/x-lha" = "org.kde.ark.desktop";
-      "application/x-stuffit" = "org.kde.ark.desktop";
-      "application/x-arj" = "org.kde.ark.desktop";
-      "application/arj" = "org.kde.ark.desktop";
+      # Archives -> xarchiver (full mimetype list taken from xarchiver's own
+      # .desktop file; not KDE/ksycoca-reliant, unlike Ark)
+      "application/epub+zip" = "xarchiver.desktop";
+      "application/gzip" = "xarchiver.desktop";
+      "application/java-archive" = "xarchiver.desktop";
+      "application/vnd.android.app-bundle" = "xarchiver.desktop";
+      "application/vnd.android.package-archive" = "xarchiver.desktop";
+      "application/vnd.appimage" = "xarchiver.desktop";
+      "application/vnd.bzip3" = "xarchiver.desktop";
+      "application/vnd.comicbook-rar" = "xarchiver.desktop";
+      "application/vnd.comicbook+zip" = "xarchiver.desktop";
+      "application/vnd.debian.binary-package" = "xarchiver.desktop";
+      "application/vnd.efi.iso" = "xarchiver.desktop";
+      "application/vnd.ms-cab-compressed" = "xarchiver.desktop";
+      "application/vnd.ms-htmlhelp" = "xarchiver.desktop";
+      "application/vnd.oasis.opendocument.text" = "xarchiver.desktop";
+      "application/vnd.openofficeorg.extension" = "xarchiver.desktop";
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = "xarchiver.desktop";
+      "application/vnd.rar" = "xarchiver.desktop";
+      "application/vnd.snap" = "xarchiver.desktop";
+      "application/vnd.squashfs" = "xarchiver.desktop";
+      "application/x-7z-compressed" = "xarchiver.desktop";
+      "application/x-archive" = "xarchiver.desktop";
+      "application/x-arj" = "xarchiver.desktop";
+      "application/x-bzip" = "xarchiver.desktop";
+      "application/x-bzip-compressed-tar" = "xarchiver.desktop";
+      "application/x-bzip1" = "xarchiver.desktop";
+      "application/x-bzip1-compressed-tar" = "xarchiver.desktop";
+      "application/x-bzip2" = "xarchiver.desktop";
+      "application/x-bzip2-compressed-tar" = "xarchiver.desktop";
+      "application/x-bzip3" = "xarchiver.desktop";
+      "application/x-bzip3-compressed-tar" = "xarchiver.desktop";
+      "application/x-cb7" = "xarchiver.desktop";
+      "application/x-cbt" = "xarchiver.desktop";
+      "application/x-cd-image" = "xarchiver.desktop";
+      "application/x-compress" = "xarchiver.desktop";
+      "application/x-compressed-tar" = "xarchiver.desktop";
+      "application/x-cpio" = "xarchiver.desktop";
+      "application/x-cpio-compressed" = "xarchiver.desktop";
+      "application/x-java-archive" = "xarchiver.desktop";
+      "application/x-lha" = "xarchiver.desktop";
+      "application/x-lrzip" = "xarchiver.desktop";
+      "application/x-lrzip-compressed-tar" = "xarchiver.desktop";
+      "application/x-lz4" = "xarchiver.desktop";
+      "application/x-lz4-compressed-tar" = "xarchiver.desktop";
+      "application/x-lzip" = "xarchiver.desktop";
+      "application/x-lzip-compressed-tar" = "xarchiver.desktop";
+      "application/x-lzma" = "xarchiver.desktop";
+      "application/x-lzma-compressed-tar" = "xarchiver.desktop";
+      "application/x-lzop" = "xarchiver.desktop";
+      "application/x-rar" = "xarchiver.desktop";
+      "application/x-rpm" = "xarchiver.desktop";
+      "application/x-rzip" = "xarchiver.desktop";
+      "application/x-rzip-compressed-tar" = "xarchiver.desktop";
+      "application/x-source-rpm" = "xarchiver.desktop";
+      "application/x-tar" = "xarchiver.desktop";
+      "application/x-tarz" = "xarchiver.desktop";
+      "application/x-tzo" = "xarchiver.desktop";
+      "application/x-xpinstall" = "xarchiver.desktop";
+      "application/x-xz" = "xarchiver.desktop";
+      "application/x-xz-compressed-tar" = "xarchiver.desktop";
+      "application/x-zip-compressed-fb2" = "xarchiver.desktop";
+      "application/x-zpaq" = "xarchiver.desktop";
+      "application/x-zstd-compressed-tar" = "xarchiver.desktop";
+      "application/zip" = "xarchiver.desktop";
+      "application/zstd" = "xarchiver.desktop";
 
-      # PDFs -> Okular
-      "application/pdf" = "okularApplication_pdf.desktop";
-      "application/x-gzpdf" = "okularApplication_pdf.desktop";
-      "application/x-bzpdf" = "okularApplication_pdf.desktop";
-      "application/x-wwf" = "okularApplication_pdf.desktop";
+      # PDFs -> zathura (mupdf backend)
+      "application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";
+      "application/oxps" = "org.pwmt.zathura-pdf-mupdf.desktop";
+      "application/x-fictionbook" = "org.pwmt.zathura-pdf-mupdf.desktop";
+      "application/x-mobipocket-ebook" = "org.pwmt.zathura-pdf-mupdf.desktop";
 
-      # Images -> Gwenview (full mimetype list taken from gwenview's own
-      # .desktop file, minus inode/directory so folders stay with Dolphin)
-      "image/avif" = "org.kde.gwenview.desktop";
-      "image/gif" = "org.kde.gwenview.desktop";
-      "image/heif" = "org.kde.gwenview.desktop";
-      "image/jpeg" = "org.kde.gwenview.desktop";
-      "image/jxl" = "org.kde.gwenview.desktop";
-      "image/png" = "org.kde.gwenview.desktop";
-      "image/bmp" = "org.kde.gwenview.desktop";
-      "image/x-eps" = "org.kde.gwenview.desktop";
-      "image/x-icns" = "org.kde.gwenview.desktop";
-      "image/x-ico" = "org.kde.gwenview.desktop";
-      "image/x-portable-bitmap" = "org.kde.gwenview.desktop";
-      "image/x-portable-graymap" = "org.kde.gwenview.desktop";
-      "image/x-portable-pixmap" = "org.kde.gwenview.desktop";
-      "image/x-xbitmap" = "org.kde.gwenview.desktop";
-      "image/x-xpixmap" = "org.kde.gwenview.desktop";
-      "image/tiff" = "org.kde.gwenview.desktop";
-      "image/x-psd" = "org.kde.gwenview.desktop";
-      "image/x-webp" = "org.kde.gwenview.desktop";
-      "image/webp" = "org.kde.gwenview.desktop";
-      "image/x-tga" = "org.kde.gwenview.desktop";
-      "image/x-xcf" = "org.kde.gwenview.desktop";
-      "image/openraster" = "org.kde.gwenview.desktop";
-      "image/svg+xml" = "org.kde.gwenview.desktop";
-      "image/svg+xml-compressed" = "org.kde.gwenview.desktop";
+      # Images -> imv (full mimetype list taken from imv's own .desktop
+      # file; not KDE/ksycoca-reliant, unlike Gwenview)
+      "image/x-farbfeld" = "imv.desktop";
+      "image/tiff" = "imv.desktop";
+      "image/tiff-fx" = "imv.desktop";
+      "image/png" = "imv.desktop";
+      "image/x-png" = "imv.desktop";
+      "image/jpeg" = "imv.desktop";
+      "image/jpg" = "imv.desktop";
+      "image/pjpeg" = "imv.desktop";
+      "image/svg+xml" = "imv.desktop";
+      "image/gif" = "imv.desktop";
+      "image/bmp" = "imv.desktop";
+      "image/x-bmp" = "imv.desktop";
+      "image/heif" = "imv.desktop";
+      "image/avif" = "imv.desktop";
+      "image/jxl" = "imv.desktop";
+      "image/webp" = "imv.desktop";
+      "image/qoi" = "imv.desktop";
+
+      # Folders -> Thunar
+      "inode/directory" = "thunar.desktop";
 
       # Video / audio -> VLC (full mimetype list taken from vlc's own
       # .desktop file)
