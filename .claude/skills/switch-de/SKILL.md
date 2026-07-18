@@ -50,22 +50,23 @@ Do not proceed until the target module file exists.
 
 ## Step 3 — Show current and proposed state
 
-Read `/home/bosko/NixOS/flake.nix` and locate the DE import line for the requested host. Each desktop host has exactly one line matching this pattern inside its `modules` list:
+Resolve the host's current DE module by running (relative to this skill's directory):
 
-```
-"${self}/modules/desktop-environments/<current>.nix"
-```
-
-Present both lines clearly:
-
-```
-Host:     <host>
-
-Current:  "${self}/modules/desktop-environments/<current>.nix"
-Proposed: "${self}/modules/desktop-environments/<target>.nix"
+```bash
+scripts/current-de.sh <host>
 ```
 
-If you cannot find a DE import line for the host, explain what you see and ask the user to verify.
+This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ... }` block (so it can't accidentally match another host's DE line), and prints the current module name.
+
+- **Exit 0** — exactly one DE module found; stdout is `<current>`. Present both lines clearly:
+  ```
+  Host:     <host>
+
+  Current:  "${self}/modules/desktop-environments/<current>.nix"
+  Proposed: "${self}/modules/desktop-environments/<target>.nix"
+  ```
+- **Exit 1** — no DE module found for that host (e.g. a headless host slipped through, or the host block wasn't found). Stop and explain what the script reported; ask the user to verify.
+- **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
 
 ## Step 4 — SDDM / displayManager warning (conditional)
 
@@ -113,6 +114,10 @@ Then remind them of the next steps:
 > 3. Commit the change: `/commit`
 
 ---
+
+## Scripts
+
+- `scripts/current-de.sh <host>` — parses `flake.nix` scoped to the named host's block and prints its current DE module name. Exit 0 = found (stdout has the name), exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
 
 ## Key constraints
 

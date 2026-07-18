@@ -36,24 +36,19 @@ Do not proceed until you have the public key in hand.
 
 ## Step 2 — Determine the next available IP
 
-Known hosts' VPN addresses are recorded live in `.claude/hosts.json` (`.hosts.<name>.vpnIp`) — never
-hardcode a copy here. List them:
+Run (relative to this skill's directory):
 
 ```bash
-jq -r '.hosts | to_entries[] | select(.value.vpnIp) | "\(.value.vpnIp)\t\(.key)"' /home/bosko/NixOS/.claude/hosts.json | sort -t. -k4 -n
+scripts/next-vpn-ip.sh
 ```
 
-That covers every host that already has a flake entry, but **not** ad-hoc peers added purely via
-`hosts/vpn-server/configuration.nix` (phones, non-NixOS devices — these aren't flake hosts and have
-no `hosts.json` entry). So also grep the actual server config for the true highest assigned
-address, and take whichever is higher:
-
-```bash
-grep -oE '10\.10\.0\.[0-9]+' /home/bosko/NixOS/hosts/vpn-server/configuration.nix | sort -t. -k4 -n | tail -1
-```
-
-Assign the next unused address after the higher of the two. The VPN subnet is `10.10.0.0/24`;
-`10.10.0.1` is reserved for vpn-server itself.
+This checks both sources of truth — `.claude/hosts.json`'s `vpnIp` entries (flake hosts) and every
+`10.10.0.x` address literally assigned in `hosts/vpn-server/configuration.nix` (covers ad-hoc peers
+— phones, non-NixOS devices — that have no `hosts.json` entry) — and prints the next unused address
+as `NEXT_IP=10.10.0.<n>` on its first line, plus `SERVER_PUBKEY=<key>` on its second (reused in Step
+4). The VPN subnet is `10.10.0.0/24`; `10.10.0.1` is reserved for vpn-server itself. A non-zero exit
+means it couldn't find any existing address in either source — investigate rather than guessing a
+starting point.
 
 ## Step 3 — Show the server-side peer block
 
@@ -69,13 +64,7 @@ Present the peer block to add to `hosts/vpn-server/configuration.nix`. It goes i
 
 ## Step 4 — Show the client-side WireGuard config
 
-The server's public key (from `modules/vpn.nix`) is:
-
-```
-ijhN7KUmHx5TOLpKgyzJpzSvp49TkD0c2CTf32Cyu1U=
-```
-
-Before presenting it, verify this is still current by reading `modules/vpn.nix` and checking the `publicKey` field in the `peers` list. Use whatever value is actually in the file.
+Use the `SERVER_PUBKEY` value printed by `scripts/next-vpn-ip.sh` in Step 2 (read live from `modules/vpn.nix`'s `publicKey` field — don't hardcode a copy here; re-run the script if Step 2 happened long enough ago that the value might be stale).
 
 **If the new device is a NixOS host**, tell the user they can import `modules/vpn.nix` and then set the host-specific address in the host's own config:
 
@@ -90,7 +79,7 @@ sourced from `secrets/hosts/<host>.yaml`. So: encrypt the new host's wg private 
 and let the module read it. Do **not** drop a plaintext key at `/etc/wireguard/private.key` — that
 path is not what the module reads and will leave the tunnel down. (This mirrors `/new-host` Step 8.)
 
-**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the live value read from `modules/vpn.nix`, not assumed). `Endpoint` and `AllowedIPs` are already correct in the template.
+**If the new device is a phone, non-NixOS machine, or any device that cannot use the Nix module**, give them a raw `wg-quick` config file to paste into their WireGuard app. Read `assets/client.conf.tmpl` and fill in: `<their-private-key>` (stays on the device — never shared), `<n>` (the address assigned in Step 2), and `<server-public-key>` (the `SERVER_PUBKEY` value from Step 2). `Endpoint` and `AllowedIPs` are already correct in the template.
 
 Remind the user that `<their-private-key>` is the private key that stays on their device — it is never shared or stored anywhere else.
 
@@ -117,6 +106,10 @@ Tell the user the following steps are still needed to activate the peer:
 - The server public key must always be read from `modules/vpn.nix` at the time of the skill run, not assumed from this file.
 - The VPN subnet is `10.10.0.0/24` (not `10.0.0.0/24`). Double-check the existing peer IPs before assigning a new one.
 - This repo's working directory is always `/home/bosko/NixOS`.
+
+## Scripts
+
+- `scripts/next-vpn-ip.sh` — prints the next unused `10.10.0.x` address (`NEXT_IP=...`) and the server's current public key (`SERVER_PUBKEY=...`), both read live. Used in Step 2 (and Step 4 reuses `SERVER_PUBKEY`).
 
 ## Assets
 
