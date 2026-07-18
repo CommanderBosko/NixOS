@@ -26,33 +26,13 @@ If the user mentioned a host (gaming/laptop/natalie-laptop/vpn-server), use that
 
 ## Step 2 — Run journalctl
 
-### Local (default)
+Run the script — it handles both the local case and remote SSH dispatch (resolving the host's SSH target from `.claude/hosts.json` via the shared `resolve-host.sh`, with a 30s timeout):
 
 ```bash
-journalctl -u <service> -n 50 --no-pager
+bash /home/bosko/NixOS/.claude/skills/journal/scripts/journal.sh <service> [host]
 ```
 
-### Remote hosts
-
-Use SSH to run journalctl on the remote machine. Resolve the host's SSH target from the single source of truth, `.claude/hosts.json` (do not hardcode a copy):
-
-```bash
-jq -r '.hosts["<host>"].ssh' /home/bosko/NixOS/.claude/hosts.json
-```
-
-Remote command:
-
-```bash
-ssh <host-args> "journalctl -u <service> -n 50 --no-pager"
-```
-
-Example for gaming:
-
-```bash
-ssh bosko@gaming "journalctl -u sddm -n 50 --no-pager"
-```
-
-Use a 30-second timeout (30000ms) for remote commands.
+Omit `[host]` (or pass nothing) for local. If the named host can't be resolved, the script exits 1 and prints the known-hosts table instead of log output — fall back to the **AskUserQuestion tool** using that table rather than guessing a host name.
 
 ## Step 3 — Present the output
 
@@ -79,3 +59,7 @@ Wait for the user to respond before running anything additional.
 - NixOS's `networking.wg-quick.interfaces.wg0` generates a plain named unit, `wg-quick-wg0` — not an `@`-style template unit.
 - vpn-server is a NixOS host — log in as `bosko` (not `ubuntu`).
 - All local hosts use static IPs via `~/.ssh/config` — use hostnames, not raw IPs.
+
+## Scripts
+
+- `scripts/journal.sh <service> [host]` — runs journalctl locally or over SSH (Step 2). Remote resolution shares `.claude/lib/resolve-host.sh` with the `/ssh-host` skill.

@@ -17,25 +17,19 @@ Parse from the user's request:
 
 ## Known hosts — single source of truth
 
-All host SSH targets and IPs live in `/home/bosko/NixOS/.claude/hosts.json`. **Read that file; never hardcode a copy here.** List them with:
-
-```bash
-jq -r '.hosts | to_entries[] | "\(.key)\t\(.value.ssh)\t\(.value.ip // "-")\t\(.value.notes // "")"' /home/bosko/NixOS/.claude/hosts.json
-```
+All host SSH targets and IPs live in `/home/bosko/NixOS/.claude/hosts.json`. **Never hardcode a copy here** — the resolver script below reads it live.
 
 ## Step 1 — Resolve the target
 
-If the user provided a host name (e.g., `/ssh-host gaming`), resolve its SSH target from hosts.json:
+If the user provided a host name (e.g., `/ssh-host gaming`), run the resolver:
 
 ```bash
-jq -r '.hosts["<name>"].ssh' /home/bosko/NixOS/.claude/hosts.json
+bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>
 ```
 
-Otherwise, list the hosts (command above) and present the pick via the **AskUserQuestion tool**, populating its options from the host keys in `/home/bosko/NixOS/.claude/hosts.json` (one option per known host) rather than asking in free-form prose. Skip the question if the user already named a host in their request.
+It normalizes aliases (`natalie` → `natalie-laptop`; `vpn`/`oracle`/`server` → `vpn-server`) and looks up the SSH target in `hosts.json`. On success (exit 0) it prints just the resolved SSH target — use it directly in Step 3. On failure (exit 1, no name given or not found) it prints the full host table (key, ssh, ip, notes) instead.
 
-Accept these aliases before lookup:
-- `natalie` → `natalie-laptop`
-- `vpn`, `oracle`, or `server` → `vpn-server`
+If no host was named, or the resolver failed, present the pick via the **AskUserQuestion tool**, populating its options from the table the script just printed (one option per known host) rather than asking in free-form prose. Skip the question if the user already named a host in their request.
 
 ## Step 2 — Show the command
 
@@ -67,3 +61,7 @@ After the session ends (or if the connection is refused/timed out), report the e
 - All hosts have password auth disabled — key auth only.
 - vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
 - Local hosts use `~/.ssh/config` entries with static IPs (hostname resolution unreliable); the IPs are recorded per-host in `.claude/hosts.json` (`.hosts.<name>.ip`).
+
+## Scripts
+
+- `.claude/lib/resolve-host.sh <name>` — normalizes aliases and resolves a host name to its SSH target from `hosts.json` (Step 1). Shared with the `/journal` skill. Exit 0 + SSH target on success; exit 1 + full host table on failure.
