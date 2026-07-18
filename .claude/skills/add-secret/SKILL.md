@@ -65,38 +65,35 @@ If the user is generating a **password hash**, the canonical way is
 
 ## Step 3 — Write the secret
 
-Always `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt` first.
+All three modes below share the same `SOPS_AGE_KEY_FILE` export and `nix shell` wrapping —
+run via `scripts/sops-secret.sh` (relative to this skill's directory) rather than typing
+sops/nix-shell invocations by hand:
 
 **Add or update a single key in an existing file** (no plaintext touches disk):
 
 ```bash
-nix shell nixpkgs#sops --command \
-  sops set /home/bosko/NixOS/secrets/common.yaml '["new-key-name"]' '"the-secret-value"'
+scripts/sops-secret.sh set /home/bosko/NixOS/secrets/common.yaml new-key-name "the-secret-value"
 ```
 
-The path is JSON (`'["key"]'`), the value is JSON (`'"string"'`). sops decrypts in memory,
-sets the key, re-encrypts in place.
+sops decrypts in memory, sets the key, re-encrypts in place.
 
 **Interactive edit / rotate** (let the user change it in `$EDITOR`):
 
 ```bash
-nix shell nixpkgs#sops --command sops /home/bosko/NixOS/secrets/common.yaml
+scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
 ```
 
-**Create a brand-new file** — write the plaintext YAML, then encrypt in place, then
-confirm no plaintext remains:
+**Create a brand-new file** — writes the plaintext YAML under `umask 077`, then encrypts in
+place:
 
 ```bash
-nix shell nixpkgs#sops --command bash -c '
-  umask 077
-  printf "my-key: \"%s\"\n" "the-value" > /home/bosko/NixOS/secrets/hosts/<host>.yaml
-  sops -e -i /home/bosko/NixOS/secrets/hosts/<host>.yaml
-'
+scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key "the-value"
 ```
 
 When a secret value is sensitive and must not appear in the transcript (e.g. a key read
 over SSH), capture it into a temp file with `umask 077` and feed it from there rather than
-echoing it.
+echoing it — `sops-secret.sh` takes the value as an argument, so pull from that temp file
+rather than pasting the value into the command yourself.
 
 ## Step 4 — Wire it into NixOS
 
@@ -150,6 +147,9 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
   file with the admin age key and confirms it's encrypted on disk (Step 5).
 - `.claude/skills/add-secret/scripts/host-age-key.sh <host>` — derives a host's age public
   key from its SSH ed25519 host key, for adding a new anchor to `.sops.yaml` (Step 2).
+- `.claude/skills/add-secret/scripts/sops-secret.sh {set|edit|create} <file> [key] [value]` —
+  the three everyday sops write operations (Step 3), sharing one `SOPS_AGE_KEY_FILE` export
+  and `nix shell` wrapping instead of three separately-typed command blocks.
 
 ## Gotchas
 

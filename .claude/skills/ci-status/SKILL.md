@@ -10,35 +10,25 @@ Report the verdict of the most recent GitHub Actions `flake check` run for `Comm
 
 ## Steps
 
-1. **Find the latest run:**
+1. **Resolve, watch, and report** by running the script (relative to this skill's directory), passing the user's filter if they gave one:
 
    ```bash
-   gh run list --repo CommanderBosko/NixOS --workflow "flake check" --limit 3
+   scripts/ci-status.sh [branch|commit-sha|run-id|title-substring]
    ```
 
-   The first line is the latest run; note its run ID, status, branch, and triggering commit subject. If the user named a specific commit or branch, pick the matching run instead of the first.
+   It finds the matching run (newest `flake check` run if no filter), watches it to completion if `in_progress`/`queued` (allow up to 10 minutes — timeout 600000ms; the deep-eval job normally finishes in ~2–3 minutes), prints the run id/branch/title/status, and on failure prints the last 40 lines of the failing step's log. Exit code mirrors the run's own success/failure. If no run matches the filter, it prints the 10 most recent runs instead so you can pick by eye.
 
-2. **If the run is `in_progress` or `queued`, watch it to completion:**
+2. **On success:** report the verdict in one or two sentences — run conclusion, which commit it certified. Green means every host's full system derivation evaluated (`flake check` + the per-host deep-eval step), not that anything was built or deployed.
 
-   ```bash
-   gh run watch <run-id> --repo CommanderBosko/NixOS --exit-status --interval 20
-   ```
+3. **On failure:** the script already printed the failing step's log tail — interpret it. Identify which host failed to evaluate (the deep-eval step groups output per host with `::group::<host>`) and, if the error names a package or option, say which one. Suggest the next move — usually reproducing locally with `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
 
-   Allow up to 10 minutes (timeout 600000ms) — the deep-eval job normally finishes in ~2–3 minutes. If the run is already `completed`, skip the watch.
-
-3. **On success:** report the verdict in one or two sentences — run conclusion, duration, which commit it certified. Green means every host's full system derivation evaluated (`flake check` + the per-host deep-eval step), not that anything was built or deployed.
-
-4. **On failure:** pull the failing step's log and show the relevant error verbatim:
-
-   ```bash
-   gh run view <run-id> --repo CommanderBosko/NixOS --log-failed | tail -40
-   ```
-
-   Identify which host failed to evaluate (the deep-eval step groups output per host with `::group::<host>`) and, if the error names a package or option, say which one. Suggest the next move — usually reproducing locally with `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
-
-5. **Edge cases:**
+4. **Edge cases:**
    - No runs listed → the workflow has never fired since its introduction (2026-07-02); say so.
    - Run `cancelled` → usually superseded by a newer push (the workflow's concurrency group cancels in-flight runs); check for a newer run and report that one instead.
+
+## Scripts
+
+- `scripts/ci-status.sh [filter]` — resolves the target run (branch, commit SHA, run ID, or title substring; newest run if omitted), watches it to completion if still running, and on failure prints the failed step's log tail. Read-only.
 
 ## Arguments
 
