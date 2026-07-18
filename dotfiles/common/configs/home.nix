@@ -1,4 +1,4 @@
-{ self, ... }:
+{ self, pkgs, ... }:
 
 {
   imports = [
@@ -7,6 +7,12 @@
   ];
 
   home = {
+    # adw-gtk3 provides the actual dark theme files for the "adw-gtk3-dark"
+    # GTK theme that dconf/gsettings already selects on niri hosts. Without
+    # it installed, GTK3/4 apps like Thunar silently fall back to stock
+    # light Adwaita since the referenced theme doesn't exist on disk.
+    packages = with pkgs; [ adw-gtk3 ];
+
     # Copy over dotfiles
     # Kate
     file.".config/katerc" = {
