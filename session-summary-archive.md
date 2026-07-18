@@ -1,3 +1,30 @@
+## Session: 2026-07-16 (session 43) — Niri keybinds/window rules, kdeglobals fix, flake bump, improve-system sweep
+
+**Focus**: A grab-bag session — new niri keybinds and per-monitor window rules, a real kdeglobals theming bug found and fixed, a full flake-input bump with an insecure-package waiver swap, and an `/improve-system` maintenance pass.
+
+### What changed (and why)
+- **Niri keybinds**: Mod+G launches Steam, Lutris, and Vesktop together (one keybind, multiple spawns); Mod+E opens dolphin.
+- **Per-monitor window rules** (`3be13bb`): on gaming's two outputs, kitty/steam/lutris pin to the Asus monitor (`DP-1`), vesktop/zen browser pin to the Dell monitor (`HDMI-A-1`) — user asked for niri's equivalent of Hyprland window rules, specified the exact app-to-monitor mapping wanted.
+- **kdeglobals bug fixed** (`4a92d59`): the `ColorScheme` write only fired when `XDG_CURRENT_DESKTOP=niri` was already set at HM-activation time — true only for an interactive live-session switch, never for this repo's real workflow (`nh os boot` + reboot, which activates before any session exists). Confirmed via journalctl. Removed the guard entirely.
+- **Flake bump** (`bacec40`): dms, financeguru, home-manager, nixpkgs — verified via flake-check + deep-eval across all 4 hosts.
+- **Insecure-package waiver swapped** (`6760838`): pnpm-10.29.2's CVE fix landed upstream (vesktop builds against generic `pnpm_10` now), so that waiver was removed; the same nixpkgs bump flagged `electron-40.10.5` (vesktop's runtime, EOL) insecure, so a new waiver was added for it instead — same mechanism, same "retest at next bump" removal condition.
+- **`/improve-system` sweep** (`7c445c5`, `8060832`): new project-local `add-niri-keybind` skill; a `flake-update-verify` gotcha from the waiver-swap incident; `skill-audit` over all 54 skills (4 parallel sub-agents) found zero drift against `hosts.json`/`vpn.nix` — applied low-risk fixes (missing `## Arguments` sections, script extractions for `deep-eval-check`/`verify-service`/`git-commit`); `improve-system`'s new-skill handoff gained a smoke-test step.
+
+### Decisions
+- Electron waiver confirmed safe by the user before adding, mirroring the pnpm waiver's precedent.
+- `improve-system` borrows just `ship-skill`'s smoke-test step rather than switching its new-skill handoff to `ship-skill` outright — keeps one consolidated end-of-run commit instead of fragmenting into `ship-skill`'s per-skill commit+push-confirm flow.
+- kdeglobals write made unconditional rather than fixing the guard's condition — a real Plasma session re-applies its own scheme on login anyway, so the guard added no value.
+
+### Issues / surprises
+- The kdeglobals guard bug is a good example of "tested only interactively, broken in the real deploy path" — the condition was never actually exercised by this repo's `nh os boot`-then-reboot workflow, so it silently no-op'd since it was written.
+
+### Next session
+- **gaming + laptop: rebuild + reboot** to pick up this session's keybinds, window rules, kdeglobals fix, and flake bump. Verify Mod+G/Mod+E, the per-monitor placement on gaming, and that dolphin renders dark without an interactive switch first.
+
+**Commits**: `4211a36`..`8060832` (8 commits)
+
+---
+
 ## Session: 2026-07-12 (session 42) — DMS-on-niri fixed for the natty user
 
 **Focus**: User (on gaming) reported DMS works under niri for `bosko` on natalie-laptop but not for `natty`; diagnosed and fixed the root cause, then closed the session.

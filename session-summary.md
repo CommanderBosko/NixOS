@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-17 — Declarative default apps, then off KDE entirely; two live bugs root-caused
+
+**Focus**: Set up declarative default-application associations, hit a wall with KDE apps being unreliable under niri (no `kded6`), swapped the whole stack for lightweight alternatives, then chased down two unrelated live bugs the user hit (broken AppArmor reload, USB not auto-mounting).
+
+### What changed (and why)
+- `xdg.mimeApps.defaultApplications` in `home.nix`: Kate/Ark/Okular/Gwenview/VLC, every mimetype verified against each app's real `.desktop` file. First rebuild failed activation (`mimeapps.list` clobber) — fixed with `force = true`, and preserved real working associations (GitHub Desktop OAuth, Discord/FreeTube/r2modman handlers) found in the live file before it got overwritten.
+- Dolphin's "Open With" picker turned out fundamentally broken under niri — KDE's `ksycoca` app database needs `kded6` to stay valid, which niri never runs. Confirmed via `xdg-open` working while Dolphin's own picker stayed empty even after clearing caches and a genuinely fresh process. Drafted a `kded6` systemd service as a fix, but the user chose to drop KDE apps entirely instead: Thunar, xarchiver, zathura, imv replaced Dolphin/Ark/Okular/Gwenview/Double Commander. Net -123 MiB.
+- Built `add-default-app` skill for the now-repeated "verify real mimetypes, add to xdg.mimeApps, verify the generated file" workflow — shipped untested at first, which led to `new-skill` gaining a permanent reminder to flag untested output and point at `ship-skill`.
+- Fixed three niri skills (`add-niri-window-rule`, `add-niri-keybind`, `add-niri-fullscreen-rule`) that still pointed at the old shared `niri-config.kdl` location, stale since the per-host overlay split.
+- Root-caused two live bugs: USB drives not auto-mounting under Thunar (needed `gvfs`+`thunar-volman`, since Dolphin's KIO backend never needed them), and `nh os boot` failing outright with "Failed to reload apparmor.service" (a real nixpkgs bug in `apparmor-parser-5.0.0` missing a file its own `aa-remove-unknown` script expects — worked around via `reloadIfChanged = false`).
+
+### Decisions
+- Chose to fully swap off KDE apps rather than keep patching around the missing `kded6` session — this was the third time in one session that gap caused a real bug (Dolphin's picker, Ark's in-archive file-open, and the underlying `ksycoca` staleness itself).
+- `new-skill` gets a reminder line, not a built-in smoke test — keeps it a clean single-bucket Utility skill; `ship-skill` already owns verification.
+
+### Issues / surprises
+- Even after `gvfs`/`thunar-volman` built and activated successfully, USB auto-mount still didn't work — turned out to be session-level staleness (the user's `dbus-broker.service` hadn't restarted since login, so it never picked up gvfs's new D-Bus service registration). Same root-cause *shape* as the `ksycoca` issue: live activation doesn't always restart the daemons that only read their config once at startup. Worth remembering as a pattern for future "config is right but nothing works" reports.
+
+### Next session
+- Push commit `c4690e5` (apparmor fix) — everything else this session is already pushed.
+- Reboot gaming (or restart the session D-Bus daemon) to actually fix USB auto-mount.
+- laptop + natalie-laptop still need their own rebuild to pick up this session's app-stack swap plus the whole accumulated backlog since session 34.
+
+**Commits**: `4b2e188..c4690e5` (11 commits)
+
+---
+
 ## Session: 2026-07-17 — Per-host niri overlay + qBittorrent app-id fix
 
 **Focus**: Split the shared niri config into a common base + per-host overlay so gaming, laptop, and natalie-laptop can each carry their own window rules, then chase down a qBittorrent placement bug the user hit while testing it.
@@ -100,33 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Same pending item as session 43: **gaming + laptop rebuild + reboot** to pick up everything from both sessions (`4211a36`..`b635287`) — verify Mod+G launches all 7 apps spread correctly across both monitors.
 
 **Commits**: `d35c5d2`..`b635287` (4 commits)
-
----
-
-## Session: 2026-07-16 (session 43) — Niri keybinds/window rules, kdeglobals fix, flake bump, improve-system sweep
-
-**Focus**: A grab-bag session — new niri keybinds and per-monitor window rules, a real kdeglobals theming bug found and fixed, a full flake-input bump with an insecure-package waiver swap, and an `/improve-system` maintenance pass.
-
-### What changed (and why)
-- **Niri keybinds**: Mod+G launches Steam, Lutris, and Vesktop together (one keybind, multiple spawns); Mod+E opens dolphin.
-- **Per-monitor window rules** (`3be13bb`): on gaming's two outputs, kitty/steam/lutris pin to the Asus monitor (`DP-1`), vesktop/zen browser pin to the Dell monitor (`HDMI-A-1`) — user asked for niri's equivalent of Hyprland window rules, specified the exact app-to-monitor mapping wanted.
-- **kdeglobals bug fixed** (`4a92d59`): the `ColorScheme` write only fired when `XDG_CURRENT_DESKTOP=niri` was already set at HM-activation time — true only for an interactive live-session switch, never for this repo's real workflow (`nh os boot` + reboot, which activates before any session exists). Confirmed via journalctl. Removed the guard entirely.
-- **Flake bump** (`bacec40`): dms, financeguru, home-manager, nixpkgs — verified via flake-check + deep-eval across all 4 hosts.
-- **Insecure-package waiver swapped** (`6760838`): pnpm-10.29.2's CVE fix landed upstream (vesktop builds against generic `pnpm_10` now), so that waiver was removed; the same nixpkgs bump flagged `electron-40.10.5` (vesktop's runtime, EOL) insecure, so a new waiver was added for it instead — same mechanism, same "retest at next bump" removal condition.
-- **`/improve-system` sweep** (`7c445c5`, `8060832`): new project-local `add-niri-keybind` skill; a `flake-update-verify` gotcha from the waiver-swap incident; `skill-audit` over all 54 skills (4 parallel sub-agents) found zero drift against `hosts.json`/`vpn.nix` — applied low-risk fixes (missing `## Arguments` sections, script extractions for `deep-eval-check`/`verify-service`/`git-commit`); `improve-system`'s new-skill handoff gained a smoke-test step.
-
-### Decisions
-- Electron waiver confirmed safe by the user before adding, mirroring the pnpm waiver's precedent.
-- `improve-system` borrows just `ship-skill`'s smoke-test step rather than switching its new-skill handoff to `ship-skill` outright — keeps one consolidated end-of-run commit instead of fragmenting into `ship-skill`'s per-skill commit+push-confirm flow.
-- kdeglobals write made unconditional rather than fixing the guard's condition — a real Plasma session re-applies its own scheme on login anyway, so the guard added no value.
-
-### Issues / surprises
-- The kdeglobals guard bug is a good example of "tested only interactively, broken in the real deploy path" — the condition was never actually exercised by this repo's `nh os boot`-then-reboot workflow, so it silently no-op'd since it was written.
-
-### Next session
-- **gaming + laptop: rebuild + reboot** to pick up this session's keybinds, window rules, kdeglobals fix, and flake bump. Verify Mod+G/Mod+E, the per-monitor placement on gaming, and that dolphin renders dark without an interactive switch first.
-
-**Commits**: `4211a36`..`8060832` (8 commits)
 
 ---
 
