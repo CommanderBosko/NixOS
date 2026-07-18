@@ -107,6 +107,7 @@ Tell the user:
   - **Managed-global** (repo `dotfiles/` + `bosko-claude.nix`): it appears in `~/.claude/skills/` only after `nh os boot /home/bosko/NixOS` **+ reboot**. The repo copy works in the meantime when invoked from the repo.
   - **Plain global** (`~/.claude`): restart or open a new session.
   - **Project-local:** available immediately in this project.
+- **This skill hasn't been smoke-tested.** `new-skill` only drafts and writes the file — it doesn't verify the skill actually works. Point the user at `ship-skill` (which chains draft → smoke-test → commit → push) for a tested result, or offer to test it inline now if the user wants to stay in `new-skill`.
 
 ## Assets
 
