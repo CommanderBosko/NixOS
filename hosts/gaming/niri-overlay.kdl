@@ -25,6 +25,9 @@ workspace "dell-3" {
 workspace "dell-4" {
     open-on-output "HDMI-A-1"
 }
+workspace "dell-5" {
+    open-on-output "HDMI-A-1"
+}
 
 // Pin specific apps to specific monitor + workspace slots (see the
 // named workspaces defined above).
@@ -65,4 +68,9 @@ window-rule {
     match app-id=r#"^org\.qbittorrent\.qBittorrent$"#
     open-on-workspace "dell-4"
     open-maximized true
+}
+
+window-rule {
+    match app-id=r#"^thunar$"#
+    open-on-workspace "dell-5"
 }
