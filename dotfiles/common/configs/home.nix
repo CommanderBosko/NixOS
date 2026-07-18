@@ -225,6 +225,10 @@
       "application/vnd.apple.mpegurl" = "vlc.desktop";
       "application/xspf+xml" = "vlc.desktop";
 
+      # Torrents -> qBittorrent (mimetypes taken from its own .desktop file)
+      "application/x-bittorrent" = "org.qbittorrent.qBittorrent.desktop";
+      "x-scheme-handler/magnet" = "org.qbittorrent.qBittorrent.desktop";
+
       # Browser (HTML files + http/https links) -> Zen Browser, matching
       # what was already live for links before this was managed; firefox
       # and brave as fallback if zen isn't available.
