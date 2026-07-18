@@ -10,9 +10,10 @@ let
     programs.dank-material-shell.systemd.enable = true;
 
     # DMS's systemd unit binds to graphical-session.target, which fires for
-    # ANY Wayland/X11 login — not niri specifically. Now that natalie-laptop
-    # can boot into Plasma too, that would start DMS's shell fighting
-    # Plasma's own panel. Gate it on the session that actually launched:
+    # ANY Wayland/X11 login — not niri specifically. natalie-laptop dual-booted
+    # into Plasma too for a while (Plasma dropped 2026-07-18, niri-only for
+    # now), which would've started DMS's shell fighting Plasma's own panel.
+    # Kept as a defensive gate in case a second session ever returns:
     # XDG_CURRENT_DESKTOP is set per-session (confirmed live: "niri" under
     # this compositor, imported into the systemd --user environment before
     # graphical-session.target is reached) and Plasma sets a different value.
@@ -92,10 +93,11 @@ let
     # was gated on XDG_CURRENT_DESKTOP=niri, which only ever fired if someone
     # ran an interactive `nh os switch` from inside a live niri session —
     # meaning it silently no-op'd for every boot-based rebuild. Safe to always
-    # run: on a host that boots into Plasma next (natalie-laptop), Plasma's
-    # own session startup re-applies its LookAndFeelPackage's ColorScheme over
-    # this on login anyway (see the kded note above), so writing `*` here
-    # first doesn't stick around to break it.
+    # run: even on a host that boots into Plasma next (natalie-laptop dual-booted
+    # both for a while; Plasma dropped 2026-07-18), Plasma's own session startup
+    # re-applies its LookAndFeelPackage's ColorScheme over this on login anyway
+    # (see the kded note above), so writing `*` here first doesn't stick around
+    # to break it — this stays correct if Plasma ever comes back.
     home.activation.kdeColorScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
     '';
