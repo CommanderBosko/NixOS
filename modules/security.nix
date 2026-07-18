@@ -29,6 +29,21 @@
   # AppArmor logging.
   systemd.services.audit-rules-nixos.enable = lib.mkForce false;
 
+  # nixpkgs bug workaround (apparmor-parser-5.0.0, found 2026-07-17): the
+  # apparmor-utils "aa-remove-unknown" script (apparmor.service's
+  # ExecReload) hardcodes a path to apparmor-parser's
+  # lib/apparmor/rc.apparmor.functions, which this build of apparmor-parser
+  # doesn't actually ship — every activation that needs to reload apparmor
+  # policies (any rebuild that changes anything in the profile closure) was
+  # failing outright with "Failed to reload apparmor.service", blocking
+  # `nh os boot`'s test-activation entirely. AppArmor's actual policy
+  # enforcement is unaffected (confirmed: the boot-time initial load
+  # succeeds fine, only the incremental reload path is broken). Disabling
+  # reloadIfChanged makes activation use a full restart (stop+start, i.e.
+  # aa-teardown twice) instead of the broken ExecReload when the policy set
+  # changes — same net effect, just via the working code path.
+  systemd.services.apparmor.reloadIfChanged = lib.mkForce false;
+
   # nixpkgs bug workaround: the AppArmor rules generator rejects non-absolute
   # PAM module paths, but PAM include directives (e.g. "include login") are
   # service-name references, not .so paths. Clear the affected rules attrsets
