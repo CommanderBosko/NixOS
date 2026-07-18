@@ -237,6 +237,12 @@ reminders so you never re-list completed work as pending.
   range — wasting 2+ failed reads each time. Instead, `grep -n '^## '
   /home/bosko/NixOS/project-state.md` first to find section boundaries, then `Read` only the
   section(s) being updated (~100-150 lines per call) rather than guessing a wide window.
+  **The "~100-150 lines" estimate is still too optimistic and has caused repeat overflows**
+  (session 2026-07-17: `offset=318 limit=210` → 28,287 tokens; an earlier session:
+  `limit=170` → 25,363 tokens — both over the 25k cap). This file's bullets run dense,
+  averaging ~130-150 tokens/line, not the ~70/line a "150 lines fits" guess assumes. Use
+  `limit=100` or less as the real safe default, and prefer reading exactly up to the next
+  `## ` boundary from the `grep` output over guessing any fixed line count at all.
 
 ## Assets
 
