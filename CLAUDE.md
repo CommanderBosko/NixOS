@@ -27,11 +27,11 @@ Reserve serial work for genuine dependencies — e.g. a new module and the `flak
 
 ## Use Existing Skills First
 
-Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising. This repo ships many task-specific skills (`add-package`, `add-flatpak`, `flake-check`, `deep-eval-check`, `nixos-dry-run`, `ssh-host`, `journal`, `update`, `verify-service`, and more) — prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
+Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising — this repo ships many task-specific skills under `.claude/skills/` (project-local) and `dotfiles/bosko/claude/skills/` (global); check those directories rather than assuming from memory, since the roster changes over time. Prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
 
 ## Editing Claude Skills
 
-The global Claude Code skills (`interview`, `new-skill`, `git-commit`, `git-push`, `repo-creator`, `session-closer`, `search-pkg`) are **owned by this repo**, not by `~/.claude`. Source lives in `dotfiles/bosko/claude/skills/<name>/SKILL.md`; `dotfiles/bosko/bosko-claude.nix` symlinks each one into `~/.claude/skills/<name>/SKILL.md` via Home Manager `home.file`.
+The global Claude Code skills are **owned by this repo**, not by `~/.claude`. Source lives in `dotfiles/bosko/claude/skills/<name>/SKILL.md`; `dotfiles/bosko/bosko-claude.nix` symlinks each one into `~/.claude/skills/<name>/SKILL.md` via Home Manager `home.file`.
 
 - **Always edit the repo copy** under `dotfiles/bosko/claude/skills/`. The `~/.claude/skills/` path is a read-only `/nix/store` symlink — editing it directly is impossible, and the change wouldn't survive a rebuild anyway.
 - A new skill must be added to the `home.file` list in `bosko-claude.nix`, then rebuilt before its symlink appears.
@@ -63,90 +63,30 @@ Conventional commits: `type(scope): short description` — lowercase after the c
 - **Scopes:** the affected area of the repo — e.g. `gaming`, `laptop`, `security`, `skills`, `vpn`, `memory`, `flake`, `shell`, `users`. Use the most specific scope that fits; if several unrelated scopes are touched, pick the dominant one or drop the scope.
 - Session closes use `chore(session): end-of-day close YYYY-MM-DD — <brief summary>`.
 
-Examples from history: `feat(skills): add new-module skill for NixOS module scaffolding`, `fix(natalie-laptop): add wg0 DNS for full-tunnel VPN routing`, `refactor(vpn): move DNS into shared vpn.nix, apply to all client hosts`.
-
 ## Architecture Overview
 
-Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared system modules live under `modules/`; shared Home Manager configs under `dotfiles/`; host-specific files under `hosts/<hostname>/`.
+Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared system modules live under `modules/` (including `desktop-environments/`, the swappable DE modules); shared Home Manager configs under `dotfiles/` (`common/` shared by both users, `bosko/` for bosko-only HM config including the Claude skill sources); host-specific files under `hosts/<hostname>/` (`hardware-configuration.nix`, `environment.nix`, `networking.nix`, plus any host-only modules like `amd.nix`/`nvidia.nix`/`gaming.nix`). Run `ls modules/ dotfiles/ hosts/` for the current contents rather than trusting a stale tree here.
 
 ### Module Composition
 
-`flake.nix` defines a `mkSystem` helper (also exported as `lib.mkSystem`) that builds each host. It takes `{ name, system ? "x86_64-linux", nixpkgs ? nixos-unstable, modules }`, sets `networking.hostName` from `name`, and injects the shared `specialArgs` — host entries hold only their unique module list. Module lists compose in layers:
+`flake.nix`'s `mkSystem` helper (also exported as `lib.mkSystem`) builds each host from `{ name, system ? x86_64-linux, nixpkgs ? nixos-unstable, modules }`: it sets `networking.hostName` and injects the shared `specialArgs`, so each host entry in `flake.nix` holds only its unique module list. Module lists compose in layers:
 
 - **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security, sops
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps (shared app/flatpak set), desktop-networking (shared NetworkManager/DNS/firewall/SSH), emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
-- Each host then adds its own desktop environment, `hardware-configuration.nix`, `environment.nix`, `networking.nix`, and any host-specific modules (`amd.nix`, `nvidia.nix`, `gaming.nix`, etc.). Host `environment.nix`/`networking.nix` files hold only host-specific extras (wg0 address, extra SSH users, host-only packages) on top of the shared desktop modules, plus the host's `system.stateVersion` (frozen at install time — never bump it on upgrades).
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps, desktop-networking, emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
+- Each host then adds its own desktop environment, hardware config, `environment.nix`/`networking.nix` (host-specific extras only), any host-only modules, and its `system.stateVersion` — **frozen at install time, never bump it on upgrades.**
 
-`nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) to allow the gaming host to drop it independently when the AMD card is installed. `amd.nix` and `gaming.nix` are gaming-only.
-
-The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no flatpaks, no DE).
-
-### Directory Layout
-
-```
-modules/                  # System-level NixOS modules shared across hosts
-├── desktop-environments/ # 12 swappable DE modules (niri, plasma, cosmic, omarchy, etc.)
-└── *.nix                 # bootloader, shell, users, amd, nvidia, gaming, sddm, security,
-                          # desktop-apps, desktop-networking, vpn, …
-
-dotfiles/
-├── common/
-│   └── configs/          # Home Manager configs shared by both users
-│       ├── home.nix      # HM root — imported by both bosko and natty
-│       ├── helix.nix
-│       └── dotfiles (katerc, kitty.conf, starship.toml)
-└── bosko/                # bosko-specific HM configs (not shared with natty)
-    ├── bosko-claude.nix  # Symlinks Claude skills into ~/.claude/skills/ + plugin/settings activation
-    └── claude/skills/    # Claude Code skill files (one dir per skill, each with SKILL.md)
-
-hosts/
-├── gaming/               # hardware-configuration.nix, environment.nix, networking.nix (+ virtualisation, jellyfin-server)
-├── laptop/               # hardware-configuration.nix, environment.nix, networking.nix
-├── natalie-laptop/       # same three files (+ virtualisation.nix)
-└── vpn-server/           # configuration.nix, disko.nix, hardware-configuration.nix
-```
+`nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) so the gaming host can drop it independently when the AMD card is installed; `amd.nix`/`gaming.nix` are gaming-only. The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no DE, no flatpaks).
 
 ### Key Patterns
 
-- **Home Manager** runs as a NixOS module. Both users (`bosko` and `natty`) import the same `dotfiles/common/configs/home.nix`. User-specific HM state (username, homeDirectory, stateVersion) is set per-user in `home-manager.nix`.
-- **Desktop environments** are pluggable — swap by changing which DE module is imported in the host's flake entry.
-- **Flatpaks** are managed declaratively via `nix-flatpak`; the shared set lives in `modules/desktop-apps.nix`, host-only extras in the host's `environment.nix`.
-- **System architecture** is `x86_64-linux` throughout (vpn-server is `aarch64-linux`); `system.stateVersion` is set per-host (all currently `25.11`).
-- `nix-ld` is enabled only on gaming for binary compatibility.
-- Gaming: Niri / Wayland. Laptop: Niri / Wayland. Natalie-laptop: Plasma 6 / Wayland.
-- **DE smoke checks**: `lib.deSmoke` in `flake.nix` exposes the laptop config with each DE module swapped in; CI's weekly `de-smoke` job deep-evaluates them so unused DE modules can't rot silently.
-
-### Users
-
-- `bosko` — primary user, wheel/sudo, Nix trusted user, auto-login; user packages: `claude-code`, `gemini-cli`
-- `natty` — secondary user, wheel/sudo, Nix trusted user; user packages: none
-
-Both users share the same Home Manager config. `mumble` is a system package on gaming only.
-
-### Flake Inputs / specialArgs
-
-Flake inputs (`home-manager`, `nix-flatpak`, `dms`) are defined once in `flake.nix` and passed to modules via `specialArgs`, ensuring consistency across hosts.
+- `nix-ld` is enabled only on gaming, for binary compatibility — don't assume it's available elsewhere.
+- **DE smoke checks**: `lib.deSmoke` in `flake.nix` exposes the laptop config with each DE module swapped in, so CI's weekly `de-smoke` job can deep-evaluate DE modules that no host currently imports — this is what keeps unused DE modules from rotting silently.
+- Both `bosko` and `natty` import the same `dotfiles/common/configs/home.nix`; per-user package/state differences (auto-login, extra packages, stateVersion) live in `modules/users.nix` and `home-manager.nix`, not in the shared HM config.
 
 ### Security Module (`modules/security.nix`)
 
-Part of `commonModules` (applies to all hosts). Enables:
-
-- AppArmor MAC enforcement (`security.apparmor.enable`, `killUnconfinedConfinables`)
-- Linux audit daemon + kernel `audit=1` parameter
-- D-Bus AppArmor mediation
-- PAM wheel-group enforcement for sudo
-- Kernel image protection / kexec disabled
-- Full ASLR (`kernel.randomize_va_space = 2`)
-
-**nixpkgs bug workaround:** AppArmor's PAM integration rejects non-absolute module paths. SDDM uses `include` directives (e.g. `include login`) which are service-name references, not `.so` paths. The fix uses `lib.mkForce` to clear the `rules` attrset for `sddm` and `sddm-autologin` and provides `text` overrides that preserve identical PAM behaviour. The `sddm-autologin` auth module paths use `pkgs.linux-pam` to stay correct across updates.
+Part of `commonModules` (applies to all hosts): AppArmor, Linux audit daemon, PAM wheel-group enforcement, kexec/kernel-image protection, full ASLR. Current workarounds for nixpkgs/AppArmor bugs are documented as comments directly in that file — read them there rather than here, since this doc drifts out of sync with the actual fix faster than the source does.
 
 ### Adding a New Desktop Environment
 
-1. Create `modules/desktop-environments/my-de.nix`
-2. Add it to git: `git add modules/desktop-environments/my-de.nix`
-3. Import in the host's flake entry using `"${self}/modules/desktop-environments/my-de.nix"` (DE modules live under `modules/`, only host-specific files are under `hosts/`)
-4. Test with `nh os boot /home/bosko/NixOS --dry`
-5. If there are display manager conflicts, temporarily comment out `services.displayManager.defaultSession` in the host's `environment.nix`
-6. `lib.deSmoke` picks the new module up automatically (it enumerates the directory), so CI's weekly de-smoke job will keep evaluating it even while unused
-
-**Editing a DE module that isn't currently imported by any host** (true for 9 of the 12 — only niri and plasma are live): step 4's `nh os boot --dry` only exercises whatever DE the target host already has wired in, so it silently verifies nothing about the module you just touched. Use the `de-smoke-check` skill instead — it deep-evaluates that module's `lib.deSmoke` build graph directly (`nix eval --raw .#lib.deSmoke.<name>.config.system.build.toplevel.drvPath`), catching real eval errors a shallow `flake check` would miss.
+Use the `new-module` skill to scaffold `modules/desktop-environments/<name>.nix` and wire it into a host's flake entry. The gotcha: a normal `nh os boot --dry` only exercises whichever DE the target host already has wired in, so it silently verifies nothing about a module not currently imported by any host (true for most of them). Use the `de-smoke-check` skill instead — it deep-evaluates that module's `lib.deSmoke` build graph directly, catching real eval errors a shallow dry-run would miss.
