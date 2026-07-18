@@ -11,7 +11,15 @@
     # GTK theme that dconf/gsettings already selects on niri hosts. Without
     # it installed, GTK3/4 apps like Thunar silently fall back to stock
     # light Adwaita since the referenced theme doesn't exist on disk.
-    packages = with pkgs; [ adw-gtk3 ];
+    #
+    # sweet + candy-icons are the GTK widget theme and icon theme carried
+    # over from gaming's earlier Plasma setup (2026-07-18): installing them
+    # here makes the actual theme files available on every niri host, not
+    # just gaming's manually-populated ~/.local/share/icons. Theme
+    # *selection* (gtk-theme/icon-theme/cursor-theme/color-scheme) stays
+    # unmanaged dconf state, same as DMS's own runtime config below — set
+    # once per host, not declared here.
+    packages = with pkgs; [ adw-gtk3 sweet candy-icons ];
 
     # Copy over dotfiles
     # Kate
