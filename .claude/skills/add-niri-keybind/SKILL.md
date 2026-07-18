@@ -44,11 +44,11 @@ niri msg windows    # confirms real App ID: values for running apps
 niri msg outputs    # confirms real connector names, e.g. DP-1, HDMI-A-1
 ```
 
-Use those confirmed values in `match app-id=r#"^...$"#` and `open-on-output "..."` / `open-on-workspace "..."`.
+Use those confirmed values in `match app-id=r#"^...$"#` and `open-on-output "..."` / `open-on-workspace "..."`. **The window-rule (and any new workspace block it needs) goes in the target host's per-host overlay, `hosts/<host>/niri-overlay.kdl`** (default `gaming`, ask if ambiguous) — not in the shared `niri-config.kdl` the bind itself lives in. See `add-niri-window-rule` for the overlay-file conventions (naming, placement) in detail.
 
 ## Step 4 — Flag cross-host caveats
 
-`niri-config.kdl` is shared across every niri host (currently `gaming` and `laptop`). If the bind's command targets an app that isn't installed on all niri hosts, say so before finishing — check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` (shared across all desktop hosts) to tell which case applies. Example: a bind launching Steam/Lutris (gaming-only) will silently no-op on laptop.
+`niri-config.kdl` (binds) is shared across every niri host (`gaming`, `laptop`, and `natalie-laptop`). If the bind's command targets an app that isn't installed on all niri hosts, say so before finishing — check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` (shared across all desktop hosts) to tell which case applies. Example: a bind launching Steam/Lutris (gaming-only) will silently no-op on laptop and natalie-laptop.
 
 ## Step 5 — Verify
 
