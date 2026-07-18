@@ -31,6 +31,7 @@
         claude-code
         gemini-cli
         mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via bosko-claude.nix)
+        rtk # Claude Code token-optimizing Bash proxy (hook wired in claude-code.nix)
       ];
     };
 

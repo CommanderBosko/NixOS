@@ -8,7 +8,16 @@
 # Contents:
 #   - deny: filesystem-destruction and disk/partition commands (incl. sudo variants)
 #   - ask:  git history/remote, NixOS gc/rollback, and system/process commands
-#   - PreToolUse hook: blocks the classic self-recursive fork bomb on Bash
+#   - PreToolUse hooks (both matcher: "Bash", both fire independently):
+#       - blocks the classic self-recursive fork bomb
+#       - routes commands through rtk (modules/users.nix) to cut token usage;
+#         rtk itself defers to Claude's native deny/ask rules on match, so the
+#         two hooks don't fight each other
+#
+# Deliberately NOT set up via `rtk init -g`: that writes the hook straight into
+# ~/.claude/settings.json, which the trimClaudeSettings HM activation
+# (bosko-claude.nix) strips clean on every rebuild once this managed file
+# exists. Declaring it here is the only form that survives a rebuild.
 { pkgs, ... }:
 
 let
@@ -88,6 +97,16 @@ let
               type = "command";
               command = forkBombGuard;
               statusMessage = "Checking for fork bomb";
+            }
+          ];
+        }
+        {
+          matcher = "Bash";
+          hooks = [
+            {
+              type = "command";
+              command = "rtk hook claude";
+              statusMessage = "Routing through rtk";
             }
           ];
         }
