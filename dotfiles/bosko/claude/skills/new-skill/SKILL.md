@@ -63,6 +63,14 @@ Classify the skill's dominant work as one of:
 
 If genuinely mixed, default to omitting `model:` — judgment work is the more expensive failure mode to get wrong. Record the tier — it goes in the draft (see step 4).
 
+### 2b. Identify deterministic chunks to extract to `scripts/`
+
+Look at each step gathered in Step 1. If a step is a fixed, judgment-free command sequence — a specific command/flag combo, a parse, a per-host loop, a lookup — that would otherwise get re-improvised in prose every run, plan to extract it into `scripts/<name>.sh` rather than inlining it. The SKILL.md prose then calls the script and keeps only the interpretation/judgment/branching logic (what the output means, what to do next).
+
+Before writing a new script, check whether an existing one already does this: project-local skills share common lookups via `.claude/lib/` (e.g. `resolve-host.sh`, `list-flake-inputs.sh`) — reuse or extend one of those instead of duplicating. Don't force a script onto a step that's already a single trivial one-liner, or one that inherently requires judgment about the specific case (those stay as prose).
+
+Record which steps (if any) get a script, and its intended name and contract (arguments in, what it prints, exit code meaning) — it goes in the draft (see step 4) and the write (see step 6).
+
 ### 3. Derive the skill name
 
 From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tests`, `deploy-staging`, `check-coverage`). Confirm with the user if it's not obvious.
@@ -74,6 +82,7 @@ Read the scaffold from `assets/skill-template.md` (relative to this skill's dire
 **Quality rules to apply when drafting:**
 - The skill must do exactly one job in its single bucket (step 2) — if drafting surfaces a second independent job, stop and split
 - If step 2a classified this as **grunt**, add a `model: haiku` line directly after `description:` in the frontmatter (matching the convention used by other grunt-work skills in this repo). If **judgment**, omit the field entirely — don't write `model: sonnet` or similar, since that would pin it and stop it from tracking the session's top model over time.
+- For every chunk step 2b flagged, write the deterministic logic into `scripts/<name>.sh` (a real file, written in step 6) and have the corresponding SKILL.md step call it and interpret its output — don't inline the bash/jq/loop in prose. If the skill ends up with one or more scripts, add a `## Scripts` section near the end of the file (mirror `add-secret/SKILL.md`'s format: one bullet per script, its path, its arguments, and which step calls it).
 - Trigger phrases in `description` must match natural speech — include the obvious variants ("run tests", "test", "execute tests")
 - Steps must be actionable with Claude Code's tools (Bash, Read, Edit, Write, WebSearch, etc.)
 - Include what to output/report to the user at the end
@@ -89,20 +98,29 @@ Present the full draft SKILL.md to the user with a brief explanation of any choi
 Determine the target path by scope:
 
 - **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). When managed, **do NOT write to `~/.claude/skills/`** — that path is read-only and an untracked file there is wiped on the next rebuild. Instead:
-  1. Write the SKILL.md to `dotfiles/bosko/claude/skills/<name>/SKILL.md`.
-  2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`, mirroring the existing entries:
+  1. Write the SKILL.md (and, if step 2b flagged any, `scripts/<name>.sh`) to `dotfiles/bosko/claude/skills/<name>/`.
+  2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`. If the skill has (or is likely to grow) `scripts/`/`assets/` files, prefer a **recursive** directory entry from the start — mirroring the several existing global skills already using `recursive = true` (grep `bosko-claude.nix` for the pattern) — so a script added later needs no further wiring:
+     ```nix
+     ".claude/skills/<name>" = {
+       source = "${self}/dotfiles/bosko/claude/skills/<name>";
+       recursive = true;
+     };
+     ```
+     Otherwise (a plain single-file skill, no `scripts/`/`assets/`), use the simpler file-by-file form:
      ```nix
      ".claude/skills/<name>/SKILL.md" = {
        source = "${self}/dotfiles/bosko/claude/skills/<name>/SKILL.md";
        force = true;
      };
      ```
-  3. `git add dotfiles/bosko/claude/skills/<name>/SKILL.md dotfiles/bosko/bosko-claude.nix` — flake evaluation only sees tracked files, so the new file must be staged before a dry-run/rebuild.
+  3. `git add dotfiles/bosko/claude/skills/<name>/ dotfiles/bosko/bosko-claude.nix` — flake evaluation only sees tracked files, so the new file(s) must be staged before a dry-run/rebuild.
   4. Optionally run `nh os boot /home/bosko/NixOS --dry` (or the `nixos-dry-run` skill) to confirm the config still evaluates. The `~/.claude/skills/<name>/` symlink appears only **after** a real rebuild (`nh os boot /home/bosko/NixOS`).
 - **Global, plain `~/.claude`** (no Home Manager managing it): write directly to `~/.claude/skills/<name>/SKILL.md`.
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to the current working directory). First check if `.claude/skills/` exists; create it if not (via `mkdir -p`). Auto-discovered immediately — no rebuild.
 
-Write the file. Then run `ls -la <target-dir>/` to confirm it exists. For the managed-global case, also confirm the `bosko-claude.nix` entry is in place.
+Write the file. If step 2b identified any script extractions, also write `<target-dir>/scripts/<name>.sh`, `chmod +x` it, and run `bash -n` on it to confirm it's syntactically valid before moving on.
+
+Then run `ls -la <target-dir>/` (and `<target-dir>/scripts/` if applicable) to confirm everything exists. For the managed-global case, also confirm the `bosko-claude.nix` entry is in place.
 
 ### 7. Update CLAUDE.md (project-local only)
 
@@ -112,6 +130,7 @@ If the skill is project-local and a `CLAUDE.md` exists in the project root, chec
 
 Tell the user:
 - The skill name and where it was written
+- Any `scripts/<name>.sh` files written alongside it, and confirm they passed `bash -n`
 - The exact phrase(s) that will invoke it
 - How it becomes available:
   - **Managed-global** (repo `dotfiles/` + `bosko-claude.nix`): it appears in `~/.claude/skills/` only after `nh os boot /home/bosko/NixOS` **+ reboot**. The repo copy works in the meantime when invoked from the repo.
