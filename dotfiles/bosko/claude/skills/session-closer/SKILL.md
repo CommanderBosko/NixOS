@@ -23,15 +23,18 @@ Work in the current project's repository. Run all git commands against that repo
 
 ## STEP 1 — Scan for changes
 
-- Find the last session-close commit:
-  `git log --oneline --all | grep "chore(session):" | head -1`
-- Use it as the baseline: `git log --oneline <last-session-commit>..HEAD --all` for every
-  commit since the last close. If no session-close commit exists, fall back to
-  `git log --oneline --since='midnight' --all`.
-- `git diff origin/main...HEAD` — changes not yet pushed.
-- `git status` — uncommitted changes.
-- `git log --stat <last-session-commit>..HEAD` — which files changed and how much.
-- This gives you the *what*; STEP 2 reads the session transcript for the *why*.
+Run the git-scan subcommand (absolute path from the "Base directory for this skill" line
+shown when the skill launched — see the `scripts/rotate-session-summary.sh` gotcha below,
+the same rule applies here):
+
+```bash
+scripts/scan-session.sh git-changes <repo-root>
+```
+
+It resolves the baseline (the last `chore(session):` commit, falling back to
+`--since='midnight'` if none exists) and prints, labeled: commits since baseline, the diff
+against `origin/main` (unpushed changes), `git status`, and `git log --stat` since baseline.
+This gives you the *what*; STEP 2 reads the session transcript for the *why*.
 - If the range spans more than the current conversation's work (e.g. several prior
   sessions were never closed), say so plainly and **only narrate what you actually did
   this session** — don't invent rationale for commits you weren't part of. Refresh the
@@ -50,25 +53,17 @@ truncated as a conversation grows, so decisions, rationale, and surprises from e
 the session may have scrolled out. The **JSONL transcript on disk is the complete,
 unsummarized record** of this session, so read it for the most accurate close.
 
-Locate the current project's transcript dir and grab the most-recently-modified file (the
-live session is the one still being written):
+Run the transcript subcommand (absolute path — same rule as Step 1's git-scan):
 
 ```bash
-DIR="$HOME/.claude/projects/$(pwd | sed 's#/#-#g')"
-LATEST=$(ls -t "$DIR"/*.jsonl 2>/dev/null | head -1)
+scripts/scan-session.sh transcript <project-dir>
 ```
 
-Read it **judiciously** — these files run to several MB, so don't dump raw JSONL into
-context. Extract the turns that matter with `jq`:
-
-```bash
-# Every user request this session (what was actually asked, in order)
-jq -r 'select(.type=="user") | .message.content
-       | if type=="string" then . else (.[]? | select(.type=="text") .text) end' "$LATEST"
-
-# Your own narrative/decisions (assistant text, skipping tool calls)
-jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") .text' "$LATEST"
-```
+It locates the current project's transcript dir, grabs the most-recently-modified `.jsonl`
+(the live session is the one still being written), and prints, labeled: every user request
+this session (what was actually asked, in order) and your own narrative/decisions
+(assistant text, skipping tool calls). Read the output **judiciously** — these files run to
+several MB, so don't let a truly huge session dump flood context; skim for what matters.
 
 Mine these for the decisions, dead-ends, and gotchas below — the transcript captures the
 *why* behind each commit, which git never records. If the close spans more than one
@@ -243,6 +238,14 @@ reminders so you never re-list completed work as pending.
   averaging ~130-150 tokens/line, not the ~70/line a "150 lines fits" guess assumes. Use
   `limit=100` or less as the real safe default, and prefer reading exactly up to the next
   `## ` boundary from the `grep` output over guessing any fixed line count at all.
+
+## Scripts
+
+- `scripts/scan-session.sh git-changes <repo-root>` — STEP 1's baseline resolution + diff/status/stat scan.
+- `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction.
+- `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation (see the Gotchas entry on invoking it by absolute path).
+
+All three are relative to the *skill's* directory, not the project cwd — this skill is symlinked into `~/.claude/skills/session-closer/`, not project-local, so a bare `scripts/...` path resolves against the wrong cwd. Always use the absolute path from the "Base directory for this skill" line shown when the skill launches.
 
 ## Assets
 
