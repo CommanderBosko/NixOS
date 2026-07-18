@@ -47,18 +47,20 @@ Run, in order:
 
 1. `nix flake check /home/bosko/NixOS` (or the `flake-check` skill) — shallow eval gate.
 2. The `deep-eval-check` skill — forces full evaluation across all 4 hosts.
-3. Build and inspect the **actual generated file**, not just eval success:
+3. Build and inspect the **actual generated file**, not just eval success (relative to this skill's directory):
    ```bash
-   nix build --no-link --print-out-paths --impure --expr \
-     '(builtins.getFlake (toString /home/bosko/NixOS)).nixosConfigurations.gaming.config.home-manager.users.bosko.xdg.configFile."mimeapps.list".source'
-   grep "<mimetype>" <the-built-path>
+   scripts/verify-mimeapps.sh <mimetype>
    ```
-   Confirm the line reads exactly what was intended.
+   It builds gaming's generated `mimeapps.list` and prints the matching line, or "not found" with a non-zero exit if the mapping isn't there. Confirm the printed line reads exactly what was intended.
 4. The `nixos-dry-run` skill for a final gaming-host change-set preview.
 
 ## Step 5 — Report and remind
 
 Report the verified result to the user. Remind them a rebuild (`rebuild` + reboot, or a live `nh os switch` if they want to test immediately) is needed to activate it, and offer to run the `git-commit` skill.
+
+## Scripts
+
+- `scripts/verify-mimeapps.sh <mimetype>` — builds gaming's generated `mimeapps.list` and greps it for `<mimetype>`, printing the matching line (exit 0) or "not found" (exit 1). Used in Step 4.3.
 
 ## Gotchas
 

@@ -24,23 +24,27 @@ Parse from the user's request:
 Resolve which DE module to check, in this order:
 1. If the user named it explicitly (e.g. "check omarchy"), use that name.
 2. Otherwise, check `git status`/`git diff` for recently modified files under `modules/desktop-environments/` and infer the name from the filename (minus `.nix`).
-3. If still ambiguous, list the available names and ask:
+3. If still ambiguous, list the available names (relative to this skill's directory) and ask:
    ```bash
-   nix eval /home/bosko/NixOS#lib.deSmoke --apply builtins.attrNames --json
+   scripts/de-smoke-check.sh
    ```
 
 ## Step 2 — Deep-evaluate the module's build graph
 
 ```bash
-nix eval --raw /home/bosko/NixOS#lib.deSmoke.<name>.config.system.build.toplevel.drvPath 2>&1
+scripts/de-smoke-check.sh <name>
 ```
 
-This forces full evaluation of the laptop config with `<name>` swapped in as the DE — not just a shallow "is it a derivation" check. Allow up to 5 minutes (300000ms timeout).
+This forces full evaluation of the laptop config with `<name>` swapped in as the DE — not just a shallow "is it a derivation" check. Allow up to 5 minutes (300000ms timeout). The script prints `PASS: <drv>` on success or `FAIL:` followed by the full error output on failure.
 
 ## Step 3 — Report the result
 
 - **Pass** — the command printed a `/nix/store/...drv` path. Show it and confirm the module evaluates cleanly.
 - **Fail** — non-zero exit or no drv path. Show the **full error output verbatim** (don't truncate or summarize away the Nix error) so the exact broken option/package/line is visible.
+
+## Scripts
+
+- `scripts/de-smoke-check.sh [module-name]` — with no argument, lists the available `lib.deSmoke` module names (Step 1's fallback). With a module name, runs the deep-eval and prints `PASS: <drv>` or `FAIL:` + the full error (Step 2), matching `deep-eval-check.sh`'s convention.
 
 ## Key facts
 
