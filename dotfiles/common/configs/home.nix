@@ -16,9 +16,11 @@
     # over from gaming's earlier Plasma setup (2026-07-18): installing them
     # here makes the actual theme files available on every niri host, not
     # just gaming's manually-populated ~/.local/share/icons. Theme
-    # *selection* (gtk-theme/icon-theme/cursor-theme/color-scheme) stays
-    # unmanaged dconf state, same as DMS's own runtime config below — set
-    # once per host, not declared here.
+    # *selection* (gtk-theme/icon-theme/cursor-theme/color-scheme) is
+    # declared via dconf.settings in modules/desktop-environments/niri.nix
+    # (2026-07-19), not here — this file installs the packages for every
+    # host (including non-niri ones), but only niri hosts assert the dconf
+    # selection.
     packages = with pkgs; [ adw-gtk3 sweet candy-icons ];
 
     # Copy over dotfiles

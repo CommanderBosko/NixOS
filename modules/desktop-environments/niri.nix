@@ -102,6 +102,24 @@ let
       run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
     '';
 
+    # Declarative GTK theme selection so Thunar and other GTK3/4 apps look
+    # the same on every niri host, instead of the previous per-host manual
+    # `dconf write` (verified working on laptop, 2026-07-19). DMS manages its
+    # own matugen-driven runtime theme for its shell UI and for Qt/KDE apps
+    # (qt6ct.conf/kdeglobals above) but doesn't touch this GSettings schema
+    # itself, so asserting it here is safe — it's just reapplied on every
+    # `home-manager` activation (i.e. every rebuild). Uses dconf.settings
+    # rather than a gsettings-based module because `gsettings set` fails here
+    # with "No schemas installed"; dconf writes directly to the same
+    # database gsettings reads from and doesn't need the schema installed to
+    # be discoverable.
+    dconf.settings."org/gnome/desktop/interface" = {
+      gtk-theme = "Sweet-Dark";
+      icon-theme = "candy-icons";
+      cursor-theme = "breeze_cursors";
+      color-scheme = "prefer-dark";
+    };
+
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
 
