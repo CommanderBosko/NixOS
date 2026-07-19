@@ -1,4 +1,4 @@
-{ pkgs, inputs, self, ... }:
+{ pkgs, lib, inputs, self, ... }:
 
 let
   # DMS/niri Home Manager wiring, shared by every user who can log into a niri
@@ -163,6 +163,21 @@ in
   # (gaming, laptop, natalie-laptop), so both get the same block.
   home-manager.users.bosko = niriHomeConfig;
   home-manager.users.natty = niriHomeConfig;
+
+  # Sandboxed/flatpak apps (e.g. Deezer) can't read the dconf.settings GTK
+  # theme above directly — they ask the xdg-desktop-portal Settings interface
+  # instead, which relays the same org/gnome/desktop/interface keys. niri had
+  # no portal backend implementing that interface at all (2026-07-19), so
+  # those apps got no color-scheme signal and fell back to their own default
+  # (light) chrome. xdg-desktop-portal-gtk over xdg-desktop-portal-gnome:
+  # the gnome backend's Screenshot/ScreenCast implementations expect
+  # GNOME Shell's D-Bus services, which don't exist under niri. mkForce
+  # because upstream's programs.niri module already sets this option to
+  # "gnome;gtk" at the same priority — a plain assignment conflicts with it.
+  xdg.portal = {
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.niri.default = lib.mkForce [ "gtk" ];
+  };
 
   # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, kate) follow
   # DMS's matugen-generated dark/light theme instead of Qt's default light style
