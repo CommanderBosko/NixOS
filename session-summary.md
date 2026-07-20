@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-19 — Diagnosed and redesigned the silent "improve-system" cloud routine
+
+**Focus**: Review the PR the scheduled weekly `improve-system` cloud routine was supposed to have opened, discover it opened nothing at all, and fix the routine so a future run can't fail silently again.
+
+### What changed (and why)
+- Found the routine (`trig_01QZPjKtQdMtX5bqwtC8oz8g`, weekly Sunday cron) had fired once already with zero trace on GitHub — no PR, no branch, no issue — and `persist_session:false` meant its session transcript was discarded, so "ran clean" and "failed silently" were indistinguishable from outside.
+- Flipped `persist_session:true` and re-ran. Watched via a local background `gh pr/issue list` poller for 78 minutes total (two watches, 30 then 45 min) — still nothing. Concluded the original design's fatal flaw: it only ever writes anything to GitHub as its very last action, so a mid-run hang looks identical to a clean pass.
+- Redesigned the routine's prompt: it now opens a GitHub tracking issue (`improve-system weekly report — YYYY-MM-DD`) as its literal first action, posts a checkpoint comment after each of its 6 steps, and only closes the issue as the final action. Triggered a third run (2026-07-20 00:58 UTC) under this design; ended the session before it resolved.
+- No changes landed in this repo itself this session (working tree stayed clean throughout) — all work was against the cloud routine's config via the `RemoteTrigger` API, which lives outside git.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of why each fix step was chosen (persist_session first, then the checkpoint-issue redesign after that alone proved insufficient).
+
+### Issues / surprises
+- `WebFetch` 403s on `claude.ai/code/routines/<id>` — no way to check a routine's live run status except via the browser UI (real login) or by having the routine itself leave a trail on GitHub.
+- The `RemoteTrigger` API exposes trigger *config* (get/list/create/update/run) but no run/session *status* — there's no way to ask "is this run still going" short of watching for its side effects.
+
+### Next session
+- Check `gh issue list --state all` on `CommanderBosko/NixOS` for `improve-system weekly report — 2026-07-20` first thing — its state (open/closed) and checkpoints tell you exactly what happened to the third run.
+- If it's still silent even with the new design, suspect the cloud sandbox lacks `gh` write access entirely and investigate the environment's GitHub App/token scope directly.
+
+**Commits**: none this session (repo untouched; all changes were to the cloud routine's config)
+
+---
+
 ## Session: 2026-07-18 — Skill model/script paradigm rollout; two real cross-host bugs found
 
 **Focus**: Classify all 52 skills by grunt-vs-judgment work and pin cheap ones to Haiku, run a scoped skill-audit for deterministic work that belongs in scripts, then chase down two real bugs the audit's own verification work surfaced along the way.
@@ -107,32 +132,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Same pending gaming/laptop reboot as prior sessions — now also covers the kitty rule reversion alongside the other four `open-maximized` rules.
 
 **Commits**: `c0005e0` + session-close (2 commits)
-
----
-
-## Session: 2026-07-16 (session 45) — qBittorrent autostart-race bug fixed, open-maximized rules added, new fullscreen-rule skill
-
-**Focus**: Chased down why qBittorrent kept opening on the wrong workspace despite a correct window-rule, added fullscreen-on-open to five apps, then closed the loop with a new sibling skill and a dry-run gotcha.
-
-### What changed (and why)
-- **qBittorrent workspace bug root-caused**: the session-44 window-rule was already correct (`StartupWMClass=qbittorrent` matches it exactly) — the real cause was qBittorrent's own "run on startup" preference, which autostarted it ~12s before Mod+G. Being single-instance, Mod+G's `qbittorrent &` just raised that already-misplaced window instead of creating a fresh one the rule could act on. Fixed live: stopped `app-org.qbittorrent.qBittorrent@autostart.service` and removed the autostart `.desktop` file (backed up, not deleted) — outside the nix flake, already in effect, no reboot needed.
-- **`open-maximized true` added to 5 window-rules** (Kitty, Vesktop, Zen Browser, Deezer, qBittorrent) so they launch already-maximized, same as pressing Mod+F. Added the same rule to Steam too, then reverted it per the user's explicit follow-up request.
-- **New `add-niri-fullscreen-rule` skill** (project-local, `/skill-suggestion` → `/new-skill`) — sibling of `add-niri-window-rule`, scoped to just `open-maximized true`. Carries forward this session's two gotchas: Steam-style multi-window-one-app-id apps vs. per-game app-ids with no blanket rule possible, and the autostart-vs-single-instance trap.
-- **`nixos-dry-run` gained a Gotchas section** (`/skill-upgrade`) — its TUI output buries the useful summary at the end; documented `tail -8` / a targeted grep instead of guessing a tail length.
-
-### Decisions
-- Disabled qBittorrent's autostart entirely rather than patching around it — no window-rule edit could fix a race against the app's own pre-existing single-instance window.
-- Kept `add-niri-fullscreen-rule` as its own skill rather than extending `add-niri-window-rule` — different single-purpose property (`open-maximized` vs. `open-on-workspace`/`open-on-output`), same single-responsibility bucket rule as its sibling pair.
-
-### Issues / surprises
-- The qBittorrent bug looked at first like a simple app-id mismatch (same shape as a normal window-rule miss) but turned out to be a login-autostart race — worth remembering for any other single-instance app that seems to ignore a window-rule.
-- Own mistake mid-session: a `mv` meant for the scratchpad landed in the repo's `.claude/` directory instead (path typo); caught immediately via `git status` and moved to the correct location before anything was staged.
-
-### Next session
-- Same pending gaming/laptop reboot as sessions 43-44, now also covering the 5 new `open-maximized` rules — see Next Steps in `project-state.md`.
-- qBittorrent's autostart fix is already live on gaming; nothing pending there.
-
-**Commits**: session-close only (1 commit)
 
 ---
 

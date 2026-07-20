@@ -1,3 +1,29 @@
+## Session: 2026-07-16 (session 45) — qBittorrent autostart-race bug fixed, open-maximized rules added, new fullscreen-rule skill
+
+**Focus**: Chased down why qBittorrent kept opening on the wrong workspace despite a correct window-rule, added fullscreen-on-open to five apps, then closed the loop with a new sibling skill and a dry-run gotcha.
+
+### What changed (and why)
+- **qBittorrent workspace bug root-caused**: the session-44 window-rule was already correct (`StartupWMClass=qbittorrent` matches it exactly) — the real cause was qBittorrent's own "run on startup" preference, which autostarted it ~12s before Mod+G. Being single-instance, Mod+G's `qbittorrent &` just raised that already-misplaced window instead of creating a fresh one the rule could act on. Fixed live: stopped `app-org.qbittorrent.qBittorrent@autostart.service` and removed the autostart `.desktop` file (backed up, not deleted) — outside the nix flake, already in effect, no reboot needed.
+- **`open-maximized true` added to 5 window-rules** (Kitty, Vesktop, Zen Browser, Deezer, qBittorrent) so they launch already-maximized, same as pressing Mod+F. Added the same rule to Steam too, then reverted it per the user's explicit follow-up request.
+- **New `add-niri-fullscreen-rule` skill** (project-local, `/skill-suggestion` → `/new-skill`) — sibling of `add-niri-window-rule`, scoped to just `open-maximized true`. Carries forward this session's two gotchas: Steam-style multi-window-one-app-id apps vs. per-game app-ids with no blanket rule possible, and the autostart-vs-single-instance trap.
+- **`nixos-dry-run` gained a Gotchas section** (`/skill-upgrade`) — its TUI output buries the useful summary at the end; documented `tail -8` / a targeted grep instead of guessing a tail length.
+
+### Decisions
+- Disabled qBittorrent's autostart entirely rather than patching around it — no window-rule edit could fix a race against the app's own pre-existing single-instance window.
+- Kept `add-niri-fullscreen-rule` as its own skill rather than extending `add-niri-window-rule` — different single-purpose property (`open-maximized` vs. `open-on-workspace`/`open-on-output`), same single-responsibility bucket rule as its sibling pair.
+
+### Issues / surprises
+- The qBittorrent bug looked at first like a simple app-id mismatch (same shape as a normal window-rule miss) but turned out to be a login-autostart race — worth remembering for any other single-instance app that seems to ignore a window-rule.
+- Own mistake mid-session: a `mv` meant for the scratchpad landed in the repo's `.claude/` directory instead (path typo); caught immediately via `git status` and moved to the correct location before anything was staged.
+
+### Next session
+- Same pending gaming/laptop reboot as sessions 43-44, now also covering the 5 new `open-maximized` rules — see Next Steps in `project-state.md`.
+- qBittorrent's autostart fix is already live on gaming; nothing pending there.
+
+**Commits**: session-close only (1 commit)
+
+---
+
 ## Session: 2026-07-16 (session 44) — financeguru bump, Deezer/qBittorrent monitor pins, new window-rule skill, Mod+G full-setup launcher
 
 **Focus**: Continuation of the same day's work — bumped one flake input, extended the per-monitor window-rule pattern to two more apps, shipped a proper skill for that pattern after doing it twice by hand, then expanded the Mod+G keybind into a full initial-setup launcher.
