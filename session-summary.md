@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-20 — Found and fixed the improve-system cloud routine's root cause: GitHub App never installed
+
+**Focus**: Follow up on the prior session's unresolved third redesign of the "improve-system" cloud routine — determine why it was still producing zero trace on GitHub even after the checkpoint-issue redesign.
+
+### What changed (and why)
+- Re-checked the routine ~20h after its 2026-07-20 00:58 UTC fire: `RemoteTrigger get` confirmed it had run, but `gh issue list`/`gh pr list` were still completely empty — meaning even the routine's literal first action (`gh issue create`) never reached GitHub. Ruled out a mid-run hang; this pointed at an infra/auth problem, not a prompt-design flaw.
+- Walked the user through GitHub's settings UI to trace the actual permission gap: the "Claude" GitHub App (owned by `anthropics`) was **authorized** on the user's GitHub account (visible under Authorized GitHub Apps, Issues/PRs permissions listed) but had **zero installations** — absent from Installed GitHub Apps entirely. GitHub Apps require both authorization and installation independently; authorization alone grants no repo access.
+- User installed the app at `github.com/apps/claude`, scoped to `CommanderBosko/NixOS`, with Contents/Issues/Pull-requests read & write.
+- Re-triggered the routine via `RemoteTrigger run` to verify. Tracking issue [`#1`](https://github.com/CommanderBosko/NixOS/issues/1) was created within 15 seconds, all 6 checkpoints posted, issue closed with a full report ~90 seconds later — the routine's first-ever clean end-to-end run. Zero-diff (nothing needed applying); 6 minor structural findings logged for manual review only.
+- No changes landed in this repo — all work this session was diagnostic (GitHub UI + `RemoteTrigger`/`gh` API calls), outside git entirely.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of the diagnostic trail and why the App-install fix was the right call (confirms sessions 46/51's prompt-design work was correct all along — the blocker was entirely infra-side).
+
+### Issues / surprises
+- `WebFetch` on the routine's own `claude.ai/code/routines/<id>` page still 403s (no login session available to a Claude Code tool) — GitHub remained the only reachable diagnostic channel, and this time it actually held the answer once the right settings tab was checked (Authorized GitHub Apps vs. Installed GitHub Apps are easy to conflate — the Connectors page in claude.ai showing "GitHub Integration" as connected was misleading, since that reflects authorization only).
+
+### Next session
+- None — routine confirmed working, back on normal weekly cadence. Only revisit if a future Sunday run goes silent again.
+- 6 minor skill-audit findings from the routine's own run are logged in `project-state.md` Current Goals for whenever there's appetite to work through them (all low-priority polish, none urgent).
+
+**Commits**: none (diagnostic-only session, no repo changes)
+
+---
+
 ## Session: 2026-07-19 — Diagnosed and redesigned the silent "improve-system" cloud routine
 
 **Focus**: Review the PR the scheduled weekly `improve-system` cloud routine was supposed to have opened, discover it opened nothing at all, and fix the routine so a future run can't fail silently again.
@@ -107,31 +132,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Laptop and natalie-laptop still need `rebuild` + reboot to pick up the overlay split and the large pile of previously-pending niri changes (now confirmed live on gaming only).
 
 **Commits**: `3960600..2cbe86c` (2 commits)
-
----
-
-## Session: 2026-07-16 (session 46) — weekly improve-system cloud routine scheduled
-
-**Focus**: Set up a recurring cloud-scheduled `/improve-system` sweep and worked through what running it unattended actually requires.
-
-### What changed (and why)
-- **New cloud routine "Weekly improve-system sweep"** (`trig_01QZPjKtQdMtX5bqwtC8oz8g`) via the `schedule` skill — every Sunday 16:00 UTC (noon Eastern in EDT; drifts to 11am Eastern once EST resumes, cron doesn't auto-adjust for DST). Runs entirely in Anthropic's cloud, no local machine or open Claude Code window required.
-- First create attempt hit `HTTP 401` — GitHub account wasn't connected for routines against `CommanderBosko/NixOS`. User installed the Claude GitHub App; retry succeeded.
-- **Rewrote the routine's prompt for the cloud sandbox's actual constraints**: `~/.claude/skills/*` slash commands don't exist there (that symlink layer is local Home-Manager state), so the prompt points directly at the repo-relative `SKILL.md` files for `improve-system` and its four repo-managed sub-skills. Also replaces `improve-system`'s interactive `AskUserQuestion` structural gates with a fixed policy (auto-apply low-risk, report-only for structural) since nobody's there to answer on a schedule, and makes the `nixos-dry-run` verification step skip gracefully if `nh`/`nix` aren't installed in the sandbox.
-- A concurrent local session (not this conversation) made one small fix, folded in here for accuracy: removed `open-maximized true` from kitty's window-rule (`c0005e0`) per the user's request in that session, keeping kitty's `asus-1` pin. The other four session-45 `open-maximized` rules are untouched.
-
-### Decisions
-- Routine opens a PR against `main` rather than pushing directly — first real run of an unattended workflow, wanted a review checkpoint.
-- Declined to build a skill for reviewing/merging the weekly PR yet — existing tools already cover the steps, and the routine has never produced real output to design against.
-
-### Issues / surprises
-- The GitHub-connection requirement wasn't obvious upfront — routine creation failed outright rather than warning softly, good forcing function to get it connected before the schedule needed it.
-
-### Next session
-- Check https://claude.ai/code/routines/trig_01QZPjKtQdMtX5bqwtC8oz8g after 2026-07-19 for the first real run and whatever PR it opens.
-- Same pending gaming/laptop reboot as prior sessions — now also covers the kitty rule reversion alongside the other four `open-maximized` rules.
-
-**Commits**: `c0005e0` + session-close (2 commits)
 
 ---
 

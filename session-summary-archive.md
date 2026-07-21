@@ -1,3 +1,28 @@
+## Session: 2026-07-16 (session 46) — weekly improve-system cloud routine scheduled
+
+**Focus**: Set up a recurring cloud-scheduled `/improve-system` sweep and worked through what running it unattended actually requires.
+
+### What changed (and why)
+- **New cloud routine "Weekly improve-system sweep"** (`trig_01QZPjKtQdMtX5bqwtC8oz8g`) via the `schedule` skill — every Sunday 16:00 UTC (noon Eastern in EDT; drifts to 11am Eastern once EST resumes, cron doesn't auto-adjust for DST). Runs entirely in Anthropic's cloud, no local machine or open Claude Code window required.
+- First create attempt hit `HTTP 401` — GitHub account wasn't connected for routines against `CommanderBosko/NixOS`. User installed the Claude GitHub App; retry succeeded.
+- **Rewrote the routine's prompt for the cloud sandbox's actual constraints**: `~/.claude/skills/*` slash commands don't exist there (that symlink layer is local Home-Manager state), so the prompt points directly at the repo-relative `SKILL.md` files for `improve-system` and its four repo-managed sub-skills. Also replaces `improve-system`'s interactive `AskUserQuestion` structural gates with a fixed policy (auto-apply low-risk, report-only for structural) since nobody's there to answer on a schedule, and makes the `nixos-dry-run` verification step skip gracefully if `nh`/`nix` aren't installed in the sandbox.
+- A concurrent local session (not this conversation) made one small fix, folded in here for accuracy: removed `open-maximized true` from kitty's window-rule (`c0005e0`) per the user's request in that session, keeping kitty's `asus-1` pin. The other four session-45 `open-maximized` rules are untouched.
+
+### Decisions
+- Routine opens a PR against `main` rather than pushing directly — first real run of an unattended workflow, wanted a review checkpoint.
+- Declined to build a skill for reviewing/merging the weekly PR yet — existing tools already cover the steps, and the routine has never produced real output to design against.
+
+### Issues / surprises
+- The GitHub-connection requirement wasn't obvious upfront — routine creation failed outright rather than warning softly, good forcing function to get it connected before the schedule needed it.
+
+### Next session
+- Check https://claude.ai/code/routines/trig_01QZPjKtQdMtX5bqwtC8oz8g after 2026-07-19 for the first real run and whatever PR it opens.
+- Same pending gaming/laptop reboot as prior sessions — now also covers the kitty rule reversion alongside the other four `open-maximized` rules.
+
+**Commits**: `c0005e0` + session-close (2 commits)
+
+---
+
 ## Session: 2026-07-16 (session 45) — qBittorrent autostart-race bug fixed, open-maximized rules added, new fullscreen-rule skill
 
 **Focus**: Chased down why qBittorrent kept opening on the wrong workspace despite a correct window-rule, added fullscreen-on-open to five apps, then closed the loop with a new sibling skill and a dry-run gotcha.
