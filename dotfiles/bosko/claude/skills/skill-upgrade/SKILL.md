@@ -44,7 +44,9 @@ Keep each gotcha to one or two sentences. Don't pad with hypotheticals — only 
 ### 4. Amend the skill
 
 If the skill already has a `## Gotchas` section, append the new entry. Otherwise add a
-`## Gotchas` section at the end of the file. Present the proposed edit to the user before writing.
+`## Gotchas` section at the end of the file. Present the proposed edit to the user and confirm
+via the **AskUserQuestion tool** (options **Apply** / **Skip**) before writing — a low-stakes,
+easily-reversible append, but a clean pick beats inferring approval from a free-form reply.
 
 ### 5. Verify and report
 

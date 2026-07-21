@@ -60,11 +60,22 @@ Create `.claude/skills/` and `.claude/loops/<loop-name>/` with `mkdir -p` if the
 
 Before handing off, prove the loop file is well-formed:
 
-1. **Frontmatter & structure** — confirm the file has valid `name:`/`description:` frontmatter, a Training Mode block at the top set to ON, the numbered steps, the done-rules, the retry cap, and the dual-file output section. Read it back.
-2. **Name match** — confirm `name:` in frontmatter matches the directory name (Claude Code requires this for the slash command to resolve).
-3. **Dry verification of the loop's own checks** — read each step's done-rule and confirm it's something Claude Code can actually evaluate (a command exit code, a file existing, a service being active, text matching). Flag any done-rule that's unmeasurable.
-4. **One verification pass** — auto-run the generated loop's *verification step only* once (not the full mutating loop) to confirm the done-rule machinery resolves. Report the result.
-5. Run `ls -la <repo-root>/.claude/skills/<loop-name>/` to confirm the file exists.
+1. **Structural lint (mechanical, scripted)** — run:
+   ```bash
+   scripts/lint-loop.sh <repo-root>/.claude/skills/<loop-name>/SKILL.md
+   ```
+   It checks presence/shape only (never meaning): valid `name:`/`description:` frontmatter,
+   `name:` matching the directory name (required for the slash command to resolve), the
+   Training Mode block, retry cap, Goal/Overall-done-rule/Steps/Verification-plan/Report
+   sections, at least one step `Done-rule:`, and the dual-file Output/Memory section. Fix
+   anything it FAILs before continuing — don't hand-check these by eye.
+2. **Dry verification of the loop's own checks (judgment, not scriptable)** — read each
+   step's done-rule and confirm it's something Claude Code can actually evaluate (a command
+   exit code, a file existing, a service being active, text matching). Flag any done-rule
+   that's unmeasurable.
+3. **One verification pass** — auto-run the generated loop's *verification step only* once
+   (not the full mutating loop) to confirm the done-rule machinery resolves. Report the
+   result.
 
 ### 5. Offer to commit
 
@@ -95,6 +106,10 @@ The loop file content lives verbatim in `assets/loop-template.md` — it is the 
 - **`name:` must equal the directory name**, or `/<loop-name>` won't resolve.
 - **Done-rules must be machine-checkable.** If the user gives a vague one ("looks good"), push back and turn it into something with an exit code, a file check, or a text match — otherwise Training Mode's "skip if passing" can't work.
 - **ON-mode is interactive only.** Don't promise unattended pauses; tell the user to flip to OFF for `/loop`-scheduled or background runs.
+
+## Scripts
+
+- `scripts/lint-loop.sh <path-to-SKILL.md>` — Step 4's mechanical structural checks (frontmatter, name/directory match, Training Mode block, retry cap, required sections, at least one done-rule, dual-file output section). Presence/shape only — the judgment calls (are the done-rules actually measurable, does a verification pass resolve) stay in Step 4's prose.
 
 ## Assets
 

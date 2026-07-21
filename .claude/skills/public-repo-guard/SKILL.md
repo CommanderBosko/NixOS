@@ -67,8 +67,13 @@ then stop and report which step blocked.
 
 4. **Triage against baseline** — classify EVERY hit/finding from steps 2–3 as either
    **known-intentional** (matches an entry in `baseline-allowlist.md`) or **genuine**.
-   In Training Mode ON, for anything you'd newly accept as intentional, pause and propose
-   appending it to the baseline with a one-line justification; on my approval, append it.
+   In Training Mode ON, for anything you'd newly accept as intentional, pause and present it
+   via the **AskUserQuestion tool** with options **Add to baseline** (append it, with a
+   one-line justification) and **Treat as genuine finding** (leave it out of the baseline,
+   count it toward the verdict). Don't use free-form prose for this gate — the other
+   destructive/state-changing confirm gates in this repo (`nixos-gc`, `rollback`,
+   `pin-input`) all route through AskUserQuestion for the same reason: a hard pick beats an
+   ambiguous typed reply.
    - Done-rule: every finding is classified; no finding is left "unknown". The baseline
      file reflects any newly-accepted items.
 

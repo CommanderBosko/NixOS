@@ -40,7 +40,8 @@ case "$MODE" in
 
   transcript)
     PROJECT_DIR="${2:-$(pwd)}"
-    DIR="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | sed 's#/#-#g')"
+    LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" && pwd)"
+    DIR="$("$LIB_DIR/find-transcript-dir.sh" "$PROJECT_DIR")" || exit 1
     LATEST="$(ls -t "$DIR"/*.jsonl 2>/dev/null | head -1)"
 
     if [ -z "$LATEST" ]; then

@@ -11,6 +11,12 @@ Catch cross-host breakage from editing a file shared across multiple NixOS hosts
 
 `commonModules` and `desktopModules` in `flake.nix` compose every host from the same shared files. Editing one of them (or `flake.nix` itself) can break a host you never touched directly and never ran a local check against. This isn't hypothetical: `deep-eval-check`'s own history includes a 2026-07-02 pnpm/vesktop insecure-package regression that a shallow `flake-check` missed, and on 2026-07-18 an `rtk` package reference added to `modules/users.nix` broke `vpn-server`'s evaluation entirely (it pins `nixpkgs-25.11` stable on `aarch64-linux`, where the package didn't exist yet) — uncaught because the commit that introduced it only exercised the local (unstable, x86_64) host. This skill closes that gap by making the cross-host sweep the default next step after any shared-file edit, not an optional afterthought.
 
+## Arguments
+
+Parse from the user's request:
+
+- **File/target** (optional) — a specific changed file to check directly, e.g. "does editing `modules/security.nix` break other hosts?". If given, use it directly in Step 2 and skip inferring from git. If omitted, resolve changed files from `git diff` per Step 1.
+
 ## Steps
 
 ### 1. Resolve which files changed

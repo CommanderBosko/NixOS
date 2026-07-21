@@ -4,6 +4,15 @@
   home.sessionPath = [ "$HOME/.local/bin" ];
 
   home.file = {
+    # Shared lib for global skills that need it (mirrors the project-local
+    # .claude/lib/ convention). Currently: find-transcript-dir.sh, used by
+    # skill-upgrade, session-closer, and skill-suggestion so the cwd-to-slug
+    # derivation lives in exactly one place.
+    ".claude/skills/lib" = {
+      source = "${self}/dotfiles/bosko/claude/skills/lib";
+      recursive = true;
+      force = true;
+    };
     # Recursive dir symlink: covers SKILL.md + scripts/ (create-repo.sh).
     ".claude/skills/repo-creator" = {
       source = "${self}/dotfiles/bosko/claude/skills/repo-creator";

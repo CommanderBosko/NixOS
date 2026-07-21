@@ -24,10 +24,13 @@ Parse from the user's request:
 Resolve which DE module to check, in this order:
 1. If the user named it explicitly (e.g. "check omarchy"), use that name.
 2. Otherwise, check `git status`/`git diff` for recently modified files under `modules/desktop-environments/` and infer the name from the filename (minus `.nix`).
-3. If still ambiguous, list the available names (relative to this skill's directory) and ask:
+3. If still ambiguous, list the available names (relative to this skill's directory):
    ```bash
    scripts/de-smoke-check.sh
    ```
+   Then ask which one to check via the **AskUserQuestion tool**, with one option per listed
+   module name — don't ask in free-form prose (matches `bump-input`'s equivalent
+   ambiguous-input pick-one).
 
 ## Step 2 — Deep-evaluate the module's build graph
 

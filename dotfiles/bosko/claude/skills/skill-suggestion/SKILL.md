@@ -18,7 +18,13 @@ Review everything done so far this session. Look for:
 
 Ignore one-off actions with no reuse value.
 
-**Mine past sessions too.** The strongest reuse signal isn't "done twice this session" — it's a workflow you repeat across *many* sessions. The current project's transcripts live at `~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`). They are large — **never read them whole**; `grep` for recurring command sequences, repeated file-edit patterns, or the same manual steps walked through in multiple sessions. A workflow that shows up across several transcripts is a prime candidate even if it only happened once *this* session.
+**Mine past sessions too.** The strongest reuse signal isn't "done twice this session" — it's a workflow you repeat across *many* sessions. Resolve the current project's transcript directory with the shared helper (also used by `skill-upgrade`/`session-closer` — don't re-derive the cwd-to-slug logic by hand):
+
+```bash
+~/.claude/skills/lib/find-transcript-dir.sh
+```
+
+It prints the directory (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`) holding the project's `*.jsonl` transcripts. They are large — **never read them whole**; `grep` for recurring command sequences, repeated file-edit patterns, or the same manual steps walked through in multiple sessions. A workflow that shows up across several transcripts is a prime candidate even if it only happened once *this* session.
 
 ### 2. Pick the single best candidate
 

@@ -12,13 +12,8 @@ set -euo pipefail
 PROJECT_DIR="${1:-$PWD}"
 MAX_FILES="${2:-15}"
 
-SLUG="$(echo "$PROJECT_DIR" | sed 's/^\///; s/\//-/g')"
-TRANSCRIPT_DIR="$HOME/.claude/projects/-${SLUG}"
-
-if [ ! -d "$TRANSCRIPT_DIR" ]; then
-  echo "No transcript directory found at $TRANSCRIPT_DIR" >&2
-  exit 1
-fi
+LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" && pwd)"
+TRANSCRIPT_DIR="$("$LIB_DIR/find-transcript-dir.sh" "$PROJECT_DIR")" || exit 1
 
 FILES=$(cd "$TRANSCRIPT_DIR" && ls -t -- *.jsonl 2>/dev/null | head -n "$MAX_FILES")
 
