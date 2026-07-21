@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-20 (continued) — Fixed all 6 structural findings from the routine's first clean run
+
+**Focus**: Fix the 6 minor skill-audit findings the improve-system routine's own first clean run (see the entry directly below) surfaced but didn't auto-apply, since they were flagged structural/report-only.
+
+### What changed (and why)
+- `de-smoke-check` + `public-repo-guard`: converted free-prose pick-one/confirm gates to the **AskUserQuestion tool**, matching the existing pattern in `bump-input`/`nixos-gc`/`rollback`/`pin-input` — a hard pick beats an ambiguous typed reply, especially for `public-repo-guard`'s baseline-append gate (permanently records a finding as intentional).
+- `shared-module-check`: added the `## Arguments` section it was missing, modeled on `verify-service`.
+- `create-loop`: extracted Step 4's mechanical structural checks into `scripts/lint-loop.sh`, keeping only the genuinely judgment-based checks (are done-rules measurable, does a verification pass resolve) in prose. Smoke-tested against two real generated loops before wiring it in.
+- `skill-suggestion`: rather than give it its own copy of transcript-dir-resolution logic that two other skills already had scripted, built a new shared `dotfiles/bosko/claude/skills/lib/` location (mirrors the project-local `.claude/lib/` convention) and rewired all three skills (`skill-suggestion`, `skill-upgrade`, `session-closer`) to call the one shared script — closing the duplication everywhere instead of adding a fourth instance of it. Required a new `bosko-claude.nix` `home.file` entry.
+- `skill-upgrade`: its own Gotchas-append confirm gate also converted to AskUserQuestion.
+- Considered spawning parallel sub-agents for the 6 independent fixes (per the repo's standing parallelization rule) but judged direct execution faster here: all the necessary repo-convention research (recursive vs. single-file skill symlinks, the AskUserQuestion confirm-gate pattern, the shared-lib precedent) was already gathered in-context from reading the six target files plus four reference skills before editing began, so fresh agents would have needed the same context re-explained rather than saving any real time.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of the `lib/` extraction scope decision (touching two already-stable scripts beyond what the finding literally asked for).
+
+### Issues / surprises
+- Testing the rewired `find-skill-misfires.sh` against this repo's own transcripts immediately caught a real, live misfire from earlier in this very session (an `rtk`-intercepted `find -o` compound-predicate failure) — a nice unplanned confirmation that the dedup didn't break the script's actual detection behavior.
+
+### Next session
+- None — all 6 findings closed, verified (`nixos-dry-run` + 4-host `shared-module-check` sweep, all PASS), committed, and pushed.
+
+**Commits**: `29e40c1` (1 commit)
+
+---
+
 ## Session: 2026-07-20 — Found and fixed the improve-system cloud routine's root cause: GitHub App never installed
 
 **Focus**: Follow up on the prior session's unresolved third redesign of the "improve-system" cloud routine — determine why it was still producing zero trace on GitHub even after the checkpoint-issue redesign.
@@ -108,30 +133,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - laptop + natalie-laptop still need their own rebuild to pick up this session's app-stack swap plus the whole accumulated backlog since session 34.
 
 **Commits**: `4b2e188..c4690e5` (11 commits)
-
----
-
-## Session: 2026-07-17 — Per-host niri overlay + qBittorrent app-id fix
-
-**Focus**: Split the shared niri config into a common base + per-host overlay so gaming, laptop, and natalie-laptop can each carry their own window rules, then chase down a qBittorrent placement bug the user hit while testing it.
-
-### What changed (and why)
-- Split `dotfiles/common/configs/niri-config.kdl` into a shared base (input/layout/binds/standard rules) plus `hosts/<host>/niri-overlay.kdl` per host, pulled in via niri's native `include` directive. Gaming keeps its 7 named-workspace/window-rule monitor pins in its own overlay; laptop and natalie-laptop start with empty overlays and just the standard rules.
-- `modules/desktop-environments/niri.nix` gained `osConfig` so it can symlink the right overlay file per host.
-- Found and fixed a second, distinct qBittorrent bug: its window rule matched app-id `^qbittorrent$`, but the live window's real app-id is `org.qbittorrent.qBittorrent` — the rule had never actually matched.
-
-### Decisions
-- Corrected course mid-task: initially told the user niri's KDL had no include mechanism and proposed Nix-level text concatenation; found `include "dms/outputs.kdl"` already in the live config, which meant a much simpler native-include approach worked instead. Surfaced this and got a fresh go-ahead before implementing.
-- Keybinds stay identical across all 3 hosts (shared base); only window rules split, per the user's explicit scoping in the interview.
-
-### Issues / surprises
-- The qBittorrent bug looked at first like a tray-restore race (the window had no mapped surface, process alive 7.9h). Live inspection via `niri msg windows`/`niri msg -j workspaces` showed the real cause was a plain wrong app-id in the match regex — worth remembering that "opens on the wrong workspace" symptoms are worth checking against the *live* app-id before assuming a compositor-behavior bug.
-
-### Next session
-- Add real content to `hosts/laptop/niri-overlay.kdl` / `hosts/natalie-laptop/niri-overlay.kdl` whenever host-specific rules are wanted (currently empty placeholders).
-- Laptop and natalie-laptop still need `rebuild` + reboot to pick up the overlay split and the large pile of previously-pending niri changes (now confirmed live on gaming only).
-
-**Commits**: `3960600..2cbe86c` (2 commits)
 
 ---
 

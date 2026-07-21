@@ -1,3 +1,27 @@
+## Session: 2026-07-17 — Per-host niri overlay + qBittorrent app-id fix
+
+**Focus**: Split the shared niri config into a common base + per-host overlay so gaming, laptop, and natalie-laptop can each carry their own window rules, then chase down a qBittorrent placement bug the user hit while testing it.
+
+### What changed (and why)
+- Split `dotfiles/common/configs/niri-config.kdl` into a shared base (input/layout/binds/standard rules) plus `hosts/<host>/niri-overlay.kdl` per host, pulled in via niri's native `include` directive. Gaming keeps its 7 named-workspace/window-rule monitor pins in its own overlay; laptop and natalie-laptop start with empty overlays and just the standard rules.
+- `modules/desktop-environments/niri.nix` gained `osConfig` so it can symlink the right overlay file per host.
+- Found and fixed a second, distinct qBittorrent bug: its window rule matched app-id `^qbittorrent$`, but the live window's real app-id is `org.qbittorrent.qBittorrent` — the rule had never actually matched.
+
+### Decisions
+- Corrected course mid-task: initially told the user niri's KDL had no include mechanism and proposed Nix-level text concatenation; found `include "dms/outputs.kdl"` already in the live config, which meant a much simpler native-include approach worked instead. Surfaced this and got a fresh go-ahead before implementing.
+- Keybinds stay identical across all 3 hosts (shared base); only window rules split, per the user's explicit scoping in the interview.
+
+### Issues / surprises
+- The qBittorrent bug looked at first like a tray-restore race (the window had no mapped surface, process alive 7.9h). Live inspection via `niri msg windows`/`niri msg -j workspaces` showed the real cause was a plain wrong app-id in the match regex — worth remembering that "opens on the wrong workspace" symptoms are worth checking against the *live* app-id before assuming a compositor-behavior bug.
+
+### Next session
+- Add real content to `hosts/laptop/niri-overlay.kdl` / `hosts/natalie-laptop/niri-overlay.kdl` whenever host-specific rules are wanted (currently empty placeholders).
+- Laptop and natalie-laptop still need `rebuild` + reboot to pick up the overlay split and the large pile of previously-pending niri changes (now confirmed live on gaming only).
+
+**Commits**: `3960600..2cbe86c` (2 commits)
+
+---
+
 ## Session: 2026-07-16 (session 46) — weekly improve-system cloud routine scheduled
 
 **Focus**: Set up a recurring cloud-scheduled `/improve-system` sweep and worked through what running it unattended actually requires.
