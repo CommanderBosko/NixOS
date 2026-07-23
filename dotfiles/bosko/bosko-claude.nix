@@ -4,6 +4,12 @@
   home.sessionPath = [ "$HOME/.local/bin" ];
 
   home.file = {
+    # Global standing instructions loaded in every project (currently: pair
+    # /init with the claude-rules skill). Plain file, not a skill.
+    ".claude/CLAUDE.md" = {
+      source = "${self}/dotfiles/bosko/claude/CLAUDE.md";
+      force = true;
+    };
     # Shared lib for global skills that need it (mirrors the project-local
     # .claude/lib/ convention). Currently: find-transcript-dir.sh, used by
     # skill-upgrade, session-closer, and skill-suggestion so the cwd-to-slug
