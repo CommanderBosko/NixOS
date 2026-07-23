@@ -34,7 +34,7 @@ for desc_pat in \
   "GitHub token::$GH_TOKEN" \
   "AWS access key::$AWS_KEY"; do
   desc=${desc_pat%%::*}; pat=${desc_pat#*::}
-  out=$(git grep -nIE "$pat" -- "${EXCLUDE[@]}" 2>/dev/null)
+  out=$(git grep -nIE -e "$pat" -- "${EXCLUDE[@]}" 2>/dev/null)
   if [ -n "$out" ]; then hit "$desc:"; echo "$out" | sed 's/^/      /'; fi
 done
 [ "$findings" -eq 0 ] && echo "  clean"
@@ -64,7 +64,7 @@ for desc_pat in \
   "inline WireGuard private key::$WG_INLINE"; do
   desc=${desc_pat%%::*}; pat=${desc_pat#*::}
   # shellcheck disable=SC2086
-  out=$(git grep -lIE "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null | head -20)
+  out=$(git grep -lIE -e "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null | head -20)
   if [ -n "$out" ]; then
     hit "$desc found in history (commit:path):"; echo "$out" | sed 's/^/      /'; histhit=1
   fi

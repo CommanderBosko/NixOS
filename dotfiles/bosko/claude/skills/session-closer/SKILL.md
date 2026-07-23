@@ -137,13 +137,22 @@ accurate — only update what changed; the **Recent Changes** section should cov
 1-3 sessions.
 
 **No sensitive or secret information — the README is public.** Don't carry a redaction
-rubric here: the repo ships a `secret-scan` skill that owns exactly this. After you finish
-writing/editing the README, **invoke `secret-scan`** for the public-safety pass — it covers
-key material (WireGuard/SSH/age-sops/TLS, password hashes, tokens, API keys), real network
-coordinates (endpoint/internal IPs, VPN subnets, MAC addresses, reachable hostnames), and
-personal data, across both the working tree and git history. Redact anything it flags in
-the README, prefer describing secrets as sops-managed rather than naming values, and note
-any redaction in the session summary.
+rubric here: a project-local `secret-scan` skill owns exactly this. After you finish
+writing/editing the README, check whether `<repo-root>/.claude/skills/secret-scan/SKILL.md`
+exists.
+
+- **If it exists**, **invoke `secret-scan`** for the public-safety pass — it covers key
+  material (private keys, password hashes, API/service tokens), and whatever else it was
+  tuned for during this project's own interview (real network coordinates, personal data,
+  etc., where applicable). Redact anything it flags in the README, prefer describing
+  secrets as managed-elsewhere rather than naming values, and note any redaction in the
+  session summary.
+- **If it's absent**, use **AskUserQuestion** to offer: **create one now** (runs
+  `/create-secret-scan` to generate a project-tuned scan, then use it for this pass —
+  recommended) or **skip with a manual pass** (a one-off grep for common secret patterns —
+  private key headers, `password`/`token`/`api_key`/`secret` literals — across the changed
+  files, for this close-out only). Either way, note in the session summary which path was
+  taken so the gap doesn't silently repeat next close-out.
 
 Read the skeleton from `assets/readme-template.md` (relative to this skill's directory)
 and fill it in (or use it as the section skeleton when updating an existing README),
@@ -211,11 +220,11 @@ reminders so you never re-list completed work as pending.
 ## Gotchas
 
 - **`secret-scan` isn't available in every project's skill list** (observed in a
-  non-NixOS-repo project with no `secret-scan` skill present). When it's missing, don't
-  skip the public-safety pass — do a manual grep for common secret patterns (private key
-  headers, `password`/`token`/`api_key`/`secret` literals) across the changed files before
-  publishing README changes, and note in the session summary that `secret-scan` wasn't
-  available so a manual check was substituted.
+  non-NixOS-repo project with no `secret-scan` skill present) — it's generated
+  per-project by `/create-secret-scan`, not a global skill. Don't silently substitute a
+  manual grep and move on: ask the user (AskUserQuestion, see STEP 5) whether to generate
+  one now or skip with a manual pass just for this close-out, and record which path was
+  taken in the session summary either way.
 - **`scripts/rotate-session-summary.sh` is relative to the *skill's* directory, not the
   project cwd** — running it as `.claude/skills/session-closer/scripts/rotate-session-summary.sh
   <repo-root>` (or the same path prefixed with the project root) fails with exit 127,

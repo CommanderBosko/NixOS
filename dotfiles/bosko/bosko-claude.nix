@@ -88,6 +88,12 @@
       recursive = true;
       force = true;
     };
+    # Recursive dir symlink: covers SKILL.md + assets/ (secret-scan templates) + scripts/ (lint).
+    ".claude/skills/create-secret-scan" = {
+      source = "${self}/dotfiles/bosko/claude/skills/create-secret-scan";
+      recursive = true;
+      force = true;
+    };
     ".claude/skills/improve-system/SKILL.md" = {
       source = "${self}/dotfiles/bosko/claude/skills/improve-system/SKILL.md";
       force = true;
