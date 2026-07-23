@@ -41,7 +41,7 @@
   fileSystems."/mnt/media" = {
     device = "/dev/disk/by-uuid/f0163d13-e964-4bab-8e5f-dd881ab6a6a4";
     fsType = "ext4";
-    options = [ "defaults" "nofail" ]; # nofail: a missing media disk won't block boot
+    options = [ "defaults" "nofail" "x-gvfs-show" ]; # nofail: a missing media disk won't block boot; x-gvfs-show: fstab mounts default to udisks2 HintSystem=true, hiding them from Thunar's sidebar
   };
 
   # Library folder layout the Jellyfin scanner expects. setgid (2775) so new
