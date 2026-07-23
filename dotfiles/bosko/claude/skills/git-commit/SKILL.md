@@ -10,16 +10,25 @@ Stage and commit all current changes with a well-crafted commit message.
 ## Steps
 
 1. Run `scripts/git-commit.sh status` (relative to this skill's directory) — prints `git status`, `git diff`, and `git log --oneline -5` in one call, to understand what changed and match the repo's commit message style.
-2. Analyze the changes:
+2. Check for unrelated uncommitted work: compare the files `git status` shows against what the
+   current task actually touched. If everything belongs to the current task, skip straight to step 3.
+   If there's anything else — modified or untracked, doesn't matter — flag it to the user via the
+   **AskUserQuestion** tool (don't just silently leave it out, and don't fold it in unasked) with
+   options **Commit it too** / **Leave it alone for now**. Only ask about the extras — never ask
+   for permission on the files the current task actually changed, that's still automatic per step 4.
+   If the user says to commit the extras too, treat them as their own separate commit (their own
+   message, their own `scripts/git-commit.sh commit` call) rather than mixing them into the task's
+   commit message, unless they're clearly the same change.
+3. Analyze the changes:
    - Summarize the nature of the change (new feature, bug fix, refactor, docs, etc.)
    - Draft a concise commit message focused on the "why" not the "what"
    - Do NOT commit files that likely contain secrets (.env, .screeps.json, credentials, tokens)
    - Warn the user if any sensitive files are staged
-3. Show the drafted message, then **proceed straight to staging and committing** — do not pause for
+4. Show the drafted message, then **proceed straight to staging and committing** — do not pause for
    a "confirm or edit?" approval step. Draft and commit immediately without asking for sign-off
    (standing user preference, not specific to any one project). The only exception is if the user
    explicitly asked to review the message first.
-4. Stage and commit by running `scripts/git-commit.sh commit <file>...` — name specific changed
+5. Stage and commit by running `scripts/git-commit.sh commit <file>...` — name specific changed
    files explicitly (avoid staging everything unless all changes are clearly safe) — and pipe the
    commit message in via a HEREDOC on stdin so formatting (including the blank line before the
    trailer) is preserved exactly:
@@ -39,7 +48,8 @@ underlying model changes.
 The script stages exactly the files you name, commits with that message, then prints `git status`
 again to confirm.
 
-5. Report: what was committed, the commit hash, and the message used.
+6. Report: what was committed, the commit hash, and the message used. If step 2 turned up extras
+   that got their own commit, report that separately too.
 
 ## Rules
 
