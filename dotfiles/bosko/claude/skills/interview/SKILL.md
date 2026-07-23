@@ -29,6 +29,8 @@ Briefly state what you're doing ("Let me ask you some questions to nail down wha
 
 Work through these areas, skipping any the user has already answered and following up wherever an answer is fuzzy. Don't dump every question at once — go in waves, adapting to their replies.
 
+Ask each wave via the **AskUserQuestion** tool whenever the question has a sensible small set of answers to offer (2-4 options, recommended one first, "Other" covers anything not listed) — this applies to most of the areas below, including ones that feel exploratory (e.g. "Users/audience" can offer "Just me" / "A team" / "External customers" + Other). Fall back to plain-text prose only for genuinely open, generative prompts where no sensible options exist yet (e.g. "what does success look like, in your own words?").
+
 - **Core goal** — In one sentence, what does success look like? What changes in the world if this works?
 - **Problem & motivation** — What problem does this solve? Why does it matter, and why now?
 - **Users / audience** — Who is this for? Just the user, a team, customers? How technical are they?
@@ -47,14 +49,11 @@ As answers come in, reflect them back briefly ("So the priority is X over Y — 
 
 Before writing the brief, surface every **key decision** the interview has settled and make the user confirm each one explicitly — don't assume silence means agreement. A key decision is any choice that, if wrong, would send the work in the wrong direction: the core goal, the must-have/nice-to-have split, scope boundaries, the chosen stack or platform, success criteria, and any tradeoff the user picked between competing options.
 
-Present them as a numbered checklist, each phrased as a concrete decision the user can accept or reject, e.g.:
+Present them via the **AskUserQuestion** tool, one question per key decision (up to 4 per call, batching across multiple calls if there are more), each phrased as the concrete decision with options **Confirm as stated** and **Needs a correction** (use "Other" to give the correction inline), e.g.:
 
-> Here are the key decisions I'm hearing. Confirm each one, or tell me what to change:
-> 1. **Goal:** … — yes/no?
-> 2. **Stack:** … — yes/no?
-> 3. **Out of scope for v1:** … — yes/no?
+> Question: "Goal: … — confirm or correct?" → options: Confirm as stated / Needs a correction
 
-Require an explicit yes (or a correction) on **each** item. If the user corrects one, replay the updated decision and re-confirm it. Do not move on to the brief until every key decision has been explicitly verified — nothing important should be carried forward on an unstated assumption.
+Require an explicit confirm (or a correction) on **each** item. If the user corrects one, replay the updated decision and re-confirm it. Do not move on to the brief until every key decision has been explicitly verified — nothing important should be carried forward on an unstated assumption.
 
 ### 6. Deliver the brief
 
@@ -81,6 +80,7 @@ Once confirmed, use the **AskUserQuestion** tool to ask what happens next, with 
 - Keep your own talking short; the user should be doing most of the talking.
 - Never skip the key-decisions verification (step 5). Every key decision must get an explicit yes or a correction before the brief — no important choice rides on an unstated assumption.
 - Set the success criteria up front (step 1) and have a second AI check the final brief (step 7) — don't hand off a brief that hasn't been measured against a clear bar and read by an independent reviewer.
+- Default to the **AskUserQuestion** tool for every question in this skill — waves (step 3), key-decision confirmations (step 5), and hand-off (step 8). Only fall back to plain-text prose when a question is genuinely open-ended with no sensible options to offer (e.g. step 2's opening prompt).
 
 ## Gotchas
 

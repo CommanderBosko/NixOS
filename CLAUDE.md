@@ -8,7 +8,7 @@ If you notice you've performed the same multi-step task twice in a session — o
 
 ## Scope First (Interview)
 
-Before you do any work, use the `/interview` skill to pin down the real goal with me — don't start building from a fuzzy or assumed understanding of the request. Surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before touching the config.
+Before you do any work, use the `/interview` skill to pin down the real goal with me — don't start building from a fuzzy or assumed understanding of the request. Surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before touching the config. All interview questions and decision confirmations go through the **AskUserQuestion** tool (see Ask via AskUserQuestion below), not plain-text prose.
 
 ## Verification Plan
 
@@ -28,6 +28,10 @@ Reserve serial work for genuine dependencies — e.g. a new module and the `flak
 ## Use Existing Skills First
 
 Before doing a task by hand, check whether an existing skill already covers it and invoke it instead of improvising — this repo ships many task-specific skills under `.claude/skills/` (project-local) and `dotfiles/bosko/claude/skills/` (global); check those directories rather than assuming from memory, since the roster changes over time. Prefer them over ad-hoc steps so the agreed, repeatable workflow is followed. If you find yourself doing the same multi-step task a second time and no skill exists, offer to create one (see Skill Awareness above).
+
+## Ask via AskUserQuestion
+
+When you need a decision, choice, or clarification from the user — not just information you can look up yourself — use the **AskUserQuestion** tool rather than asking in plain text. Phrase it as 2-4 concrete options (with a recommended one first); when the answer could be open-ended, the tool's built-in "Other" choice covers free text. This keeps answers structured, makes trade-offs explicit, and avoids an answer getting buried in prose. Reserve plain-text questions for genuinely open, generative prompts where no sensible options exist yet (e.g. "describe the project in your own words").
 
 ## Editing Claude Skills
 
