@@ -50,6 +50,10 @@
       recursive = true;
       force = true;
     };
+    ".claude/skills/commit-and-push/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/commit-and-push/SKILL.md";
+      force = true;
+    };
     # Recursive dir symlink: covers SKILL.md + scripts/ (search-pkg.sh).
     ".claude/skills/search-pkg" = {
       source = "${self}/dotfiles/bosko/claude/skills/search-pkg";
