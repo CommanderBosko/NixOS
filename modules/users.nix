@@ -36,7 +36,14 @@
       # stable, so guard on attribute existence rather than hardcoding it and
       # breaking that host's eval. Picks itself up automatically once a future
       # stable point-release backports the package.
-      ++ pkgs.lib.optional (pkgs ? rtk) pkgs.rtk; # Claude Code token-optimizing Bash proxy (hook wired in claude-code.nix)
+      #
+      # TEMPORARY (added 2026-07-24): rtk-0.43.0's checkPhase fails upstream —
+      # `cargo test` runs with -D warnings and the rtk crate has dead-code
+      # warnings that get promoted to hard errors, breaking the nixpkgs build
+      # outright. This skips rtk's own test suite so the package still builds;
+      # REMOVE this override once nixpkgs ships an rtk revision whose tests
+      # pass cleanly (i.e. `nh os boot --dry` builds rtk without doCheck=false).
+      ++ pkgs.lib.optional (pkgs ? rtk) (pkgs.rtk.overrideAttrs (_: { doCheck = false; })); # Claude Code token-optimizing Bash proxy (hook wired in claude-code.nix)
     };
 
     # Natty
