@@ -120,6 +120,24 @@ let
       color-scheme = "prefer-dark";
     };
 
+    # Covers what the dconf key above doesn't: XWayland/Qt apps that resolve
+    # cursors via XCURSOR_THEME/XCURSOR_SIZE rather than GSettings, and a
+    # guaranteed ~/.icons/default symlink for anything reading that directly.
+    # kdePackages.breeze is the actual package providing breeze_cursors
+    # (confirmed via `nix build` — kdePackages.breeze-icons only has folder/
+    # mimetype icons, not the cursor theme). gtk.enable is deliberately left
+    # off: it force-manages gtk-3.0/gtk-4.0 settings.ini and only knows about
+    # cursorTheme, which would wipe the gtk-theme-name/icon-theme-name keys
+    # already hand-set there for Sweet-Dark/candy-icons (dconf changes don't
+    # propagate to settings.ini on this system, see sweet-theme-rollout memory).
+    home.pointerCursor = {
+      enable = true;
+      package = pkgs.kdePackages.breeze;
+      name = "breeze_cursors";
+      size = 24;
+      x11.enable = true;
+    };
+
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
 

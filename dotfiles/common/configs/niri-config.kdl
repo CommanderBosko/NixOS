@@ -69,6 +69,16 @@ input {
     // focus-follows-mouse max-scroll-amount="0%"
 }
 
+// Cursor theme/size niri itself uses to render context-aware shapes (text,
+// grab, resize, wait, etc.) via the cursor-shape-v1 protocol, and the
+// XCURSOR_THEME/XCURSOR_SIZE env vars niri exports into the session for
+// clients that resolve cursors the legacy X way. Kept in sync with the
+// breeze_cursors dconf key in modules/desktop-environments/niri.nix.
+cursor {
+    xcursor-theme "breeze_cursors"
+    xcursor-size 24
+}
+
 // You can configure outputs by their name, which you can find
 // by running `niri msg outputs` while inside a niri instance.
 // The built-in laptop monitor is usually called "eDP-1".
