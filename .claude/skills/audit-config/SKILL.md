@@ -49,10 +49,10 @@ every candidate finding against this list and against the project's memory files
   directives are not `.so` paths. The `lib.mkForce` clearing of `rules` for `sddm` /
   `sddm-autologin`, with `text` overrides using `pkgs.linux-pam`, is **intentional** — it works
   around a nixpkgs bug. Not a finding.
-- **Audit rules sentinel**: `security.audit.rules` must be non-empty; an empty list causes a
-  blank-line parse error in audit-4.1.2. A comment sentinel rule is **intentional**. Not a finding.
-- **`security.audit.enable` vs `security.auditd.enable`**: these are distinct (rules loader vs
-  daemon). Don't report them as duplicated/confused options.
+- **Audit rules loader disabled**: `systemd.services.audit-rules-nixos.enable = lib.mkForce false;`
+  works around a blank-line parse error in the rules loader (audit-4.1.2); `auditd` itself still
+  runs for AppArmor logging. This is **intentional**, not a silently-disabled audit daemon. Not a
+  finding.
 - **`nvidia.nix` imported per-host, not via `desktopModules`**: intentional, so gaming can drop it
   for the AMD card. Not a structural smell.
 - **dbus-broker via plain assignment** (not `mkDefault`) in security.nix: intentional, beats
