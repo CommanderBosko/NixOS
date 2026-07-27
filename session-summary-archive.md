@@ -1,3 +1,30 @@
+## Session: 2026-07-17 — Declarative default apps, then off KDE entirely; two live bugs root-caused
+
+**Focus**: Set up declarative default-application associations, hit a wall with KDE apps being unreliable under niri (no `kded6`), swapped the whole stack for lightweight alternatives, then chased down two unrelated live bugs the user hit (broken AppArmor reload, USB not auto-mounting).
+
+### What changed (and why)
+- `xdg.mimeApps.defaultApplications` in `home.nix`: Kate/Ark/Okular/Gwenview/VLC, every mimetype verified against each app's real `.desktop` file. First rebuild failed activation (`mimeapps.list` clobber) — fixed with `force = true`, and preserved real working associations (GitHub Desktop OAuth, Discord/FreeTube/r2modman handlers) found in the live file before it got overwritten.
+- Dolphin's "Open With" picker turned out fundamentally broken under niri — KDE's `ksycoca` app database needs `kded6` to stay valid, which niri never runs. Confirmed via `xdg-open` working while Dolphin's own picker stayed empty even after clearing caches and a genuinely fresh process. Drafted a `kded6` systemd service as a fix, but the user chose to drop KDE apps entirely instead: Thunar, xarchiver, zathura, imv replaced Dolphin/Ark/Okular/Gwenview/Double Commander. Net -123 MiB.
+- Built `add-default-app` skill for the now-repeated "verify real mimetypes, add to xdg.mimeApps, verify the generated file" workflow — shipped untested at first, which led to `new-skill` gaining a permanent reminder to flag untested output and point at `ship-skill`.
+- Fixed three niri skills (`add-niri-window-rule`, `add-niri-keybind`, `add-niri-fullscreen-rule`) that still pointed at the old shared `niri-config.kdl` location, stale since the per-host overlay split.
+- Root-caused two live bugs: USB drives not auto-mounting under Thunar (needed `gvfs`+`thunar-volman`, since Dolphin's KIO backend never needed them), and `nh os boot` failing outright with "Failed to reload apparmor.service" (a real nixpkgs bug in `apparmor-parser-5.0.0` missing a file its own `aa-remove-unknown` script expects — worked around via `reloadIfChanged = false`).
+
+### Decisions
+- Chose to fully swap off KDE apps rather than keep patching around the missing `kded6` session — this was the third time in one session that gap caused a real bug (Dolphin's picker, Ark's in-archive file-open, and the underlying `ksycoca` staleness itself).
+- `new-skill` gets a reminder line, not a built-in smoke test — keeps it a clean single-bucket Utility skill; `ship-skill` already owns verification.
+
+### Issues / surprises
+- Even after `gvfs`/`thunar-volman` built and activated successfully, USB auto-mount still didn't work — turned out to be session-level staleness (the user's `dbus-broker.service` hadn't restarted since login, so it never picked up gvfs's new D-Bus service registration). Same root-cause *shape* as the `ksycoca` issue: live activation doesn't always restart the daemons that only read their config once at startup. Worth remembering as a pattern for future "config is right but nothing works" reports.
+
+### Next session
+- Push commit `c4690e5` (apparmor fix) — everything else this session is already pushed.
+- Reboot gaming (or restart the session D-Bus daemon) to actually fix USB auto-mount.
+- laptop + natalie-laptop still need their own rebuild to pick up this session's app-stack swap plus the whole accumulated backlog since session 34.
+
+**Commits**: `4b2e188..c4690e5` (11 commits)
+
+---
+
 ## Session: 2026-07-17 — Per-host niri overlay + qBittorrent app-id fix
 
 **Focus**: Split the shared niri config into a common base + per-host overlay so gaming, laptop, and natalie-laptop can each carry their own window rules, then chase down a qBittorrent placement bug the user hit while testing it.

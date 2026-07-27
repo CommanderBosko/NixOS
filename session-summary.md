@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-26 — Catch-up close for 4 unclosed sessions (2026-07-23 through -26)
+
+**Focus**: Close out 11 commits across at least 4 sessions that never ran `/session-closer` individually; this close's own conversation did no repo work itself.
+
+### What changed (and why)
+- **2026-07-23**: `/init` now always chains into `claude-rules`, everywhere; added a 5th standing rule (Ask via AskUserQuestion); shipped `/create-secret-scan` (project-tuned secret-scan generator, chosen over a global generic scanner) and fixed a real bug found while testing it — `git grep -E "$pat"` silently no-ops when `$pat` starts with `-`, so private-key detection had never actually worked in the shipped `secret-scan.sh`; `git-commit` now asks before dropping unrelated uncommitted work; new `commit-and-push` skill; niri Mod+B/Mod+G now also opens a Zen private window; gaming's Jellyfin drive fixed to show in Thunar's sidebar (`x-gvfs-show`).
+- **2026-07-24**: flake bump resolved the `electron-40.10.5` insecure waiver (nixpkgs moved vesktop to `electron_43`) — removed, don't re-add; the same bump was the first time `rtk` resolved on the unstable hosts, but its own `cargo test` checkPhase fails under `-D warnings`, breaking real builds — patched with `doCheck = false`.
+- **2026-07-25**: niri's own cursor-shape-v1 rendering (text/grab/resize cursors) had no `cursor{}` KDL block and was falling back to niri's bundled default instead of `breeze_cursors` — added the block plus `home.pointerCursor` (GTK path deliberately left off to avoid clobbering the hand-set Sweet-Dark `settings.ini`).
+- **2026-07-26**: routine `dms`/`financeguru` flake bump, all 4 hosts deep-eval clean; `flake-update-verify` gained a mandatory `AskUserQuestion` gate before its commit+push step, which now applies regardless of Training Mode or how the invocation was pre-approved (Training Mode's own default flipped OFF for steps 1-5 in the same change).
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeups (flake-update-verify's gate scope, create-secret-scan's option-2 choice, git-commit's new ask-before-drop behavior, the pointerCursor gtk.enable=off call).
+
+### Issues / surprises
+- Four sessions in a row went uncommitted-to-session-closer, meaning this close is narrated entirely from commit messages and the memory already saved live during those sessions (no transcript to read for the "why" of any of them) — the memory system is what made an accurate catch-up possible at all.
+- niri's cursor fix and the `rtk` doCheck patch are both dry-run/eval-verified only; neither has been confirmed against a real reboot/build yet — see Next Steps.
+
+### Next session
+- Visually confirm the niri cursor fix after a reboot (text I-beam, resize/grab shapes rendering as breeze_cursors).
+- Run the pending gaming/laptop/natalie-laptop rebuilds (user said they'd handle these themselves) — picks up the cursor fix, the flake bumps, and everything else queued since session 48.
+- Try running `/session-closer` at the end of each session going forward rather than letting several stack up.
+
+**Commits**: `a3d5c59..7e6e896` (11 commits)
+
+---
+
 ## Session: 2026-07-20 (continued) — Fixed all 6 structural findings from the routine's first clean run
 
 **Focus**: Fix the 6 minor skill-audit findings the improve-system routine's own first clean run (see the entry directly below) surfaced but didn't auto-apply, since they were flagged structural/report-only.
@@ -106,33 +132,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - User is doing the gaming/laptop/natalie-laptop rebuilds themselves; nothing to chase from this side until that's done.
 
 **Commits**: `8222fb5..8507de3` (12 commits, this session)
-
----
-
-## Session: 2026-07-17 — Declarative default apps, then off KDE entirely; two live bugs root-caused
-
-**Focus**: Set up declarative default-application associations, hit a wall with KDE apps being unreliable under niri (no `kded6`), swapped the whole stack for lightweight alternatives, then chased down two unrelated live bugs the user hit (broken AppArmor reload, USB not auto-mounting).
-
-### What changed (and why)
-- `xdg.mimeApps.defaultApplications` in `home.nix`: Kate/Ark/Okular/Gwenview/VLC, every mimetype verified against each app's real `.desktop` file. First rebuild failed activation (`mimeapps.list` clobber) — fixed with `force = true`, and preserved real working associations (GitHub Desktop OAuth, Discord/FreeTube/r2modman handlers) found in the live file before it got overwritten.
-- Dolphin's "Open With" picker turned out fundamentally broken under niri — KDE's `ksycoca` app database needs `kded6` to stay valid, which niri never runs. Confirmed via `xdg-open` working while Dolphin's own picker stayed empty even after clearing caches and a genuinely fresh process. Drafted a `kded6` systemd service as a fix, but the user chose to drop KDE apps entirely instead: Thunar, xarchiver, zathura, imv replaced Dolphin/Ark/Okular/Gwenview/Double Commander. Net -123 MiB.
-- Built `add-default-app` skill for the now-repeated "verify real mimetypes, add to xdg.mimeApps, verify the generated file" workflow — shipped untested at first, which led to `new-skill` gaining a permanent reminder to flag untested output and point at `ship-skill`.
-- Fixed three niri skills (`add-niri-window-rule`, `add-niri-keybind`, `add-niri-fullscreen-rule`) that still pointed at the old shared `niri-config.kdl` location, stale since the per-host overlay split.
-- Root-caused two live bugs: USB drives not auto-mounting under Thunar (needed `gvfs`+`thunar-volman`, since Dolphin's KIO backend never needed them), and `nh os boot` failing outright with "Failed to reload apparmor.service" (a real nixpkgs bug in `apparmor-parser-5.0.0` missing a file its own `aa-remove-unknown` script expects — worked around via `reloadIfChanged = false`).
-
-### Decisions
-- Chose to fully swap off KDE apps rather than keep patching around the missing `kded6` session — this was the third time in one session that gap caused a real bug (Dolphin's picker, Ark's in-archive file-open, and the underlying `ksycoca` staleness itself).
-- `new-skill` gets a reminder line, not a built-in smoke test — keeps it a clean single-bucket Utility skill; `ship-skill` already owns verification.
-
-### Issues / surprises
-- Even after `gvfs`/`thunar-volman` built and activated successfully, USB auto-mount still didn't work — turned out to be session-level staleness (the user's `dbus-broker.service` hadn't restarted since login, so it never picked up gvfs's new D-Bus service registration). Same root-cause *shape* as the `ksycoca` issue: live activation doesn't always restart the daemons that only read their config once at startup. Worth remembering as a pattern for future "config is right but nothing works" reports.
-
-### Next session
-- Push commit `c4690e5` (apparmor fix) — everything else this session is already pushed.
-- Reboot gaming (or restart the session D-Bus daemon) to actually fix USB auto-mount.
-- laptop + natalie-laptop still need their own rebuild to pick up this session's app-stack swap plus the whole accumulated backlog since session 34.
-
-**Commits**: `4b2e188..c4690e5` (11 commits)
 
 ---
 
