@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-27 — Closed the Kate-vs-OnlyOffice printer thread from the prior session; confirmed both prior fixes live
+
+**Focus**: Follow-up on the previous session's natalie-laptop close-out — confirm the printer/VPN fixes are actually live, and figure out why OnlyOffice still couldn't see the printer even though Kate could.
+
+### What changed (and why)
+- User confirmed the VPN fix works as intended (off at boot, manual `vpn-on` succeeds) and reported OnlyOffice still couldn't discover the printer despite Kate being able to.
+- Confirmed live that both prior fixes are active: `/etc/cups/cups-browsed.conf` correctly contains `CreateIPPPrinterQueues Everywhere` (previously baked empty), and `wg0` no longer autostarts.
+- Diagnosed the printer gap: `lpstat -p -d` showed zero permanent CUPS destinations even though the Canon TS9500 was fully discoverable via `avahi-browse`/`lpinfo -v`/`lpstat -e`. Root cause: Kate uses the host's system CUPS client (2.4.19), which does live DNS-SD printer discovery and can show a network printer before any permanent queue exists; OnlyOffice's bundled print dialog (its own `buildFHSEnv` sandbox binary) only ever sees printers already registered as real, permanent CUPS destinations.
+- Found *why* the permanent queue hadn't been created despite correct config: `cups-browsed.service` is `BindsTo=avahi-daemon.service`, so it resets on every avahi-daemon restart — and journal showed cups-browsed bouncing every few minutes to hours on this host, never getting a clean-enough run to finish instantiating the queue.
+- Fixed live (no repo change): had the user run `sudo systemctl restart cups-browsed` (no passwordless sudo available to the Bash tool), waited ~30s, confirmed `Canon_TS9500_series` appeared via `lpstat -p -d`, then confirmed directly in OnlyOffice's print dialog that the printer now shows up.
+
+### Decisions
+- Diagnosed as far as possible without sudo (avahi-browse, lpinfo, lpstat, reading the nixpkgs `onlyoffice-desktopeditors` package.nix to rule out a sandbox network-namespace restriction) before handing the two sudo-gated commands to the user via the `!` prefix, rather than guessing at a fix.
+- Didn't make a repo change for the `cups-browsed`/avahi coupling — the live restart resolved it immediately and the coupling is standard/intentional systemd behavior, not a config bug; flagged as a residual recurrence risk instead (see project-state.md Known Issues).
+
+### Issues / surprises
+- The Kate-vs-OnlyOffice discrepancy from the prior session's close-out (flagged as an unresolved open thread) turned out to have a real, specific mechanism — not a stale memory or print-to-PDF confusion as guessed.
+- No sudo available non-interactively in this session (same constraint as the prior session) — every privileged command had to be handed to the user to run themselves.
+
+### Next session
+- If OnlyOffice printer discovery breaks again after future VPN/network flapping, check `systemctl status cups-browsed` and `journalctl -u cups-browsed` for restart churn before assuming a config regression — restart it directly rather than re-diagnosing from scratch.
+- No further action needed unless the `cups-browsed`/avahi coupling recurs; see project-state.md Known Issues for the tweak options if it does.
+
+**Commits**: none (diagnostic/live-fix session only)
+
+---
+
 ## Session: 2026-07-27 — Root-caused all three natalie-laptop issues (clock desync, VPN, printer) live via SSH
 
 **Focus**: The user connected to natalie-laptop over SSH to debug three reported issues (clock desync, no internet when VPN connected, printer invisible in OnlyOffice) — asked to check boot logs first and research as needed before debugging.
@@ -108,31 +135,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Try running `/session-closer` at the end of each session going forward rather than letting several stack up.
 
 **Commits**: `a3d5c59..7e6e896` (11 commits)
-
----
-
-## Session: 2026-07-20 (continued) — Fixed all 6 structural findings from the routine's first clean run
-
-**Focus**: Fix the 6 minor skill-audit findings the improve-system routine's own first clean run (see the entry directly below) surfaced but didn't auto-apply, since they were flagged structural/report-only.
-
-### What changed (and why)
-- `de-smoke-check` + `public-repo-guard`: converted free-prose pick-one/confirm gates to the **AskUserQuestion tool**, matching the existing pattern in `bump-input`/`nixos-gc`/`rollback`/`pin-input` — a hard pick beats an ambiguous typed reply, especially for `public-repo-guard`'s baseline-append gate (permanently records a finding as intentional).
-- `shared-module-check`: added the `## Arguments` section it was missing, modeled on `verify-service`.
-- `create-loop`: extracted Step 4's mechanical structural checks into `scripts/lint-loop.sh`, keeping only the genuinely judgment-based checks (are done-rules measurable, does a verification pass resolve) in prose. Smoke-tested against two real generated loops before wiring it in.
-- `skill-suggestion`: rather than give it its own copy of transcript-dir-resolution logic that two other skills already had scripted, built a new shared `dotfiles/bosko/claude/skills/lib/` location (mirrors the project-local `.claude/lib/` convention) and rewired all three skills (`skill-suggestion`, `skill-upgrade`, `session-closer`) to call the one shared script — closing the duplication everywhere instead of adding a fourth instance of it. Required a new `bosko-claude.nix` `home.file` entry.
-- `skill-upgrade`: its own Gotchas-append confirm gate also converted to AskUserQuestion.
-- Considered spawning parallel sub-agents for the 6 independent fixes (per the repo's standing parallelization rule) but judged direct execution faster here: all the necessary repo-convention research (recursive vs. single-file skill symlinks, the AskUserQuestion confirm-gate pattern, the shared-lib precedent) was already gathered in-context from reading the six target files plus four reference skills before editing began, so fresh agents would have needed the same context re-explained rather than saving any real time.
-
-### Decisions
-- See `project-state.md` Recent Decisions for the full writeup of the `lib/` extraction scope decision (touching two already-stable scripts beyond what the finding literally asked for).
-
-### Issues / surprises
-- Testing the rewired `find-skill-misfires.sh` against this repo's own transcripts immediately caught a real, live misfire from earlier in this very session (an `rtk`-intercepted `find -o` compound-predicate failure) — a nice unplanned confirmation that the dedup didn't break the script's actual detection behavior.
-
-### Next session
-- None — all 6 findings closed, verified (`nixos-dry-run` + 4-host `shared-module-check` sweep, all PASS), committed, and pushed.
-
-**Commits**: `29e40c1` (1 commit)
 
 ---
 

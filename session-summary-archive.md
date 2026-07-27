@@ -1,3 +1,28 @@
+## Session: 2026-07-20 (continued) — Fixed all 6 structural findings from the routine's first clean run
+
+**Focus**: Fix the 6 minor skill-audit findings the improve-system routine's own first clean run (see the entry directly below) surfaced but didn't auto-apply, since they were flagged structural/report-only.
+
+### What changed (and why)
+- `de-smoke-check` + `public-repo-guard`: converted free-prose pick-one/confirm gates to the **AskUserQuestion tool**, matching the existing pattern in `bump-input`/`nixos-gc`/`rollback`/`pin-input` — a hard pick beats an ambiguous typed reply, especially for `public-repo-guard`'s baseline-append gate (permanently records a finding as intentional).
+- `shared-module-check`: added the `## Arguments` section it was missing, modeled on `verify-service`.
+- `create-loop`: extracted Step 4's mechanical structural checks into `scripts/lint-loop.sh`, keeping only the genuinely judgment-based checks (are done-rules measurable, does a verification pass resolve) in prose. Smoke-tested against two real generated loops before wiring it in.
+- `skill-suggestion`: rather than give it its own copy of transcript-dir-resolution logic that two other skills already had scripted, built a new shared `dotfiles/bosko/claude/skills/lib/` location (mirrors the project-local `.claude/lib/` convention) and rewired all three skills (`skill-suggestion`, `skill-upgrade`, `session-closer`) to call the one shared script — closing the duplication everywhere instead of adding a fourth instance of it. Required a new `bosko-claude.nix` `home.file` entry.
+- `skill-upgrade`: its own Gotchas-append confirm gate also converted to AskUserQuestion.
+- Considered spawning parallel sub-agents for the 6 independent fixes (per the repo's standing parallelization rule) but judged direct execution faster here: all the necessary repo-convention research (recursive vs. single-file skill symlinks, the AskUserQuestion confirm-gate pattern, the shared-lib precedent) was already gathered in-context from reading the six target files plus four reference skills before editing began, so fresh agents would have needed the same context re-explained rather than saving any real time.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of the `lib/` extraction scope decision (touching two already-stable scripts beyond what the finding literally asked for).
+
+### Issues / surprises
+- Testing the rewired `find-skill-misfires.sh` against this repo's own transcripts immediately caught a real, live misfire from earlier in this very session (an `rtk`-intercepted `find -o` compound-predicate failure) — a nice unplanned confirmation that the dedup didn't break the script's actual detection behavior.
+
+### Next session
+- None — all 6 findings closed, verified (`nixos-dry-run` + 4-host `shared-module-check` sweep, all PASS), committed, and pushed.
+
+**Commits**: `29e40c1` (1 commit)
+
+---
+
 ## Session: 2026-07-20 — Found and fixed the improve-system cloud routine's root cause: GitHub App never installed
 
 **Focus**: Follow up on the prior session's unresolved third redesign of the "improve-system" cloud routine — determine why it was still producing zero trace on GitHub even after the checkpoint-issue redesign.
