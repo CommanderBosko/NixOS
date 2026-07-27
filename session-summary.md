@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-27 — Found and fixed a second real bug in the improve-system cloud routine, then hardened it toward live-session parity
+
+**Focus**: Check on the weekly `improve-system` cloud routine's run, investigate a suspiciously repetitive backlog, and harden the routine after finding it was reporting phantom findings.
+
+### What changed (and why)
+- The routine's Sunday run (issue #2) re-reported the same 6 "structural findings" from the past 3 weeks. Investigated instead of just clearing them by hand: all 6 were already fixed by commit `29e40c1` (2026-07-20), verified by reading each of the 6 skill files' actual current content. The routine's persisted session (`persist_session: true`, same session ID reused weekly) had a stale belief about what commit to diff against and never noticed the fix.
+- Patched the trigger prompt with a freshness check first, then — after the user asked how to harden the routine toward live-session parity — went further per the user's choice of all three offered options: removed the reuse-shortcut entirely (always run the full 55-skill audit fresh), set `persist_session: false` (no cross-week memory), and added a new "self-verifiable structural fixes" auto-apply tier (SKILL.md-only fixes with a scriptable check can now land as a PR instead of sitting report-only forever).
+- Manually triggered the hardened routine to test it. Confirmed all three changes worked: explicit "no persisted history" checkpoints, a genuine full fan-out (not reused), and — this time — 7 *real* drift bugs found and fixed (a rules-count typo, a false claim about `natty`'s permissions, a stale security-workaround description, a wrong DE-host roster, three hardcoded host lists replaced with live `jq` enumeration). It also correctly refused one sub-agent's false-positive claim after cross-checking.
+- Reviewed PR #4 by hand (independently re-verified all 7 fixes against live repo content) and merged it. Fast-forwarded local `main` to match, since the squash-merge had only happened on GitHub.
+
+### Decisions
+- See `project-state.md` Recent Decisions for full writeups: removing the reuse-shortcut instead of just patching around it, the new auto-apply tier's scope (never `.nix`, always re-verify current content first), and doing the PR review/merge by hand rather than building a dedicated skill for it yet.
+
+### Issues / surprises
+- The routine's "clean, nothing to fix" verdict had been technically true but for the wrong reason for two straight weeks — a good reminder that an unattended routine's own confidence isn't proof of correctness; the phantom backlog was only caught by directly reading the actual files instead of trusting the audit's report.
+- The cloud sandbox still has no `nix`/`nh` available and no exposed way to add them (only one CCR environment exists, no setup-script mechanism) — confirmed this is a real, unfixable-from-Claude-Code-tooling gap, not something to keep chasing.
+
+### Next session
+- Watch the 2026-08-02 scheduled fire (the first real unattended run under the new design) — confirm it opens cleanly with no persisted-memory references, runs the full fresh audit, and — if it finds anything — actually applies+PRs self-verifiable fixes rather than just reporting them.
+- `dotfiles/bosko/claude/skills/improve-system/SKILL.md`'s "five standing rules" fix needs a rebuild + new session to reach live `~/.claude` (the other 6 fixes from PR #4 are project-local and already live).
+
+**Commits**: `bdcf9b6` (1 commit, merged via PR #4)
+
+---
+
 ## Session: 2026-07-26 — Catch-up close for 4 unclosed sessions (2026-07-23 through -26)
 
 **Focus**: Close out 11 commits across at least 4 sessions that never ran `/session-closer` individually; this close's own conversation did no repo work itself.
@@ -102,36 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - If it's still silent even with the new design, suspect the cloud sandbox lacks `gh` write access entirely and investigate the environment's GitHub App/token scope directly.
 
 **Commits**: none this session (repo untouched; all changes were to the cloud routine's config)
-
----
-
-## Session: 2026-07-18 — Skill model/script paradigm rollout; two real cross-host bugs found
-
-**Focus**: Classify all 52 skills by grunt-vs-judgment work and pin cheap ones to Haiku, run a scoped skill-audit for deterministic work that belongs in scripts, then chase down two real bugs the audit's own verification work surfaced along the way.
-
-### What changed (and why)
-- Classified all 52 skills as grunt (haiku) or judgment (keep top model) via 4 parallel sub-agents; pinned `model: haiku` on the 32 grunt-work skills. Confirmed `SKILL.md`'s `model:` frontmatter field is real and documented. Taught `new-skill`/`create-loop` to apply this to every future skill.
-- Ran `/skill-audit` scoped to just its "deterministic work → scripts/" lens across all 52 skills — 13 findings, implemented 11 across 6 commits: a new shared `.claude/lib/resolve-host.sh` (de-duping `ssh-host`+`journal`), plus script extractions for `session-closer`, `ci-status`, `add-secret`, `pin-input`, `vpn-status`, `switch-de`, `new-peer`, `de-smoke-check`, `add-default-app`. Every script proven against live state before being wired in. Taught `new-skill` to apply this to every future skill too.
-- `switch-de`'s brand-new `current-de.sh` immediately caught a real bug: `natalie-laptop` still imported both `niri.nix` and `plasma.nix` (a leftover SDDM dual-session setup from session 42 that was never actually used) — dropped Plasma, niri-only now.
-- The same sweep's `deep-eval-check` run caught a second, unrelated real bug: `vpn-server`'s flake eval has been broken since the prior session's `rtk` install — `rtk` only exists in nixpkgs-unstable, not the `nixpkgs-25.11` stable channel `vpn-server` pins. Fixed by gating the package and its Claude Code hook on `pkgs ? rtk` instead of hardcoding it.
-- Built `shared-module-check` (new skill) to close the exact gap that let the `vpn-server` bug through — forces a 4-host sweep after any shared-module edit instead of trusting a local dry-run.
-- Found and fixed a bug in the *very script written earlier this session*: `session-closer`'s new `scan-session.sh` used `git log --all` in its range query, which pulls in stash entries and unrelated branch history — the classic already-documented `--all` footgun, reproduced because the sub-agent that wrote it didn't have access to that memory.
-
-### Decisions
-- `vpn-server`'s fix stays unstable-only, not force-installed some other way — user explicitly held off deploying until nixpkgs-25.11 catches up naturally; the existence-guard is the right shape either way.
-- Desktop-host rebuilds (gaming/laptop/natalie-laptop) left to the user — they said they'd handle those three themselves.
-- Skipped Tier 4 of the skill-audit findings (a `claude-rules` grep script, `new-skill`'s scope-detection mechanics) — both global skills, both too small a payoff for the symlink+rebuild overhead.
-
-### Issues / surprises
-- Two real, previously-undetected bugs (`natalie-laptop`'s stale dual-DE import, `vpn-server`'s broken eval) surfaced purely as side effects of building better verification tooling — neither was what the session set out to find. `vpn-server`'s break had been sitting undetected since a prior session's commit, exactly because that commit's own dry-run only exercised the local host.
-- The new `scan-session.sh` script had a real bug on its very first real-world run (this close) — a reminder that a freshly-forked sub-agent writing a script has no access to hard-won repo-specific gotchas already sitting in memory.
-
-### Next session
-- Push all of this session's commits (session-closer handles that now).
-- Check whether `vpn-server` needs anything once a `nixpkgs-25.11` point release ships `rtk` — otherwise no action needed.
-- User is doing the gaming/laptop/natalie-laptop rebuilds themselves; nothing to chase from this side until that's done.
-
-**Commits**: `8222fb5..8507de3` (12 commits, this session)
 
 ---
 
