@@ -29,9 +29,6 @@ in
         edit = "sudo hx";
         shell = "nix-shell -p";
         cleanup = ''
-          echo ""
-          echo "Cleaning up your system"
-          echo ""
           nh clean all --keep 3
           echo ""
           echo "Removing unused Flatpaks"
