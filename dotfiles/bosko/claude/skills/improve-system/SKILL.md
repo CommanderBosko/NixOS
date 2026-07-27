@@ -15,7 +15,7 @@ Classify every proposed change before acting:
 
 - **Low-risk (auto-apply, then report what you did):** purely *additive, reversible, non-destructive* edits to files that already exist —
   - `## Gotchas` entries added by **skill-upgrade**
-  - the four standing workflow rules added to `CLAUDE.md` by **claude-rules**
+  - the five standing workflow rules added to `CLAUDE.md` by **claude-rules**
   - `permissions.allow` additions in `settings.json` from **fewer-permission-prompts**
 - **Structural (always confirm first via the AskUserQuestion tool):** anything that creates files, changes behaviour, deletes/rewrites content, or needs new wiring + a rebuild —
   - a **new skill** proposed by skill-suggestion (new file + `bosko-claude.nix` symlink + rebuild)

@@ -33,7 +33,7 @@ Ask the user the following questions (you may batch them into a single message).
 
 3. **Purpose** — One sentence describing what this module configures. Used as the top comment in the file.
 
-4. **Hosts** — Which hosts will import this module? Present this pick via the **AskUserQuestion tool** (allow multi-select) rather than free-form prose, with one option per `.flakeHosts` entry in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`), plus an `all desktop hosts` option (the `"desktop": true` hosts) and an `all hosts` option. This is informational — it determines where the import line goes in `flake.nix`. Skip the question if the user already named the host(s).
+4. **Hosts** — Which hosts will import this module? Present this pick via the **AskUserQuestion tool** (allow multi-select) rather than free-form prose, with one option per `.flakeHosts` entry in `.claude/hosts.json` — enumerate live, don't hardcode: `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json` — plus an `all desktop hosts` option (the `"desktop": true` hosts) and an `all hosts` option. This is informational — it determines where the import line goes in `flake.nix`. Skip the question if the user already named the host(s).
 
 **Optional (ask only if relevant):**
 

@@ -103,6 +103,6 @@ Do not rebuild. Do not stage files. Leave both of those to the user's own workfl
 - Never run `nh os boot` or `nixos-rebuild` — leave that to the user.
 - `vpn-server` is headless; never suggest HM or user packages for it.
 - The `vpn-server` host uses `aarch64-linux` — only offer packages that are likely available for that architecture.
-- `natty` has no wheel access and no personal user packages — the only shared user destination for `natty` is the HM shared list (`home.nix`).
+- `natty` has their own entry in `users.users.natty` in `modules/users.nix` (wheel access, personal `packages` list) alongside the HM shared list (`home.nix`) — both destinations are valid for `natty`.
 - If the package name is ambiguous (e.g. `discord` vs `vesktop`), note the distinction briefly.
 - If the package may require `nixpkgs.config.allowUnfree = true` (already enabled globally in this repo via `nix.nix`), no action is needed — just proceed.

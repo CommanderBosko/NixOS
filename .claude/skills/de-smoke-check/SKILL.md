@@ -11,7 +11,7 @@ Force Nix to fully evaluate one named module under `modules/desktop-environments
 
 ## Why this exists
 
-Only 3 of the 12 modules under `modules/desktop-environments/` are actually imported by a host (`niri` on gaming/laptop, `plasma` on natalie-laptop) — the other 9 are edited only through `lib.deSmoke`, the laptop config with each DE module swapped in. `nh os boot --dry` on a real host only exercises whatever DE that host already has wired in; it silently verifies nothing about an unwired module you just touched. `nix flake check` is also insufficient here — like the four real hosts, it's a shallow check. This skill closes both gaps for the unwired case.
+Only 1 of the 12 modules under `modules/desktop-environments/` is actually imported by any host — `niri`, imported by all three desktop hosts (gaming, laptop, natalie-laptop). The other 11, including `plasma`, are edited only through `lib.deSmoke`, the laptop config with each DE module swapped in. `nh os boot --dry` on a real host only exercises whatever DE that host already has wired in; it silently verifies nothing about an unwired module you just touched. `nix flake check` is also insufficient here — like the four real hosts, it's a shallow check. This skill closes both gaps for the unwired case.
 
 ## Arguments
 

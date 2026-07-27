@@ -12,7 +12,7 @@ Run a read-only health sweep for a single systemd service on one of this repo's 
 Parse from the user's request:
 
 - **`<unit>`** (required) — the systemd unit / service name, e.g. `jellyfin`, `qbittorrent`, `wg-quick-wg0`.
-- **`host`** (optional) — one of `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Default: the **local/current box** (no SSH).
+- **`host`** (optional) — one of `.claude/hosts.json`'s `flakeHosts` (enumerate live, don't hardcode: `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json`). Default: the **local/current box** (no SSH).
 - **mount path** (optional) — a backing mount to check, e.g. `/mnt/media`.
 - **data dir** (optional) — a data/library/download dir to check ownership on, e.g. `/mnt/media/downloads`.
 - **absent mode** (optional) — if the user is confirming a service was *intentionally removed* (e.g. "confirm qbittorrent service is gone"), invert the service check so "not found / inactive" is a PASS.
