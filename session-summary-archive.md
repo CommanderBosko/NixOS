@@ -1,3 +1,28 @@
+## Session: 2026-07-19 — Diagnosed and redesigned the silent "improve-system" cloud routine
+
+**Focus**: Review the PR the scheduled weekly `improve-system` cloud routine was supposed to have opened, discover it opened nothing at all, and fix the routine so a future run can't fail silently again.
+
+### What changed (and why)
+- Found the routine (`trig_01QZPjKtQdMtX5bqwtC8oz8g`, weekly Sunday cron) had fired once already with zero trace on GitHub — no PR, no branch, no issue — and `persist_session:false` meant its session transcript was discarded, so "ran clean" and "failed silently" were indistinguishable from outside.
+- Flipped `persist_session:true` and re-ran. Watched via a local background `gh pr/issue list` poller for 78 minutes total (two watches, 30 then 45 min) — still nothing. Concluded the original design's fatal flaw: it only ever writes anything to GitHub as its very last action, so a mid-run hang looks identical to a clean pass.
+- Redesigned the routine's prompt: it now opens a GitHub tracking issue (`improve-system weekly report — YYYY-MM-DD`) as its literal first action, posts a checkpoint comment after each of its 6 steps, and only closes the issue as the final action. Triggered a third run (2026-07-20 00:58 UTC) under this design; ended the session before it resolved.
+- No changes landed in this repo itself this session (working tree stayed clean throughout) — all work was against the cloud routine's config via the `RemoteTrigger` API, which lives outside git.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of why each fix step was chosen (persist_session first, then the checkpoint-issue redesign after that alone proved insufficient).
+
+### Issues / surprises
+- `WebFetch` 403s on `claude.ai/code/routines/<id>` — no way to check a routine's live run status except via the browser UI (real login) or by having the routine itself leave a trail on GitHub.
+- The `RemoteTrigger` API exposes trigger *config* (get/list/create/update/run) but no run/session *status* — there's no way to ask "is this run still going" short of watching for its side effects.
+
+### Next session
+- Check `gh issue list --state all` on `CommanderBosko/NixOS` for `improve-system weekly report — 2026-07-20` first thing — its state (open/closed) and checkpoints tell you exactly what happened to the third run.
+- If it's still silent even with the new design, suspect the cloud sandbox lacks `gh` write access entirely and investigate the environment's GitHub App/token scope directly.
+
+**Commits**: none this session (repo untouched; all changes were to the cloud routine's config)
+
+---
+
 ## Session: 2026-07-18 — Skill model/script paradigm rollout; two real cross-host bugs found
 
 **Focus**: Classify all 52 skills by grunt-vs-judgment work and pin cheap ones to Haiku, run a scoped skill-audit for deterministic work that belongs in scripts, then chase down two real bugs the audit's own verification work surfaced along the way.
