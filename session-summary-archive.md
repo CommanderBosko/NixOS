@@ -1,3 +1,28 @@
+## Session: 2026-07-20 — Found and fixed the improve-system cloud routine's root cause: GitHub App never installed
+
+**Focus**: Follow up on the prior session's unresolved third redesign of the "improve-system" cloud routine — determine why it was still producing zero trace on GitHub even after the checkpoint-issue redesign.
+
+### What changed (and why)
+- Re-checked the routine ~20h after its 2026-07-20 00:58 UTC fire: `RemoteTrigger get` confirmed it had run, but `gh issue list`/`gh pr list` were still completely empty — meaning even the routine's literal first action (`gh issue create`) never reached GitHub. Ruled out a mid-run hang; this pointed at an infra/auth problem, not a prompt-design flaw.
+- Walked the user through GitHub's settings UI to trace the actual permission gap: the "Claude" GitHub App (owned by `anthropics`) was **authorized** on the user's GitHub account (visible under Authorized GitHub Apps, Issues/PRs permissions listed) but had **zero installations** — absent from Installed GitHub Apps entirely. GitHub Apps require both authorization and installation independently; authorization alone grants no repo access.
+- User installed the app at `github.com/apps/claude`, scoped to `CommanderBosko/NixOS`, with Contents/Issues/Pull-requests read & write.
+- Re-triggered the routine via `RemoteTrigger run` to verify. Tracking issue [`#1`](https://github.com/CommanderBosko/NixOS/issues/1) was created within 15 seconds, all 6 checkpoints posted, issue closed with a full report ~90 seconds later — the routine's first-ever clean end-to-end run. Zero-diff (nothing needed applying); 6 minor structural findings logged for manual review only.
+- No changes landed in this repo — all work this session was diagnostic (GitHub UI + `RemoteTrigger`/`gh` API calls), outside git entirely.
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeup of the diagnostic trail and why the App-install fix was the right call (confirms sessions 46/51's prompt-design work was correct all along — the blocker was entirely infra-side).
+
+### Issues / surprises
+- `WebFetch` on the routine's own `claude.ai/code/routines/<id>` page still 403s (no login session available to a Claude Code tool) — GitHub remained the only reachable diagnostic channel, and this time it actually held the answer once the right settings tab was checked (Authorized GitHub Apps vs. Installed GitHub Apps are easy to conflate — the Connectors page in claude.ai showing "GitHub Integration" as connected was misleading, since that reflects authorization only).
+
+### Next session
+- None — routine confirmed working, back on normal weekly cadence. Only revisit if a future Sunday run goes silent again.
+- 6 minor skill-audit findings from the routine's own run are logged in `project-state.md` Current Goals for whenever there's appetite to work through them (all low-priority polish, none urgent).
+
+**Commits**: none (diagnostic-only session, no repo changes)
+
+---
+
 ## Session: 2026-07-19 — Diagnosed and redesigned the silent "improve-system" cloud routine
 
 **Focus**: Review the PR the scheduled weekly `improve-system` cloud routine was supposed to have opened, discover it opened nothing at all, and fix the routine so a future run can't fail silently again.
