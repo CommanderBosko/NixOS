@@ -57,3 +57,12 @@ again to confirm.
 - Never amend a previous commit unless the user explicitly asks
 - If there are no changes to commit, say so — do not create an empty commit
 - If a pre-commit hook fails, fix the underlying issue and create a NEW commit (never --amend after a hook failure)
+
+## Gotchas
+
+- **"relative to this skill's directory" is not the shell's cwd.** This is a global,
+  home-symlinked skill, and the Bash tool's working directory during a run is the project
+  root, not this skill's directory. Resolve the full absolute path from this skill's "Base
+  directory" line (e.g. `/home/bosko/.claude/skills/git-commit/scripts/git-commit.sh`)
+  rather than guessing a project-relative `.claude/skills/git-commit/...` path — the guess
+  reliably 404s with exit 127 (observed 2026-07-27).

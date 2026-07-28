@@ -39,3 +39,12 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 - Only force push if the user explicitly requests it AND the branch is not main/master
 - Do not push if there are no commits ahead of origin (nothing to push)
 - If the push is rejected (non-fast-forward), explain why and suggest `git pull --rebase` rather than force pushing
+
+## Gotchas
+
+- **"relative to this skill's directory" is not the shell's cwd.** This is a global,
+  home-symlinked skill, and the Bash tool's working directory during a run is the project
+  root, not this skill's directory. Resolve the full absolute path from this skill's "Base
+  directory" line (e.g. `/home/bosko/.claude/skills/git-push/scripts/push.sh`) rather than
+  guessing a project-relative `.claude/skills/git-push/...` path — the guess reliably 404s
+  with exit 127 (observed 2026-07-25).
