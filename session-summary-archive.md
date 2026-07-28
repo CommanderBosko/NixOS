@@ -1,3 +1,28 @@
+## Session: 2026-07-27 — Found and fixed a second real bug in the improve-system cloud routine, then hardened it toward live-session parity
+
+**Focus**: Check on the weekly `improve-system` cloud routine's run, investigate a suspiciously repetitive backlog, and harden the routine after finding it was reporting phantom findings.
+
+### What changed (and why)
+- The routine's Sunday run (issue #2) re-reported the same 6 "structural findings" from the past 3 weeks. Investigated instead of just clearing them by hand: all 6 were already fixed by commit `29e40c1` (2026-07-20), verified by reading each of the 6 skill files' actual current content. The routine's persisted session (`persist_session: true`, same session ID reused weekly) had a stale belief about what commit to diff against and never noticed the fix.
+- Patched the trigger prompt with a freshness check first, then — after the user asked how to harden the routine toward live-session parity — went further per the user's choice of all three offered options: removed the reuse-shortcut entirely (always run the full 55-skill audit fresh), set `persist_session: false` (no cross-week memory), and added a new "self-verifiable structural fixes" auto-apply tier (SKILL.md-only fixes with a scriptable check can now land as a PR instead of sitting report-only forever).
+- Manually triggered the hardened routine to test it. Confirmed all three changes worked: explicit "no persisted history" checkpoints, a genuine full fan-out (not reused), and — this time — 7 *real* drift bugs found and fixed (a rules-count typo, a false claim about `natty`'s permissions, a stale security-workaround description, a wrong DE-host roster, three hardcoded host lists replaced with live `jq` enumeration). It also correctly refused one sub-agent's false-positive claim after cross-checking.
+- Reviewed PR #4 by hand (independently re-verified all 7 fixes against live repo content) and merged it. Fast-forwarded local `main` to match, since the squash-merge had only happened on GitHub.
+
+### Decisions
+- See `project-state.md` Recent Decisions for full writeups: removing the reuse-shortcut instead of just patching around it, the new auto-apply tier's scope (never `.nix`, always re-verify current content first), and doing the PR review/merge by hand rather than building a dedicated skill for it yet.
+
+### Issues / surprises
+- The routine's "clean, nothing to fix" verdict had been technically true but for the wrong reason for two straight weeks — a good reminder that an unattended routine's own confidence isn't proof of correctness; the phantom backlog was only caught by directly reading the actual files instead of trusting the audit's report.
+- The cloud sandbox still has no `nix`/`nh` available and no exposed way to add them (only one CCR environment exists, no setup-script mechanism) — confirmed this is a real, unfixable-from-Claude-Code-tooling gap, not something to keep chasing.
+
+### Next session
+- Watch the 2026-08-02 scheduled fire (the first real unattended run under the new design) — confirm it opens cleanly with no persisted-memory references, runs the full fresh audit, and — if it finds anything — actually applies+PRs self-verifiable fixes rather than just reporting them.
+- `dotfiles/bosko/claude/skills/improve-system/SKILL.md`'s "five standing rules" fix needs a rebuild + new session to reach live `~/.claude` (the other 6 fixes from PR #4 are project-local and already live).
+
+**Commits**: `bdcf9b6` (1 commit, merged via PR #4)
+
+---
+
 ## Session: 2026-07-26 — Catch-up close for 4 unclosed sessions (2026-07-23 through -26)
 
 **Focus**: Close out 11 commits across at least 4 sessions that never ran `/session-closer` individually; this close's own conversation did no repo work itself.

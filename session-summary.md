@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-28 — Sudo-gated skill steps now hand off instead of failing silently
+
+**Focus**: User asked whether skills that perform an actual `switch`/rebuild (not just dry-run) should be removed since Claude can't supply an interactive sudo password; audit, fix the real gap, and decide whether a NOPASSWD rule is worth adding to remove the friction.
+
+### What changed (and why)
+- Audited every skill touching `nixos-rebuild switch`/`nh os switch`: `rollback` and `nixos-gc` already handed off correctly; `remote-rebuild` works because `vpn-server` alone has passwordless sudo. `fleet-rollout` was the one real gap — its switch step had no hand-off and would just fail on the password prompt.
+- Fixed `fleet-rollout` step 5 to hand the switch command to the user for every host except `vpn-server`, and made the pause explicit even in Training Mode OFF (unattended runs still stall here). Added a Gotchas section.
+- Found and fixed a second bug in the same step: `fleet-rollout` was telling `vpn-server` to deploy via `switch --target-host`, which the `remote-rebuild` skill's own Gotchas say drops the SSH session mid-activation — corrected to use `remote-rebuild`'s actual `boot` + reboot method.
+- Fixed `rollback` Step 3, which instructed running the sudo command directly, contradicting its own Gotcha further down the file (already noting 9+ past sessions where this was mis-attempted). Rewrote as an explicit hand-off; Step 4 now reuses the unprivileged `rollback.sh` helper instead of a second `sudo` call.
+
+### Decisions
+- Considered adding a NOPASSWD sudo rule for `nixos-rebuild switch` to remove the friction entirely — rejected. `switch` activates an arbitrary config (effectively unrestricted root code execution), so even a narrowly-scoped rule would remove the last human checkpoint against a compromised/prompt-injected agent session. Keeping the hand-off pattern as the standing design.
+
+### Issues / surprises
+- Three commits from an earlier, separately-run session today (`a1493d3` gaming amd_pstate fix, `87531b8` new boot-error-triage skill, `cb7e495` git-commit/git-push absolute-path Gotcha) landed without their own `/session-closer` run — same gap pattern as the 2026-07-26 catch-up, now recurring a second time. Narrated into project-state.md from commit messages only (no transcript); flagged directly to the user rather than silently repeating the workaround again.
+
+### Next session
+- gaming: rebuild + reboot to pick up `amd_pstate=disable` (rides along with other pending gaming reboots).
+- `nh os boot` + a new session to bring `boot-error-triage` and the `git-commit`/`git-push` Gotcha docs live in `~/.claude` (global repo-managed skills).
+- Consider a lower-friction session-closing habit (e.g. closing at the end of each sitting) given two same-day unclosed-session gaps in a row.
+
+**Commits**: `595b759` (this session) + `a1493d3`, `87531b8`, `cb7e495` (earlier unclosed session today, narrated from commit messages only — `f68aed0` from that same gap window was already captured by the 2026-07-27 close).
+
+---
+
 ## Session: 2026-07-27 — Verified natalie-laptop's nvidia driver fix actually cleared the boot errors
 
 **Focus**: Confirm, via a live boot-log check on natalie-laptop, that an earlier session's two nvidia driver fixes (closed kernel module, legacy 580.xx pin) actually resolved the issue rather than just evaluating cleanly.
@@ -109,31 +134,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - laptop still hasn't been rebuilt/rebooted for this fix (or the large backlog of other pending changes tracked in Known Issues).
 
 **Commits**: `faff703..53dd415` (3 commits: `faff703` predates this session's work, `6877f4b` is this session's fix, `53dd415` is the unrelated out-of-band shell.nix commit)
-
----
-
-## Session: 2026-07-27 — Found and fixed a second real bug in the improve-system cloud routine, then hardened it toward live-session parity
-
-**Focus**: Check on the weekly `improve-system` cloud routine's run, investigate a suspiciously repetitive backlog, and harden the routine after finding it was reporting phantom findings.
-
-### What changed (and why)
-- The routine's Sunday run (issue #2) re-reported the same 6 "structural findings" from the past 3 weeks. Investigated instead of just clearing them by hand: all 6 were already fixed by commit `29e40c1` (2026-07-20), verified by reading each of the 6 skill files' actual current content. The routine's persisted session (`persist_session: true`, same session ID reused weekly) had a stale belief about what commit to diff against and never noticed the fix.
-- Patched the trigger prompt with a freshness check first, then — after the user asked how to harden the routine toward live-session parity — went further per the user's choice of all three offered options: removed the reuse-shortcut entirely (always run the full 55-skill audit fresh), set `persist_session: false` (no cross-week memory), and added a new "self-verifiable structural fixes" auto-apply tier (SKILL.md-only fixes with a scriptable check can now land as a PR instead of sitting report-only forever).
-- Manually triggered the hardened routine to test it. Confirmed all three changes worked: explicit "no persisted history" checkpoints, a genuine full fan-out (not reused), and — this time — 7 *real* drift bugs found and fixed (a rules-count typo, a false claim about `natty`'s permissions, a stale security-workaround description, a wrong DE-host roster, three hardcoded host lists replaced with live `jq` enumeration). It also correctly refused one sub-agent's false-positive claim after cross-checking.
-- Reviewed PR #4 by hand (independently re-verified all 7 fixes against live repo content) and merged it. Fast-forwarded local `main` to match, since the squash-merge had only happened on GitHub.
-
-### Decisions
-- See `project-state.md` Recent Decisions for full writeups: removing the reuse-shortcut instead of just patching around it, the new auto-apply tier's scope (never `.nix`, always re-verify current content first), and doing the PR review/merge by hand rather than building a dedicated skill for it yet.
-
-### Issues / surprises
-- The routine's "clean, nothing to fix" verdict had been technically true but for the wrong reason for two straight weeks — a good reminder that an unattended routine's own confidence isn't proof of correctness; the phantom backlog was only caught by directly reading the actual files instead of trusting the audit's report.
-- The cloud sandbox still has no `nix`/`nh` available and no exposed way to add them (only one CCR environment exists, no setup-script mechanism) — confirmed this is a real, unfixable-from-Claude-Code-tooling gap, not something to keep chasing.
-
-### Next session
-- Watch the 2026-08-02 scheduled fire (the first real unattended run under the new design) — confirm it opens cleanly with no persisted-memory references, runs the full fresh audit, and — if it finds anything — actually applies+PRs self-verifiable fixes rather than just reporting them.
-- `dotfiles/bosko/claude/skills/improve-system/SKILL.md`'s "five standing rules" fix needs a rebuild + new session to reach live `~/.claude` (the other 6 fixes from PR #4 are project-local and already live).
-
-**Commits**: `bdcf9b6` (1 commit, merged via PR #4)
 
 ---
 
