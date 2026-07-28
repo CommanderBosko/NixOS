@@ -53,9 +53,13 @@ done < <(git ls-files 'secrets/*.yaml' 2>/dev/null)
 [ "$intacterr" -eq 0 ] && echo "  all encrypted"
 
 echo
-echo "-- 3. Git history (all commits, excluding secrets/ and .claude/skills/) --"
-echo "     (scanning $(git rev-list --all --count) commits; this can take a moment)"
-allrev=$(git rev-list --all)
+echo "-- 3. Git history (all commits, excluding secrets/, .claude/skills/, and refs/stash) --"
+echo "     (scanning $(git rev-list --all --exclude=refs/stash --count) commits; this can take a moment)"
+# refs/stash is deliberately excluded: git push never transmits it, so a stash-only hit
+# is a local WIP leftover, not a public exposure — including it here caused a false
+# "leaked in history" alarm over old stash entries that were never reachable from any
+# branch or tag (found 2026-07-27).
+allrev=$(git rev-list --all --exclude=refs/stash)
 histhit=0
 for desc_pat in \
   "private key block::$PRIV_BLOCK" \
