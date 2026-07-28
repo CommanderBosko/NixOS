@@ -112,6 +112,12 @@
       source = "${self}/dotfiles/bosko/claude/skills/ship-skill/SKILL.md";
       force = true;
     };
+    # Recursive dir symlink: covers SKILL.md + scripts/ (collect-boot-diagnostics.sh).
+    ".claude/skills/boot-error-triage" = {
+      source = "${self}/dotfiles/bosko/claude/skills/boot-error-triage";
+      recursive = true;
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
