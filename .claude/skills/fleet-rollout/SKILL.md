@@ -24,6 +24,14 @@ description: Deploy a config change across all four NixOS hosts one at a time �
 > ⚠️ **This loop activates configuration on live machines (`switch`).** Because it mutates
 > running systems, ON is strongly recommended. Only run OFF when you've already vetted the
 > change and accept unattended activation across the whole fleet.
+>
+> **Step 5 cannot run unattended for any host except `vpn-server`.** No NOPASSWD sudo rule
+> exists on the local host or on gaming/laptop/natalie-laptop, so Claude cannot supply a
+> sudo password — `nh os switch` / `nixos-rebuild switch --target-host` will just fail with
+> "a terminal is required to read the password" if attempted directly. Step 5 always stops
+> and hands the switch command to the user, **regardless of Training Mode**, the same way
+> the mandatory commit gate in `flake-update-verify` can't be skipped by OFF mode. Budget
+> for that pause even on unattended/`/loop`-scheduled runs.
 
 ## Goal
 
@@ -49,8 +57,12 @@ The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the sin
 4. `vpn-server`
 
 The host this loop runs on is the **local** host — deploy it with `nh os switch`. All
-other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`
-(use the `remote-rebuild` skill). Resolve which is local with `hostname` at run start.
+other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`,
+**except `vpn-server`**, which is deployed via the `remote-rebuild` skill's `boot` + reboot
+method instead (see Step 5 and Gotchas for why `switch` is never used there). None of the
+local/desktop switches can run unattended — only `vpn-server` has passwordless sudo, so
+Step 5 always hands the others off to the user. Resolve which is local with `hostname` at
+run start.
 
 ## Steps
 
@@ -80,11 +92,24 @@ current host passes its health sweep.**
    - Done-rule: dry-run evaluates clean and prints the would-be changes with no errors.
      If it errors, stop at this host — do NOT switch.
 
-5. **Per host — SWITCH (activate live).** Only after step 4 is green for this host:
-   - Local host: `nh os switch /home/bosko/NixOS`.
-   - Remote host: invoke the `remote-rebuild` skill
-     (`nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <host>`).
-   - Done-rule: switch completes exit 0 and reports the new generation activated.
+5. **Per host — SWITCH (activate live).** Only after step 4 is green for this host.
+   **`sudo` has no NOPASSWD rule on the local host or on gaming/laptop/natalie-laptop —
+   do not run these directly via Bash, they will fail with "a terminal is required to
+   read the password."** Hand off instead, and this pause applies even in Training Mode
+   OFF:
+   - Local host: print `nh os switch /home/bosko/NixOS` and ask the user to run it
+     themselves (suggest the `!` prefix). Wait for their confirmation it completed.
+   - Remote desktop host (gaming/laptop/natalie-laptop): print
+     `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <host>` and
+     hand it off the same way — the same missing-NOPASSWD problem applies over SSH.
+   - `vpn-server` only: this is the one host with passwordless sudo, so Claude CAN run
+     this step itself — but never with `switch` (it tears down the SSH session
+     mid-activation, per the `remote-rebuild` skill's Gotchas). Invoke the
+     `remote-rebuild` skill instead, which deploys via `nixos-rebuild boot` + a clean
+     reboot.
+   - Done-rule: for handed-off hosts, the user confirms the command completed and
+     reports the new generation; for `vpn-server`, `remote-rebuild` completes exit 0
+     and reports the new generation activated.
 
 6. **Per host — FULL HEALTH SWEEP.** Delegate to the **`fleet-status` skill** (which runs
    `.claude/skills/fleet-status/scripts/fleet-status.sh`) rather than re-spelling the probe
@@ -149,3 +174,18 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 Tell me: the mode, the result, the per-host outcome (dry / switch+generation / sweep),
 which steps were skipped vs re-run, where the two files were written, and — if blocked —
 exactly which host and step failed and whether a rollback is recommended.
+
+## Gotchas
+
+- **`sudo` has no NOPASSWD rule on the local host or on gaming/laptop/natalie-laptop.**
+  Running `nh os switch` or `nixos-rebuild switch --target-host <host>` directly via the
+  Bash tool will fail with "a terminal is required to read the password" (same failure
+  mode documented in the `rollback` and `nixos-gc` skills). Step 5 hands these off to the
+  user instead of attempting them — don't "fix" that by trying to run them directly, and
+  don't treat a hand-off as the step being blocked; it's the expected path.
+- **`vpn-server` is the one host with passwordless sudo, but still can't use `switch`
+  over SSH.** `switch-to-configuration` restarts networking, which drops the SSH session
+  mid-activation and leaves firewall/NAT state inconsistent (symptom: `MASQUERADE`
+  present but FORWARD/conntrack at zero). Always deploy vpn-server via the
+  `remote-rebuild` skill's `boot` + reboot method, never
+  `nixos-rebuild switch --target-host vpn-server` directly.

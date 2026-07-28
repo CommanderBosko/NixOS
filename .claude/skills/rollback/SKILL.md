@@ -2,7 +2,7 @@
 name: rollback
 description: Use this skill when the user wants to "rollback", "roll back nixos", "revert to previous generation", "undo last rebuild", "go back to previous build", or "nixos rollback". It shows recent generations, confirms with the user, then activates the previous generation immediately via nixos-rebuild switch --rollback.
 model: haiku
-version: 0.2.0
+version: 0.3.0
 ---
 
 # NixOS Rollback
@@ -38,30 +38,32 @@ Ask the user to confirm before proceeding. This yes/no gate can be presented via
 
 Do not proceed until the user explicitly confirms (e.g. "yes", "do it", "go ahead").
 
-## Step 3 — Run rollback
+## Step 3 — Hand off the rollback command
+
+**Do not run this via the Bash tool.** `sudo` has no NOPASSWD rule on this host, so it will fail with "a terminal is required to read the password" (see Gotchas). Print the exact command and ask the user to run it themselves (suggest the `!` prefix):
 
 ```bash
 sudo nixos-rebuild switch --rollback
 ```
 
-The `nh` tool does not have a rollback subcommand — always use `nixos-rebuild` directly. Do not add `--dry` or any other flags.
+The `nh` tool does not have a rollback subcommand — always use `nixos-rebuild` directly. Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
 
 ## Step 4 — Report result
 
-Run again to confirm the active generation changed:
+Re-run the same read-only helper from Step 1 to confirm the active generation changed — no sudo needed:
 
 ```bash
-sudo nix-env --list-generations --profile /nix/var/nix/profiles/system | tail -5
+/home/bosko/NixOS/.claude/skills/rollback/scripts/rollback.sh
 ```
 
-Show the user which generation is now marked `(current)` and confirm the rollback succeeded.
+Show the user which generation is now marked `<- current` and confirm the rollback succeeded.
 
 ## Script
 
 `.claude/skills/rollback/scripts/rollback.sh [target-generation]` — **read-only**: lists recent
 generations and resolves the rollback target (current minus 1, or the number passed). It does NOT
-activate anything; the skill runs the actual `nixos-rebuild switch --rollback` itself (Step 3)
-only after the user confirms.
+activate anything; the actual `nixos-rebuild switch --rollback` (Step 3) is always handed off to
+the user to run themselves, never executed by Claude directly.
 
 ---
 
