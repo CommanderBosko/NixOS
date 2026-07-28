@@ -1,4 +1,4 @@
-{ pkgs, inputs, lib, ... }:
+{ pkgs, inputs, lib, config, ... }:
 
 {
   # Frozen at this machine's install-time NixOS release — never bump on upgrades
@@ -42,6 +42,12 @@
     # "not supported by open nvidia.ko" on every boot under modules/nvidia.nix's
     # default. Fall back to the proprietary closed module instead.
     nvidia.open = lib.mkForce false;
+
+    # Pascal (MX350, 10de:1c94) has aged out of the .stable driver branch —
+    # the 595.84 driver silently refuses to bind to it ("will ignore"),
+    # leaving no nvidia kernel module loaded at all. Needs the 580.xx legacy
+    # branch, which still supports Pascal.
+    nvidia.package = lib.mkForce config.boot.kernelPackages.nvidiaPackages.legacy_580;
   };
 
   # Host-specific packages, on top of the shared modules/desktop-apps.nix list

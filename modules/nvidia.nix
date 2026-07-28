@@ -39,7 +39,9 @@
       nvidiaSettings = true;
 
       # Optionally, you may need to select the appropriate driver version for your specific GPU.
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      # mkDefault so hosts whose GPU has aged out of the current stable branch
+      # (e.g. natalie-laptop's Pascal-era dGPU) can override to a legacy branch.
+      package = lib.mkDefault config.boot.kernelPackages.nvidiaPackages.stable;
     };
   };
 
