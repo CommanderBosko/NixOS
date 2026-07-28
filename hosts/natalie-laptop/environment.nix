@@ -44,5 +44,6 @@
     anki
     qutebrowser
     rpi-imager
+    simple-scan
   ];
 }
