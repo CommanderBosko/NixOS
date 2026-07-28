@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, ... }:
 
 {
   # Frozen at this machine's install-time NixOS release — never bump on upgrades
@@ -36,6 +36,12 @@
 
     # Enable graphical interface
     graphics.enable = true;
+
+    # This machine's discrete GPU (PCI 10de:1c94, Pascal-era) predates the
+    # GSP firmware the open kernel module requires — NVRM probe fails with
+    # "not supported by open nvidia.ko" on every boot under modules/nvidia.nix's
+    # default. Fall back to the proprietary closed module instead.
+    nvidia.open = lib.mkForce false;
   };
 
   # Host-specific packages, on top of the shared modules/desktop-apps.nix list

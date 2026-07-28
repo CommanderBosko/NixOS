@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 {
   # Load nvidia driver for Xorg and Wayland
@@ -26,11 +26,13 @@
 
       # Use the NVidia open source kernel module (not to be confused with the
       # independent third-party "nouveau" open source driver).
-      # Support is limited to the Turing and later architectures. Full list of
-      # supported GPUs is at:
+      # Support is limited to the Turing and later architectures (needs GSP
+      # firmware). Full list of supported GPUs is at:
       # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
       # Only available from driver 515.43.04+
-      open = true;
+      # mkDefault so pre-Turing hosts (e.g. natalie-laptop's Pascal-era dGPU,
+      # which fails NVRM probe under the open module) can override to false.
+      open = lib.mkDefault true;
 
       # Enable the Nvidia settings menu,
       # accessible via `nvidia-settings`.
