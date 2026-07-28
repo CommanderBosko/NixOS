@@ -1,3 +1,29 @@
+## Session: 2026-07-26 — Catch-up close for 4 unclosed sessions (2026-07-23 through -26)
+
+**Focus**: Close out 11 commits across at least 4 sessions that never ran `/session-closer` individually; this close's own conversation did no repo work itself.
+
+### What changed (and why)
+- **2026-07-23**: `/init` now always chains into `claude-rules`, everywhere; added a 5th standing rule (Ask via AskUserQuestion); shipped `/create-secret-scan` (project-tuned secret-scan generator, chosen over a global generic scanner) and fixed a real bug found while testing it — `git grep -E "$pat"` silently no-ops when `$pat` starts with `-`, so private-key detection had never actually worked in the shipped `secret-scan.sh`; `git-commit` now asks before dropping unrelated uncommitted work; new `commit-and-push` skill; niri Mod+B/Mod+G now also opens a Zen private window; gaming's Jellyfin drive fixed to show in Thunar's sidebar (`x-gvfs-show`).
+- **2026-07-24**: flake bump resolved the `electron-40.10.5` insecure waiver (nixpkgs moved vesktop to `electron_43`) — removed, don't re-add; the same bump was the first time `rtk` resolved on the unstable hosts, but its own `cargo test` checkPhase fails under `-D warnings`, breaking real builds — patched with `doCheck = false`.
+- **2026-07-25**: niri's own cursor-shape-v1 rendering (text/grab/resize cursors) had no `cursor{}` KDL block and was falling back to niri's bundled default instead of `breeze_cursors` — added the block plus `home.pointerCursor` (GTK path deliberately left off to avoid clobbering the hand-set Sweet-Dark `settings.ini`).
+- **2026-07-26**: routine `dms`/`financeguru` flake bump, all 4 hosts deep-eval clean; `flake-update-verify` gained a mandatory `AskUserQuestion` gate before its commit+push step, which now applies regardless of Training Mode or how the invocation was pre-approved (Training Mode's own default flipped OFF for steps 1-5 in the same change).
+
+### Decisions
+- See `project-state.md` Recent Decisions for the full writeups (flake-update-verify's gate scope, create-secret-scan's option-2 choice, git-commit's new ask-before-drop behavior, the pointerCursor gtk.enable=off call).
+
+### Issues / surprises
+- Four sessions in a row went uncommitted-to-session-closer, meaning this close is narrated entirely from commit messages and the memory already saved live during those sessions (no transcript to read for the "why" of any of them) — the memory system is what made an accurate catch-up possible at all.
+- niri's cursor fix and the `rtk` doCheck patch are both dry-run/eval-verified only; neither has been confirmed against a real reboot/build yet — see Next Steps.
+
+### Next session
+- Visually confirm the niri cursor fix after a reboot (text I-beam, resize/grab shapes rendering as breeze_cursors).
+- Run the pending gaming/laptop/natalie-laptop rebuilds (user said they'd handle these themselves) — picks up the cursor fix, the flake bumps, and everything else queued since session 48.
+- Try running `/session-closer` at the end of each session going forward rather than letting several stack up.
+
+**Commits**: `a3d5c59..7e6e896` (11 commits)
+
+---
+
 ## Session: 2026-07-20 (continued) — Fixed all 6 structural findings from the routine's first clean run
 
 **Focus**: Fix the 6 minor skill-audit findings the improve-system routine's own first clean run (see the entry directly below) surfaced but didn't auto-apply, since they were flagged structural/report-only.

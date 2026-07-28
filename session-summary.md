@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-27 — Verified natalie-laptop's nvidia driver fix actually cleared the boot errors
+
+**Focus**: Confirm, via a live boot-log check on natalie-laptop, that an earlier session's two nvidia driver fixes (closed kernel module, legacy 580.xx pin) actually resolved the issue rather than just evaluating cleanly.
+
+### What changed (and why)
+- No repo changes this session — verification only. An earlier, unclosed session today made 3 commits (`140d33d` simple-scan, `ee07039` closed nvidia module, `c22737e` legacy 580.xx driver pin) fixing natalie-laptop's Pascal-GPU (MX350) nvidia driver failure; this session confirmed on a real boot that the fix works.
+- Checked `journalctl -k -b 0` and `nvidia-smi` directly on natalie-laptop: the module now loads (`NVRM: loading NVIDIA UNIX x86_64 Kernel Module 580.173.02`), binds to the MX350, and `nvidia-smi` reports the driver live — no GSP-firmware probe failure, no RmInitAdapter failure, `systemctl --failed` empty.
+
+### Decisions
+- Initially tried reaching natalie-laptop over SSH from gaming (following the pattern of prior sessions); when that hit a host-key mismatch, did not bypass it (no `ssh-keygen -R`) — flagged it as a real "was this legitimate or not" question instead of assuming benign. Turned out to be moot: the conversation was already running locally on natalie-laptop, so no SSH was needed at all once that was noticed.
+
+### Issues / surprises
+- SSH to natalie-laptop from gaming failed with `Host key verification failed` against an unrecognized key — not diagnosed (stale `known_hosts` vs. genuine re-key), see project-state.md Known Issues.
+- Kernel log timestamps this boot show `Oct 08` while `uptime -s` reports the real date — the already-known RTC/CMOS-battery clock skew (sessions 57/58), not new.
+
+### Next session
+- Before trusting remote SSH to natalie-laptop again, resolve the host-key mismatch first (confirm a legitimate re-key before removing the old `known_hosts` entry).
+- No further nvidia action needed — both fixes are confirmed live and working.
+
+**Commits**: none this session (verification only); `140d33d..c22737e` (3 commits) landed in the preceding unclosed session and are already pushed.
+
+---
+
 ## Session: 2026-07-27 — Closed the Kate-vs-OnlyOffice printer thread from the prior session; confirmed both prior fixes live
 
 **Focus**: Follow-up on the previous session's natalie-laptop close-out — confirm the printer/VPN fixes are actually live, and figure out why OnlyOffice still couldn't see the printer even though Kate could.
@@ -109,32 +132,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `dotfiles/bosko/claude/skills/improve-system/SKILL.md`'s "five standing rules" fix needs a rebuild + new session to reach live `~/.claude` (the other 6 fixes from PR #4 are project-local and already live).
 
 **Commits**: `bdcf9b6` (1 commit, merged via PR #4)
-
----
-
-## Session: 2026-07-26 — Catch-up close for 4 unclosed sessions (2026-07-23 through -26)
-
-**Focus**: Close out 11 commits across at least 4 sessions that never ran `/session-closer` individually; this close's own conversation did no repo work itself.
-
-### What changed (and why)
-- **2026-07-23**: `/init` now always chains into `claude-rules`, everywhere; added a 5th standing rule (Ask via AskUserQuestion); shipped `/create-secret-scan` (project-tuned secret-scan generator, chosen over a global generic scanner) and fixed a real bug found while testing it — `git grep -E "$pat"` silently no-ops when `$pat` starts with `-`, so private-key detection had never actually worked in the shipped `secret-scan.sh`; `git-commit` now asks before dropping unrelated uncommitted work; new `commit-and-push` skill; niri Mod+B/Mod+G now also opens a Zen private window; gaming's Jellyfin drive fixed to show in Thunar's sidebar (`x-gvfs-show`).
-- **2026-07-24**: flake bump resolved the `electron-40.10.5` insecure waiver (nixpkgs moved vesktop to `electron_43`) — removed, don't re-add; the same bump was the first time `rtk` resolved on the unstable hosts, but its own `cargo test` checkPhase fails under `-D warnings`, breaking real builds — patched with `doCheck = false`.
-- **2026-07-25**: niri's own cursor-shape-v1 rendering (text/grab/resize cursors) had no `cursor{}` KDL block and was falling back to niri's bundled default instead of `breeze_cursors` — added the block plus `home.pointerCursor` (GTK path deliberately left off to avoid clobbering the hand-set Sweet-Dark `settings.ini`).
-- **2026-07-26**: routine `dms`/`financeguru` flake bump, all 4 hosts deep-eval clean; `flake-update-verify` gained a mandatory `AskUserQuestion` gate before its commit+push step, which now applies regardless of Training Mode or how the invocation was pre-approved (Training Mode's own default flipped OFF for steps 1-5 in the same change).
-
-### Decisions
-- See `project-state.md` Recent Decisions for the full writeups (flake-update-verify's gate scope, create-secret-scan's option-2 choice, git-commit's new ask-before-drop behavior, the pointerCursor gtk.enable=off call).
-
-### Issues / surprises
-- Four sessions in a row went uncommitted-to-session-closer, meaning this close is narrated entirely from commit messages and the memory already saved live during those sessions (no transcript to read for the "why" of any of them) — the memory system is what made an accurate catch-up possible at all.
-- niri's cursor fix and the `rtk` doCheck patch are both dry-run/eval-verified only; neither has been confirmed against a real reboot/build yet — see Next Steps.
-
-### Next session
-- Visually confirm the niri cursor fix after a reboot (text I-beam, resize/grab shapes rendering as breeze_cursors).
-- Run the pending gaming/laptop/natalie-laptop rebuilds (user said they'd handle these themselves) — picks up the cursor fix, the flake bumps, and everything else queued since session 48.
-- Try running `/session-closer` at the end of each session going forward rather than letting several stack up.
-
-**Commits**: `a3d5c59..7e6e896` (11 commits)
 
 ---
 
