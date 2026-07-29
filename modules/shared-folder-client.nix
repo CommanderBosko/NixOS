@@ -3,6 +3,15 @@
 {
   environment.systemPackages = [ pkgs.cifs-utils ];
 
+  # mdns4_minimal (nsswitch) only resolves .local-suffixed names, and there's
+  # no DNS record for the bare "gaming" hostname the mount below uses — so
+  # without this, mount.cifs fails with "could not resolve address for
+  # gaming" and the automount unit hits start-limit-hit. Static IP from
+  # .claude/hosts.json; update here too if that ever drifts.
+  networking.extraHosts = ''
+    10.0.0.251 gaming
+  '';
+
   # Mounts gaming's "shared" Samba share at the same /srv/shared path used
   # locally on gaming, so ~/Shared (dotfiles/common/configs/home.nix) can
   # point at one identical path on every host regardless of server/client
