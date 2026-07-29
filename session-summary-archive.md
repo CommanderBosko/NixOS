@@ -1,3 +1,33 @@
+## Session: 2026-07-27 — Root-caused all three natalie-laptop issues (clock desync, VPN, printer) live via SSH
+
+**Focus**: The user connected to natalie-laptop over SSH to debug three reported issues (clock desync, no internet when VPN connected, printer invisible in OnlyOffice) — asked to check boot logs first and research as needed before debugging.
+
+### What changed (and why)
+- Confirmed the session's Bash tool was running directly on natalie-laptop (not a separate remote hop), then read boot-time journal/chrony logs before touching anything, per the user's explicit request.
+- **Clock desync**: `journalctl -u chronyd` across multiple boots shows the identical ~4.8-year offset every time (`System clock wrong by 151528561.x seconds`, matching 2021-10-07 → 2026-07-27); `hwclock --show` can't access the hardware clock at all. Diagnosed as a dying CMOS/RTC battery (expected at ~5 years on this ASUS X532EQ). Checked chrony's config and found it already does the right things (`makestep 0.1 3`, `rtcautotrim`) — no config change made, since there isn't a software fix for failed hardware.
+- **VPN "no internet"**: forked two parallel investigations (VPN routing, printer/OnlyOffice) rather than working them serially. The VPN fork ruled out a config difference from gaming/laptop and found `wg-quick` activation logs clean across 5+ boots. A live 15-minute on-host test (background `run_in_background` captures of ping/dmesg/journal/WiFi-signal alongside the user manually running `vpn-on`) found zero reproduction — everything worked, confirmed in the user's own apps too. Digging into *why* it's enabled at all revealed the real mechanism: `wg-quick-wg0` autostarts at boot (never explicitly disabled), and the full-tunnel kill-switch route captures all traffic — chrony's own NTP retries included — the instant the service starts, before the handshake completes; if WiFi is still associating at that moment, everything vanishes into the dead tunnel with no fallback. Fixed by setting `networking.wg-quick.interfaces.wg0.autostart = false;` on natalie-laptop only (commit `21df99c`) — gaming/laptop haven't shown this failure, so their behavior is unchanged.
+- **Printer**: the other fork found this was never an OnlyOffice/Flatpak sandboxing issue — CUPS had zero destinations configured for *any* app. Root cause: natalie-laptop's running generation was built from a checkout 54 seconds too old to include the previous session's `6877f4b` fix in substance, confirmed via `nix derivation show` (not just `git log`) showing the deployed `cups-browsed.conf` was baked empty. Re-ran the `nixos-dry-run` skill against the current, correct checkout — clean build, fix now evaluates correctly.
+- Every risky or ambiguous step was gated through AskUserQuestion: dry-run-only vs. rebuild-now for the printer fix, whether to attempt a live VPN test given the risk of dropping the user's own SSH session, and repo-wide vs. natalie-laptop-only scope for the autostart fix.
+
+### Decisions
+- Chose to fork the two independent investigation threads (VPN, printer) in parallel while working the RTC/chrony analysis directly, rather than serially — they shared no dependencies.
+- Chose not to run any command needing an interactive sudo password (enabling VPN live, staging the rebuild) from the Bash tool — surfaced this limitation directly and asked the user to run those commands themselves rather than attempting a workaround.
+- Chose natalie-laptop-only for the autostart fix over a repo-wide change, on the user's explicit call, since gaming/laptop haven't shown the failure and disabling autostart there would be an unrequested behavior change.
+
+### Issues / surprises
+- The VPN issue could not be reproduced at all once live-tested — full connectivity (ping, DNS, HTTPS, a 5MB download at ~110 Mbps) worked perfectly with VPN manually enabled after boot. The eventual root cause (autostart racing WiFi association) explains why: it's a boot-time-only race, not a persistent condition.
+- The printer's "worked in Kate" report doesn't fully add up — CUPS had zero configured destinations system-wide at investigation time, so Kate can't have printed to a real queue for this printer either. Flagged as an open thread rather than resolved.
+- `nh os boot` (both for the printer fix and to stage the VPN fix) needs an interactive sudo password that the Bash tool cannot supply — the user is running the rebuild and reboot themselves after this session closes.
+
+### Next session
+- Once the user reboots: verify `lpstat -p -d` lists the Canon TS9500, and `systemctl is-enabled wg-quick-wg0` shows it no longer auto-starting (confirm `vpn-on`/`vpn-off` still work manually).
+- Ask what Kate's print dialog actually showed, to close the open thread above.
+- If natalie-laptop's WiFi association speed is ever worth confirming directly (vs. gaming's wired connection), `iw`/`ethtool` aren't installed on this host and would need adding first.
+
+**Commits**: `1c590e1..21df99c` (1 commit)
+
+---
+
 ## Session: 2026-07-27 — Diagnosed and fixed network printer detection; traced a Zen Browser follow-up to a stale-session-environment red herring
 
 **Focus**: Figure out why niri wasn't detecting a network printer, fix it, and verify it live.

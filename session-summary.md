@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-29 — Shared network folder for natty and bosko (Samba)
+
+**Focus**: Add a shared folder both natty and bosko can use across the fleet, visible in Thunar.
+
+### What changed (and why)
+- First pass (scoped via AskUserQuestion, skipping the full `/interview` ceremony): a plain local group-permissioned `/srv/shared` folder, independently on all 3 desktop hosts, symlinked to `~/Shared` in each home dir. Deep-eval + dry-run clean, committed as `489432a`.
+- User then asked mid-close whether it synced across machines; once told each host's copy was independent, said no — wanted it centrally hosted. **Reworked into a real Samba/CIFS setup**: gaming (already the always-on Jellyfin host) serves `/srv/shared` via Samba with guest access; laptop and natalie-laptop CIFS-mount it at the same path, client-side permissions forced to `root:shared 0770` so local group membership governs access regardless of server ownership. Auto-mounts at boot via `x-systemd.automount` + `nofail` so client boots don't hang/fail if gaming is off.
+- New `hosts/gaming/samba-shared.nix` (server), new `modules/shared-folder-client.nix` (laptop + natalie-laptop's CIFS mount + `cifs-utils`); `modules/shared-folder.nix` trimmed back to just the shared `users.groups.shared`. `~/Shared` symlink in `dotfiles/common/configs/home.nix` unchanged — same path works for both server and client roles.
+
+### Decisions
+- Server host: gaming, over laptop/natalie-laptop, since laptops sleep/travel and would take the share offline.
+- Protocol: Samba over NFS, for native Thunar/GVfs network-browsing compatibility on a Linux-only LAN.
+- Auth: guest access, no password — accepted as appropriate for a trusted home LAN rather than adding sops-managed credentials.
+
+### Issues / surprises
+- `deep-eval-check` failed both times immediately after adding a new module file, with "not tracked by Git" — untracked files are invisible to flake evaluation even without committing; `git add` first, every time.
+- The user's mid-session question about sync behavior caught a real scope gap the earlier AskUserQuestion round had technically covered ("not synced between machines" was in the option description) but the user hadn't actually registered until asked directly — worth stating consequences plainly, not just leaving them in option subtext, for architecture-shaping choices like this one.
+
+### Next session
+- User needs to run `rebuild` + reboot on **gaming first** (the Samba server), then laptop and natalie-laptop (sudo-gated, their own call). Confirm `samba-smbd` active on gaming, then `~/Shared` + CIFS automount + cross-machine read/write on each client.
+
+**Commits**: see this close's final commit hash below (supersedes `489432a`'s local-only draft, kept in history).
+
+---
+
 ## Session: 2026-07-28 — Screenshot-verify reminders + permission allowlist tune-up
 
 **Focus**: User asked what an "ultimate optimal workspace" would look like; turned the answer (tighter verification loops) into a concrete change, then asked for a permissions check as a follow-up.
@@ -100,36 +125,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No further action needed unless the `cups-browsed`/avahi coupling recurs; see project-state.md Known Issues for the tweak options if it does.
 
 **Commits**: none (diagnostic/live-fix session only)
-
----
-
-## Session: 2026-07-27 — Root-caused all three natalie-laptop issues (clock desync, VPN, printer) live via SSH
-
-**Focus**: The user connected to natalie-laptop over SSH to debug three reported issues (clock desync, no internet when VPN connected, printer invisible in OnlyOffice) — asked to check boot logs first and research as needed before debugging.
-
-### What changed (and why)
-- Confirmed the session's Bash tool was running directly on natalie-laptop (not a separate remote hop), then read boot-time journal/chrony logs before touching anything, per the user's explicit request.
-- **Clock desync**: `journalctl -u chronyd` across multiple boots shows the identical ~4.8-year offset every time (`System clock wrong by 151528561.x seconds`, matching 2021-10-07 → 2026-07-27); `hwclock --show` can't access the hardware clock at all. Diagnosed as a dying CMOS/RTC battery (expected at ~5 years on this ASUS X532EQ). Checked chrony's config and found it already does the right things (`makestep 0.1 3`, `rtcautotrim`) — no config change made, since there isn't a software fix for failed hardware.
-- **VPN "no internet"**: forked two parallel investigations (VPN routing, printer/OnlyOffice) rather than working them serially. The VPN fork ruled out a config difference from gaming/laptop and found `wg-quick` activation logs clean across 5+ boots. A live 15-minute on-host test (background `run_in_background` captures of ping/dmesg/journal/WiFi-signal alongside the user manually running `vpn-on`) found zero reproduction — everything worked, confirmed in the user's own apps too. Digging into *why* it's enabled at all revealed the real mechanism: `wg-quick-wg0` autostarts at boot (never explicitly disabled), and the full-tunnel kill-switch route captures all traffic — chrony's own NTP retries included — the instant the service starts, before the handshake completes; if WiFi is still associating at that moment, everything vanishes into the dead tunnel with no fallback. Fixed by setting `networking.wg-quick.interfaces.wg0.autostart = false;` on natalie-laptop only (commit `21df99c`) — gaming/laptop haven't shown this failure, so their behavior is unchanged.
-- **Printer**: the other fork found this was never an OnlyOffice/Flatpak sandboxing issue — CUPS had zero destinations configured for *any* app. Root cause: natalie-laptop's running generation was built from a checkout 54 seconds too old to include the previous session's `6877f4b` fix in substance, confirmed via `nix derivation show` (not just `git log`) showing the deployed `cups-browsed.conf` was baked empty. Re-ran the `nixos-dry-run` skill against the current, correct checkout — clean build, fix now evaluates correctly.
-- Every risky or ambiguous step was gated through AskUserQuestion: dry-run-only vs. rebuild-now for the printer fix, whether to attempt a live VPN test given the risk of dropping the user's own SSH session, and repo-wide vs. natalie-laptop-only scope for the autostart fix.
-
-### Decisions
-- Chose to fork the two independent investigation threads (VPN, printer) in parallel while working the RTC/chrony analysis directly, rather than serially — they shared no dependencies.
-- Chose not to run any command needing an interactive sudo password (enabling VPN live, staging the rebuild) from the Bash tool — surfaced this limitation directly and asked the user to run those commands themselves rather than attempting a workaround.
-- Chose natalie-laptop-only for the autostart fix over a repo-wide change, on the user's explicit call, since gaming/laptop haven't shown the failure and disabling autostart there would be an unrequested behavior change.
-
-### Issues / surprises
-- The VPN issue could not be reproduced at all once live-tested — full connectivity (ping, DNS, HTTPS, a 5MB download at ~110 Mbps) worked perfectly with VPN manually enabled after boot. The eventual root cause (autostart racing WiFi association) explains why: it's a boot-time-only race, not a persistent condition.
-- The printer's "worked in Kate" report doesn't fully add up — CUPS had zero configured destinations system-wide at investigation time, so Kate can't have printed to a real queue for this printer either. Flagged as an open thread rather than resolved.
-- `nh os boot` (both for the printer fix and to stage the VPN fix) needs an interactive sudo password that the Bash tool cannot supply — the user is running the rebuild and reboot themselves after this session closes.
-
-### Next session
-- Once the user reboots: verify `lpstat -p -d` lists the Canon TS9500, and `systemctl is-enabled wg-quick-wg0` shows it no longer auto-starting (confirm `vpn-on`/`vpn-off` still work manually).
-- Ask what Kate's print dialog actually showed, to close the open thread above.
-- If natalie-laptop's WiFi association speed is ever worth confirming directly (vs. gaming's wired connection), `iw`/`ethtool` aren't installed on this host and would need adding first.
-
-**Commits**: `1c590e1..21df99c` (1 commit)
 
 ---
 

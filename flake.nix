@@ -97,6 +97,7 @@
       "${self}/hosts/laptop/networking.nix"
       de
       "${self}/modules/nvidia.nix"
+      "${self}/modules/shared-folder-client.nix"
     ];
   in
   {
@@ -130,6 +131,7 @@
           "${self}/modules/nvidia.nix"
           "${self}/hosts/gaming/virtualisation.nix"
           "${self}/hosts/gaming/jellyfin-server.nix"
+          "${self}/hosts/gaming/samba-shared.nix"
         ];
       };
 
@@ -150,6 +152,7 @@
           "${self}/hosts/natalie-laptop/virtualisation.nix"
           "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/nvidia.nix"
+          "${self}/modules/shared-folder-client.nix"
         ];
       };
 
