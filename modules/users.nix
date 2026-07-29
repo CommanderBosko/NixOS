@@ -18,6 +18,7 @@
         "lp"
         "networkmanager"
         "render"
+        "shared"
         "video"
         "wheel"
       ];
@@ -62,6 +63,7 @@
         "lp"
         "networkmanager"
         "render"
+        "shared"
         "video"
         "wheel"
       ];

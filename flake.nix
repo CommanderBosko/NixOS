@@ -74,6 +74,7 @@
       "${self}/modules/jellyfin-client.nix"
       "${self}/modules/printing.nix"
       "${self}/modules/sddm.nix"
+      "${self}/modules/shared-folder.nix"
       "${self}/modules/vpn.nix"
     ];
 

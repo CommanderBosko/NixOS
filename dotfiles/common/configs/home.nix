@@ -1,4 +1,4 @@
-{ self, pkgs, ... }:
+{ config, self, pkgs, ... }:
 
 {
   imports = [
@@ -22,6 +22,12 @@
     # host (including non-niri ones), but only niri hosts assert the dconf
     # selection.
     packages = with pkgs; [ adw-gtk3 sweet candy-icons ];
+
+    # Shared folder for natty and bosko (/srv/shared, created by
+    # modules/shared-folder.nix). mkOutOfStoreSymlink points straight at the
+    # real path instead of copying it into the nix store, since /srv/shared
+    # is a mutable directory both users read/write at runtime.
+    file."Shared".source = config.lib.file.mkOutOfStoreSymlink "/srv/shared";
 
     # Copy over dotfiles
     # Kate
