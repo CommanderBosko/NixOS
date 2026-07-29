@@ -73,4 +73,10 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 ## Step 7 — Remind the user of next steps
 
-Tell the user to run `/git-commit` when ready. Do not stage or commit automatically — that's the user's explicit action.
+This overlay file is Home-Manager-managed via a nix-store symlink, so the change only takes effect after a reboot — there's no live `nh os switch` in the normal flow here. Remind them:
+
+> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 2. After rebooting, run `/wayland-screenshot <app>` to confirm it actually opens on the intended monitor/workspace.
+> 3. Commit the change: `/git-commit`
+
+Do not stage or commit automatically — that's the user's explicit action.

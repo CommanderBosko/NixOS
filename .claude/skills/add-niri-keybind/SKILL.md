@@ -57,4 +57,10 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 ## Step 6 — Remind the user of next steps
 
-Tell the user to run `/git-commit` when ready. Do not stage or commit automatically — that's the user's explicit action.
+If Step 3 added a window-rule (the bind opens an app pinned to a specific output/workspace), remind the user that overlay file only takes effect after a reboot — there's no live `nh os switch` in the normal flow here:
+
+> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 2. After rebooting, run `/wayland-screenshot <app>` to confirm it opens on the intended output/workspace.
+> 3. Commit the change: `/git-commit`
+
+If no window-rule was involved (a plain keybind with nothing to screenshot), just tell the user to run `/git-commit` when ready. Do not stage or commit automatically — that's the user's explicit action.

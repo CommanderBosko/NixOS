@@ -60,4 +60,10 @@ Since the rule is written into the target host's own overlay file, there's no cr
 
 ## Step 6 — Remind the user of next steps
 
-The per-host overlay file is Home-Manager-managed via a nix-store symlink, same as `niri-config.kdl` — this repo's normal workflow is `nh os boot` (stages for the *next* boot), so the change only takes effect after a reboot; there's no live `nh os switch` in the normal flow here. Tell the user to run `/git-commit` when ready. Do not stage or commit automatically — that's the user's explicit action.
+The per-host overlay file is Home-Manager-managed via a nix-store symlink, same as `niri-config.kdl` — this repo's normal workflow is `nh os boot` (stages for the *next* boot), so the change only takes effect after a reboot; there's no live `nh os switch` in the normal flow here. Remind them:
+
+> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 2. After rebooting, run `/wayland-screenshot <app>` to confirm the app actually opens maximized.
+> 3. Commit the change: `/git-commit`
+
+Do not stage or commit automatically — that's the user's explicit action.
