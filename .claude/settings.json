@@ -20,6 +20,10 @@
       "Bash(/home/bosko/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh*)",
       "Bash(gh run watch*)",
       "Bash(journalctl*)",
+      "Bash(/home/bosko/.claude/skills/session-closer/scripts/scan-session.sh*)",
+      "Bash(/home/bosko/.claude/skills/git-commit/scripts/git-commit.sh status)",
+      "Bash(/home/bosko/.claude/skills/git-push/scripts/push.sh status)",
+      "Bash(flatpak remote-info*)",
       "mcp__nixos__nix"
     ]
   }
