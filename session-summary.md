@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-28 — Screenshot-verify reminders + permission allowlist tune-up
+
+**Focus**: User asked what an "ultimate optimal workspace" would look like; turned the answer (tighter verification loops) into a concrete change, then asked for a permissions check as a follow-up.
+
+### What changed (and why)
+- Added an explicit numbered "run `/wayland-screenshot` after rebooting" step to the next-steps reminder in `switch-de`, `add-niri-fullscreen-rule`, `add-niri-window-rule`, and `add-niri-keybind` (conditional on its window-rule path) — these skills previously ended at commit with no confirmation the visual result actually landed, even though none of them take effect without a reboot.
+- Ran `fewer-permission-prompts`: scanned the 50 most-recent session transcripts across all projects, filtered to genuinely read-only and still-prompting patterns, and added 4 entries to `.claude/settings.json` (`session-closer`'s `scan-session.sh`, `git-commit.sh status`, `push.sh status`, `flatpak remote-info*`). Their mutating siblings (`git-commit.sh commit`, `push.sh execute`, `flatpak run`) were deliberately left gated, along with the entire interpreter/shell-runner category.
+
+### Decisions
+- Scoped which skills to touch and how the reminder should read via AskUserQuestion before editing anything (user picked all 4 candidate skills + the explicit-numbered-step style over a soft mention).
+- Split the work into two commits (skill reminders vs. permission allowlist) rather than one, since they're unrelated concerns.
+
+### Issues / surprises
+- None — small, self-contained change; both commits verified clean before push.
+
+### Next session
+- No follow-up required; both commits pushed as part of this close.
+
+**Commits**: `db6bca9`, `926e78a`
+
+---
+
 ## Session: 2026-07-28 — Sudo-gated skill steps now hand off instead of failing silently
 
 **Focus**: User asked whether skills that perform an actual `switch`/rebuild (not just dry-run) should be removed since Claude can't supply an interactive sudo password; audit, fix the real gap, and decide whether a NOPASSWD rule is worth adding to remove the friction.
@@ -108,32 +130,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - If natalie-laptop's WiFi association speed is ever worth confirming directly (vs. gaming's wired connection), `iw`/`ethtool` aren't installed on this host and would need adding first.
 
 **Commits**: `1c590e1..21df99c` (1 commit)
-
----
-
-## Session: 2026-07-27 — Diagnosed and fixed network printer detection; traced a Zen Browser follow-up to a stale-session-environment red herring
-
-**Focus**: Figure out why niri wasn't detecting a network printer, fix it, and verify it live.
-
-### What changed (and why)
-- Diagnosed via live inspection on gaming rather than guessing from the Nix config: `avahi-browse` and `lpstat -e` showed the Canon TS9500 discovered fine, but `lpstat -p` showed no actual CUPS destination. Root cause: `cups-browsed`'s compiled-in default `CreateIPPPrinterQueues=LocalOnly` only auto-creates queues for IPP-over-USB printers, never real network ones — confirmed by reading the shipped `cups-browsed.conf.5` man page.
-- Added `services.printing.browsedConf = "CreateIPPPrinterQueues Everywhere"` to `modules/printing.nix` (commit `6877f4b`). This file is shared via `desktopModules`, so ran the `shared-module-check` 4-host deep-eval sweep (all PASS) before the user switched it live on gaming and confirmed the printer appeared.
-- Investigated a follow-up report that Zen Browser (Flatpak) still couldn't see the printer while OnlyOffice/Firefox could. Chased it fairly deep (flatpak sandbox mounts, `CUPS_DATADIR` pointing at a store path unreachable inside the sandbox) before the simpler explanation confirmed itself: Zen was a long-running process from before the switch and just needed to be relaunched. No further config change was needed.
-
-### Decisions
-- Diagnose daemon/discovery bugs from live system state (`systemctl`, `avahi-browse`, `lpstat`, `journalctl`) first, not just by reading what the Nix options claim to do — the actual gap here was invisible from the option list alone.
-
-### Issues / surprises
-- natalie-laptop was rebuilt **and fully rebooted** to pick up the fix, but the printer still isn't detected there — ruling out the stale-daemon explanation that worked for Zen. Not yet diagnosed; needs its own live investigation on that host.
-- The user separately flagged that natalie-laptop "has been having issues for a while now," broader than just the printer, and plans to debug it directly with a Claude Code session on that machine. Nature of those issues is still unspecified.
-- One unrelated commit (`53dd415`, "removed some empty lines from shell.nix") landed on `main` during this session but wasn't part of this conversation — noting it for the record without inventing rationale.
-
-### Next session
-- Diagnose the natalie-laptop printer issue with live state (same method as gaming: `avahi-browse`, `lpstat -p`/`-e`, `cups-browsed` journal) rather than assuming it's the same root cause.
-- When a Claude Code session starts on natalie-laptop, ask what the other "ongoing issues" actually are before assuming scope.
-- laptop still hasn't been rebuilt/rebooted for this fix (or the large backlog of other pending changes tracked in Known Issues).
-
-**Commits**: `faff703..53dd415` (3 commits: `faff703` predates this session's work, `6877f4b` is this session's fix, `53dd415` is the unrelated out-of-band shell.nix commit)
 
 ---
 
