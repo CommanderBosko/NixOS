@@ -16,6 +16,21 @@ wolf on things that are intentionally public (endpoint IPs, public keys).
 This is a *meta-skill*: it writes another skill. It does **not** run the scan itself —
 it produces the project-local skill and verifies that skill is well-formed.
 
+## Arguments
+
+Parse from the user's invocation phrase, if given:
+
+- **Secret-management scheme** — if the user already names it (e.g. "we use sops",
+  "it's just a gitignored .env"), that answers interview question 1 directly.
+- **Paths to exclude** — any directories/globs already volunteered (e.g. "skip the
+  fixtures dir").
+- **Full git-history scan** — if the user states a preference up front (e.g. "don't
+  bother scanning history, this repo is huge").
+
+Pre-fill Step 1's interview questions from whatever is already given, and confirm rather
+than re-asking. Still run the detection hints and ask for whatever's missing — this
+doesn't replace the interview, it just skips re-asking what's already stated.
+
 ## Key facts (don't re-derive these)
 
 - **Generated skills are project-local:** `<repo-root>/.claude/skills/secret-scan/`.
