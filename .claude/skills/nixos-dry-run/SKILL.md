@@ -2,7 +2,7 @@
 name: nixos-dry-run
 description: This skill should be used when the user wants to "dry run", "preview rebuild", "see what would change", "check config", "test build", or "see changes before applying". Use it to preview what nh os boot would change without writing anything to the system.
 model: haiku
-version: 0.1.0
+version: 0.2.0
 ---
 
 # NixOS Dry-Run Preview
@@ -33,6 +33,14 @@ None — this skill takes no user-supplied arguments.
 
 5. This skill is safe to invoke without confirmation — it does not modify any system state.
 
+6. After the diff, the script also prints a `RECOMMENDATION:` line — either `switch` or `boot` —
+   based on keyword heuristics over the diff (kernel/initrd/bootloader/firmware → always `boot`;
+   display-manager/graphics-driver/compositor → `boot` to avoid crashing the live session;
+   otherwise → `switch`, since it's safe to apply immediately with no reboot needed). Surface
+   this recommendation and its reason to the user in your summary. **Do not run `nh os switch`
+   or `nh os boot` yourself** — this skill stays read-only; hand the actual apply step to the
+   user to run themselves (see sudo-gated steps note below).
+
 ## Script
 
 ```
@@ -40,6 +48,16 @@ scripts/dry-run.sh
 ```
 
 ## Gotchas
+
+- **The switch/boot recommendation is a keyword heuristic, not exhaustive.** It scans the raw
+  diff text for package-name substrings (`nvidia`, `sddm`, `niri`, `linux-`, etc.), so it can
+  miss changes that don't show up under those names (e.g. a security-critical config change
+  wrapped in a differently-named derivation) or a low-risk service that happens to have a
+  session-risk keyword in an unrelated path. Treat it as a strong default suggestion, not an
+  infallible verdict — still show the user the underlying diff.
+- **Never run the recommended `nh os switch`/`nh os boot` from this skill.** Both are
+  privileged, live-system actions; per this repo's standing rule, hand off any switch/apply
+  step to the user rather than attempting it via Bash.
 
 - **`nh os boot --dry`'s output is a redrawing TUI tree**, not a flat log — most of it is
   self-overwriting progress-bar escape sequences, and the actually useful summary (the
