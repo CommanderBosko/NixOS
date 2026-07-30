@@ -138,6 +138,14 @@ let
       x11.enable = true;
     };
 
+    # Wine has no native StatusNotifierItem tray implementation, so Wine/Lutris
+    # apps (e.g. Battle.net) fall back to a legacy XEmbed tray icon that DMS's
+    # SNI-only tray can't embed, showing as a floating window instead.
+    # snixembed proxies XEmbed icons into SNI so DMS picks them up; started at
+    # niri startup in niri-config.kdl since it must be running before those
+    # apps create their tray icon.
+    home.packages = [ pkgs.snixembed ];
+
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
 
