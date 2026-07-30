@@ -280,12 +280,6 @@ layout {
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
 
-// Proxies legacy XEmbed tray icons (Wine/Lutris apps, e.g. Battle.net) into
-// StatusNotifierItem so DMS's tray can show them. --fork daemonizes so this
-// spawn line returns immediately; must start before Wine apps create their
-// tray icon, hence at-startup rather than launched by Lutris.
-spawn-sh-at-startup "snixembed --fork"
-
 hotkey-overlay {
     // Disables the "Important Hotkeys" pop-up at startup.
     skip-at-startup
