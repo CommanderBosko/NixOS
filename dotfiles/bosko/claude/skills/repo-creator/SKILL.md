@@ -100,8 +100,8 @@ existing), `.gitignore` status, and the commit message used.
 ## Error handling
 
 - **SSH key not configured** — guide the user to add their key to GitHub, then retry.
-- **Repo name already exists** — ask whether to use a different name or connect to the
-  existing repo.
+- **Repo name already exists** — use the AskUserQuestion tool (options **Use a different
+  name** / **Connect to the existing repo**) to confirm before continuing.
 - **`gh` not installed** — fall back to `curl` GitHub API, or give manual instructions.
 - **Sensitive untracked files** — warn, add to `.gitignore`, do not commit them.
 - **Existing git history** — pause and confirm (see Step 5).

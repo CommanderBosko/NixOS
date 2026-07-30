@@ -7,7 +7,7 @@ version: 0.1.0
 
 # VPN Status Check
 
-Check WireGuard peer connectivity on the Oracle Cloud ARM VPN server at `150.136.232.63`. This is a safe, read-only operation.
+Check WireGuard peer connectivity on the Oracle Cloud ARM VPN server (`vpn-server` in `.claude/hosts.json`). This is a safe, read-only operation.
 
 ## Instructions
 
