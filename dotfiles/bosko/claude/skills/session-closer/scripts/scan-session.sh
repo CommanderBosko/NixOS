@@ -2,7 +2,8 @@
 # Mechanical scan helpers for the session-closer skill.
 # Usage:
 #   scan-session.sh git-changes [repo-root]     — baseline commit + diff/status/stat
-#   scan-session.sh transcript [project-dir]    — this session's JSONL, user+assistant turns
+#   scan-session.sh transcript [project-dir]    — JSONL since session-closer's last run
+#                                                  (all sessions since then), user+assistant turns
 set -uo pipefail
 
 MODE="${1:-}"
@@ -42,21 +43,37 @@ case "$MODE" in
     PROJECT_DIR="${2:-$(pwd)}"
     LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" && pwd)"
     DIR="$("$LIB_DIR/find-transcript-dir.sh" "$PROJECT_DIR")" || exit 1
-    LATEST="$(ls -t "$DIR"/*.jsonl 2>/dev/null | head -1)"
 
-    if [ -z "$LATEST" ]; then
+    # Scope to every transcript touched since session-closer's own last run,
+    # so a close spanning several unclosed sessions reads all of them, not
+    # just the single most-recently-modified file.
+    CUTOFF="$("$LIB_DIR/find-last-skill-invocation.sh" session-closer "$PROJECT_DIR" 2>/dev/null)"
+
+    if [ -n "$CUTOFF" ]; then
+      echo "--- transcripts since last session-closer run ($CUTOFF) ---"
+      FILES="$("$LIB_DIR/list-transcripts-since.sh" "$CUTOFF" "$PROJECT_DIR")"
+    else
+      echo "--- no prior session-closer run found; using latest transcript only ---"
+      FILES="$(cd "$DIR" && ls -t -- *.jsonl 2>/dev/null | head -1)"
+    fi
+
+    if [ -z "$FILES" ]; then
       echo "no transcript found under $DIR" >&2
       exit 1
     fi
 
-    echo "--- transcript: $LATEST ---"
+    while IFS= read -r FN; do
+      [ -z "$FN" ] && continue
+      FILE="$DIR/$FN"
+      echo "--- transcript: $FILE ---"
 
-    echo "--- user turns ---"
-    jq -r 'select(.type=="user") | .message.content
-           | if type=="string" then . else (.[]? | select(.type=="text") .text) end' "$LATEST"
+      echo "--- user turns ---"
+      jq -r 'select(.type=="user") | .message.content
+             | if type=="string" then . else (.[]? | select(.type=="text") .text) end' "$FILE"
 
-    echo "--- assistant narrative ---"
-    jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") .text' "$LATEST"
+      echo "--- assistant narrative ---"
+      jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") .text' "$FILE"
+    done <<< "$FILES"
     ;;
 
   *)

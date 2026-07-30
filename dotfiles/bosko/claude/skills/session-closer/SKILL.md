@@ -59,16 +59,20 @@ Run the transcript subcommand (absolute path — same rule as Step 1's git-scan)
 scripts/scan-session.sh transcript <project-dir>
 ```
 
-It locates the current project's transcript dir, grabs the most-recently-modified `.jsonl`
-(the live session is the one still being written), and prints, labeled: every user request
-this session (what was actually asked, in order) and your own narrative/decisions
-(assistant text, skipping tool calls). Read the output **judiciously** — these files run to
-several MB, so don't let a truly huge session dump flood context; skim for what matters.
+It locates the current project's transcript dir, then checks when session-closer itself
+last ran here (via the shared `find-last-skill-invocation.sh` helper) and reads **every**
+transcript touched since then — not just the live session's file — printing, per
+transcript and labeled: every user request (what was actually asked, in order) and your
+own narrative/decisions (assistant text, skipping tool calls). If session-closer has never
+run for this project before, it falls back to just the most-recently-modified `.jsonl`
+(the live session). Read the output **judiciously** — these files run to several MB, so
+don't let a truly huge multi-session dump flood context; skim for what matters.
 
 Mine these for the decisions, dead-ends, and gotchas below — the transcript captures the
 *why* behind each commit, which git never records. If the close spans more than one
-session (several `.jsonl` files since the last `chore(session):` commit), read each
-relevant transcript, but only narrate work you can see was actually done.
+session (several `.jsonl` files since session-closer's last run), the command above already
+surfaced all of them — read through each, but only narrate work you can see was actually
+done.
 
 ### Then capture what vanishes otherwise
 
@@ -251,7 +255,7 @@ reminders so you never re-list completed work as pending.
 ## Scripts
 
 - `scripts/scan-session.sh git-changes <repo-root>` — STEP 1's baseline resolution + diff/status/stat scan.
-- `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction.
+- `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction, scoped to every transcript since session-closer's own last run (falls back to just the latest on a first-ever run).
 - `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation (see the Gotchas entry on invoking it by absolute path).
 
 All three are relative to the *skill's* directory, not the project cwd — this skill is symlinked into `~/.claude/skills/session-closer/`, not project-local, so a bare `scripts/...` path resolves against the wrong cwd. Always use the absolute path from the "Base directory for this skill" line shown when the skill launches.

@@ -15,7 +15,7 @@
     # derivation) is used by skill-upgrade, session-closer, and
     # skill-suggestion. find-last-skill-invocation.sh / list-transcripts-since.sh
     # (scope a log review to "since I last ran") are used by skill-suggestion,
-    # skill-upgrade, and skill-audit.
+    # skill-upgrade, skill-audit, and session-closer.
     ".claude/skills/lib" = {
       source = "${self}/dotfiles/bosko/claude/skills/lib";
       recursive = true;
