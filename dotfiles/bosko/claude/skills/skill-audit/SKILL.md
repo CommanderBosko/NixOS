@@ -33,11 +33,12 @@ Find all skills and their shape. There are usually two locations:
 - **Global / repo-owned:** if this repo symlinks skills into `~/.claude` (e.g. via Home Manager `home.file`), the source is under `dotfiles/**/claude/skills/<name>/`. **These are symlinked file-by-file** — adding a `scripts/` or `assets/` file to one needs a new symlink entry **plus a rebuild** before it appears. Treat script/asset extraction for global skills as higher-cost (flag it, but don't assume it's free).
 
 The enumeration itself is mechanical (iterate both locations, print each skill's name, its
-`SKILL.md` line count, and any sibling files), so it's handled by the script — run it from
-the repo root:
+`SKILL.md` line count, and any sibling files), so it's handled by the script. It lives in
+this SKILL's own base dir, not the repo root (the base dir is printed when the skill loads)
+— run it with the repo root as cwd:
 
 ```bash
-scripts/enumerate-skills.sh
+bash <skill-base-dir>/scripts/enumerate-skills.sh
 ```
 
 Confirm it exits `0` and prints one line per skill before trusting its output — an empty or

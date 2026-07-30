@@ -61,15 +61,17 @@ Then reboot the host to activate the staged generation cleanly:
 ssh "$VPN_SSH" 'sudo systemctl reboot'
 ```
 
-## Step 3 — Post-reboot: restore client tunnels
+## Step 3 — Post-reboot: hand off client tunnel restarts
 
-Rebooting vpn-server drops every client's WireGuard handshake (see Gotchas). After it comes back up, restart the tunnel on every full-tunnel client:
+Rebooting vpn-server drops every client's WireGuard handshake (see Gotchas). **Do not restart the tunnels via the Bash tool** — none of `gaming`/`laptop`/`natalie-laptop` have a NOPASSWD sudo rule (only `vpn-server` does), so a non-interactive `ssh ... sudo systemctl restart` will fail with "a terminal is required to read the password," the same reason `rollback` hands off its privileged step.
+
+Print the per-host restart commands and ask the user to run each themselves (suggest the `!` prefix for the local host):
 
 ```bash
 /home/bosko/NixOS/.claude/skills/remote-rebuild/scripts/restore-tunnels.sh
 ```
 
-It iterates `.claude/hosts.json`'s `flakeHosts` (skipping `vpn-server` itself) and restarts `wg-quick-wg0` on each via SSH. Then run `/vpn-status` to confirm the handshakes return.
+This is read-only — it iterates `.claude/hosts.json`'s `flakeHosts` (skipping `vpn-server` itself) and prints the exact command for each host, without running any of them. Wait for the user to confirm, then run `/vpn-status` to verify the handshakes returned.
 
 ## Step 4 — Report result
 

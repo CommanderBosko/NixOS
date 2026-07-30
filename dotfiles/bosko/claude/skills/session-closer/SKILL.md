@@ -238,8 +238,9 @@ reminders so you never re-list completed work as pending.
   from the "Base directory for this skill" line shown when the skill launched (e.g.
   `~/.claude/skills/session-closer/scripts/rotate-session-summary.sh <repo-root>`), never a
   bare `scripts/...` or project-root-relative path.
-- **`project-state.md` has grown too large for a single `Read`** (currently 381 lines /
-  ~137KB, ~35k tokens against a 25k-token Read limit). Across several sessions, Step 3 first
+- **`project-state.md` has grown too large for a single `Read`** (check live via `wc -l
+  /home/bosko/NixOS/project-state.md` — it only grows, and was already past 650 lines /
+  270KB as of 2026-07-30). Across several sessions, Step 3 first
   tried a bare `Read project-state.md` (fails), then guessed a large offset/limit window
   (e.g. 236 or 267 lines) that *still* overflowed, before finally landing on a narrower
   range — wasting 2+ failed reads each time. Instead, `grep -n '^## '
