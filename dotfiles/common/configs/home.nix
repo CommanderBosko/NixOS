@@ -88,8 +88,17 @@
       "application/x-ruby" = "org.kde.kate.desktop";
       "application/x-shellscript" = "org.kde.kate.desktop";
 
+      # Word processing documents -> OnlyOffice. Excluded from the xarchiver
+      # list below even though xarchiver's own .desktop file also declares
+      # these mimetypes (docx/odt are zip containers) — an earlier blind copy
+      # of that list wrongly sent double-clicked .docx/.odt files to the
+      # archive manager instead of OnlyOffice.
+      "application/vnd.oasis.opendocument.text" = "onlyoffice-desktopeditors.desktop";
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = "onlyoffice-desktopeditors.desktop";
+
       # Archives -> xarchiver (full mimetype list taken from xarchiver's own
-      # .desktop file; not KDE/ksycoca-reliant, unlike Ark)
+      # .desktop file, minus the two document formats above; not
+      # KDE/ksycoca-reliant, unlike Ark)
       "application/epub+zip" = "xarchiver.desktop";
       "application/gzip" = "xarchiver.desktop";
       "application/java-archive" = "xarchiver.desktop";
@@ -103,9 +112,7 @@
       "application/vnd.efi.iso" = "xarchiver.desktop";
       "application/vnd.ms-cab-compressed" = "xarchiver.desktop";
       "application/vnd.ms-htmlhelp" = "xarchiver.desktop";
-      "application/vnd.oasis.opendocument.text" = "xarchiver.desktop";
       "application/vnd.openofficeorg.extension" = "xarchiver.desktop";
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = "xarchiver.desktop";
       "application/vnd.rar" = "xarchiver.desktop";
       "application/vnd.snap" = "xarchiver.desktop";
       "application/vnd.squashfs" = "xarchiver.desktop";
