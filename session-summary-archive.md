@@ -1,3 +1,30 @@
+## Session: 2026-07-27 — Closed the Kate-vs-OnlyOffice printer thread from the prior session; confirmed both prior fixes live
+
+**Focus**: Follow-up on the previous session's natalie-laptop close-out — confirm the printer/VPN fixes are actually live, and figure out why OnlyOffice still couldn't see the printer even though Kate could.
+
+### What changed (and why)
+- User confirmed the VPN fix works as intended (off at boot, manual `vpn-on` succeeds) and reported OnlyOffice still couldn't discover the printer despite Kate being able to.
+- Confirmed live that both prior fixes are active: `/etc/cups/cups-browsed.conf` correctly contains `CreateIPPPrinterQueues Everywhere` (previously baked empty), and `wg0` no longer autostarts.
+- Diagnosed the printer gap: `lpstat -p -d` showed zero permanent CUPS destinations even though the Canon TS9500 was fully discoverable via `avahi-browse`/`lpinfo -v`/`lpstat -e`. Root cause: Kate uses the host's system CUPS client (2.4.19), which does live DNS-SD printer discovery and can show a network printer before any permanent queue exists; OnlyOffice's bundled print dialog (its own `buildFHSEnv` sandbox binary) only ever sees printers already registered as real, permanent CUPS destinations.
+- Found *why* the permanent queue hadn't been created despite correct config: `cups-browsed.service` is `BindsTo=avahi-daemon.service`, so it resets on every avahi-daemon restart — and journal showed cups-browsed bouncing every few minutes to hours on this host, never getting a clean-enough run to finish instantiating the queue.
+- Fixed live (no repo change): had the user run `sudo systemctl restart cups-browsed` (no passwordless sudo available to the Bash tool), waited ~30s, confirmed `Canon_TS9500_series` appeared via `lpstat -p -d`, then confirmed directly in OnlyOffice's print dialog that the printer now shows up.
+
+### Decisions
+- Diagnosed as far as possible without sudo (avahi-browse, lpinfo, lpstat, reading the nixpkgs `onlyoffice-desktopeditors` package.nix to rule out a sandbox network-namespace restriction) before handing the two sudo-gated commands to the user via the `!` prefix, rather than guessing at a fix.
+- Didn't make a repo change for the `cups-browsed`/avahi coupling — the live restart resolved it immediately and the coupling is standard/intentional systemd behavior, not a config bug; flagged as a residual recurrence risk instead (see project-state.md Known Issues).
+
+### Issues / surprises
+- The Kate-vs-OnlyOffice discrepancy from the prior session's close-out (flagged as an unresolved open thread) turned out to have a real, specific mechanism — not a stale memory or print-to-PDF confusion as guessed.
+- No sudo available non-interactively in this session (same constraint as the prior session) — every privileged command had to be handed to the user to run themselves.
+
+### Next session
+- If OnlyOffice printer discovery breaks again after future VPN/network flapping, check `systemctl status cups-browsed` and `journalctl -u cups-browsed` for restart churn before assuming a config regression — restart it directly rather than re-diagnosing from scratch.
+- No further action needed unless the `cups-browsed`/avahi coupling recurs; see project-state.md Known Issues for the tweak options if it does.
+
+**Commits**: none (diagnostic/live-fix session only)
+
+---
+
 ## Session: 2026-07-27 — Root-caused all three natalie-laptop issues (clock desync, VPN, printer) live via SSH
 
 **Focus**: The user connected to natalie-laptop over SSH to debug three reported issues (clock desync, no internet when VPN connected, printer invisible in OnlyOffice) — asked to check boot logs first and research as needed before debugging.

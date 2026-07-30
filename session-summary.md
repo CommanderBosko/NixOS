@@ -4,6 +4,35 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-07-30 — Skill-audit sweep, tray-icon dead end, docx/portal/CIFS fixes
+
+**Focus**: Full skill-library quality sweep, plus a batch of desktop/networking fixes carried over from the tail end of 2026-07-29.
+
+### What changed (and why)
+- **`/skill-audit`** swept all 58 skills via 5 parallel sub-agents: 3 real correctness bugs fixed (`remote-rebuild`'s broken sudo hand-off, `skill-audit`'s own self-contradicting Step 1, `session-closer`'s stale doc numbers) plus 4 style fixes (`vpn-status` IP dedup, `repo-creator` AskUserQuestion gate, `claude-rules` script extraction, `create-secret-scan` Arguments section). Declined one recommendation (`public-repo-guard`'s inline template) after confirming it's the intentional repo-wide loop-skill convention.
+- `nixos-dry-run` now recommends `switch` vs `boot` from the diff content. `skill-suggestion`/`skill-upgrade`/`skill-audit` now scope their transcript scan to "since I last ran" via two new shared helpers — this also caught and fixed a real bug in `session-closer` itself (its transcript scan only ever read the latest `.jsonl`, contradicting its own docs).
+- New skill `printer-diagnose`, automating a diagnostic sequence done by hand 4+ times across sessions. Smoke-tested live on gaming.
+- **Tray-icon dead end**: added `snixembed` to bridge Wine's XEmbed tray icons into DMS's SNI tray, then found live it breaks DMS's tray entirely (exclusive-watcher conflict) — reverted same day.
+- **docx/odt mimetype fix** (was wrongly routed to xarchiver, not OnlyOffice) — confirmed live on natalie-laptop after `nh os switch`. **niri ScreenCast/Screenshot portal fix** (was routed to gtk, which doesn't implement those interfaces; now gnome) — confirmed live on gaming. A separate stuck-file CIFS issue was worked around (fresh inode), root cause not found.
+- **gaming's static IP confirmed live** after reboot. **CIFS bare-hostname resolution fixed** for the `/srv/shared` mount (`mdns4_minimal` doesn't resolve bare hostnames).
+
+### Decisions
+- Declined `public-repo-guard`'s template extraction — matches `create-loop`'s settled self-contained-loop design, not a real deviation.
+- No packaged alternative to `snixembed` exists in nixpkgs (`xembedsniproxy` isn't packaged) — Battle.net's tray icon stays a floating window rather than chase a different bridge.
+
+### Issues / surprises
+- My own `scan-session.sh transcript | head -c 60000` truncated the real scan output to 3 of 17 transcripts — no bug in the script itself, just my own piping. Worth remembering: don't cap this command's output when reviewing a multi-session close.
+- The transcript-scan cutoff (`find-last-skill-invocation.sh session-closer`) returned a timestamp a full day stale relative to the actual last `chore(session)` commit — harmless here (the wider window just re-surfaced already-closed sessions 64/65's worth of content redundantly), but worth watching if it recurs.
+
+### Next session
+- Run `nh os switch` for the skill-audit global-skill fixes (no reboot needed).
+- laptop: `nh os switch` to pick up the docx mimetype fix and the CIFS hostname fix (natalie-laptop already confirmed).
+- Confirm the fresh-inode workaround holds for `mock-interview-questions.docx`; watch for recurrence on other `/srv/shared` files.
+
+**Commits**: `812aa5f`..`3db5168` (13 commits)
+
+---
+
 ## Session: 2026-07-29 — Shared network folder for natty and bosko (Samba)
 
 **Focus**: Add a shared folder both natty and bosko can use across the fleet, visible in Thunar.
@@ -98,33 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - The `~/nixos-pre-hash-purge-rewrite.bundle` safety backup made during the false-alarm investigation is harmless and can be deleted whenever convenient — it was never needed.
 
 **Commits**: `81e5637` (session-close docs) + a follow-up commit fixing `secret-scan.sh`'s `refs/stash` false-positive; `140d33d..c22737e` (3 commits) landed in the preceding unclosed session and are already pushed.
-
----
-
-## Session: 2026-07-27 — Closed the Kate-vs-OnlyOffice printer thread from the prior session; confirmed both prior fixes live
-
-**Focus**: Follow-up on the previous session's natalie-laptop close-out — confirm the printer/VPN fixes are actually live, and figure out why OnlyOffice still couldn't see the printer even though Kate could.
-
-### What changed (and why)
-- User confirmed the VPN fix works as intended (off at boot, manual `vpn-on` succeeds) and reported OnlyOffice still couldn't discover the printer despite Kate being able to.
-- Confirmed live that both prior fixes are active: `/etc/cups/cups-browsed.conf` correctly contains `CreateIPPPrinterQueues Everywhere` (previously baked empty), and `wg0` no longer autostarts.
-- Diagnosed the printer gap: `lpstat -p -d` showed zero permanent CUPS destinations even though the Canon TS9500 was fully discoverable via `avahi-browse`/`lpinfo -v`/`lpstat -e`. Root cause: Kate uses the host's system CUPS client (2.4.19), which does live DNS-SD printer discovery and can show a network printer before any permanent queue exists; OnlyOffice's bundled print dialog (its own `buildFHSEnv` sandbox binary) only ever sees printers already registered as real, permanent CUPS destinations.
-- Found *why* the permanent queue hadn't been created despite correct config: `cups-browsed.service` is `BindsTo=avahi-daemon.service`, so it resets on every avahi-daemon restart — and journal showed cups-browsed bouncing every few minutes to hours on this host, never getting a clean-enough run to finish instantiating the queue.
-- Fixed live (no repo change): had the user run `sudo systemctl restart cups-browsed` (no passwordless sudo available to the Bash tool), waited ~30s, confirmed `Canon_TS9500_series` appeared via `lpstat -p -d`, then confirmed directly in OnlyOffice's print dialog that the printer now shows up.
-
-### Decisions
-- Diagnosed as far as possible without sudo (avahi-browse, lpinfo, lpstat, reading the nixpkgs `onlyoffice-desktopeditors` package.nix to rule out a sandbox network-namespace restriction) before handing the two sudo-gated commands to the user via the `!` prefix, rather than guessing at a fix.
-- Didn't make a repo change for the `cups-browsed`/avahi coupling — the live restart resolved it immediately and the coupling is standard/intentional systemd behavior, not a config bug; flagged as a residual recurrence risk instead (see project-state.md Known Issues).
-
-### Issues / surprises
-- The Kate-vs-OnlyOffice discrepancy from the prior session's close-out (flagged as an unresolved open thread) turned out to have a real, specific mechanism — not a stale memory or print-to-PDF confusion as guessed.
-- No sudo available non-interactively in this session (same constraint as the prior session) — every privileged command had to be handed to the user to run themselves.
-
-### Next session
-- If OnlyOffice printer discovery breaks again after future VPN/network flapping, check `systemctl status cups-browsed` and `journalctl -u cups-browsed` for restart churn before assuming a config regression — restart it directly rather than re-diagnosing from scratch.
-- No further action needed unless the `cups-browsed`/avahi coupling recurs; see project-state.md Known Issues for the tweak options if it does.
-
-**Commits**: none (diagnostic/live-fix session only)
 
 ---
 
