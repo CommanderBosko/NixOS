@@ -19,13 +19,21 @@ Scan the conversation for every skill that was invoked. Flag the ones where some
 
 If no skill caused friction this session, say so plainly and stop.
 
-**Also check past sessions.** A skill that misfires the *same way across multiple sessions* is the highest-value gotcha to add. Run:
+**Always check the logs since the last time skill-upgrade itself ran** — not just this session. First get the cutoff:
 
 ```bash
-scripts/find-skill-misfires.sh <repo-root> [max-files]
+~/.claude/skills/lib/find-last-skill-invocation.sh skill-upgrade
 ```
 
-from this skill's own base directory (the "Base directory for this skill" line shown when it launched — e.g. `~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh`). It scans the current project's transcripts at `~/.claude/projects/<cwd-with-slashes-as-dashes>/*.jsonl` and prints every `is_error` tool result alongside the tool call and the `Skill` that was active at the time, across the most recently modified transcripts (default 15). Treat a recurring cross-session failure — the same skill, same tool, same error shape — as a stronger signal than a one-off slip this session.
+This prints the ISO-8601 timestamp of skill-upgrade's previous invocation for this project, or nothing if it's never run before. Then feed that cutoff into the misfire scan:
+
+```bash
+scripts/find-skill-misfires.sh <repo-root> [max-files] [since-timestamp]
+```
+
+from this skill's own base directory (the "Base directory for this skill" line shown when it launched — e.g. `~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh`). Pass the cutoff as the third argument and it scans every transcript touched since then instead of a fixed recent-N window; omit it (or leave it empty) to fall back to the most-recently-modified `max-files` transcripts (default 15) — that fallback only applies on skill-upgrade's first-ever run for this project. It prints every `is_error` tool result alongside the tool call and the `Skill` that was active at the time. Treat a recurring cross-session failure — the same skill, same tool, same error shape — as a stronger signal than a one-off slip this session.
+
+**Report every misfire found, not just one.** List each flagged skill and its gotcha in Step 3/4 below — don't stop at the first candidate. A single finding is fine if that's genuinely all the logs turned up, but don't truncate a longer list for brevity.
 
 ### 2. Locate the source file
 

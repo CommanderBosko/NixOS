@@ -18,32 +18,38 @@ Review everything done so far this session. Look for:
 
 Ignore one-off actions with no reuse value.
 
-**Mine past sessions too.** The strongest reuse signal isn't "done twice this session" — it's a workflow you repeat across *many* sessions. Resolve the current project's transcript directory with the shared helper (also used by `skill-upgrade`/`session-closer` — don't re-derive the cwd-to-slug logic by hand):
+**Always check the logs since the last time skill-suggestion itself ran** — not just this session. Get the cutoff first:
 
 ```bash
-~/.claude/skills/lib/find-transcript-dir.sh
+~/.claude/skills/lib/find-last-skill-invocation.sh skill-suggestion
 ```
 
-It prints the directory (e.g. this repo → `~/.claude/projects/-home-bosko-NixOS/`) holding the project's `*.jsonl` transcripts. They are large — **never read them whole**; `grep` for recurring command sequences, repeated file-edit patterns, or the same manual steps walked through in multiple sessions. A workflow that shows up across several transcripts is a prime candidate even if it only happened once *this* session.
+This prints the ISO-8601 timestamp of skill-suggestion's previous invocation for this project, or nothing if it's never run before. Then resolve which transcripts to mine:
 
-### 2. Pick the single best candidate
+```bash
+~/.claude/skills/lib/list-transcripts-since.sh "<cutoff-from-above>"
+```
 
-Choose the one workflow with the highest reuse value. If nothing in the conversation is reusable, say so plainly and stop — do not invent a skill just to have one.
+Passing an empty string (first-ever run) lists the full transcript history instead. This is a stronger reuse signal than "done twice this session" — a workflow repeated across *many* sessions since you last looked is a prime candidate even if it only happened once *this* session. The listed files are large — **never read them whole**; `grep` for recurring command sequences, repeated file-edit patterns, or the same manual steps walked through more than once.
 
-### 3. Propose it
+### 2. Rank every viable candidate
 
-Present to the user, concisely:
+Don't collapse to a single pick. List **every** workflow that clears the reuse bar (repeated 2+ times, or a 4+ step reusable sequence), ranked by reuse value. If nothing in the conversation or logs is reusable, say so plainly and stop — do not invent a skill just to have one. A list of one is fine if that's genuinely all that qualifies — don't pad it, and don't artificially trim a longer list down to one.
+
+### 3. Propose them
+
+Present each candidate to the user, concisely, most valuable first:
 - **Skill name** (kebab-case) and a one-sentence goal
 - **Trigger phrases** (3–5 natural variants)
 - **The steps** it would automate, in plain English, citing the concrete commands/paths from this conversation
 - **Scope** — recommend global (repo-managed) or project-local based on whether the workflow is NixOS-specific or general
 
-Use the **AskUserQuestion** tool to ask whether to proceed, with options **Build it as proposed** (hand off to `new-skill` as-is), **Let me tweak it first** (gather the requested changes, then proceed), and **Skip it** (don't build anything). Don't ask this in free-form prose.
+Use the **AskUserQuestion** tool to ask which to proceed with (multi-select if there's more than one candidate), with options **Build it as proposed** (hand off to `new-skill` as-is), **Let me tweak it first** (gather the requested changes, then proceed), and **Skip it** (don't build anything) — applied per candidate the user selects. Don't ask this in free-form prose.
 
-### 4. Build it
+### 4. Build them
 
-On **Build it as proposed** (or after applying the user's tweaks), hand off to the `new-skill` skill to draft and write the file, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed. On **Skip it**, stop cleanly.
+For each candidate on **Build it as proposed** (or after applying the user's tweaks), hand off to the `new-skill` skill to draft and write the file, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed. Skip cleanly over any marked **Skip it**.
 
 ### 5. Confirm
 
-Report the skill name, where it was written, the invocation phrases, and (for global/repo-managed skills) the reminder that it must be added to `bosko-claude.nix` and rebuilt before its `~/.claude` symlink appears.
+Report each skill built: its name, where it was written, the invocation phrases, and (for global/repo-managed skills) the reminder that it must be added to `bosko-claude.nix` and rebuilt before its `~/.claude` symlink appears.

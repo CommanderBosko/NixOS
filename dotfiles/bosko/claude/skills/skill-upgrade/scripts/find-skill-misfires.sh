@@ -3,19 +3,30 @@
 # which Skill was active when each one happened, so skill-upgrade can spot
 # misfires that recur across sessions (not just within the current one).
 #
-# Usage: find-skill-misfires.sh [project-dir] [max-files]
-#   project-dir  defaults to $PWD
-#   max-files    most-recently-modified transcripts to scan (default 15)
+# Usage: find-skill-misfires.sh [project-dir] [max-files] [since-timestamp]
+#   project-dir      defaults to $PWD
+#   max-files        most-recently-modified transcripts to scan when
+#                     since-timestamp is not given (default 15)
+#   since-timestamp  ISO-8601 cutoff (e.g. from find-last-skill-invocation.sh).
+#                     When given, scans every transcript touched at or after
+#                     that time instead of an arbitrary recent-N window --
+#                     pass skill-upgrade's own last-invocation timestamp here
+#                     to review "since I last ran" rather than a fixed count.
 
 set -euo pipefail
 
 PROJECT_DIR="${1:-$PWD}"
 MAX_FILES="${2:-15}"
+SINCE="${3:-}"
 
 LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" && pwd)"
 TRANSCRIPT_DIR="$("$LIB_DIR/find-transcript-dir.sh" "$PROJECT_DIR")" || exit 1
 
-FILES=$(cd "$TRANSCRIPT_DIR" && ls -t -- *.jsonl 2>/dev/null | head -n "$MAX_FILES")
+if [ -n "$SINCE" ]; then
+  FILES=$("$LIB_DIR/list-transcripts-since.sh" "$SINCE" "$PROJECT_DIR")
+else
+  FILES=$(cd "$TRANSCRIPT_DIR" && ls -t -- *.jsonl 2>/dev/null | head -n "$MAX_FILES")
+fi
 
 if [ -z "$FILES" ]; then
   echo "No .jsonl transcripts found in $TRANSCRIPT_DIR" >&2

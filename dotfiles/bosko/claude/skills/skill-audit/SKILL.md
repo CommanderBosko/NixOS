@@ -9,6 +9,22 @@ Sweep **every** skill in the project and evaluate each against a fixed quality r
 
 (Bucket: Verification — its one output is a quality report on the skill library. It fans work out to sub-agents to read in parallel, but that is an implementation detail, not skill-chaining.)
 
+## Step 0 — Check logs since the last audit
+
+**Always check what's happened since skill-audit itself last ran**, so the sweep can flag skills that are new or changed since the last pass, and any misfires logged in the meantime. Get the cutoff first:
+
+```bash
+~/.claude/skills/lib/find-last-skill-invocation.sh skill-audit
+```
+
+This prints the ISO-8601 timestamp of skill-audit's previous invocation for this project, or nothing if it's never run before. Then resolve which transcripts are new since then:
+
+```bash
+~/.claude/skills/lib/list-transcripts-since.sh "<cutoff-from-above>"
+```
+
+An empty cutoff (first-ever run) lists the full transcript history instead. Skim the listed transcripts (never read them whole — `grep` for `Write`/`Edit` calls touching `SKILL.md` paths, and for `is_error` tool results with a `Skill` active) to note: skills created or materially edited since the last audit (give these closer scrutiny — they haven't been swept yet), and any recurring misfires logged since then (feed these into the correctness-bugs section of Step 3, don't leave them to `skill-upgrade` alone). This is a scoping aid, not a replacement for Steps 1–2's full sweep — every skill still gets audited every time.
+
 ## Step 1 — Enumerate every skill
 
 Find all skills and their shape. There are usually two locations:
@@ -55,7 +71,7 @@ Merge the agents' findings into a single report, ordered by leverage, not by ski
 3. **Per-lens rollup** — the remaining script/asset/AskUserQuestion/arguments candidates.
 4. Name the skills that are already clean (so the user sees the sweep was complete).
 
-Be blunt; skip clean skills; lead with what matters.
+**Report every finding that survives verification — across every skill, every lens — not just the single highest-priority one.** A list of one is fine if that's genuinely all the sweep turned up; don't truncate a longer list for brevity. Be blunt; skip clean skills; lead with what matters.
 
 ## Step 4 — Report, don't auto-apply
 
