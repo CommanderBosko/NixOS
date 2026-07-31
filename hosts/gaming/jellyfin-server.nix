@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 
 # Jellyfin media server — gaming host only (this is the host with the media SSD).
 #
@@ -15,6 +15,12 @@
     enable = true;
     openFirewall = false; # we scope the ports to trusted interfaces below
   };
+
+  # Jellyfin's unit ships UMask=0077, so trickplay caches, nfo, and artwork it
+  # writes into /mnt/media come out 600/700 owned by jellyfin — locking out
+  # bosko/natty even though the media group is meant to share access both ways
+  # (see the tmpfiles rule below). Loosen to 0027 so new group members can read.
+  systemd.services.jellyfin.serviceConfig.UMask = lib.mkForce "0027";
 
   # GPU access for hardware transcoding (NVENC/NVDEC).
   users.users.jellyfin.extraGroups = [ "render" "video" "media" ];
