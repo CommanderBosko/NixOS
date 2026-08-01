@@ -153,6 +153,25 @@
     };
   };
 
+  # Weekly reboot, offset 30m past oracle-keepalive's 03:00 run so a reboot
+  # doesn't cut its 90m anti-idle stress-ng job short mid-run.
+  systemd.services.weekly-reboot = {
+    description = "Weekly scheduled reboot";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.systemd}/bin/systemctl reboot";
+    };
+  };
+
+  systemd.timers.weekly-reboot = {
+    description = "Weekly reboot every Sunday at 3:30AM";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Sun *-*-* 03:30:00";
+      Persistent = false;
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     wireguard-tools
   ];
