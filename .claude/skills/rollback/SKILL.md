@@ -28,15 +28,16 @@ generation, and the resolved rollback target.
 
 ## Step 2 — Confirm
 
-Ask the user to confirm before proceeding. This yes/no gate can be presented via the
-**AskUserQuestion tool** (e.g. "Roll back to gen N" / "Cancel"). State clearly:
+Present the confirmation as a hard gate via the **AskUserQuestion tool**, with exactly two
+options: **Roll back to gen N** (proceed) and **Cancel** (abort, do nothing). Do not use
+free-form prose or a typed-`YES` match for this gate. State clearly:
 
 - Which generation is currently active
 - Which generation will become active after rollback
 - That this takes effect immediately (no reboot needed)
 - That rollback is reversible by running `/rollback` again or by rebuilding
 
-Do not proceed until the user explicitly confirms (e.g. "yes", "do it", "go ahead").
+Do not proceed until the user picks **Roll back to gen N**.
 
 ## Step 3 — Hand off the rollback command
 

@@ -81,8 +81,7 @@ Walk the config looking for genuine security regressions. Focus areas, in rough 
    services bound to `0.0.0.0` that needn't be, SSH `PermitRootLogin`/`PasswordAuthentication`
    loosened. vpn-server (public-facing) is the highest-stakes here.
 4. **Trust & privilege** — unexpected `nix.settings.trusted-users`, `security.sudo` wheel rules
-   loosened, auto-login on hosts where it shouldn't be (note: SDDM auto-login on **gaming** is
-   intentional/known — not a finding).
+   loosened, auto-login enabled on any host.
 5. **Untrusted inputs / substituters** — unreviewed `nix.settings.substituters` or
    `trusted-public-keys` additions.
 
