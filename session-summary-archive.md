@@ -1,3 +1,28 @@
+## Session: 2026-07-28 — Sudo-gated skill steps now hand off instead of failing silently
+
+**Focus**: User asked whether skills that perform an actual `switch`/rebuild (not just dry-run) should be removed since Claude can't supply an interactive sudo password; audit, fix the real gap, and decide whether a NOPASSWD rule is worth adding to remove the friction.
+
+### What changed (and why)
+- Audited every skill touching `nixos-rebuild switch`/`nh os switch`: `rollback` and `nixos-gc` already handed off correctly; `remote-rebuild` works because `vpn-server` alone has passwordless sudo. `fleet-rollout` was the one real gap — its switch step had no hand-off and would just fail on the password prompt.
+- Fixed `fleet-rollout` step 5 to hand the switch command to the user for every host except `vpn-server`, and made the pause explicit even in Training Mode OFF (unattended runs still stall here). Added a Gotchas section.
+- Found and fixed a second bug in the same step: `fleet-rollout` was telling `vpn-server` to deploy via `switch --target-host`, which the `remote-rebuild` skill's own Gotchas say drops the SSH session mid-activation — corrected to use `remote-rebuild`'s actual `boot` + reboot method.
+- Fixed `rollback` Step 3, which instructed running the sudo command directly, contradicting its own Gotcha further down the file (already noting 9+ past sessions where this was mis-attempted). Rewrote as an explicit hand-off; Step 4 now reuses the unprivileged `rollback.sh` helper instead of a second `sudo` call.
+
+### Decisions
+- Considered adding a NOPASSWD sudo rule for `nixos-rebuild switch` to remove the friction entirely — rejected. `switch` activates an arbitrary config (effectively unrestricted root code execution), so even a narrowly-scoped rule would remove the last human checkpoint against a compromised/prompt-injected agent session. Keeping the hand-off pattern as the standing design.
+
+### Issues / surprises
+- Three commits from an earlier, separately-run session today (`a1493d3` gaming amd_pstate fix, `87531b8` new boot-error-triage skill, `cb7e495` git-commit/git-push absolute-path Gotcha) landed without their own `/session-closer` run — same gap pattern as the 2026-07-26 catch-up, now recurring a second time. Narrated into project-state.md from commit messages only (no transcript); flagged directly to the user rather than silently repeating the workaround again.
+
+### Next session
+- gaming: rebuild + reboot to pick up `amd_pstate=disable` (rides along with other pending gaming reboots).
+- `nh os boot` + a new session to bring `boot-error-triage` and the `git-commit`/`git-push` Gotcha docs live in `~/.claude` (global repo-managed skills).
+- Consider a lower-friction session-closing habit (e.g. closing at the end of each sitting) given two same-day unclosed-session gaps in a row.
+
+**Commits**: `595b759` (this session) + `a1493d3`, `87531b8`, `cb7e495` (earlier unclosed session today, narrated from commit messages only — `f68aed0` from that same gap window was already captured by the 2026-07-27 close).
+
+---
+
 ## Session: 2026-07-27 — Verified natalie-laptop's nvidia driver fix actually cleared the boot errors
 
 **Focus**: Confirm, via a live boot-log check on natalie-laptop, that an earlier session's two nvidia driver fixes (closed kernel module, legacy 580.xx pin) actually resolved the issue rather than just evaluating cleanly.

@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-03 — Pinchflat VPN split-tunnel fix (bot-detection root cause)
+
+**Focus**: Diagnose and fix Pinchflat's yt-dlp downloads failing with YouTube's "Sign in to confirm you're not a bot" error, which the user suspected was VPN-related.
+
+### What changed (and why)
+- Confirmed the user's hypothesis directly rather than guessing: gaming's WireGuard client is a deliberate full tunnel, so Pinchflat's yt-dlp traffic was exiting via the Oracle Cloud VPS IP — `curl -4 ifconfig.me` from gaming literally returned the VPN server's own address, a datacenter/hosting ASN YouTube flags far more aggressively than residential IPs.
+- **Fix 1** (`61fe874`): a UID-scoped `ip rule` (via `wg-quick`'s `postUp`/`postDown`) routes only Pinchflat's traffic via the normal LAN gateway, bypassing wg0, while the rest of gaming stays fully tunneled. UID resolved at *runtime* (`$(id -u pinchflat)`), not eval time — NixOS system users get dynamically assigned UIDs.
+- **Fix 1 alone hung every connection in `SYN-SENT` forever** — a second, non-obvious bug: NixOS's firewall does its own strict reverse-path check independent of the `rp_filter` sysctl (already loose), and dropped the return traffic as spoofed since the global route still points at wg0. **Fix 2** (`4fad567`): `checkReversePath = "loose"` on gaming, matching a pattern `vpn-server` already used for the same class of asymmetric-routing problem.
+- Confirmed fully live end-to-end, not just dry-run-clean: all 3 previously-failing videos downloaded successfully (video, thumbnail, `.nfo`, `.info.json` all present in `/mnt/media/YouTube`) — Pinchflat's first-ever confirmed successful download.
+
+### Decisions
+- UID-scoped split-tunnel exception over disabling full-tunnel entirely or relying on cookies (yt-dlp's own suggested workaround) — cookies treat the symptom (still flagged as a datacenter IP) not the cause, and full-tunnel is deliberate for the rest of the host.
+
+### Issues / surprises
+- The two-part nature of this fix was the real surprise: the routing rule alone doesn't error, it just hangs silently (`SYN-SENT` forever) — easy to mistake for "still propagating" rather than a second real bug. Root-caused via `ss -tn state syn-sent` plus a control test (a plain `curl --interface enp4s0` as a different, non-pinchflat user reproduced the identical hang, which ruled out anything specific to the UID rule itself).
+- `ps aux` intermittently failed to show other users' full command lines for the pinchflat-owned yt-dlp processes, while `pgrep -u pinchflat -a` and `ps -p <pid> -o cmd` did — cost some back-and-forth before finding the actually-running (but network-stalled) processes.
+
+### Next session
+- Set up the Jellyfin "YouTube" library and confirm the Media Profile's NFO/series-image toggles — now higher priority, since 3 real video files are already sitting in `/mnt/media/YouTube` with no library to pick them up.
+- Watch for Yes Theory's next upload (still gated by its own unrelated `download_cutoff_date`) as the first real end-to-end file-to-Jellyfin verification.
+
+**Commits**: `61fe874`..`4fad567` (2 commits)
+
+---
+
 ## Session: 2026-08-03 — Pinchflat YouTube archiver added to gaming, wired to Jellyfin
 
 **Focus**: Research, plan, and deploy Pinchflat (self-hosted YouTube archiver) on gaming, integrated with the existing Jellyfin library. Also closes a gap of several unclosed prior sessions.
@@ -106,31 +131,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No follow-up required; both commits pushed as part of this close.
 
 **Commits**: `db6bca9`, `926e78a`
-
----
-
-## Session: 2026-07-28 — Sudo-gated skill steps now hand off instead of failing silently
-
-**Focus**: User asked whether skills that perform an actual `switch`/rebuild (not just dry-run) should be removed since Claude can't supply an interactive sudo password; audit, fix the real gap, and decide whether a NOPASSWD rule is worth adding to remove the friction.
-
-### What changed (and why)
-- Audited every skill touching `nixos-rebuild switch`/`nh os switch`: `rollback` and `nixos-gc` already handed off correctly; `remote-rebuild` works because `vpn-server` alone has passwordless sudo. `fleet-rollout` was the one real gap — its switch step had no hand-off and would just fail on the password prompt.
-- Fixed `fleet-rollout` step 5 to hand the switch command to the user for every host except `vpn-server`, and made the pause explicit even in Training Mode OFF (unattended runs still stall here). Added a Gotchas section.
-- Found and fixed a second bug in the same step: `fleet-rollout` was telling `vpn-server` to deploy via `switch --target-host`, which the `remote-rebuild` skill's own Gotchas say drops the SSH session mid-activation — corrected to use `remote-rebuild`'s actual `boot` + reboot method.
-- Fixed `rollback` Step 3, which instructed running the sudo command directly, contradicting its own Gotcha further down the file (already noting 9+ past sessions where this was mis-attempted). Rewrote as an explicit hand-off; Step 4 now reuses the unprivileged `rollback.sh` helper instead of a second `sudo` call.
-
-### Decisions
-- Considered adding a NOPASSWD sudo rule for `nixos-rebuild switch` to remove the friction entirely — rejected. `switch` activates an arbitrary config (effectively unrestricted root code execution), so even a narrowly-scoped rule would remove the last human checkpoint against a compromised/prompt-injected agent session. Keeping the hand-off pattern as the standing design.
-
-### Issues / surprises
-- Three commits from an earlier, separately-run session today (`a1493d3` gaming amd_pstate fix, `87531b8` new boot-error-triage skill, `cb7e495` git-commit/git-push absolute-path Gotcha) landed without their own `/session-closer` run — same gap pattern as the 2026-07-26 catch-up, now recurring a second time. Narrated into project-state.md from commit messages only (no transcript); flagged directly to the user rather than silently repeating the workaround again.
-
-### Next session
-- gaming: rebuild + reboot to pick up `amd_pstate=disable` (rides along with other pending gaming reboots).
-- `nh os boot` + a new session to bring `boot-error-triage` and the `git-commit`/`git-push` Gotcha docs live in `~/.claude` (global repo-managed skills).
-- Consider a lower-friction session-closing habit (e.g. closing at the end of each sitting) given two same-day unclosed-session gaps in a row.
-
-**Commits**: `595b759` (this session) + `a1493d3`, `87531b8`, `cb7e495` (earlier unclosed session today, narrated from commit messages only — `f68aed0` from that same gap window was already captured by the 2026-07-27 close).
 
 ---
 
