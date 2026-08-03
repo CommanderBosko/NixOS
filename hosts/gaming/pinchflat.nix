@@ -52,4 +52,13 @@
       ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
     '';
   };
+
+  # The UID exception above makes pinchflat's return traffic arrive on
+  # enp4s0 while the global default route still points at wg0. NixOS's
+  # firewall does its own strict reverse-path check independent of the
+  # rp_filter sysctl (already loose) and drops that as spoofed, hanging
+  # every connection in SYN-SENT forever. Same asymmetric-routing fix
+  # already applied on vpn-server (hosts/vpn-server/configuration.nix)
+  # for the same reason.
+  networking.firewall.checkReversePath = "loose";
 }
