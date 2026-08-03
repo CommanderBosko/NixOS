@@ -138,6 +138,10 @@ Tell the user:
   - **Project-local:** available immediately in this project.
 - **This skill hasn't been smoke-tested.** `new-skill` only drafts and writes the file — it doesn't verify the skill actually works. Point the user at `ship-skill` (which chains draft → smoke-test → commit → push) for a tested result, or offer to test it inline now if the user wants to stay in `new-skill`.
 
+## Gotchas
+
+- **The `nixos-dry-run` parenthetical in step 6 only works when the session's cwd is `~/NixOS`** — it's a project-local skill there, not global, so invoking it from another project fails with `Unknown skill: nixos-dry-run`. Prefer the direct `nh os boot /home/bosko/NixOS --dry` command listed first when working from outside `~/NixOS`.
+
 ## Assets
 
 - `assets/skill-template.md` — the SKILL.md scaffold. Read it in step 4 and fill its `<…>` placeholders (name, description/trigger phrases, bucket, steps) to draft the new skill. Drop the surrounding code fence from the final written file.

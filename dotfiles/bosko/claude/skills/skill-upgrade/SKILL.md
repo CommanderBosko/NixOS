@@ -61,3 +61,11 @@ easily-reversible append, but a clean pick beats inferring approval from a free-
 After editing repo-managed skills, run the `nixos-dry-run` skill to confirm the config still
 evaluates. Report which skills were upgraded, the gotcha added to each, and the reminder that a
 rebuild + new session is needed before the change reaches `~/.claude`.
+
+## Gotchas
+
+- **`nixos-dry-run` is project-local to `~/NixOS`, not a global skill** — invoking it via the
+  Skill tool from a different project's working directory fails with
+  `Unknown skill: nixos-dry-run` (observed from a FinanceGuru session). When step 5 runs from
+  outside `~/NixOS`, verify with the direct command instead:
+  `nh os boot /home/bosko/NixOS --dry`.
