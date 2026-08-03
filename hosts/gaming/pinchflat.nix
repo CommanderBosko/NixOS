@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 
 # Pinchflat — self-hosted YouTube archiver (yt-dlp-backed), feeding the
 # existing Jellyfin library on this host.
@@ -33,5 +33,23 @@
   networking.firewall.interfaces = {
     enp4s0.allowedTCPPorts = [ 8945 ];
     wg0.allowedTCPPorts = [ 8945 ];
+  };
+
+  # modules/vpn.nix routes ALL of gaming's egress through the Oracle Cloud
+  # VPS by design (full tunnel). YouTube flags that datacenter IP as bot
+  # traffic ("Sign in to confirm you're not a bot"), breaking Pinchflat's
+  # yt-dlp downloads. Exempt only Pinchflat's UID from the tunnel via a
+  # policy-routing rule so its traffic exits via the normal LAN gateway
+  # instead, while the rest of the host stays fully tunneled.
+  networking.wg-quick.interfaces.wg0 = {
+    postUp = ''
+      PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
+      ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
+      ${pkgs.iproute2}/bin/ip rule add uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100
+    '';
+    postDown = ''
+      PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
+      ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
+    '';
   };
 }
