@@ -38,3 +38,8 @@ Invocation shape: `<topic>` or `<topic> <n>`.
 6. **Edge cases:**
    - If every source is inaccessible, say so plainly instead of producing a synthesized verdict from nothing.
    - If sources genuinely conflict (not just differ in emphasis), state the conflict directly rather than forcing a false consensus.
+
+## Gotchas
+
+- **What went wrong:** Step 4's "wait for all sub-agents to report back" was read as "actively poll for completion," leading to three consecutive malformed `ScheduleWakeup` calls in one session (missing `prompt`, then missing `delaySeconds`/`reason`) before giving up on it.
+- **How to avoid it:** don't call `ScheduleWakeup` to wait on sub-agents spawned via the `Agent` tool — that work is harness-tracked, so a completion notification arrives automatically as a later turn without any polling call. Just let the turn end after spawning; there is nothing to schedule.
