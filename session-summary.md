@@ -4,6 +4,35 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-03 — Pinchflat YouTube archiver added to gaming, wired to Jellyfin
+
+**Focus**: Research, plan, and deploy Pinchflat (self-hosted YouTube archiver) on gaming, integrated with the existing Jellyfin library. Also closes a gap of several unclosed prior sessions.
+
+### What changed (and why)
+- `/research` (9 sources) found nixpkgs already ships a native `services.pinchflat` module — no Docker needed. Built `hosts/gaming/pinchflat.nix`: `mediaDir` on a new `/mnt/media/YouTube` folder sharing Jellyfin's existing `media` group, port 8945 firewalled LAN+WG (matches Jellyfin's own scoping), `SECRET_KEY_BASE` via a new sops secret rather than the module's weak `selfhosted` escape hatch. `nixos-dry-run` clean (+367 MiB, no kernel/DM changes), committed `b76e09b`, pushed.
+- **Confirmed live this close**: gaming got a full reboot (15:11) + switch (15:31) today — verified directly (`systemctl status pinchflat`, `/mnt/media/YouTube` perms, HTTP 200 on :8945) rather than assumed. That same reboot+switch also activated a large backlog from several previously-unclosed sessions (see below).
+- Added first source (Yes Theory) and hit two real Pinchflat gotchas, both root-caused live: a `download_cutoff_date` that correctly filtered out all current videos (working as designed, not a bug — user wants future-only), and a `collection_type: playlist` misdetection matching a confirmed-still-open upstream bug (`#607`) that survived re-adding with two different URL forms — accepted as-is (cosmetic-only impact).
+- Resolved several practical follow-ups: SponsorBlock ("mark chapters" only, non-destructive — enabled), "use my subscriptions as a source" (not possible, and the cookie-auth workaround is explicitly discouraged upstream), and the new Jellyfin "YouTube" library's advanced settings (decided, not yet applied).
+- **Catch-up**: ten commits across several separately-run, unclosed sessions since the 2026-07-30 close — flake bump, a VPN weekly-reboot timer, Jellyfin's `UMask` fix (which this session's Pinchflat work directly relies on), a `cups-browsed` boot-race fix, and six skill-doc gotcha additions. Narrated from commit messages only.
+
+### Decisions
+- Native nixpkgs module over Docker; shared Jellyfin `media` group over a standalone `pinchflat` group; sops secret over `selfhosted = true` — all three keep Pinchflat consistent with how the rest of this repo already does things, rather than treating it as a one-off appliance.
+- Accepted both Pinchflat rough edges (playlist misdetection, cutoff-date filtering) rather than chasing them further — neither blocks real functionality.
+
+### Issues / surprises
+- The `nh os boot --dry` gotcha recurred (untracked file invisible to flake eval) — `git add`-ing the new files before dry-running fixed it immediately, but worth remembering it'll happen again for any new host file that isn't staged first.
+- Generation bookkeeping looked alarming at first (a new generation appeared to be created at the same moment as a `--dry` run) — turned out to be the user running the recommended `sudo nh os switch` a few minutes later, not the dry-run itself doing anything live. Worth double-checking generation timestamps precisely (to the second) before concluding a "read-only" skill did something it shouldn't have.
+- A second Pinchflat source (`@66Samus`) was found already mid-indexing, added directly through the web UI outside this conversation — no context on it beyond what's visible in `systemctl status`.
+
+### Next session
+- Confirm the Pinchflat Media Profile has NFO/series-image toggles on, and actually create the Jellyfin "YouTube" library with this session's decided settings — do this before Yes Theory's next upload lands.
+- Check back once Yes Theory (or `@66Samus`) posts something new — first real end-to-end file-to-Jellyfin verification is still pending.
+- laptop/natalie-laptop still need their own rebuild+reboot to pick up everything gaming got today (docx/CIFS fixes, skill fixes, etc.) — not part of this session's scope.
+
+**Commits**: `896eca9`..`b76e09b` (11 commits, spanning this session plus the unclosed catch-up range)
+
+---
+
 ## Session: 2026-07-30 — Skill-audit sweep, tray-icon dead end, docx/portal/CIFS fixes
 
 **Focus**: Full skill-library quality sweep, plus a batch of desktop/networking fixes carried over from the tail end of 2026-07-29.
@@ -102,31 +131,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Consider a lower-friction session-closing habit (e.g. closing at the end of each sitting) given two same-day unclosed-session gaps in a row.
 
 **Commits**: `595b759` (this session) + `a1493d3`, `87531b8`, `cb7e495` (earlier unclosed session today, narrated from commit messages only — `f68aed0` from that same gap window was already captured by the 2026-07-27 close).
-
----
-
-## Session: 2026-07-27 — Verified natalie-laptop's nvidia driver fix actually cleared the boot errors
-
-**Focus**: Confirm, via a live boot-log check on natalie-laptop, that an earlier session's two nvidia driver fixes (closed kernel module, legacy 580.xx pin) actually resolved the issue rather than just evaluating cleanly.
-
-### What changed (and why)
-- No repo changes this session — verification only. An earlier, unclosed session today made 3 commits (`140d33d` simple-scan, `ee07039` closed nvidia module, `c22737e` legacy 580.xx driver pin) fixing natalie-laptop's Pascal-GPU (MX350) nvidia driver failure; this session confirmed on a real boot that the fix works.
-- Checked `journalctl -k -b 0` and `nvidia-smi` directly on natalie-laptop: the module now loads (`NVRM: loading NVIDIA UNIX x86_64 Kernel Module 580.173.02`), binds to the MX350, and `nvidia-smi` reports the driver live — no GSP-firmware probe failure, no RmInitAdapter failure, `systemctl --failed` empty.
-
-### Decisions
-- Initially tried reaching natalie-laptop over SSH from gaming (following the pattern of prior sessions); when that hit a host-key mismatch, did not bypass it (no `ssh-keygen -R`) — flagged it as a real "was this legitimate or not" question instead of assuming benign. Turned out to be moot: the conversation was already running locally on natalie-laptop, so no SSH was needed at all once that was noticed.
-
-### Issues / surprises
-- SSH to natalie-laptop from gaming failed with `Host key verification failed` against an unrecognized key — not diagnosed (stale `known_hosts` vs. genuine re-key), see project-state.md Known Issues.
-- Kernel log timestamps this boot show `Oct 08` while `uptime -s` reports the real date — the already-known RTC/CMOS-battery clock skew (sessions 57/58), not new.
-- **The session-close `secret-scan` false-alarmed a "leaked password hash in public git history" finding.** Almost proposed a `git filter-repo --replace-text` + force-push before checking reachability — the 20 flagged commits turned out to exist only inside two local `git stash` entries (never pushed, never public), not any branch or tag. Root cause: the scanner's history pass used `git rev-list --all`, which includes `refs/stash` — corrected the user as soon as this was found, dropped the two stale stashes, and fixed `secret-scan.sh` to exclude `refs/stash`. Re-ran clean.
-
-### Next session
-- Before trusting remote SSH to natalie-laptop again, resolve the host-key mismatch first (confirm a legitimate re-key before removing the old `known_hosts` entry).
-- No further nvidia action needed — both fixes are confirmed live and working.
-- The `~/nixos-pre-hash-purge-rewrite.bundle` safety backup made during the false-alarm investigation is harmless and can be deleted whenever convenient — it was never needed.
-
-**Commits**: `81e5637` (session-close docs) + a follow-up commit fixing `secret-scan.sh`'s `refs/stash` false-positive; `140d33d..c22737e` (3 commits) landed in the preceding unclosed session and are already pushed.
 
 ---
 
