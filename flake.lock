@@ -77,11 +77,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1785724009,
-        "narHash": "sha256-BAd5idHEwNp0cC8s4OVQ+6ED3QruH+OVNUZp50LaFro=",
+        "lastModified": 1785801507,
+        "narHash": "sha256-brxCqm9f6TVPAeRsRwXieX5fHXpKgatYTSk2u28l+wc=",
         "owner": "CommanderBosko",
         "repo": "FinanceGuru",
-        "rev": "fd91f3e00031c7ebcce4a4d2d30ebcc819ad261b",
+        "rev": "7ee3a458702129c72422c5fe288e59063d020472",
         "type": "github"
       },
       "original": {
