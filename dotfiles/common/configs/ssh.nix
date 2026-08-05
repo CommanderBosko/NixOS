@@ -27,12 +27,12 @@
       };
 
       "pi-hole" = {
-        Hostname = "10.0.0.20";
+        Hostname = "10.0.0.19";
         User = "bosko";
       };
 
       "famdash" = {
-        Hostname = "10.0.0.21";
+        Hostname = "10.0.0.20";
         User = "natty";
       };
     };
