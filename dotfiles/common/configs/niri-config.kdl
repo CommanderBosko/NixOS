@@ -280,6 +280,14 @@ layout {
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
 
+// playerctld tracks MPRIS players by last-activity order, so the plain
+// `playerctl play-pause`/next/previous binds below act on whichever player
+// was most recently active (music app, browser tab, etc.) instead of just
+// the first one D-Bus happens to enumerate — replicates KDE Plasma's media
+// key behavior. Provided by the `playerctl` package, already installed by
+// every DE module that imports this config.
+spawn-at-startup "playerctld" "daemon"
+
 hotkey-overlay {
     // Disables the "Important Hotkeys" pop-up at startup.
     skip-at-startup
@@ -392,8 +400,9 @@ binds {
     XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
-    // Example media keys mapping using playerctl.
-    // This will work with any MPRIS-enabled media player.
+    // Media keys mapping using playerctl. Works with any MPRIS-enabled media
+    // player; targets whichever one was most recently active, via the
+    // playerctld daemon spawned at startup above.
     XF86AudioPlay        allow-when-locked=true { spawn-sh "playerctl play-pause"; }
     XF86AudioStop        allow-when-locked=true { spawn-sh "playerctl stop"; }
     XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
