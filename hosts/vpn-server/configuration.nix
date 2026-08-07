@@ -38,6 +38,17 @@
       listenPort = 51820;
       privateKeyFile = config.sops.secrets."wg-private-key".path;
 
+      # Oracle's route cache reports MTU 9000 for the default route (its
+      # internal jumbo-frame VCN fabric) even though the physical NIC and the
+      # real path to external peers is 1500. Left unset, wg-quick auto-detects
+      # off that inflated route MTU and picks 8920, which then needs IP
+      # fragmentation to leave the 1500-byte physical link — fragmented UDP is
+      # exactly what gets silently dropped by ISPs/NAT/firewalls along the way,
+      # causing random stutter (worst on latency-sensitive traffic like
+      # gaming) instead of a clean drop. Match the client-side clamp
+      # (modules/vpn.nix) so both ends agree on a safe real-world MTU.
+      mtu = 1380;
+
       # NAT masquerade: rewrite source IP so return traffic knows to come back
       # to the server. FORWARD accept is handled declaratively via trustedInterfaces.
       postUp = ''
