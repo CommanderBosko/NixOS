@@ -1,3 +1,25 @@
+## Session: 2026-07-28 — Screenshot-verify reminders + permission allowlist tune-up
+
+**Focus**: User asked what an "ultimate optimal workspace" would look like; turned the answer (tighter verification loops) into a concrete change, then asked for a permissions check as a follow-up.
+
+### What changed (and why)
+- Added an explicit numbered "run `/wayland-screenshot` after rebooting" step to the next-steps reminder in `switch-de`, `add-niri-fullscreen-rule`, `add-niri-window-rule`, and `add-niri-keybind` (conditional on its window-rule path) — these skills previously ended at commit with no confirmation the visual result actually landed, even though none of them take effect without a reboot.
+- Ran `fewer-permission-prompts`: scanned the 50 most-recent session transcripts across all projects, filtered to genuinely read-only and still-prompting patterns, and added 4 entries to `.claude/settings.json` (`session-closer`'s `scan-session.sh`, `git-commit.sh status`, `push.sh status`, `flatpak remote-info*`). Their mutating siblings (`git-commit.sh commit`, `push.sh execute`, `flatpak run`) were deliberately left gated, along with the entire interpreter/shell-runner category.
+
+### Decisions
+- Scoped which skills to touch and how the reminder should read via AskUserQuestion before editing anything (user picked all 4 candidate skills + the explicit-numbered-step style over a soft mention).
+- Split the work into two commits (skill reminders vs. permission allowlist) rather than one, since they're unrelated concerns.
+
+### Issues / surprises
+- None — small, self-contained change; both commits verified clean before push.
+
+### Next session
+- No follow-up required; both commits pushed as part of this close.
+
+**Commits**: `db6bca9`, `926e78a`
+
+---
+
 ## Session: 2026-07-28 — Sudo-gated skill steps now hand off instead of failing silently
 
 **Focus**: User asked whether skills that perform an actual `switch`/rebuild (not just dry-run) should be removed since Claude can't supply an interactive sudo password; audit, fix the real gap, and decide whether a NOPASSWD rule is worth adding to remove the friction.

@@ -4,6 +4,36 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-08 — Weekly PR review, DNS drift fix, niri media keys, vpn-server MTU + watchdog, router research
+
+**Focus**: Catch-up close spanning five sessions since the last close (2026-08-03 → 2026-08-07) — a weekly skill-sweep PR merge, a flake bump, a real DNS outage-drift bug, a niri media-key UX fix, a non-obvious VPN MTU bug, a new monitoring pair, and a router-architecture research pass in a sibling repo.
+
+### What changed (and why)
+- **Weekly `improve-system` PR #6 merged** (`00ab3f1`) — first full live run of `review-improve-system-pr`: guardrail passed, diff reviewed, user-confirmed, squash-merged. Removed a stale `audit-config` carve-out and hardened `rollback`'s confirm gate.
+- **`financeguru` flake input bumped** (`21b848e`) — routine lock-only bump.
+- **pi-hole/famdash IP drift fixed after a power outage** (`ac1c4ad`) — both Pis re-leased, famdash landed on pi-hole's old slot; verified live (mDNS/HTTP/DNS fingerprinting) before fixing. Surfaced a real bug in the fix itself: the LAN DNS resolver hardcoded in `desktop-networking.nix` had silently become famdash's address, bypassing pi-hole ad-blocking fleet-wide since the outage.
+- **niri media keys now route to the most-recently-active MPRIS player** (`8feeb46`) — `playerctld` added at niri startup, matching KDE Plasma's pause/play behavior, across all 3 niri hosts in one shared-config edit.
+- **vpn-server MTU black-hole bug fixed** (`d00e0fd`) — root cause of user-reported "random gaming stutter" through the VPN: Oracle's route cache over-reports MTU 9000, so `wg-quick` auto-detected `wg0` at 8920 with no explicit clamp, causing return traffic to fragment and silently drop. Added the same `mtu = 1380` clamp the client side already had. Confirmed live.
+- **Gaming-only VPN health-watchdog + a cloud nixpkgs-staleness routine added** (`1a4d440`) — a follow-up audit found vpn-server had no monitoring and no automated patch-cadence check; built a local systemd timer for the former (dry-run clean, not yet switched) and a cloud routine for the latter (first run 2026-08-10).
+- **Router research done, written to a sibling repo** — `~/projects/home-lab/docs/router-options.md` (not this repo) now recommends running NixOS itself as a future home router, for the same declarative/Claude-drivable reasons this repo already exists. No hardware bought, nothing scaffolded here.
+
+### Decisions
+- VPN monitoring split into a local watchdog (live health, needs SSH) + a cloud routine (staleness check, no credentials needed) rather than one combined mechanism — the cloud sandbox genuinely can't reach vpn-server.
+- NixOS-as-router chosen over OPNsense/VyOS/an appliance specifically for *this* user's declarative/AI-manageable priority axis, not as a general "best firewall" verdict — see `project-state.md` for the full tradeoff.
+
+### Issues / surprises
+- Live-verified during this close that pi-hole ad-blocking is bypassed by design whenever gaming's VPN tunnel is up — `wg-quick`'s own `DNS=` setting overwrites `/etc/resolv.conf` for as long as the tunnel is connected, independent of the LAN nameserver fix above. Not a bug, but worth knowing before re-diagnosing a future "pi-hole isn't blocking anything" report.
+- This close's transcript scan pulled in two already-closed 2026-08-03 sessions (`967aef9`, `cb5380d`) due to the known slash-command-cutoff-detection gap — cross-checked against `git log`'s actual last `chore(session)` commit and excluded their content from this narrative rather than re-describing already-documented work.
+
+### Next session
+- `nh os switch` on gaming to bring the VPN watchdog live, then confirm it actually fires (e.g. point it at a bad host temporarily).
+- `nh os boot`/`switch` + reboot on laptop and natalie-laptop for the pi-hole DNS fix and the niri media-key fix — both are gaming-only confirmed live right now.
+- No action required on the router research unless the user decides to move forward with buying hardware.
+
+**Commits**: `21b848e`..`1a4d440` (7 commits: `21b848e`, `2ed3644`, `00ab3f1`, `ac1c4ad`, `8feeb46`, `d00e0fd`, `1a4d440`)
+
+---
+
 ## Session: 2026-08-03 — Pinchflat VPN split-tunnel fix (bot-detection root cause)
 
 **Focus**: Diagnose and fix Pinchflat's yt-dlp downloads failing with YouTube's "Sign in to confirm you're not a bot" error, which the user suspected was VPN-related.
@@ -109,28 +139,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - User needs to run `rebuild` + reboot on **gaming first** (the Samba server), then laptop and natalie-laptop (sudo-gated, their own call). Confirm `samba-smbd` active on gaming, then `~/Shared` + CIFS automount + cross-machine read/write on each client.
 
 **Commits**: see this close's final commit hash below (supersedes `489432a`'s local-only draft, kept in history).
-
----
-
-## Session: 2026-07-28 — Screenshot-verify reminders + permission allowlist tune-up
-
-**Focus**: User asked what an "ultimate optimal workspace" would look like; turned the answer (tighter verification loops) into a concrete change, then asked for a permissions check as a follow-up.
-
-### What changed (and why)
-- Added an explicit numbered "run `/wayland-screenshot` after rebooting" step to the next-steps reminder in `switch-de`, `add-niri-fullscreen-rule`, `add-niri-window-rule`, and `add-niri-keybind` (conditional on its window-rule path) — these skills previously ended at commit with no confirmation the visual result actually landed, even though none of them take effect without a reboot.
-- Ran `fewer-permission-prompts`: scanned the 50 most-recent session transcripts across all projects, filtered to genuinely read-only and still-prompting patterns, and added 4 entries to `.claude/settings.json` (`session-closer`'s `scan-session.sh`, `git-commit.sh status`, `push.sh status`, `flatpak remote-info*`). Their mutating siblings (`git-commit.sh commit`, `push.sh execute`, `flatpak run`) were deliberately left gated, along with the entire interpreter/shell-runner category.
-
-### Decisions
-- Scoped which skills to touch and how the reminder should read via AskUserQuestion before editing anything (user picked all 4 candidate skills + the explicit-numbered-step style over a soft mention).
-- Split the work into two commits (skill reminders vs. permission allowlist) rather than one, since they're unrelated concerns.
-
-### Issues / surprises
-- None — small, self-contained change; both commits verified clean before push.
-
-### Next session
-- No follow-up required; both commits pushed as part of this close.
-
-**Commits**: `db6bca9`, `926e78a`
 
 ---
 
