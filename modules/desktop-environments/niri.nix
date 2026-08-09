@@ -113,9 +113,17 @@ let
     # with "No schemas installed"; dconf writes directly to the same
     # database gsettings reads from and doesn't need the schema installed to
     # be discoverable.
+    #
+    # Colloid-Teal-Dark + matching icon set replace Sweet-Dark/candy-icons
+    # (2026-08-09, see sweet-theme-rollout memory) — nixpkgs purged `sweet`
+    # for depending on gtk-engine-murrine (GTK2 EOL sweep); Colloid's
+    # nixpkgs build has no such dependency. Both strings are the literal
+    # output folder names from dotfiles/common/configs/home.nix's
+    # colloid-gtk-theme/colloid-icon-theme overrides — confirmed via a real
+    # build, not guessed from the README.
     dconf.settings."org/gnome/desktop/interface" = {
-      gtk-theme = "Sweet-Dark";
-      icon-theme = "candy-icons";
+      gtk-theme = "Colloid-Teal-Dark";
+      icon-theme = "Colloid-Teal-Dark";
       cursor-theme = "breeze_cursors";
       color-scheme = "prefer-dark";
     };
@@ -128,7 +136,7 @@ let
     # mimetype icons, not the cursor theme). gtk.enable is deliberately left
     # off: it force-manages gtk-3.0/gtk-4.0 settings.ini and only knows about
     # cursorTheme, which would wipe the gtk-theme-name/icon-theme-name keys
-    # already hand-set there for Sweet-Dark/candy-icons (dconf changes don't
+    # already hand-set there for Colloid-Teal-Dark (dconf changes don't
     # propagate to settings.ini on this system, see sweet-theme-rollout memory).
     home.pointerCursor = {
       enable = true;

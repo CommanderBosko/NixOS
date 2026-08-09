@@ -12,16 +12,32 @@
     # it installed, GTK3/4 apps like Thunar silently fall back to stock
     # light Adwaita since the referenced theme doesn't exist on disk.
     #
-    # sweet + candy-icons are the GTK widget theme and icon theme carried
-    # over from gaming's earlier Plasma setup (2026-07-18): installing them
-    # here makes the actual theme files available on every niri host, not
-    # just gaming's manually-populated ~/.local/share/icons. Theme
-    # *selection* (gtk-theme/icon-theme/cursor-theme/color-scheme) is
-    # declared via dconf.settings in modules/desktop-environments/niri.nix
-    # (2026-07-19), not here — this file installs the packages for every
-    # host (including non-niri ones), but only niri hosts assert the dconf
-    # selection.
-    packages = with pkgs; [ adw-gtk3 sweet candy-icons ];
+    # colloid-gtk-theme + colloid-icon-theme (teal accent) replace the
+    # earlier sweet + candy-icons pairing (2026-08-09) — nixpkgs removed
+    # `sweet` in its GTK2/gtk-engine-murrine end-of-life purge (see
+    # sweet-theme-rollout memory / NixOS/nixpkgs#410814); Colloid's nixpkgs
+    # build has no murrine dependency (confirmed via direct build), so it
+    # isn't exposed to the same removal. Both packages default to building
+    # only the plain/dark variant, so the teal accent needs an explicit
+    # override — confirmed against real build output, not just the READMEs,
+    # that this produces theme/icon folders literally named
+    # "Colloid-Teal-Dark" (the exact string used by niri.nix's dconf
+    # selection below). Installing them here makes the theme files
+    # available on every host; theme *selection* (gtk-theme/icon-theme/
+    # cursor-theme/color-scheme) is declared via dconf.settings in
+    # modules/desktop-environments/niri.nix (2026-07-19), not here — this
+    # file installs the packages for every host (including non-niri ones),
+    # but only niri hosts assert the dconf selection.
+    packages = with pkgs; [
+      adw-gtk3
+      (colloid-gtk-theme.override {
+        themeVariants = [ "teal" ];
+        colorVariants = [ "dark" ];
+      })
+      (colloid-icon-theme.override {
+        colorVariants = [ "teal" ];
+      })
+    ];
 
     # Shared folder for natty and bosko (/srv/shared, created by
     # modules/shared-folder.nix). mkOutOfStoreSymlink points straight at the
