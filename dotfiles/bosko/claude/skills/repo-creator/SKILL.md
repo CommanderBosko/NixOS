@@ -18,6 +18,11 @@ clean history, hand off a fully initialized repo.
 - This is a one-time setup. Once the first push succeeds, the job is done — no further
   commits.
 
+## Arguments
+
+None — the repo name is inferred from the current working directory (Step 1), confirmed
+with the user only if the directory name is ambiguous.
+
 ## Workflow
 
 ### 1. Determine the repo name

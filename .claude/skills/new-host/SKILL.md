@@ -70,8 +70,20 @@ Read the byte-exact templates from this skill's `assets/` directory and fill the
 | remote    | `hardware-configuration.nix`, `configuration.nix` | `assets/hardware-configuration.nix`, `assets/remote/configuration.nix` |
 
 Substitutions when filling a template:
-- Replace every `<hostname>` with the actual hostname.
-- `hardware-configuration.nix` is always written **as-is** (it's a placeholder); the real file is generated on the target machine — see Step 7.
+- Replace every `<hostname>` with the actual hostname — **including inside
+  `assets/hardware-configuration.nix`'s own comment** ("Run that command on `<hostname>`
+  and paste the result here"), even though the rest of that file is written as-is (see
+  below). Leaving that placeholder unsubstituted would commit the literal string instead
+  of the real hostname into a file that's otherwise correct as a stub.
+- Replace `<current-nixos-release>` (in `environment.nix`/`configuration.nix`'s
+  `system.stateVersion` line) with the state version gathered in Step 1 Q6 (default
+  `25.11`). This is a real, live-caught gap: Step 1 gathers the value but nothing wired
+  it into the substitution list before — following the template literally would write
+  `system.stateVersion = "<current-nixos-release>";` into the new host's config instead
+  of the real version.
+- `hardware-configuration.nix`'s **body** (everything except that one comment line) is
+  always written **as-is** (it's a placeholder); the real file is generated on the target
+  machine — see Step 7.
 
 Per-type notes (preserve these — they encode real decisions):
 - **desktop `environment.nix`:** keep `environment.systemPackages` minimal (add real packages later); leave `services.flatpak.packages` an empty list. Do NOT add aarch64 emulation (`boot.binfmt.emulatedSystems`) unless the user asks — that's gaming-specific. Drop the `displayManager.autoLogin` block if the user does not want auto-login.

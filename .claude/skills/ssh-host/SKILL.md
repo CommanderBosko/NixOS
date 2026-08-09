@@ -13,7 +13,7 @@ Connect to any host in the NixOS repo by short name, without needing to remember
 
 Parse from the user's request:
 
-- **`<host>`** (optional) — the short host name to connect to (a key under `.hosts` in `/home/bosko/NixOS/.claude/hosts.json`). Aliases `natalie` → `natalie-laptop`, `vpn`/`oracle` → `vpn-server` are accepted. If omitted, ask in Step 1.
+- **`<host>`** (optional) — the short host name to connect to (a key under `.hosts` in `/home/bosko/NixOS/.claude/hosts.json`). Aliases `natalie` → `natalie-laptop`, `vpn`/`oracle`/`server` → `vpn-server` are accepted. If omitted, ask in Step 1.
 
 ## Known hosts — single source of truth
 

@@ -24,7 +24,16 @@ fi
 # (`nh os boot` + reboot). Order matters: reboot-mandatory changes win over
 # session-risk changes.
 REBOOT_PATTERN='linux-[0-9]|linux-firmware|initrd|systemd-boot|boot\.loader|kernel-modules|/boot/'
-SESSION_RISK_PATTERN='sddm|nvidia|niri|hyprland|plasma|gnome-shell|greetd|xorg-server|mesa-|wayland-protocols'
+
+# Session-risk keywords: static infra (display manager, GPU driver, graphics
+# stack) plus every desktop-environment module name, derived live from
+# modules/desktop-environments/ so a newly-added DE is covered automatically
+# instead of silently falling through to the wrong (switch) recommendation.
+# This previously only covered 3 of 12 DE modules by hand (found by the
+# 2026-08-09 skill-audit sweep).
+STATIC_RISK_KEYWORDS='sddm|nvidia|greetd|xorg-server|mesa-|wayland-protocols|gnome-shell'
+DE_MODULE_NAMES=$(ls "${FLAKE_PATH}"/modules/desktop-environments/*.nix 2>/dev/null | xargs -n1 basename -s .nix | paste -sd'|')
+SESSION_RISK_PATTERN="${STATIC_RISK_KEYWORDS}${DE_MODULE_NAMES:+|${DE_MODULE_NAMES}}"
 
 echo ""
 echo "==> Switch vs boot recommendation"

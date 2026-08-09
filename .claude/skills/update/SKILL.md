@@ -9,6 +9,24 @@ version: 0.2.0
 
 Update all flake inputs for `/home/bosko/NixOS` and present a human-readable summary of what changed. Do not commit or rebuild automatically — leave those to the user.
 
+## Step 0 — Check for an active pin before updating
+
+A temporary pin set via `/pin-input` (lock-file only, `flake.nix`'s `url` is untouched) has no
+dedicated marker file — `nix flake update` will silently re-resolve it to the latest rev with
+no warning of its own, undoing the pin. The one live record of "is anything intentionally held
+back right now" is the most recent `flake-update-verify` loop memory file (that loop tracks
+pins it hits or sets across runs):
+
+```bash
+latest=$(ls -t /home/bosko/NixOS/.claude/loops/flake-update-verify/memory-*.md 2>/dev/null | head -1)
+[ -n "$latest" ] && grep -iA3 "pin" "$latest"
+```
+
+If it mentions an active pin (e.g. "Pin is TEMPORARY... the next full/bare `nix flake update`
+... WILL try to move `<input>` again"), surface that note to the user and confirm via the
+**AskUserQuestion tool** — options **Proceed and un-pin `<input>`** / **Skip this update** —
+before running Step 1. If nothing mentions a pin, proceed straight to Step 1.
+
 ## Step 1 — Run the update
 
 ```bash
