@@ -47,7 +47,7 @@ Do not proceed until the user picks **Roll back to gen N**.
 sudo nixos-rebuild switch --rollback
 ```
 
-The `nh` tool does not have a rollback subcommand — always use `nixos-rebuild` directly. Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
+Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
 
 ## Step 4 — Report result
 
@@ -70,8 +70,10 @@ the user to run themselves, never executed by Claude directly.
 
 ## Key constraints
 
-- No dry-run mode — rollback either happens or it doesn't.
-- Use `nixos-rebuild switch --rollback` — not `nh`, not `nixos-rebuild boot --rollback`.
+- No dry-run mode for this flow — rollback either happens or it doesn't. (`nh os rollback` does
+  have a `--dry` flag, but this skill deliberately stays on the `nixos-rebuild`-direct flow that's
+  been proven across 9+ past sessions — see Gotchas.)
+- Use `nixos-rebuild switch --rollback` — not `nixos-rebuild boot --rollback`.
 - `switch --rollback` activates immediately; it does NOT require a reboot.
 - If the user wants to roll back further than one generation, they can run `/rollback` again after this one completes.
 - If rollback fails (e.g. no previous generation exists), report the error output and stop — do not attempt workarounds.
@@ -79,3 +81,4 @@ the user to run themselves, never executed by Claude directly.
 ## Gotchas
 
 - **`sudo` has no NOPASSWD rule on this host — it always needs an interactive password.** Running `sudo nixos-rebuild switch --rollback` directly via the Bash tool will fail with "a terminal is required to read the password" (observed across 9+ past sessions). Instead, tell the user the exact command to run themselves (suggest the `!` prefix), or ask them to run it — don't attempt it and then report failure.
+- **This skill's "`nh` has no rollback subcommand" claim was wrong and has been removed** (corrected 2026-08-09 skill-audit sweep). `nh os rollback --to <gen>` genuinely exists (`nh 4.4.1`, confirmed via `nh os rollback --help`) and maps directly onto this skill's own generation-target argument. It's not adopted here only because the `nixos-rebuild`-direct flow above is the one actually proven across 9+ past sessions on this host — not because `nh` doesn't work. Same NOPASSWD hand-off constraint applies to either command.

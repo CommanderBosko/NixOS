@@ -7,11 +7,16 @@ description: Review and (with confirmation) merge the PR the weekly improve-syst
 
 Find the PR the weekly `improve-system` cloud routine opened, verify it stayed inside its auto-apply guardrail, then merge it only after explicit user confirmation. (Bucket: Orchestration — chains a guardrail check, a diff review, an AskUserQuestion gate, and a merge; each step stands alone but the chain matters so the gate never gets skipped under time pressure.)
 
+## Arguments
+
+None — the target is always whichever open PR the weekly `improve-system` routine most
+recently opened (resolved automatically in Step 1).
+
 ## Steps
 
 ### 1. Find the PR and check the guardrail
 
-Run `scripts/find-and-check-pr.sh` (relative to this skill's directory). It finds the open PR from the routine (title `chore(skills): weekly improve-system sweep`, or head branch `improve-system/weekly-*`) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/` subdirectory.
+Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/` subdirectory.
 
 Interpret the exit code:
 - **1 (no PR found)** — this is a normal, expected outcome most weeks. Report "nothing to review" and stop here.

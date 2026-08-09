@@ -17,15 +17,17 @@ set -uo pipefail
 
 REPO="CommanderBosko/NixOS"
 
-PR_JSON=$(gh pr list --repo "$REPO" --state open \
-  --search "chore(skills): weekly improve-system sweep in:title" \
-  --json number,title,headRefName,url,body --jq '.[0] // empty')
-
-if [ -z "$PR_JSON" ]; then
-  # Fall back to head-branch pattern in case the title convention drifts.
-  PR_JSON=$(gh pr list --repo "$REPO" --state open --json number,title,headRefName,url,body \
-    --jq '[.[] | select(.headRefName | startswith("improve-system/weekly-"))][0] // empty')
-fi
+# Match on the head-branch pattern the routine always uses
+# (improve-system/weekly-<date>) rather than the PR title: gh's --search
+# mangles a title string containing "()"/":"  (verified empirically —
+# `--search "chore(skills): weekly improve-system sweep in:title"` returns
+# zero results even against a PR whose title starts with that exact
+# string), and the title format has already drifted once in practice
+# (PR #4: "chore(skills): weekly improve-system sweep — ..."; PR #6:
+# "improve-system weekly sweep — ..."). The head branch is the one thing
+# that has stayed stable across every real PR the routine has opened.
+PR_JSON=$(gh pr list --repo "$REPO" --state open --json number,title,headRefName,url,body \
+  --jq '[.[] | select(.headRefName | startswith("improve-system/weekly-"))][0] // empty')
 
 if [ -z "$PR_JSON" ]; then
   echo "NO_PR: no open improve-system weekly PR found."
