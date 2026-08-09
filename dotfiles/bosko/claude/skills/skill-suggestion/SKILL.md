@@ -57,3 +57,16 @@ For each candidate on **Build it as proposed** (or after applying the user's twe
 ### 6. Confirm
 
 Report each skill built: its name, where it was written, the invocation phrases, and (for global/repo-managed skills) the reminder that it must be added to `bosko-claude.nix` and rebuilt before its `~/.claude` symlink appears. For each skill built, suggest running `/ship-skill` next to smoke-test it and carry it through to a commit (and, on confirmation, a push).
+
+## Gotchas
+
+- **`find-last-skill-invocation.sh` misses slash-command invocations.** It only greps for
+  assistant-initiated `Skill` tool_use entries — when this skill (or any other) is run the
+  normal way, via a user-typed `/skill-suggestion`, Claude Code injects the instructions as
+  user-turn content instead, so the detector never records it. `session-closer` hit this for
+  real (2026-08-02: reported a stale 2026-07-16 cutoff when two closes had actually happened
+  since), and this skill leans on the same detector as its **primary** reuse signal in Step 1
+  — a silently-wrong cutoff here directly corrupts the candidate ranking in Step 3. If the
+  reported cutoff looks suspiciously old given known recent activity, cross-check
+  `git log --oneline | grep 'chore(session):' | head -1` (or any other skill-specific commit
+  marker) as a sanity check before trusting it.

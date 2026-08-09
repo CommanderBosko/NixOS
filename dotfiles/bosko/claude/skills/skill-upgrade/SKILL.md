@@ -69,3 +69,12 @@ rebuild + new session is needed before the change reaches `~/.claude`.
   `Unknown skill: nixos-dry-run` (observed from a FinanceGuru session). When step 5 runs from
   outside `~/NixOS`, verify with the direct command instead:
   `nh os boot /home/bosko/NixOS --dry`.
+- **`find-last-skill-invocation.sh` misses slash-command invocations.** It only greps for
+  assistant-initiated `Skill` tool_use entries — when this skill (or the skill being fed to
+  `find-skill-misfires.sh`'s `since-timestamp` arg in Step 1) is run the normal way, via a
+  user-typed `/skill-upgrade`, Claude Code injects the instructions as user-turn content
+  instead, so the detector never records it. `session-closer` already paid for this discovery
+  for real (2026-08-02: reported a stale cutoff after two runs had actually happened since) —
+  worth a mild irony flag, since fixing exactly this kind of undocumented gotcha in *other*
+  skills is this skill's entire job. Cross-check a skill-specific commit marker in `git log`
+  if the reported cutoff looks suspiciously old before trusting the misfire scan's scope.

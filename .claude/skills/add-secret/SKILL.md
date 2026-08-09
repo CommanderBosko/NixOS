@@ -28,7 +28,10 @@ Invocation inputs (gather any the user didn't already give in Step 1):
 - **`secrets/common.yaml`** — shared secrets, encrypted to **admin + all hosts**.
   Currently: `bosko-hashedPassword`, `natty-hashedPassword`.
 - **`secrets/hosts/<host>.yaml`** — per-host secrets, encrypted to **admin + that host
-  only**. Currently each holds `wg-private-key` (the host's WireGuard key).
+  only**. Every host holds `wg-private-key` (its WireGuard key); `gaming.yaml` additionally
+  holds `pinchflat-env`. Don't assume "each holds exactly one key" — check the file live
+  (`grep -o '^[a-zA-Z0-9_-]*:' secrets/hosts/<host>.yaml`) rather than trusting this list, it
+  will keep growing per-host over time.
 - **Admin key**: `~/.config/sops/age/keys.txt` (NOT in repo). Required for all edits.
   Export it for every sops command: `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt`.
 - Tooling isn't installed system-wide — run sops via `nix shell nixpkgs#sops --command …`.
