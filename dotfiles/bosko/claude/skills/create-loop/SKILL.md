@@ -60,9 +60,11 @@ Create `.claude/skills/` and `.claude/loops/<loop-name>/` with `mkdir -p` if the
 
 Before handing off, prove the loop file is well-formed:
 
-1. **Structural lint (mechanical, scripted)** — run:
+1. **Structural lint (mechanical, scripted)** — run (absolute path — a bare `scripts/...`
+   path 404s, this is a global home-symlinked skill and the Bash tool's cwd is the project
+   root, not this skill's directory):
    ```bash
-   scripts/lint-loop.sh <repo-root>/.claude/skills/<loop-name>/SKILL.md
+   /home/bosko/.claude/skills/create-loop/scripts/lint-loop.sh <repo-root>/.claude/skills/<loop-name>/SKILL.md
    ```
    It checks presence/shape only (never meaning): valid `name:`/`description:` frontmatter,
    `name:` matching the directory name (required for the slash command to resolve), the
@@ -109,7 +111,7 @@ The loop file content lives verbatim in `assets/loop-template.md` — it is the 
 
 ## Scripts
 
-- `scripts/lint-loop.sh <path-to-SKILL.md>` — Step 4's mechanical structural checks (frontmatter, name/directory match, Training Mode block, retry cap, required sections, at least one done-rule, dual-file output section). Presence/shape only — the judgment calls (are the done-rules actually measurable, does a verification pass resolve) stay in Step 4's prose.
+- `/home/bosko/.claude/skills/create-loop/scripts/lint-loop.sh <path-to-SKILL.md>` — Step 4's mechanical structural checks (frontmatter, name/directory match, Training Mode block, retry cap, required sections, at least one done-rule, dual-file output section). Presence/shape only — the judgment calls (are the done-rules actually measurable, does a verification pass resolve) stay in Step 4's prose.
 
 ## Assets
 

@@ -15,7 +15,7 @@ Force Nix to fully evaluate each host's build graph — not just confirm it's a 
 
 ## Step 1 — Deep-evaluate each host
 
-Run `scripts/deep-eval-check.sh` (relative to this skill's directory). It reads the host list
+Run `.claude/skills/deep-eval-check/scripts/deep-eval-check.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It reads the host list
 live from `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (never hardcode the host
 list — that's the single source of truth other skills like `fleet-rollout` already read from)
 and deep-evaluates each host's `config.system.build.toplevel.drvPath` in turn, printing
@@ -58,4 +58,4 @@ If anything failed, do not suggest rebuilding that host until the reported error
 - Working directory: `/home/bosko/NixOS`
 - Read-only, safe to run anytime — it only evaluates, never builds or activates.
 - Slower than `flake-check` (forces full evaluation per host) — expect it to take noticeably longer, especially the first run after a nixpkgs bump before the eval cache is warm.
-- `scripts/deep-eval-check.sh` requires `jq` (already used by other host-touching skills via `hosts.json`) and exits non-zero if any host fails, without stopping early — every host is still evaluated and reported.
+- `.claude/skills/deep-eval-check/scripts/deep-eval-check.sh` requires `jq` (already used by other host-touching skills via `hosts.json`) and exits non-zero if any host fails, without stopping early — every host is still evaluated and reported.

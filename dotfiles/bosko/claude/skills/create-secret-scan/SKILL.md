@@ -118,9 +118,11 @@ filled script to `<repo-root>/.claude/skills/secret-scan/scripts/secret-scan.sh`
 
 ### 3. Verify the generated skill (built-in verification plan)
 
-1. **Structural lint (mechanical, scripted)** — run:
+1. **Structural lint (mechanical, scripted)** — run (absolute path — a bare `scripts/...`
+   path 404s, this is a global home-symlinked skill and the Bash tool's cwd is the project
+   root, not this skill's directory):
    ```bash
-   scripts/lint-secret-scan.sh <repo-root>/.claude/skills/secret-scan
+   /home/bosko/.claude/skills/create-secret-scan/scripts/lint-secret-scan.sh <repo-root>/.claude/skills/secret-scan
    ```
    It checks presence/shape only (never meaning): frontmatter `name:`/`description:`,
    `name:` matching the directory name, `model: haiku` pinned, required sections, no
@@ -165,7 +167,7 @@ Tell the user:
 
 ## Scripts
 
-- `scripts/lint-secret-scan.sh <path-to-skill-dir>` — Step 3's mechanical structural
+- `/home/bosko/.claude/skills/create-secret-scan/scripts/lint-secret-scan.sh <path-to-skill-dir>` — Step 3's mechanical structural
   checks (frontmatter, name/directory match, model pin, required sections, no leftover
   placeholders, script present/executable/valid).
 

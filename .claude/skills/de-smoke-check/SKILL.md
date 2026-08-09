@@ -24,9 +24,9 @@ Parse from the user's request:
 Resolve which DE module to check, in this order:
 1. If the user named it explicitly (e.g. "check omarchy"), use that name.
 2. Otherwise, check `git status`/`git diff` for recently modified files under `modules/desktop-environments/` and infer the name from the filename (minus `.nix`).
-3. If still ambiguous, list the available names (relative to this skill's directory):
+3. If still ambiguous, list the available names (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd):
    ```bash
-   scripts/de-smoke-check.sh
+   .claude/skills/de-smoke-check/scripts/de-smoke-check.sh
    ```
    Then ask which one to check via the **AskUserQuestion tool**, with one option per listed
    module name — don't ask in free-form prose (matches `bump-input`'s equivalent
@@ -35,7 +35,7 @@ Resolve which DE module to check, in this order:
 ## Step 2 — Deep-evaluate the module's build graph
 
 ```bash
-scripts/de-smoke-check.sh <name>
+.claude/skills/de-smoke-check/scripts/de-smoke-check.sh <name>
 ```
 
 This forces full evaluation of the laptop config with `<name>` swapped in as the DE — not just a shallow "is it a derivation" check. Allow up to 5 minutes (300000ms timeout). The script prints `PASS: <drv>` on success or `FAIL:` followed by the full error output on failure.
@@ -47,7 +47,7 @@ This forces full evaluation of the laptop config with `<name>` swapped in as the
 
 ## Scripts
 
-- `scripts/de-smoke-check.sh [module-name]` — with no argument, lists the available `lib.deSmoke` module names (Step 1's fallback). With a module name, runs the deep-eval and prints `PASS: <drv>` or `FAIL:` + the full error (Step 2), matching `deep-eval-check.sh`'s convention.
+- `.claude/skills/de-smoke-check/scripts/de-smoke-check.sh [module-name]` — with no argument, lists the available `lib.deSmoke` module names (Step 1's fallback). With a module name, runs the deep-eval and prints `PASS: <drv>` or `FAIL:` + the full error (Step 2), matching `deep-eval-check.sh`'s convention.
 
 ## Key facts
 

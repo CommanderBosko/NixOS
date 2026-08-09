@@ -14,7 +14,7 @@ vpn-server, which is passwordless there.
 
 ## Instructions
 
-1. Run `scripts/fleet-status.sh`. For each host it SSHes (using the `~/.ssh/config`
+1. Run `.claude/skills/fleet-status/scripts/fleet-status.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). For each host it SSHes (using the `~/.ssh/config`
    aliases; the current machine is probed locally) and collects:
    - **gen** — current system generation number (`/nix/var/nix/profiles/system`)
    - **ver** — `nixos-version`
@@ -57,5 +57,5 @@ vpn-server, which is passwordless there.
 ## Script
 
 ```
-scripts/fleet-status.sh
+.claude/skills/fleet-status/scripts/fleet-status.sh
 ```
