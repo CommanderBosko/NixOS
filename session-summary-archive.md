@@ -1,3 +1,28 @@
+## Session: 2026-07-29 — Shared network folder for natty and bosko (Samba)
+
+**Focus**: Add a shared folder both natty and bosko can use across the fleet, visible in Thunar.
+
+### What changed (and why)
+- First pass (scoped via AskUserQuestion, skipping the full `/interview` ceremony): a plain local group-permissioned `/srv/shared` folder, independently on all 3 desktop hosts, symlinked to `~/Shared` in each home dir. Deep-eval + dry-run clean, committed as `489432a`.
+- User then asked mid-close whether it synced across machines; once told each host's copy was independent, said no — wanted it centrally hosted. **Reworked into a real Samba/CIFS setup**: gaming (already the always-on Jellyfin host) serves `/srv/shared` via Samba with guest access; laptop and natalie-laptop CIFS-mount it at the same path, client-side permissions forced to `root:shared 0770` so local group membership governs access regardless of server ownership. Auto-mounts at boot via `x-systemd.automount` + `nofail` so client boots don't hang/fail if gaming is off.
+- New `hosts/gaming/samba-shared.nix` (server), new `modules/shared-folder-client.nix` (laptop + natalie-laptop's CIFS mount + `cifs-utils`); `modules/shared-folder.nix` trimmed back to just the shared `users.groups.shared`. `~/Shared` symlink in `dotfiles/common/configs/home.nix` unchanged — same path works for both server and client roles.
+
+### Decisions
+- Server host: gaming, over laptop/natalie-laptop, since laptops sleep/travel and would take the share offline.
+- Protocol: Samba over NFS, for native Thunar/GVfs network-browsing compatibility on a Linux-only LAN.
+- Auth: guest access, no password — accepted as appropriate for a trusted home LAN rather than adding sops-managed credentials.
+
+### Issues / surprises
+- `deep-eval-check` failed both times immediately after adding a new module file, with "not tracked by Git" — untracked files are invisible to flake evaluation even without committing; `git add` first, every time.
+- The user's mid-session question about sync behavior caught a real scope gap the earlier AskUserQuestion round had technically covered ("not synced between machines" was in the option description) but the user hadn't actually registered until asked directly — worth stating consequences plainly, not just leaving them in option subtext, for architecture-shaping choices like this one.
+
+### Next session
+- User needs to run `rebuild` + reboot on **gaming first** (the Samba server), then laptop and natalie-laptop (sudo-gated, their own call). Confirm `samba-smbd` active on gaming, then `~/Shared` + CIFS automount + cross-machine read/write on each client.
+
+**Commits**: see this close's final commit hash below (supersedes `489432a`'s local-only draft, kept in history).
+
+---
+
 ## Session: 2026-07-28 — Screenshot-verify reminders + permission allowlist tune-up
 
 **Focus**: User asked what an "ultimate optimal workspace" would look like; turned the answer (tighter verification loops) into a concrete change, then asked for a permissions check as a follow-up.
