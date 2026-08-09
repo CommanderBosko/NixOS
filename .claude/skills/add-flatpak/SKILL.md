@@ -57,9 +57,6 @@ Add the new entry to `services.flatpak.packages` in the target `environment.nix`
 ```nix
   services.flatpak.packages = [
     "com.albiononline.AlbionOnline" # Albion Online
-    "dev.aunetx.deezer" # Deezer
-    "org.kde.digikam" # Digikam
-    "app.zen_browser.zen" # Zen Browser
   ];
 ```
 

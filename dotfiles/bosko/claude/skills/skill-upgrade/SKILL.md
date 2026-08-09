@@ -60,7 +60,8 @@ easily-reversible append, but a clean pick beats inferring approval from a free-
 
 After editing repo-managed skills, run the `nixos-dry-run` skill to confirm the config still
 evaluates. Report which skills were upgraded, the gotcha added to each, and the reminder that a
-rebuild + new session is needed before the change reaches `~/.claude`.
+rebuild + reboot (it only stages the change for next boot) + new session is needed before the
+change reaches `~/.claude`.
 
 ## Gotchas
 
