@@ -161,3 +161,7 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
   run `sops updatekeys <file>` to apply new recipients.
 - Editing on a machine without the admin key at `~/.config/sops/age/keys.txt` will fail to
   decrypt. That key is the recovery path — keep it backed up.
+- **`openssl` isn't on PATH either** (found generating a random `SECRET_KEY_BASE` for
+  Pinchflat, 2026-08-03: `openssl rand -hex 64` → `command not found`). For a random
+  token/hex value, use `nix shell nixpkgs#openssl --command openssl rand -hex <N>` — same
+  `nix shell nixpkgs#<pkg> --command` pattern as the `mkpasswd` guidance in Step 1.

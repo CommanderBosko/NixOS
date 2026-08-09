@@ -253,6 +253,10 @@ reminders so you never re-list completed work as pending.
   `limit=100` or less as the real safe default, and prefer reading exactly up to the next
   `## ` boundary from the `grep` output over guessing any fixed line count at all.
 - **The transcript cutoff detector misses slash-command invocations** (`find-last-skill-invocation.sh` only greps for assistant-initiated `Skill` tool_use entries) — when session-closer is run the normal way, via a user-typed `/session-closer`, Claude Code injects its instructions as user-turn content instead of an assistant `Skill` tool_use, so the detector never records it. On 2026-08-02 this made the cutoff report 2026-07-16 as the "last run" even though 2026-07-23 and 2026-07-26 both closed successfully (confirmed via `chore(session)` commits `e122a01`/`f7f0549`), pulling in 13 stale transcripts instead of the 7 actually in scope and nearly causing an old close to be re-narrated as current. **Always treat `git log --oneline | grep 'chore(session):' | head -1` — the same baseline STEP 1's git-changes script already computes — as the authoritative last-close marker for STEP 2's transcript scan too.** If the transcript tool's own reported cutoff predates that commit's date, only mine transcripts back to the commit's date, not the tool's cutoff. Don't tail-skim a multi-transcript dump either — transcripts concatenate newest-first, so a `tail` surfaces the *oldest* included transcript's content, not a summary of the newest.
+- **`uptime -p` and `uptime -s` both fail** when confirming a real reboot vs. just a switch
+  (observed 2026-08-03: `uptime: invalid option -- 'p'`, same for `-s`) — this system's
+  `uptime` is the coreutils build, not procps-ng, so neither flag exists. Use `who -b`
+  instead to get the boot timestamp.
 
 ## Scripts
 
