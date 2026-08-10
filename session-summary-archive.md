@@ -1,3 +1,32 @@
+## Session: 2026-07-30 — Skill-audit sweep, tray-icon dead end, docx/portal/CIFS fixes
+
+**Focus**: Full skill-library quality sweep, plus a batch of desktop/networking fixes carried over from the tail end of 2026-07-29.
+
+### What changed (and why)
+- **`/skill-audit`** swept all 58 skills via 5 parallel sub-agents: 3 real correctness bugs fixed (`remote-rebuild`'s broken sudo hand-off, `skill-audit`'s own self-contradicting Step 1, `session-closer`'s stale doc numbers) plus 4 style fixes (`vpn-status` IP dedup, `repo-creator` AskUserQuestion gate, `claude-rules` script extraction, `create-secret-scan` Arguments section). Declined one recommendation (`public-repo-guard`'s inline template) after confirming it's the intentional repo-wide loop-skill convention.
+- `nixos-dry-run` now recommends `switch` vs `boot` from the diff content. `skill-suggestion`/`skill-upgrade`/`skill-audit` now scope their transcript scan to "since I last ran" via two new shared helpers — this also caught and fixed a real bug in `session-closer` itself (its transcript scan only ever read the latest `.jsonl`, contradicting its own docs).
+- New skill `printer-diagnose`, automating a diagnostic sequence done by hand 4+ times across sessions. Smoke-tested live on gaming.
+- **Tray-icon dead end**: added `snixembed` to bridge Wine's XEmbed tray icons into DMS's SNI tray, then found live it breaks DMS's tray entirely (exclusive-watcher conflict) — reverted same day.
+- **docx/odt mimetype fix** (was wrongly routed to xarchiver, not OnlyOffice) — confirmed live on natalie-laptop after `nh os switch`. **niri ScreenCast/Screenshot portal fix** (was routed to gtk, which doesn't implement those interfaces; now gnome) — confirmed live on gaming. A separate stuck-file CIFS issue was worked around (fresh inode), root cause not found.
+- **gaming's static IP confirmed live** after reboot. **CIFS bare-hostname resolution fixed** for the `/srv/shared` mount (`mdns4_minimal` doesn't resolve bare hostnames).
+
+### Decisions
+- Declined `public-repo-guard`'s template extraction — matches `create-loop`'s settled self-contained-loop design, not a real deviation.
+- No packaged alternative to `snixembed` exists in nixpkgs (`xembedsniproxy` isn't packaged) — Battle.net's tray icon stays a floating window rather than chase a different bridge.
+
+### Issues / surprises
+- My own `scan-session.sh transcript | head -c 60000` truncated the real scan output to 3 of 17 transcripts — no bug in the script itself, just my own piping. Worth remembering: don't cap this command's output when reviewing a multi-session close.
+- The transcript-scan cutoff (`find-last-skill-invocation.sh session-closer`) returned a timestamp a full day stale relative to the actual last `chore(session)` commit — harmless here (the wider window just re-surfaced already-closed sessions 64/65's worth of content redundantly), but worth watching if it recurs.
+
+### Next session
+- Run `nh os switch` for the skill-audit global-skill fixes (no reboot needed).
+- laptop: `nh os switch` to pick up the docx mimetype fix and the CIFS hostname fix (natalie-laptop already confirmed).
+- Confirm the fresh-inode workaround holds for `mock-interview-questions.docx`; watch for recurrence on other `/srv/shared` files.
+
+**Commits**: `812aa5f`..`3db5168` (13 commits)
+
+---
+
 ## Session: 2026-07-29 — Shared network folder for natty and bosko (Samba)
 
 **Focus**: Add a shared folder both natty and bosko can use across the fleet, visible in Thunar.

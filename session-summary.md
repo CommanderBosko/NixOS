@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-09 — Colloid theme rollout finished + made fully declarative
+
+**Focus**: Resume and finish the Sweet-Dark→Colloid-Teal-Dark rollout across all 3 niri hosts; along the way, replace the manual dconf+hand-edited-`settings.ini` pattern with a real declarative fix.
+
+### What changed (and why)
+- **Finished the fleet rollout**: verified gaming live from the prior session's handoff, hand-fixed `settings.ini` as a stopgap, screenshot-confirmed. Hit two real snags getting laptop/natalie-laptop rebuilt — laptop transiently lost WAN routing (self-resolved), and natalie-laptop's graphical session belongs to `natty`, not `bosko` (permission gap, no sudo available) — both diagnosed live rather than guessed.
+- **User asked to make theme selection declarative for all users** — read Home Manager's own `gtk`/`pointerCursor` module source directly (fetched via `nix flake prefetch`, not guessed from docs) and found `gtk.enable = true` generates **both** `settings.ini` and the equivalent `dconf` keys from one set of options, eliminating the propagation gap that caused 3 separate stale-file incidents this session. Replaced the manual `dconf.settings` block in `niri.nix` (`944b64b`).
+- **First switch attempt failed activation** — HM refused to clobber real pre-existing files at the paths the new `gtk` module now owns (some mine, some predating the session). Fixed generally with `home-manager.backupFileExtension = "backup"` (`835a078`), since every user on every niri host was about to hit the same collision.
+- **Verified live on all 3 hosts**: correct symlinks/content/dconf everywhere, and — bonus — natalie-laptop's `home-manager-natty.service` succeeded too, closing the natty gap for free without the sudo workaround originally drafted for it.
+
+### Decisions
+- Went with HM's `gtk` module over continuing the manual dconf+settings.ini pattern, once it became clear the propagation gap was structural, not a one-off miss — verified via source, not assumed from option names.
+- Reversed a 2026-07-25 decision that kept `home.pointerCursor.gtk.enable` off (to avoid it wiping hand-set theme keys) — that risk no longer applies now that the whole file is declarative, so it's on.
+
+### Issues / surprises
+- laptop's screenshot capture returned a flat gray frame after the first successful shot, despite niri reporting the output logically on — looks like a physical backlight/DPMS state `power-on-monitors` didn't fully clear; not chased further since config-level verification was already solid.
+- Ran into the session's own `home-manager.backupFileExtension` gap the hard way — good reminder that a module claiming a new file path needs an explicit collision policy, not just correctness at the option level.
+
+### Next session
+- Grab a real Thunar screenshot on gaming once it's not mid-game, to close the loop on visual confirmation.
+- Nothing else pending — this closes out `project_sweet_theme_rollout` entirely.
+
+**Commits**: `4ab25e1..835a078` (2 commits this session; `4ab25e1`/`bcd1d60` were the prior session's handoff)
+
+---
+
 ## Session: 2026-08-09 — Full skill-ecosystem sweep (58 skills, 5 bugs fixed) + flake update
 
 **Focus**: Chain `/skill-suggestion` → `/skill-upgrade` → `/skill-audit` across the whole skill roster, plus a routine `/flake-update-verify` and weekly-PR check.
@@ -113,35 +139,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - laptop/natalie-laptop still need their own rebuild+reboot to pick up everything gaming got today (docx/CIFS fixes, skill fixes, etc.) — not part of this session's scope.
 
 **Commits**: `896eca9`..`b76e09b` (11 commits, spanning this session plus the unclosed catch-up range)
-
----
-
-## Session: 2026-07-30 — Skill-audit sweep, tray-icon dead end, docx/portal/CIFS fixes
-
-**Focus**: Full skill-library quality sweep, plus a batch of desktop/networking fixes carried over from the tail end of 2026-07-29.
-
-### What changed (and why)
-- **`/skill-audit`** swept all 58 skills via 5 parallel sub-agents: 3 real correctness bugs fixed (`remote-rebuild`'s broken sudo hand-off, `skill-audit`'s own self-contradicting Step 1, `session-closer`'s stale doc numbers) plus 4 style fixes (`vpn-status` IP dedup, `repo-creator` AskUserQuestion gate, `claude-rules` script extraction, `create-secret-scan` Arguments section). Declined one recommendation (`public-repo-guard`'s inline template) after confirming it's the intentional repo-wide loop-skill convention.
-- `nixos-dry-run` now recommends `switch` vs `boot` from the diff content. `skill-suggestion`/`skill-upgrade`/`skill-audit` now scope their transcript scan to "since I last ran" via two new shared helpers — this also caught and fixed a real bug in `session-closer` itself (its transcript scan only ever read the latest `.jsonl`, contradicting its own docs).
-- New skill `printer-diagnose`, automating a diagnostic sequence done by hand 4+ times across sessions. Smoke-tested live on gaming.
-- **Tray-icon dead end**: added `snixembed` to bridge Wine's XEmbed tray icons into DMS's SNI tray, then found live it breaks DMS's tray entirely (exclusive-watcher conflict) — reverted same day.
-- **docx/odt mimetype fix** (was wrongly routed to xarchiver, not OnlyOffice) — confirmed live on natalie-laptop after `nh os switch`. **niri ScreenCast/Screenshot portal fix** (was routed to gtk, which doesn't implement those interfaces; now gnome) — confirmed live on gaming. A separate stuck-file CIFS issue was worked around (fresh inode), root cause not found.
-- **gaming's static IP confirmed live** after reboot. **CIFS bare-hostname resolution fixed** for the `/srv/shared` mount (`mdns4_minimal` doesn't resolve bare hostnames).
-
-### Decisions
-- Declined `public-repo-guard`'s template extraction — matches `create-loop`'s settled self-contained-loop design, not a real deviation.
-- No packaged alternative to `snixembed` exists in nixpkgs (`xembedsniproxy` isn't packaged) — Battle.net's tray icon stays a floating window rather than chase a different bridge.
-
-### Issues / surprises
-- My own `scan-session.sh transcript | head -c 60000` truncated the real scan output to 3 of 17 transcripts — no bug in the script itself, just my own piping. Worth remembering: don't cap this command's output when reviewing a multi-session close.
-- The transcript-scan cutoff (`find-last-skill-invocation.sh session-closer`) returned a timestamp a full day stale relative to the actual last `chore(session)` commit — harmless here (the wider window just re-surfaced already-closed sessions 64/65's worth of content redundantly), but worth watching if it recurs.
-
-### Next session
-- Run `nh os switch` for the skill-audit global-skill fixes (no reboot needed).
-- laptop: `nh os switch` to pick up the docx mimetype fix and the CIFS hostname fix (natalie-laptop already confirmed).
-- Confirm the fresh-inode workaround holds for `mock-interview-questions.docx`; watch for recurrence on other `/srv/shared` files.
-
-**Commits**: `812aa5f`..`3db5168` (13 commits)
 
 ---
 
