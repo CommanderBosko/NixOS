@@ -103,47 +103,82 @@ let
     '';
 
     # Declarative GTK theme selection so Thunar and other GTK3/4 apps look
-    # the same on every niri host, instead of the previous per-host manual
-    # `dconf write` (verified working on laptop, 2026-07-19). DMS manages its
-    # own matugen-driven runtime theme for its shell UI and for Qt/KDE apps
-    # (qt6ct.conf/kdeglobals above) but doesn't touch this GSettings schema
-    # itself, so asserting it here is safe — it's just reapplied on every
-    # `home-manager` activation (i.e. every rebuild). Uses dconf.settings
-    # rather than a gsettings-based module because `gsettings set` fails here
-    # with "No schemas installed"; dconf writes directly to the same
-    # database gsettings reads from and doesn't need the schema installed to
-    # be discoverable.
+    # the same on every niri host/user, via Home Manager's own `gtk` module
+    # instead of a manual `dconf write` + hand-edited settings.ini pair
+    # (2026-08-09 — the manual approach silently went stale 3 separate times
+    # in one session: dconf updated fine on rebuild, but gtk-3.0/gtk-4.0
+    # settings.ini never picked up the change on its own, needing a by-hand
+    # fix on every host, per-user, every time the theme changed. See
+    # sweet-theme-rollout memory for the full incident).
+    #
+    # `gtk.enable = true` makes HM generate gtk-3.0/gtk-4.0 settings.ini
+    # *and* the equivalent dconf keys from the same source options in one
+    # activation step (confirmed by reading home-manager's own
+    # modules/misc/gtk/gtk3.nix: its `config` block writes both
+    # `xdg.configFile."gtk-3.0/settings.ini"` and
+    # `dconf.settings."org/gnome/desktop/interface"` off the same `theme`/
+    # `iconTheme`/`cursorTheme`/`colorScheme` values) — so there's no
+    # propagation step left to go stale. DMS still manages its own
+    # matugen-driven runtime theme for the shell UI and Qt/KDE apps
+    # (qt6ct.conf/kdeglobals above) independently of this.
     #
     # Colloid-Teal-Dark + matching icon set replace Sweet-Dark/candy-icons
     # (2026-08-09, see sweet-theme-rollout memory) — nixpkgs purged `sweet`
     # for depending on gtk-engine-murrine (GTK2 EOL sweep); Colloid's
-    # nixpkgs build has no such dependency. Both strings are the literal
-    # output folder names from dotfiles/common/configs/home.nix's
-    # colloid-gtk-theme/colloid-icon-theme overrides — confirmed via a real
-    # build, not guessed from the README.
-    dconf.settings."org/gnome/desktop/interface" = {
-      gtk-theme = "Colloid-Teal-Dark";
-      icon-theme = "Colloid-Teal-Dark";
-      cursor-theme = "breeze_cursors";
-      color-scheme = "prefer-dark";
+    # nixpkgs build has no such dependency. The theme/iconTheme names below
+    # are the literal output folder names from dotfiles/common/configs/
+    # home.nix's colloid-gtk-theme/colloid-icon-theme overrides — confirmed
+    # via a real build, not guessed from the README; keep the `.override`
+    # args here in sync with home.nix's if either ever changes, since HM
+    # doesn't dedupe across differing override args. `colorScheme = "dark"`
+    # alone gets HM to derive `gtk-application-prefer-dark-theme = true` and
+    # dconf's `color-scheme = "prefer-dark"` automatically (see gtk/lib.nix's
+    # mkGtkSettings) — no separate flag needed. GTK4 doesn't officially
+    # support theme swapping (HM applies it via a CSS-import workaround that
+    # real GTK4 apps mostly ignore). home.stateVersion "25.11" here is below
+    # HM's 26.05 cutover, so `gtk.gtk4.theme` would inherit `gtk.theme` by
+    # default anyway (HM's own deprecation warning during eval confirms
+    # this) — set it explicitly instead of relying on that implicit
+    # version-gated default, so behavior doesn't silently change out from
+    # under this config on a future home-manager bump.
+    gtk = {
+      enable = true;
+      theme = {
+        name = "Colloid-Teal-Dark";
+        package = pkgs.colloid-gtk-theme.override {
+          themeVariants = [ "teal" ];
+          colorVariants = [ "dark" ];
+        };
+      };
+      gtk4.theme = config.gtk.theme;
+      iconTheme = {
+        name = "Colloid-Teal-Dark";
+        package = pkgs.colloid-icon-theme.override {
+          colorVariants = [ "teal" ];
+        };
+      };
+      colorScheme = "dark";
     };
 
-    # Covers what the dconf key above doesn't: XWayland/Qt apps that resolve
+    # Covers what the gtk module above doesn't: XWayland/Qt apps that resolve
     # cursors via XCURSOR_THEME/XCURSOR_SIZE rather than GSettings, and a
     # guaranteed ~/.icons/default symlink for anything reading that directly.
     # kdePackages.breeze is the actual package providing breeze_cursors
     # (confirmed via `nix build` — kdePackages.breeze-icons only has folder/
-    # mimetype icons, not the cursor theme). gtk.enable is deliberately left
-    # off: it force-manages gtk-3.0/gtk-4.0 settings.ini and only knows about
-    # cursorTheme, which would wipe the gtk-theme-name/icon-theme-name keys
-    # already hand-set there for Colloid-Teal-Dark (dconf changes don't
-    # propagate to settings.ini on this system, see sweet-theme-rollout memory).
+    # mimetype icons, not the cursor theme). `gtk.enable` (namespaced under
+    # pointerCursor, not the top-level `gtk.enable` above) feeds this same
+    # package/name/size into `gtk.cursorTheme` automatically (confirmed via
+    # home-manager's modules/config/home-cursor.nix: `mkIf cfg.gtk.enable {
+    # gtk.cursorTheme = mkDefault { inherit package name; inherit
+    # (cfg.gtk) size; }; }`) — one declared cursor, not two copies to keep in
+    # sync.
     home.pointerCursor = {
       enable = true;
       package = pkgs.kdePackages.breeze;
       name = "breeze_cursors";
       size = 24;
       x11.enable = true;
+      gtk.enable = true;
     };
 
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
