@@ -52,7 +52,7 @@ After all five, print a single summary, not five scattered ones:
 Several of these skills edit **repo-managed global skills** under `dotfiles/bosko/claude/skills/` (skill-upgrade, a new skill from skill-suggestion). After any such edit:
 
 - Run the `nixos-dry-run` skill to prove the flake still evaluates.
-- Remind the user that repo-managed skill edits only reach `~/.claude` after `nh os boot /home/bosko/NixOS` **and a reboot** (it only stages the change for next boot — there's no live `nh os switch` in the normal flow here) **plus a new session** — the live session keeps using the old `/nix/store` path.
+- Remind the user that repo-managed skill edits only reach `~/.claude` after `nh os boot /home/bosko/NixOS` **and a reboot** (it only stages the change for next boot — there's no live `nh os switch` in the normal flow here). No new session is needed beyond that — the symlink resolves in the same running session as soon as it's updated, since skill discovery reads from disk per-invocation.
 - A brand-new skill also needs its `home.file` symlink entry added to `dotfiles/bosko/bosko-claude.nix` before the rebuild.
 
 ## Arguments
