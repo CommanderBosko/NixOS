@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Finds when a given skill was last invoked, prior to the current call, by
 # scanning this project's Claude Code session transcripts for `Skill`
-# tool_use entries whose input.skill matches. Shared by skill-suggestion,
+# tool_use entries whose input.skill matches, OR a user-typed slash-command
+# turn (<command-name>/<skill-name></command-name>) naming the same skill.
+# Both count: Claude Code injects the latter as plain user-turn content
+# instead of an assistant tool_use, so relying on tool_use alone silently
+# misses every direct `/<skill-name>` invocation. Shared by skill-suggestion,
 # skill-upgrade, and skill-audit so each can scope its own log review to
 # "what's happened since I last ran" instead of an arbitrary recent-N-files
 # window.
@@ -27,10 +31,11 @@ FILES=$(cd "$TRANSCRIPT_DIR" && ls -- *.jsonl 2>/dev/null)
 
 cd "$TRANSCRIPT_DIR"
 python3 - "$SKILL_NAME" $FILES <<'PYEOF'
-import json, sys
+import json, re, sys
 
 skill_name = sys.argv[1]
 files = sys.argv[2:]
+slash_re = re.compile(r"<command-name>/" + re.escape(skill_name) + r"</command-name>")
 
 timestamps = []
 for fn in files:
@@ -45,18 +50,25 @@ for fn in files:
                 except (ValueError, json.JSONDecodeError):
                     continue
                 content = obj.get("message", {}).get("content")
-                if not isinstance(content, list):
-                    continue
-                for c in content:
-                    if (
-                        isinstance(c, dict)
-                        and c.get("type") == "tool_use"
-                        and c.get("name") == "Skill"
-                        and c.get("input", {}).get("skill") == skill_name
-                    ):
-                        ts = obj.get("timestamp")
-                        if ts:
-                            timestamps.append(ts)
+                matched = False
+                if isinstance(content, list):
+                    for c in content:
+                        if (
+                            isinstance(c, dict)
+                            and c.get("type") == "tool_use"
+                            and c.get("name") == "Skill"
+                            and c.get("input", {}).get("skill") == skill_name
+                        ):
+                            matched = True
+                            break
+                elif isinstance(content, str) and slash_re.search(content):
+                    # User-typed `/<skill_name>` slash command: Claude Code
+                    # injects this as plain user-turn text, not a tool_use.
+                    matched = True
+                if matched:
+                    ts = obj.get("timestamp")
+                    if ts:
+                        timestamps.append(ts)
     except OSError:
         continue
 

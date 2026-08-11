@@ -37,9 +37,13 @@ from this skill's own base directory (the "Base directory for this skill" line s
 
 ### 2. Locate the source file
 
-For each flagged skill, find its source `SKILL.md`. Repo-managed global skills live under
-`dotfiles/bosko/claude/skills/<name>/SKILL.md` — **always edit the repo copy**, never the
-read-only `~/.claude/skills/` symlink. Project-local skills live under `.claude/skills/<name>/SKILL.md`.
+For each flagged skill, find its source `SKILL.md`. **Check `.claude/skills/<name>/SKILL.md` in
+the current project first** — repo/project-specific skills (scaffolding, RAM audits, and other
+tooling tied to one codebase) usually live there *only*, with no global copy at all. Don't assume
+global by default and go straight to `~/.claude/skills/<name>/SKILL.md`; that read fails outright
+for a project-local-only skill. Only once a project-local copy is ruled out, treat it as
+repo-managed global, living under `dotfiles/bosko/claude/skills/<name>/SKILL.md` — **always edit
+that repo copy**, never the read-only `~/.claude/skills/` symlink.
 
 ### 3. Draft the Gotcha
 
@@ -80,3 +84,13 @@ per-invocation.
   worth a mild irony flag, since fixing exactly this kind of undocumented gotcha in *other*
   skills is this skill's entire job. Cross-check a skill-specific commit marker in `git log`
   if the reported cutoff looks suspiciously old before trusting the misfire scan's scope.
+  **Fixed 2026-08-10:** the script now also matches a `<command-name>/<skill-name></command-name>`
+  slash-command turn (plain user-turn string content), not just `Skill` tool_use — this gotcha's
+  workaround should be needed less going forward, but keep the cross-check habit since other gaps
+  may still exist.
+- **Step 2 mis-resolved a project-local-only skill as global.** Tried to `Read`
+  `~/.claude/skills/new-background-loop/SKILL.md` for a skill that only exists at
+  `.claude/skills/new-background-loop/SKILL.md` in the bitburner project — no global copy exists
+  at all — and got `File does not exist`. Same failure class as the `nixos-dry-run` gotcha above,
+  just recurring against a different skill. Step 2's instructions above now say to check
+  project-local first for this reason.
