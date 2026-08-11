@@ -120,6 +120,10 @@
       recursive = true;
       force = true;
     };
+    ".claude/skills/resume-session/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/resume-session/SKILL.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
