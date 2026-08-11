@@ -184,11 +184,11 @@ let
     # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
     programs.swaylock.enable = true;
 
-    # Idle management: lock screen after 5 minutes (services.swayidle NixOS module removed upstream; use HM)
+    # Idle management: lock screen after 10 minutes (services.swayidle NixOS module removed upstream; use HM)
     services.swayidle = {
       enable = true;
       timeouts = [
-        { timeout = 300; command = "${pkgs.swaylock}/bin/swaylock -f"; }
+        { timeout = 600; command = "${pkgs.swaylock}/bin/swaylock -f"; }
       ];
     };
 
