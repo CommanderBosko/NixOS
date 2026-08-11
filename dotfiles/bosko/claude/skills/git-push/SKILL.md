@@ -14,8 +14,8 @@ The status gathering and the push itself are both mechanical (fixed git commands
 judgment involved), so they're handled by a script — only the confirm-skip decision in step
 4 needs judgment and stays here.
 
-1. Run `scripts/push.sh status` — prints the current branch, working-tree status, and the
-   commits ahead of upstream (or all commits, if there's no upstream yet).
+1. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh status` — prints the current branch,
+   working-tree status, and the commits ahead of upstream (or all commits, if there's no upstream yet).
 
 2. If there are uncommitted changes, warn the user and ask if they want to commit first (suggest `/git-commit`).
 
@@ -27,9 +27,9 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
    - **Ask for confirmation** in all other cases (e.g. "push", "push my changes"), via the
      AskUserQuestion tool with options **Proceed** / **Cancel**.
 
-5. Run `scripts/push.sh execute` — determines whether the branch has an upstream, pushes
-   accordingly (`git push -u origin <branch>` if not, `git push` if so), and prints the
-   branch name and remote URL.
+5. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` — determines whether the
+   branch has an upstream, pushes accordingly (`git push -u origin <branch>` if not, `git push`
+   if so), and prints the branch name and remote URL.
 
 6. Report: how many commits were pushed, the branch name, and the remote URL (from step 5's output).
 

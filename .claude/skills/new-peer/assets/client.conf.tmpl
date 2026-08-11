@@ -2,6 +2,11 @@
 PrivateKey = <their-private-key>
 Address = 10.10.0.<n>/24
 DNS = 1.1.1.1, 8.8.8.8
+# wg-quick defaults to MTU 1420, but the path to the Oracle Cloud endpoint
+# black-holes full-size packets above ~1400 bytes. Clamp to 1380 to match
+# both server and client settings elsewhere in this repo (modules/vpn.nix,
+# hosts/vpn-server/configuration.nix).
+MTU = 1380
 
 [Peer]
 PublicKey = <server-public-key>

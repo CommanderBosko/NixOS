@@ -36,10 +36,10 @@ Do not proceed until you have the public key in hand.
 
 ## Step 2 — Determine the next available IP
 
-Run (relative to this skill's directory):
+Run (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd):
 
 ```bash
-scripts/next-vpn-ip.sh
+.claude/skills/new-peer/scripts/next-vpn-ip.sh
 ```
 
 This checks both sources of truth — `.claude/hosts.json`'s `vpnIp` entries (flake hosts) and every
