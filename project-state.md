@@ -1,8 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-08-09 (session 71)_
+_Last updated: 2026-08-10 (session 72)_
 
 ## Current Project State
+
+**Niri idle-lock timeout increased 5→10 minutes (2026-08-10, session 72) — plus catch-up narration of 3 other unclosed same-day sessions.**
+- User asked to confirm swaylock is still used with niri (yes — HM `programs.swaylock.enable` + `services.swayidle`, gated to niri via `ConditionEnvironment`), then asked for the idle-before-lock timeout bumped from 5 to 10 minutes. One-line change in the shared `modules/desktop-environments/niri.nix` (`600` replaces `300`, comment updated) — applies to all 3 niri hosts. `nixos-dry-run` passed clean (+16.8 KiB, no kernel/DM/compositor changes), recommendation `switch`, **not yet applied** on any host (`e375565`, see Known Issues).
+- **Catch-up note: 3 more sessions ran unclosed earlier the same day** — a recurrence of the pattern already flagged in `project_session_closer_gap_202607`; narrated here from their own transcripts (all fell inside the window since the 2026-08-09 close, so full detail was available, unlike some past catch-up notes):
+  - **`resume-session` global skill shipped** (ported from a standalone draft written in the `bitburner` repo) — `dotfiles/bosko/claude/skills/resume-session/SKILL.md`, wired into `bosko-claude.nix` (`1233737`). Smoke-tested manually (not via the `Skill` tool — the HM symlink can't resolve mid-session) against this repo's own `README.md`/`project-state.md`/`session-summary.md`: pass. Same session also fixed a real bug found along the way: `find-last-skill-invocation.sh` only matched `Skill` tool_use entries, silently missing direct `/skill-name` slash-command invocations (`910c986`) — this exact gap had already caused this session-closer skill's own transcript-cutoff detector to under-scope itself in the past.
+  - **Weekly `improve-system` PR #8 reviewed and merged** (`607534d`) — guardrail check passed (6 files, all `SKILL.md`/`assets/` under the two allowed skill dirs), but content review caught something the guardrail can't see: the PR's own reboot-requirement fix was correct but bundled in a wrong "+ new session" claim to `improve-system`/`skill-upgrade` that memory (`feedback_global_skill_live_without_new_session`) had already disproven. Merged, then corrected in a same-session follow-up (`504e9f6`).
+  - One further session was empty — just a `/clear`, no work done.
+- All 4 catch-up commits above (`1233737`/`910c986`/`607534d`/`504e9f6`) are `dotfiles/bosko/claude/skills/` (repo-managed/global) — live in the repo now, but `~/.claude/skills/` won't reflect them until `nh os boot` + reboot.
 
 **Sweet-Dark→Colloid-Teal-Dark theme rollout fully completed and made declarative end-to-end across all 3 niri hosts/both users (2026-08-09, session 71 — resumes and closes out the mid-session handoff from session 70).**
 - **Resumed from the prior session's handoff**: gaming had `nh os boot`'d onto the Colloid migration (`bcd1d60`/`4ab25e1`) and was rebooting. Verified live (generation 372, `who -b` confirmed a real reboot), hand-fixed `~/.config/gtk-{3,4}.0/settings.ini` (dconf doesn't auto-propagate to these files on this system — a known, now-eliminated gap, see below), screenshot-confirmed via `wayland-screenshot`: dark theme + teal Colloid icons rendering correctly in Thunar.
@@ -513,6 +521,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ### Short-term (next 1-3 sessions)
 
+- **Run `nh os switch` on any niri host to apply the 5→10 min idle-lock timeout bump** (session 72, `e375565`) — safe per dry-run (no kernel/DM changes), restarts the `swayidle` user service with the new 600s timeout.
+- **Run `nh os boot` + reboot to bring the 2026-08-10 catch-up skill fixes live** (`resume-session` skill, slash-command transcript-detection fix, improve-system PR #8 content fix) — session 72, see Known Issues.
 - ~~Run `nh os switch` on gaming to bring the VPN health-watchdog timer AND the 2026-08-09 flake bump live~~ (session 69 `1a4d440`, session 70 `e6b8367`) — **RESOLVED (session 71)**, see Known Issues. Still worth confirming the watchdog timer's `notify-send` toast actually pops under DMS (e.g. by temporarily pointing it at a bad host), per the open question from session 69 — that specific check hasn't happened yet.
 - ~~Run `nh os boot` + reboot to bring 8 global-skill fixes from the 2026-08-09 skill-audit sweep live in `~/.claude`~~ (session 70) — **RESOLVED (session 71)**, see Known Issues.
 - ~~laptop + natalie-laptop: still need their own `nh os boot`/`switch` + reboot~~ to pick up the pi-hole/famdash DNS fix (`ac1c4ad`) and the niri `playerctld` media-key fix (`8feeb46`) — **RESOLVED (session 71)**, see Known Issues.
@@ -694,6 +704,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **niri idle-lock timeout bump (5→10 min, `e375565`, session 72) not yet applied** — `nh os switch` needed on gaming/laptop/natalie-laptop to restart the `swayidle` user service with the new 600s timeout; dry-run confirmed safe (`switch`, no reboot needed).
+- **2026-08-10 catch-up commits (skills) not yet live in `~/.claude`** — `resume-session` skill (`1233737`), the slash-command transcript-detection fix (`910c986`), and the improve-system PR #8 content fix (`504e9f6`) are all `dotfiles/bosko/claude/skills/` repo-managed/global; need `nh os boot` + reboot to reach the live `~/.claude/skills/` symlinks. Project-local skills are unaffected.
 - ~~8 skill-audit fixes not yet live in `~/.claude`~~ (session 70, commits `02eb5e1`/`d130dce`/`2d4610c`/`b39a1b1`/`87561de`) — **RESOLVED (session 71):** gaming rebooted + switched multiple times this session; confirmed live via direct symlink resolution + `git log` on the underlying source (not assumed from reboot alone).
 - ~~VPN health-watchdog timer + today's flake bump both pending a gaming `nh os switch`~~ (session 69 `1a4d440`, session 70 `e6b8367`) — **RESOLVED (session 71):** confirmed live via `systemctl list-timers` (`vpn-health-check.timer` active, next trigger on schedule).
 - **pi-hole ad-blocking is bypassed by design whenever gaming's VPN tunnel is active** (discovered live during session 69's close, not a regression from any recent commit) — `modules/vpn.nix:33`'s `dns = [ "1.1.1.1" "8.8.8.8" ]` makes `wg-quick` overwrite `/etc/resolv.conf` for the whole time the tunnel is up, taking precedence over `networking.nameservers`' pi-hole entry regardless of whether that entry is correct. This is separate from (and persists after) the `ac1c4ad` outage-drift fix — that fix only matters when the VPN is down. Not treated as a bug to fix; flagging so a future "pi-hole isn't blocking anything" report checks tunnel state first.
