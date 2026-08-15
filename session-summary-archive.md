@@ -1,3 +1,33 @@
+## Session: 2026-08-08 — Weekly PR review, DNS drift fix, niri media keys, vpn-server MTU + watchdog, router research
+
+**Focus**: Catch-up close spanning five sessions since the last close (2026-08-03 → 2026-08-07) — a weekly skill-sweep PR merge, a flake bump, a real DNS outage-drift bug, a niri media-key UX fix, a non-obvious VPN MTU bug, a new monitoring pair, and a router-architecture research pass in a sibling repo.
+
+### What changed (and why)
+- **Weekly `improve-system` PR #6 merged** (`00ab3f1`) — first full live run of `review-improve-system-pr`: guardrail passed, diff reviewed, user-confirmed, squash-merged. Removed a stale `audit-config` carve-out and hardened `rollback`'s confirm gate.
+- **`financeguru` flake input bumped** (`21b848e`) — routine lock-only bump.
+- **pi-hole/famdash IP drift fixed after a power outage** (`ac1c4ad`) — both Pis re-leased, famdash landed on pi-hole's old slot; verified live (mDNS/HTTP/DNS fingerprinting) before fixing. Surfaced a real bug in the fix itself: the LAN DNS resolver hardcoded in `desktop-networking.nix` had silently become famdash's address, bypassing pi-hole ad-blocking fleet-wide since the outage.
+- **niri media keys now route to the most-recently-active MPRIS player** (`8feeb46`) — `playerctld` added at niri startup, matching KDE Plasma's pause/play behavior, across all 3 niri hosts in one shared-config edit.
+- **vpn-server MTU black-hole bug fixed** (`d00e0fd`) — root cause of user-reported "random gaming stutter" through the VPN: Oracle's route cache over-reports MTU 9000, so `wg-quick` auto-detected `wg0` at 8920 with no explicit clamp, causing return traffic to fragment and silently drop. Added the same `mtu = 1380` clamp the client side already had. Confirmed live.
+- **Gaming-only VPN health-watchdog + a cloud nixpkgs-staleness routine added** (`1a4d440`) — a follow-up audit found vpn-server had no monitoring and no automated patch-cadence check; built a local systemd timer for the former (dry-run clean, not yet switched) and a cloud routine for the latter (first run 2026-08-10).
+- **Router research done, written to a sibling repo** — `~/projects/home-lab/docs/router-options.md` (not this repo) now recommends running NixOS itself as a future home router, for the same declarative/Claude-drivable reasons this repo already exists. No hardware bought, nothing scaffolded here.
+
+### Decisions
+- VPN monitoring split into a local watchdog (live health, needs SSH) + a cloud routine (staleness check, no credentials needed) rather than one combined mechanism — the cloud sandbox genuinely can't reach vpn-server.
+- NixOS-as-router chosen over OPNsense/VyOS/an appliance specifically for *this* user's declarative/AI-manageable priority axis, not as a general "best firewall" verdict — see `project-state.md` for the full tradeoff.
+
+### Issues / surprises
+- Live-verified during this close that pi-hole ad-blocking is bypassed by design whenever gaming's VPN tunnel is up — `wg-quick`'s own `DNS=` setting overwrites `/etc/resolv.conf` for as long as the tunnel is connected, independent of the LAN nameserver fix above. Not a bug, but worth knowing before re-diagnosing a future "pi-hole isn't blocking anything" report.
+- This close's transcript scan pulled in two already-closed 2026-08-03 sessions (`967aef9`, `cb5380d`) due to the known slash-command-cutoff-detection gap — cross-checked against `git log`'s actual last `chore(session)` commit and excluded their content from this narrative rather than re-describing already-documented work.
+
+### Next session
+- `nh os switch` on gaming to bring the VPN watchdog live, then confirm it actually fires (e.g. point it at a bad host temporarily).
+- `nh os boot`/`switch` + reboot on laptop and natalie-laptop for the pi-hole DNS fix and the niri media-key fix — both are gaming-only confirmed live right now.
+- No action required on the router research unless the user decides to move forward with buying hardware.
+
+**Commits**: `21b848e`..`1a4d440` (7 commits: `21b848e`, `2ed3644`, `00ab3f1`, `ac1c4ad`, `8feeb46`, `d00e0fd`, `1a4d440`)
+
+---
+
 ## Session: 2026-08-03 — Pinchflat VPN split-tunnel fix (bot-detection root cause)
 
 **Focus**: Diagnose and fix Pinchflat's yt-dlp downloads failing with YouTube's "Sign in to confirm you're not a bot" error, which the user suspected was VPN-related.

@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-14 — Claude Code Auto Mode enabled globally; gemini-cli warning triaged
+
+**Focus**: Explain a nixpkgs eval warning and a just-run `/auto-mode-setup` CLI command, then act on the follow-on decisions — no NixOS repo changes this session.
+
+### What changed (and why)
+- Triaged the `gemini-cli-0.47.0` "removal" eval warning from session 73's flake bump: it's nixpkgs' new `meta.problems.removal` mechanism (warn-level by nixpkgs default), surfacing Google's own deprecation of Gemini CLI for Antigravity CLI — confirmed non-blocking and that no `antigravity-cli` package exists in nixpkgs yet.
+- Walked through what the user's just-run `/auto-mode-setup` (a built-in Claude Code CLI command, not a project skill — searched both skill directories and found nothing, which caused some back-and-forth before finding it in `~/.claude/settings.json`) had actually configured: `autoMode.soft_deny`/`environment` rules scoped to this repo's risk profile.
+- Set `permissions.defaultMode: "auto"` in the global `~/.claude/settings.json` so Auto Mode is now the startup default for every project, not just this repo — done via the `update-config` skill, editing directly rather than through `/config` since the request was unambiguous.
+
+### Decisions
+- gemini-cli: offered do-nothing / suppress-the-warning / remove-the-package; user chose do-nothing — it stays installed in `modules/users.nix` for both `bosko` and `natty`.
+- Auto Mode rules: offered to scope the NixOS-specific `autoMode` rules into this project's own `.claude/settings.json` so they wouldn't leak into unrelated projects; user chose to keep one global ruleset instead. Recorded in memory `project_auto_mode_global` so this isn't re-proposed.
+
+### Issues / surprises
+- Initially told the user `/auto-mode-setup` didn't exist anywhere, since it's not a skill file in either skill directory — it's a native CLI command that writes straight to `~/.claude/settings.json`, invisible to a skill-file search. Corrected once the user pushed back and a settings.json mtime check confirmed it had actually run ~2 minutes earlier.
+
+### Next session
+- None — this session's changes (global `~/.claude/settings.json`) are already live; nothing pending on any host.
+
+**Commits**: none (no repo changes this session — Claude Code global config only)
+
+---
+
 ## Session: 2026-08-14 — Routine flake-update-verify run (4 inputs bumped, verified, committed+pushed)
 
 **Focus**: Run `/flake-update-verify` end-to-end — bump all flake inputs, prove the result evaluates cleanly, commit and push the lock bump without applying it anywhere.
@@ -101,36 +124,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `nh os boot`/`switch` + reboot still pending on laptop/natalie-laptop for the pi-hole DNS fix and niri media-key fix (carried over from session 69, unchanged this session).
 
 **Commits**: `f357132..87561de` (6 commits)
-
----
-
-## Session: 2026-08-08 — Weekly PR review, DNS drift fix, niri media keys, vpn-server MTU + watchdog, router research
-
-**Focus**: Catch-up close spanning five sessions since the last close (2026-08-03 → 2026-08-07) — a weekly skill-sweep PR merge, a flake bump, a real DNS outage-drift bug, a niri media-key UX fix, a non-obvious VPN MTU bug, a new monitoring pair, and a router-architecture research pass in a sibling repo.
-
-### What changed (and why)
-- **Weekly `improve-system` PR #6 merged** (`00ab3f1`) — first full live run of `review-improve-system-pr`: guardrail passed, diff reviewed, user-confirmed, squash-merged. Removed a stale `audit-config` carve-out and hardened `rollback`'s confirm gate.
-- **`financeguru` flake input bumped** (`21b848e`) — routine lock-only bump.
-- **pi-hole/famdash IP drift fixed after a power outage** (`ac1c4ad`) — both Pis re-leased, famdash landed on pi-hole's old slot; verified live (mDNS/HTTP/DNS fingerprinting) before fixing. Surfaced a real bug in the fix itself: the LAN DNS resolver hardcoded in `desktop-networking.nix` had silently become famdash's address, bypassing pi-hole ad-blocking fleet-wide since the outage.
-- **niri media keys now route to the most-recently-active MPRIS player** (`8feeb46`) — `playerctld` added at niri startup, matching KDE Plasma's pause/play behavior, across all 3 niri hosts in one shared-config edit.
-- **vpn-server MTU black-hole bug fixed** (`d00e0fd`) — root cause of user-reported "random gaming stutter" through the VPN: Oracle's route cache over-reports MTU 9000, so `wg-quick` auto-detected `wg0` at 8920 with no explicit clamp, causing return traffic to fragment and silently drop. Added the same `mtu = 1380` clamp the client side already had. Confirmed live.
-- **Gaming-only VPN health-watchdog + a cloud nixpkgs-staleness routine added** (`1a4d440`) — a follow-up audit found vpn-server had no monitoring and no automated patch-cadence check; built a local systemd timer for the former (dry-run clean, not yet switched) and a cloud routine for the latter (first run 2026-08-10).
-- **Router research done, written to a sibling repo** — `~/projects/home-lab/docs/router-options.md` (not this repo) now recommends running NixOS itself as a future home router, for the same declarative/Claude-drivable reasons this repo already exists. No hardware bought, nothing scaffolded here.
-
-### Decisions
-- VPN monitoring split into a local watchdog (live health, needs SSH) + a cloud routine (staleness check, no credentials needed) rather than one combined mechanism — the cloud sandbox genuinely can't reach vpn-server.
-- NixOS-as-router chosen over OPNsense/VyOS/an appliance specifically for *this* user's declarative/AI-manageable priority axis, not as a general "best firewall" verdict — see `project-state.md` for the full tradeoff.
-
-### Issues / surprises
-- Live-verified during this close that pi-hole ad-blocking is bypassed by design whenever gaming's VPN tunnel is up — `wg-quick`'s own `DNS=` setting overwrites `/etc/resolv.conf` for as long as the tunnel is connected, independent of the LAN nameserver fix above. Not a bug, but worth knowing before re-diagnosing a future "pi-hole isn't blocking anything" report.
-- This close's transcript scan pulled in two already-closed 2026-08-03 sessions (`967aef9`, `cb5380d`) due to the known slash-command-cutoff-detection gap — cross-checked against `git log`'s actual last `chore(session)` commit and excluded their content from this narrative rather than re-describing already-documented work.
-
-### Next session
-- `nh os switch` on gaming to bring the VPN watchdog live, then confirm it actually fires (e.g. point it at a bad host temporarily).
-- `nh os boot`/`switch` + reboot on laptop and natalie-laptop for the pi-hole DNS fix and the niri media-key fix — both are gaming-only confirmed live right now.
-- No action required on the router research unless the user decides to move forward with buying hardware.
-
-**Commits**: `21b848e`..`1a4d440` (7 commits: `21b848e`, `2ed3644`, `00ab3f1`, `ac1c4ad`, `8feeb46`, `d00e0fd`, `1a4d440`)
 
 ---
 
