@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-14 — Routine flake-update-verify run (4 inputs bumped, verified, committed+pushed)
+
+**Focus**: Run `/flake-update-verify` end-to-end — bump all flake inputs, prove the result evaluates cleanly, commit and push the lock bump without applying it anywhere.
+
+### What changed (and why)
+- Ran the loop's default OFF-mode flow: steps 1-5 straight through, mandatory step-6 gate still enforced before touching git. Step 1 confirmed via the 2026-08-09 memory file (and a live `grep` of `flake.nix`) that no input pin is currently active.
+- `nix flake update` moved 4 inputs: `nixpkgs` `f13ff45a`→`0e251e24`, `home-manager` `367f7ef8`→`83b7606d`, `dms` `80bad610`→`fb9f00a6` (+ its `dank-qml-common` sub-input), `sops-nix` `f1406619`→`a8627b21`. `financeguru`/`disko`/`nix-colors`/`nix-flatpak`/`nixpkgs-stable` held steady.
+- Verified with both `flake-check` (shallow, all 4 hosts) and the loop's mandatory deep-eval (`toplevel.drvPath` per host) — all 4 hosts resolved real `.drv` paths clean. One non-blocking eval warning (`gemini-cli-0.47.0` nixpkgs removal notice) surfaced but didn't fail anything.
+
+### Decisions
+- User approved the step-6 AskUserQuestion gate ("Commit and push"), so `flake.lock` was committed alone (`4ea763c`) and pushed immediately — no separate confirmation needed for the push itself, per the skill's "unambiguous prior approval" carve-out.
+- No activation performed anywhere — explicitly out of scope for this loop; `/fleet-rollout` is the documented next step.
+
+### Issues / surprises
+- None. Single attempt, no retries, no revert path needed.
+
+### Next session
+- `/fleet-rollout` (or a per-host `nh os boot`/`switch`) to actually apply the 2026-08-14 flake bump — currently just committed+pushed, not live anywhere.
+- Same for the still-pending 2026-08-10 idle-lock bump and catch-up skill commits (see Known Issues in `project-state.md`) — can ride the same reboot.
+
+**Commits**: `4ea763c` (1 commit)
+
+---
+
 ## Session: 2026-08-10 — Niri idle-lock timeout bump + catch-up close on 3 unclosed sessions
 
 **Focus**: Small config change (swaylock idle timeout 5→10 min), plus a catch-up close covering 3 other sessions that ran earlier the same day without being closed out.
@@ -107,31 +131,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No action required on the router research unless the user decides to move forward with buying hardware.
 
 **Commits**: `21b848e`..`1a4d440` (7 commits: `21b848e`, `2ed3644`, `00ab3f1`, `ac1c4ad`, `8feeb46`, `d00e0fd`, `1a4d440`)
-
----
-
-## Session: 2026-08-03 — Pinchflat VPN split-tunnel fix (bot-detection root cause)
-
-**Focus**: Diagnose and fix Pinchflat's yt-dlp downloads failing with YouTube's "Sign in to confirm you're not a bot" error, which the user suspected was VPN-related.
-
-### What changed (and why)
-- Confirmed the user's hypothesis directly rather than guessing: gaming's WireGuard client is a deliberate full tunnel, so Pinchflat's yt-dlp traffic was exiting via the Oracle Cloud VPS IP — `curl -4 ifconfig.me` from gaming literally returned the VPN server's own address, a datacenter/hosting ASN YouTube flags far more aggressively than residential IPs.
-- **Fix 1** (`61fe874`): a UID-scoped `ip rule` (via `wg-quick`'s `postUp`/`postDown`) routes only Pinchflat's traffic via the normal LAN gateway, bypassing wg0, while the rest of gaming stays fully tunneled. UID resolved at *runtime* (`$(id -u pinchflat)`), not eval time — NixOS system users get dynamically assigned UIDs.
-- **Fix 1 alone hung every connection in `SYN-SENT` forever** — a second, non-obvious bug: NixOS's firewall does its own strict reverse-path check independent of the `rp_filter` sysctl (already loose), and dropped the return traffic as spoofed since the global route still points at wg0. **Fix 2** (`4fad567`): `checkReversePath = "loose"` on gaming, matching a pattern `vpn-server` already used for the same class of asymmetric-routing problem.
-- Confirmed fully live end-to-end, not just dry-run-clean: all 3 previously-failing videos downloaded successfully (video, thumbnail, `.nfo`, `.info.json` all present in `/mnt/media/YouTube`) — Pinchflat's first-ever confirmed successful download.
-
-### Decisions
-- UID-scoped split-tunnel exception over disabling full-tunnel entirely or relying on cookies (yt-dlp's own suggested workaround) — cookies treat the symptom (still flagged as a datacenter IP) not the cause, and full-tunnel is deliberate for the rest of the host.
-
-### Issues / surprises
-- The two-part nature of this fix was the real surprise: the routing rule alone doesn't error, it just hangs silently (`SYN-SENT` forever) — easy to mistake for "still propagating" rather than a second real bug. Root-caused via `ss -tn state syn-sent` plus a control test (a plain `curl --interface enp4s0` as a different, non-pinchflat user reproduced the identical hang, which ruled out anything specific to the UID rule itself).
-- `ps aux` intermittently failed to show other users' full command lines for the pinchflat-owned yt-dlp processes, while `pgrep -u pinchflat -a` and `ps -p <pid> -o cmd` did — cost some back-and-forth before finding the actually-running (but network-stalled) processes.
-
-### Next session
-- Set up the Jellyfin "YouTube" library and confirm the Media Profile's NFO/series-image toggles — now higher priority, since 3 real video files are already sitting in `/mnt/media/YouTube` with no library to pick them up.
-- Watch for Yes Theory's next upload (still gated by its own unrelated `download_cutoff_date`) as the first real end-to-end file-to-Jellyfin verification.
-
-**Commits**: `61fe874`..`4fad567` (2 commits)
 
 ---
 

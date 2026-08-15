@@ -1,3 +1,28 @@
+## Session: 2026-08-03 — Pinchflat VPN split-tunnel fix (bot-detection root cause)
+
+**Focus**: Diagnose and fix Pinchflat's yt-dlp downloads failing with YouTube's "Sign in to confirm you're not a bot" error, which the user suspected was VPN-related.
+
+### What changed (and why)
+- Confirmed the user's hypothesis directly rather than guessing: gaming's WireGuard client is a deliberate full tunnel, so Pinchflat's yt-dlp traffic was exiting via the Oracle Cloud VPS IP — `curl -4 ifconfig.me` from gaming literally returned the VPN server's own address, a datacenter/hosting ASN YouTube flags far more aggressively than residential IPs.
+- **Fix 1** (`61fe874`): a UID-scoped `ip rule` (via `wg-quick`'s `postUp`/`postDown`) routes only Pinchflat's traffic via the normal LAN gateway, bypassing wg0, while the rest of gaming stays fully tunneled. UID resolved at *runtime* (`$(id -u pinchflat)`), not eval time — NixOS system users get dynamically assigned UIDs.
+- **Fix 1 alone hung every connection in `SYN-SENT` forever** — a second, non-obvious bug: NixOS's firewall does its own strict reverse-path check independent of the `rp_filter` sysctl (already loose), and dropped the return traffic as spoofed since the global route still points at wg0. **Fix 2** (`4fad567`): `checkReversePath = "loose"` on gaming, matching a pattern `vpn-server` already used for the same class of asymmetric-routing problem.
+- Confirmed fully live end-to-end, not just dry-run-clean: all 3 previously-failing videos downloaded successfully (video, thumbnail, `.nfo`, `.info.json` all present in `/mnt/media/YouTube`) — Pinchflat's first-ever confirmed successful download.
+
+### Decisions
+- UID-scoped split-tunnel exception over disabling full-tunnel entirely or relying on cookies (yt-dlp's own suggested workaround) — cookies treat the symptom (still flagged as a datacenter IP) not the cause, and full-tunnel is deliberate for the rest of the host.
+
+### Issues / surprises
+- The two-part nature of this fix was the real surprise: the routing rule alone doesn't error, it just hangs silently (`SYN-SENT` forever) — easy to mistake for "still propagating" rather than a second real bug. Root-caused via `ss -tn state syn-sent` plus a control test (a plain `curl --interface enp4s0` as a different, non-pinchflat user reproduced the identical hang, which ruled out anything specific to the UID rule itself).
+- `ps aux` intermittently failed to show other users' full command lines for the pinchflat-owned yt-dlp processes, while `pgrep -u pinchflat -a` and `ps -p <pid> -o cmd` did — cost some back-and-forth before finding the actually-running (but network-stalled) processes.
+
+### Next session
+- Set up the Jellyfin "YouTube" library and confirm the Media Profile's NFO/series-image toggles — now higher priority, since 3 real video files are already sitting in `/mnt/media/YouTube` with no library to pick them up.
+- Watch for Yes Theory's next upload (still gated by its own unrelated `download_cutoff_date`) as the first real end-to-end file-to-Jellyfin verification.
+
+**Commits**: `61fe874`..`4fad567` (2 commits)
+
+---
+
 ## Session: 2026-08-03 — Pinchflat YouTube archiver added to gaming, wired to Jellyfin
 
 **Focus**: Research, plan, and deploy Pinchflat (self-hosted YouTube archiver) on gaming, integrated with the existing Jellyfin library. Also closes a gap of several unclosed prior sessions.

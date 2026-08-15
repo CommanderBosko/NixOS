@@ -1,8 +1,15 @@
 # NixOS Project State
 
-_Last updated: 2026-08-10 (session 72)_
+_Last updated: 2026-08-14 (session 73)_
 
 ## Current Project State
+
+**Routine `/flake-update-verify` run, 4 inputs bumped and verified clean, committed+pushed — not applied to any host (2026-08-14, session 73).**
+- Ran the loop in its default (Training Mode OFF) posture: steps 1-5 autonomous, mandatory step-6 commit gate still enforced. Step 1 read the 2026-08-09 memory file first — confirmed the nixpkgs pin from the Sweet-Dark saga is lifted (baseline `f13ff45a`/`367f7ef8` matched live `flake.lock` exactly) and no pin is currently in effect, cross-checked against `flake.nix` directly rather than trusting the memory note alone.
+- `nix flake update` moved 4 inputs: `nixpkgs` `f13ff45a`→`0e251e24` (2026-08-13), `home-manager` `367f7ef8`→`83b7606d` (2026-08-14), `dms` `80bad610`→`fb9f00a6` (2026-08-14, plus its `dank-qml-common` sub-input), `sops-nix` `f1406619`→`a8627b21` (2026-08-13). `financeguru`/`disko`/`nix-colors`/`nix-flatpak`/`nixpkgs-stable` unchanged.
+- Verified via both `flake-check` (shallow, all 4 hosts) **and** the mandatory deep-eval (`nix eval --raw .../toplevel.drvPath`) per this loop's own standing gotcha that flake-check alone isn't sufficient — all 4 hosts (gaming/laptop/natalie-laptop/vpn-server) resolved real `.drv` paths cleanly. One non-blocking eval **warning** (not an error) surfaced on the 3 desktop hosts: `gemini-cli-0.47.0` has a nixpkgs removal notice ("replaced by Antigravity CLI") — didn't fail eval, not an insecure-package gate, flagged for awareness only in case it escalates to a hard block on a future bump.
+- User approved the step-6 gate ("Commit and push"); committed `flake.lock` alone as `4ea763c`, pushed clean (`git status -sb` confirmed not-ahead of `origin/main`). **No `switch`/`boot` performed on any host** — applying this bump is explicitly out of scope for this loop; `/fleet-rollout` is the documented next step once/if the user wants it live.
+- See memory `.claude/loops/flake-update-verify/{output,memory}-2026-08-14.md` for the full per-input table and eval verdict.
 
 **Niri idle-lock timeout increased 5→10 minutes (2026-08-10, session 72) — plus catch-up narration of 3 other unclosed same-day sessions.**
 - User asked to confirm swaylock is still used with niri (yes — HM `programs.swaylock.enable` + `services.swayidle`, gated to niri via `ConditionEnvironment`), then asked for the idle-before-lock timeout bumped from 5 to 10 minutes. One-line change in the shared `modules/desktop-environments/niri.nix` (`600` replaces `300`, comment updated) — applies to all 3 niri hosts. `nixos-dry-run` passed clean (+16.8 KiB, no kernel/DM/compositor changes), recommendation `switch`, **not yet applied** on any host (`e375565`, see Known Issues).
@@ -521,6 +528,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ### Short-term (next 1-3 sessions)
 
+- **Apply the 2026-08-14 flake bump (`4ea763c`) via `/fleet-rollout` when ready** (session 73) — nixpkgs/home-manager/dms/sops-nix all moved and are verified clean (flake-check + 4-host deep-eval), but committing was explicitly scoped to lock-only; no host has switched onto it yet. Can ride along with the idle-lock bump below on the same reboot.
 - **Run `nh os switch` on any niri host to apply the 5→10 min idle-lock timeout bump** (session 72, `e375565`) — safe per dry-run (no kernel/DM changes), restarts the `swayidle` user service with the new 600s timeout.
 - **Run `nh os boot` + reboot to bring the 2026-08-10 catch-up skill fixes live** (`resume-session` skill, slash-command transcript-detection fix, improve-system PR #8 content fix) — session 72, see Known Issues.
 - ~~Run `nh os switch` on gaming to bring the VPN health-watchdog timer AND the 2026-08-09 flake bump live~~ (session 69 `1a4d440`, session 70 `e6b8367`) — **RESOLVED (session 71)**, see Known Issues. Still worth confirming the watchdog timer's `notify-send` toast actually pops under DMS (e.g. by temporarily pointing it at a bad host), per the open question from session 69 — that specific check hasn't happened yet.
@@ -704,6 +712,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **2026-08-14 flake bump (`4ea763c`, session 73) not yet applied to any host** — nixpkgs/home-manager/dms/sops-nix all moved; committed+pushed lock-only per `/flake-update-verify`'s scope, verified via flake-check + 4-host deep-eval. `/fleet-rollout` is the way to actually apply it.
 - **niri idle-lock timeout bump (5→10 min, `e375565`, session 72) not yet applied** — `nh os switch` needed on gaming/laptop/natalie-laptop to restart the `swayidle` user service with the new 600s timeout; dry-run confirmed safe (`switch`, no reboot needed).
 - **2026-08-10 catch-up commits (skills) not yet live in `~/.claude`** — `resume-session` skill (`1233737`), the slash-command transcript-detection fix (`910c986`), and the improve-system PR #8 content fix (`504e9f6`) are all `dotfiles/bosko/claude/skills/` repo-managed/global; need `nh os boot` + reboot to reach the live `~/.claude/skills/` symlinks. Project-local skills are unaffected.
 - ~~8 skill-audit fixes not yet live in `~/.claude`~~ (session 70, commits `02eb5e1`/`d130dce`/`2d4610c`/`b39a1b1`/`87561de`) — **RESOLVED (session 71):** gaming rebooted + switched multiple times this session; confirmed live via direct symlink resolution + `git log` on the underlying source (not assumed from reboot alone).
