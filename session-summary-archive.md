@@ -1,3 +1,31 @@
+## Session: 2026-08-09 — Full skill-ecosystem sweep (58 skills, 5 bugs fixed) + flake update
+
+**Focus**: Chain `/skill-suggestion` → `/skill-upgrade` → `/skill-audit` across the whole skill roster, plus a routine `/flake-update-verify` and weekly-PR check.
+
+### What changed (and why)
+- **`/flake-update-verify` ran twice** — first pass reverted (nixpkgs `f13ff45a` still blocked by the removed Sweet-Dark theme, 3rd consecutive blocked run); second pass pinned nixpkgs and updated `dms`/`financeguru`/`home-manager` independently. Verified via `flake-check` + 4-host deep-eval, committed+pushed (`e6b8367`).
+- **`skill-suggestion`** scanned 66 transcripts since 2026-07-18: no new skill candidates cleared the reuse bar — nothing invented just to have output.
+- **`skill-upgrade`** found 3 genuine misfires and added gotchas to `add-secret` (bare `openssl` not on `PATH`), `session-closer` (`uptime -p`/`-s` fail on this host, use `who -b`), `journal` (`vpn-server` has no `~/.ssh/config` alias).
+- **`skill-audit`** swept all 58 skills via 5 parallel sub-agents and found 5 real correctness bugs — a bare-`scripts/` 404 in 6 skills, `rollback`'s false `nh`-rollback claim, `review-improve-system-pr`'s dead PR-search query, `/update`'s missing nixpkgs-pin check, `new-host`'s un-substituted state-version placeholder — all fixed, empirically verified, committed (5 commits), and pushed.
+- **`review-improve-system-pr`** checked for the weekly cloud routine's PR — none open, expected before the 2026-08-10 scheduled run.
+
+### Decisions
+- Nixpkgs pin stays **temporary** for a 3rd consecutive blocked run — user declined making it permanent again; expected to keep recurring until upstream restores `sweet`/`gtk-engine-murrine` or the theme is migrated.
+- All 5 skill-audit findings were implemented in the recommended fix order, nothing declined this time (unlike the 2026-07-30 sweep's Tier-4 skip).
+
+### Issues / surprises
+- This session's own `skill-audit` Step 0 hit the exact slash-command transcript-cutoff bug it went on to fix — reported cutoff read 2026-07-18 against a real last-audit of 2026-07-30/08-03. Propagated the fix (already known from `session-closer`'s own Gotchas) to the 3 meta-skills that lacked it.
+- This close's own transcript scan hit the same known gap (tool-reported cutoff 2026-08-03 vs. the real last close at `f357132`, 2026-08-08) — cross-checked against `git log`'s `chore(session)` baseline per the documented workaround, so only the two genuinely-new transcripts (today's flake-update-verify run and the skill-suggestion/upgrade/audit chain) were mined.
+
+### Next session
+- `nh os switch` on gaming — brings live the VPN watchdog timer (session 69), today's flake bump (dms/home-manager), and confirms `notify-send` actually fires.
+- `nh os boot` + reboot on gaming — brings the 8 global-skill fixes from today's audit live in `~/.claude`.
+- `nh os boot`/`switch` + reboot still pending on laptop/natalie-laptop for the pi-hole DNS fix and niri media-key fix (carried over from session 69, unchanged this session).
+
+**Commits**: `f357132..87561de` (6 commits)
+
+---
+
 ## Session: 2026-08-08 — Weekly PR review, DNS drift fix, niri media keys, vpn-server MTU + watchdog, router research
 
 **Focus**: Catch-up close spanning five sessions since the last close (2026-08-03 → 2026-08-07) — a weekly skill-sweep PR merge, a flake bump, a real DNS outage-drift bug, a niri media-key UX fix, a non-obvious VPN MTU bug, a new monitoring pair, and a router-architecture research pass in a sibling repo.
