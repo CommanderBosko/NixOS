@@ -213,10 +213,14 @@ in
     # Enable x11
     xserver.enable = true;
 
-    # Plasma auto-enables these two as defaults; bare compositors like Niri
+    # Plasma auto-enables these as defaults; bare compositors like Niri
     # don't, so DMS's System Check flags them as unavailable without this.
+    # upower is what actually feeds DMS's battery pill/top-bar widget and
+    # Settings page — without upowerd running, DMS has no battery data to
+    # show at all (laptop/natalie-laptop, 2026-08-16).
     accounts-daemon.enable = true;
     power-profiles-daemon.enable = true;
+    upower.enable = true;
   };
 
   # Enable Dank Material Shell via Home Manager for every user who can log

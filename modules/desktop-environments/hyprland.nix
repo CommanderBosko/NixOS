@@ -16,10 +16,13 @@
     # plumbing — mirrored here for consistency with niri.nix)
     xserver.enable = true;
 
-    # Plasma auto-enables these two as defaults; bare compositors like
-    # Hyprland don't, so DMS's System Check flags them as unavailable without this.
+    # Plasma auto-enables these as defaults; bare compositors like
+    # Hyprland don't, so DMS's System Check flags them as unavailable without
+    # this. upower is what feeds DMS's battery pill/top-bar widget and
+    # Settings page (mirrored from the same fix in niri.nix, 2026-08-16).
     accounts-daemon.enable = true;
     power-profiles-daemon.enable = true;
+    upower.enable = true;
   };
 
   # Enable Dank Material Shell via Home Manager
