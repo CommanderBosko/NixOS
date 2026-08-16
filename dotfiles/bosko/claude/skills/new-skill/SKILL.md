@@ -104,6 +104,7 @@ Determine the target path by scope:
      ".claude/skills/<name>" = {
        source = "${self}/dotfiles/bosko/claude/skills/<name>";
        recursive = true;
+       force = true;
      };
      ```
      Otherwise (a plain single-file skill, no `scripts/`/`assets/`), use the simpler file-by-file form:
