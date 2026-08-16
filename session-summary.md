@@ -4,6 +4,47 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-16 — DMS battery display fixed via services.upower.enable
+
+**Focus**: Fix laptop/natalie-laptop showing no battery % in DMS's top-bar pill or Settings page.
+
+### What changed (and why)
+- Root-caused: `services.upower.enable` was never set on any DE module — Plasma auto-enables `upowerd` as a hidden dependency, but bare compositors like niri/Hyprland don't, the same class of gap the existing `accounts-daemon`/`power-profiles-daemon` workaround already covers. Confirmed live via `systemctl status upower` ("could not be found") before fixing.
+- Added `services.upower.enable = true;` to `modules/desktop-environments/niri.nix` (live on gaming/laptop/natalie-laptop) and mirrored it into `hyprland.nix` (same latent gap, unwired to any host yet).
+
+### Decisions
+- Fixed both the live DE module (niri) and the unwired one (hyprland) in the same commit rather than scoping to just niri, since the gap was structurally identical and hyprland was one line away.
+
+### Issues / surprises
+- None — root cause was found quickly by checking `systemctl status upower` directly rather than guessing at DMS config.
+
+### Next session
+- laptop and natalie-laptop still need their own `nh os switch`/`nh os boot` to bring this live (user applying manually); gaming already has it.
+
+**Commits**: `ae6e428` (1 commit)
+
+---
+
+## Session: 2026-08-16 — financeguru flake input bumped
+
+**Focus**: Bump the `financeguru` flake input to latest and push.
+
+### What changed (and why)
+- `/bump-input financeguru`: `6fa44d36` → `99490491` (2026-08-04 → 2026-08-16). Verified via `nixos-dry-run` on gaming — clean build, only `financeguru`/`source` derivations changed (+92.8 KiB), no kernel/bootloader/DE churn, recommendation `switch`.
+
+### Decisions
+- None beyond the routine bump — no config-level changes involved.
+
+### Issues / surprises
+- None.
+
+### Next session
+- Not yet applied to any host — `nh os switch`/`boot` whenever convenient (can ride along with the upower fix above).
+
+**Commits**: `f17aeab` (1 commit)
+
+---
+
 ## Session: 2026-08-15 — Printer diagnosed and fixed live on gaming; new cups-browsed gap found
 
 **Focus**: Diagnose why Zen Browser couldn't see the network printer on gaming, fix it live, and set a default printer — no repo changes.
@@ -71,54 +112,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Same for the still-pending 2026-08-10 idle-lock bump and catch-up skill commits (see Known Issues in `project-state.md`) — can ride the same reboot.
 
 **Commits**: `4ea763c` (1 commit)
-
----
-
-## Session: 2026-08-10 — Niri idle-lock timeout bump + catch-up close on 3 unclosed sessions
-
-**Focus**: Small config change (swaylock idle timeout 5→10 min), plus a catch-up close covering 3 other sessions that ran earlier the same day without being closed out.
-
-### What changed (and why)
-- Confirmed swaylock is still wired into niri (HM `programs.swaylock` + `services.swayidle`, gated to `XDG_CURRENT_DESKTOP=niri`), then bumped the idle-before-lock timeout from 300s to 600s in the shared `modules/desktop-environments/niri.nix` (`e375565`) — applies to all 3 niri hosts. Dry-run clean, `switch` recommended, not yet applied.
-- **Catch-up (not this conversation's own work, narrated from their transcripts)**: an earlier unclosed session today shipped the `resume-session` global skill (ported from a `bitburner`-repo draft) and fixed a real bug in `find-last-skill-invocation.sh` (slash-command invocations were invisible to the transcript-cutoff detector). A second unclosed session reviewed and merged the weekly `improve-system` PR #8, catching a wrong "+new session" claim the PR itself reinforced and fixing it in a same-session follow-up. A third session was empty (just a `/clear`).
-
-### Decisions
-- Treated the 3 earlier same-day sessions as a catch-up close rather than silently absorbing their commits into this session's narrative — this is a repeat of the pattern in memory `project_session_closer_gap_202607`, flagged rather than re-litigated.
-
-### Issues / surprises
-- None new — the transcript-cutoff detector gap that bit past closes is now fixed (`910c986`, from the catch-up session), so this close didn't need the git-log-baseline workaround manually, though the finding was cross-checked against it anyway.
-
-### Next session
-- `nh os switch` on any niri host to apply the idle-lock bump.
-- `nh os boot` + reboot to bring the 4 catch-up skill commits live in `~/.claude`.
-
-**Commits**: `504e9f6..e375565` (5 commits across the 4 sessions closed here)
-
----
-
-## Session: 2026-08-09 — Colloid theme rollout finished + made fully declarative
-
-**Focus**: Resume and finish the Sweet-Dark→Colloid-Teal-Dark rollout across all 3 niri hosts; along the way, replace the manual dconf+hand-edited-`settings.ini` pattern with a real declarative fix.
-
-### What changed (and why)
-- **Finished the fleet rollout**: verified gaming live from the prior session's handoff, hand-fixed `settings.ini` as a stopgap, screenshot-confirmed. Hit two real snags getting laptop/natalie-laptop rebuilt — laptop transiently lost WAN routing (self-resolved), and natalie-laptop's graphical session belongs to `natty`, not `bosko` (permission gap, no sudo available) — both diagnosed live rather than guessed.
-- **User asked to make theme selection declarative for all users** — read Home Manager's own `gtk`/`pointerCursor` module source directly (fetched via `nix flake prefetch`, not guessed from docs) and found `gtk.enable = true` generates **both** `settings.ini` and the equivalent `dconf` keys from one set of options, eliminating the propagation gap that caused 3 separate stale-file incidents this session. Replaced the manual `dconf.settings` block in `niri.nix` (`944b64b`).
-- **First switch attempt failed activation** — HM refused to clobber real pre-existing files at the paths the new `gtk` module now owns (some mine, some predating the session). Fixed generally with `home-manager.backupFileExtension = "backup"` (`835a078`), since every user on every niri host was about to hit the same collision.
-- **Verified live on all 3 hosts**: correct symlinks/content/dconf everywhere, and — bonus — natalie-laptop's `home-manager-natty.service` succeeded too, closing the natty gap for free without the sudo workaround originally drafted for it.
-
-### Decisions
-- Went with HM's `gtk` module over continuing the manual dconf+settings.ini pattern, once it became clear the propagation gap was structural, not a one-off miss — verified via source, not assumed from option names.
-- Reversed a 2026-07-25 decision that kept `home.pointerCursor.gtk.enable` off (to avoid it wiping hand-set theme keys) — that risk no longer applies now that the whole file is declarative, so it's on.
-
-### Issues / surprises
-- laptop's screenshot capture returned a flat gray frame after the first successful shot, despite niri reporting the output logically on — looks like a physical backlight/DPMS state `power-on-monitors` didn't fully clear; not chased further since config-level verification was already solid.
-- Ran into the session's own `home-manager.backupFileExtension` gap the hard way — good reminder that a module claiming a new file path needs an explicit collision policy, not just correctness at the option level.
-
-### Next session
-- Grab a real Thunar screenshot on gaming once it's not mid-game, to close the loop on visual confirmation.
-- Nothing else pending — this closes out `project_sweet_theme_rollout` entirely.
-
-**Commits**: `4ab25e1..835a078` (2 commits this session; `4ab25e1`/`bcd1d60` were the prior session's handoff)
 
 ---
 

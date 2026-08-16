@@ -1,8 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-08-15 (session 75)_
+_Last updated: 2026-08-16 (session 77)_
 
 ## Current Project State
+
+**DMS battery display fixed via `services.upower.enable` — root cause found, verified, pushed; laptop/natalie-laptop still need their own switch (2026-08-16, session 77).**
+- User reported laptop and natalie-laptop showed no battery % in DMS's top-bar pill or Settings page. Root cause: `services.upower.enable` was never set on any DE module — Plasma auto-enables `upowerd` as a hidden dependency, but bare compositors like niri/Hyprland don't, the same class of gap the existing `accounts-daemon`/`power-profiles-daemon` workaround already covers. Confirmed live (`systemctl status upower` → "could not be found") before fixing, rather than guessed.
+- Fixed in `modules/desktop-environments/niri.nix` (live DE on all 3 desktop hosts) and mirrored into `hyprland.nix` (same latent gap, though unwired to any host). Verified via `nixos-dry-run` on gaming (diff showed `etc-UPower-UPower.conf` added, recommendation `switch`), `de-smoke-check` on hyprland (PASS), and `deep-eval-check` across all 4 hosts (PASS). Committed `ae6e428`, pushed.
+- **gaming applied live by the user** (this is where the dry-run ran); **laptop and natalie-laptop still need their own `nh os switch`/`nh os boot`** — user is applying those manually, treat as self-managed. See memory `project_dms_battery_upower_fix`.
+
+**`financeguru` flake input bumped to latest, verified clean, committed+pushed (2026-08-16, session 76).**
+- Routine `/bump-input financeguru` → `6fa44d36` → `99490491` (2026-08-04 → 2026-08-16). `nixos-dry-run` on gaming built clean: only the `financeguru`/`source` derivations changed (+92.8 KiB total), no kernel/bootloader/DE churn — recommendation `switch`. Committed `f17aeab`, pushed. **Not yet applied to any host** — the bump is on `main` but nobody has run `nh os switch`/`boot` yet.
 
 **gaming: printer invisible in Zen Browser (and every other app) diagnosed + fixed live, new `cups-browsed` discovery gap found — no repo change (2026-08-15, session 75).**
 - User reported Zen Browser's print dialog couldn't see the Canon TS9500 despite it being powered on and networked. `printer-diagnose` skill run against gaming: avahi discovery ✅, `cups-browsed.conf` config ✅ (`CreateIPPPrinterQueues Everywhere` still active), but `lpstat -p -d` showed no permanent queue — the familiar `cups-browsed`↔avahi symptom, not a Zen/browser-specific bug (the print dialog just reads whatever CUPS has).
@@ -537,6 +545,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ### Short-term (next 1-3 sessions)
 
+- **laptop and natalie-laptop: `nh os switch`/`nh os boot` to pick up `services.upower.enable`** (session 77, `ae6e428`) — brings DMS's battery pill/Settings page to life on both; gaming already has it live. User applying manually.
+- **`financeguru` bump (`f17aeab`, session 76) not yet applied to any host** — verified clean via dry-run (+92.8 KiB, `switch` recommended), can ride along with the upower fix above on the same switch.
 - **Apply the 2026-08-14 flake bump (`4ea763c`) via `/fleet-rollout` when ready** (session 73) — nixpkgs/home-manager/dms/sops-nix all moved and are verified clean (flake-check + 4-host deep-eval), but committing was explicitly scoped to lock-only; no host has switched onto it yet. Can ride along with the idle-lock bump below on the same reboot.
 - **Run `nh os switch` on any niri host to apply the 5→10 min idle-lock timeout bump** (session 72, `e375565`) — safe per dry-run (no kernel/DM changes), restarts the `swayidle` user service with the new 600s timeout.
 - **Run `nh os boot` + reboot to bring the 2026-08-10 catch-up skill fixes live** (`resume-session` skill, slash-command transcript-detection fix, improve-system PR #8 content fix) — session 72, see Known Issues.
@@ -724,6 +734,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **laptop and natalie-laptop: `services.upower.enable` fix (`ae6e428`, session 77) not yet applied** — gaming already has it live (that's where the dry-run/verification ran); the other two desktop hosts need their own `nh os switch`/`nh os boot` before DMS's battery pill/Settings page will show data. User applying manually.
+- **`financeguru` bump (`f17aeab`, session 76) not yet applied to any host** — dry-run-verified clean (+92.8 KiB, no kernel/DM churn, `switch` recommended); nobody has switched onto it yet.
 - **2026-08-14 flake bump (`4ea763c`, session 73) not yet applied to any host** — nixpkgs/home-manager/dms/sops-nix all moved; committed+pushed lock-only per `/flake-update-verify`'s scope, verified via flake-check + 4-host deep-eval. `/fleet-rollout` is the way to actually apply it.
 - **niri idle-lock timeout bump (5→10 min, `e375565`, session 72) not yet applied** — `nh os switch` needed on gaming/laptop/natalie-laptop to restart the `swayidle` user service with the new 600s timeout; dry-run confirmed safe (`switch`, no reboot needed).
 - **2026-08-10 catch-up commits (skills) not yet live in `~/.claude`** — `resume-session` skill (`1233737`), the slash-command transcript-detection fix (`910c986`), and the improve-system PR #8 content fix (`504e9f6`) are all `dotfiles/bosko/claude/skills/` repo-managed/global; need `nh os boot` + reboot to reach the live `~/.claude/skills/` symlinks. Project-local skills are unaffected.
