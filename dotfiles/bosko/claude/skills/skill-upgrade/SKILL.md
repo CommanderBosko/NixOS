@@ -94,3 +94,12 @@ per-invocation.
   at all — and got `File does not exist`. Same failure class as the `nixos-dry-run` gotcha above,
   just recurring against a different skill. Step 2's instructions above now say to check
   project-local first for this reason.
+- **Step 2's own "find its source `SKILL.md`" hit the compound-predicate `find` failure.** Ran
+  `find /home/bosko/NixOS -path "*dotfiles/.../skill-upgrade*" -o -path "*dotfiles/.../new-skill*"`
+  to locate two skills' repo copies at once; `rtk find` rejected it outright (`does not support
+  compound predicates or actions`) — the exact failure class the user's global CLAUDE.md flags as
+  "the single most common tool-call failure across this user's projects." Recovered by switching
+  to `grep -n <pattern> <file1> <file2>` against the already-known repo-managed paths, but wasted
+  a turn first. When locating one or more flagged skills' source files in Step 2, go straight to
+  `grep`/one `find` call per skill (never `-o`/`-not`/`-exec`) instead of trying to combine paths
+  in a single `find`.
