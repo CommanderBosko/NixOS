@@ -137,6 +137,10 @@
       source = "${self}/dotfiles/bosko/claude/agents/skill-reviewer.md";
       force = true;
     };
+    ".claude/agents/transcript-scanner.md" = {
+      source = "${self}/dotfiles/bosko/claude/agents/transcript-scanner.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
