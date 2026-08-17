@@ -78,8 +78,9 @@ current host passes its health sweep.**
 
 2. **Pre-flight: working tree is committed** — the rollout deploys the committed flake.
    Run `git -C /home/bosko/NixOS status --porcelain`.
-   - Done-rule: output is empty (clean tree). If dirty, stop and ask me to commit or
-     confirm deploying uncommitted state before continuing.
+   - Done-rule: output is empty (clean tree). If dirty, stop and use the **AskUserQuestion**
+     tool with options **Commit first** (hand off to `/git-commit`, then resume) and
+     **Deploy uncommitted state anyway** — don't ask in free prose.
 
 3. **Pre-flight: flake evaluates** — invoke the `flake-check` skill (or
    `nh os boot /home/bosko/NixOS --dry` via the `nixos-dry-run` skill) once against the

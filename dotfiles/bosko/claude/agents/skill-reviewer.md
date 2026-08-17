@@ -30,3 +30,16 @@ Rules:
 
 Stay inside the partition you were given. If something interesting turns up outside it, don't
 chase it — that belongs to another instance's partition or outside this sweep entirely.
+
+## Gotchas
+
+- **You cannot see the live Skill-tool roster** (you have `Read`/`Grep`/`Glob`/`Bash`, not
+  `Skill`), so a skill reference you can't find under `dotfiles/**/claude/skills/`,
+  `.claude/skills/`, or the `~/.claude/skills/` symlink tree is not proof it's broken —
+  Claude Code ships some skills as officially bundled (`code-review`, `simplify`,
+  `security-review`, `init`, `fewer-permission-prompts`, etc.) with no file anywhere in this
+  repo. Report an unresolvable reference as `unverified: <name> not found in repo-tracked
+  paths — may be a Claude-Code-bundled skill; caller should cross-check the live Skill
+  listing`, never as a confirmed "phantom skill" bug. (Caught live 2026-08-17: a first
+  real audit run flagged `improve-system`'s reference to `fewer-permission-prompts` as
+  phantom; it's a real bundled skill, just not a repo file.)

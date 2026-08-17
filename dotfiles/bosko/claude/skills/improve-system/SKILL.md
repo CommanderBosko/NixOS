@@ -57,7 +57,7 @@ Several of these skills edit **repo-managed global skills** under `dotfiles/bosk
 
 ## Arguments
 
-Optional focus argument in the user's phrasing — e.g. "improve-system, skills only" or "improve-system, just permissions". If given, run only the matching sub-skills (skills-only = steps 1, 2, 4; permissions = step 5; rules = step 3·claude-rules). With no argument, run all five.
+Optional focus argument in the user's phrasing — e.g. "improve-system, skills only" or "improve-system, just permissions". If given, run only the matching sub-skills — **skills-only** = `skill-upgrade` + `skill-suggestion` + `skill-audit` (plus Step 4's certify/remind); **permissions** = `fewer-permission-prompts`; **rules** = `claude-rules`. With no argument, run all five.
 
 ## Gotchas
 

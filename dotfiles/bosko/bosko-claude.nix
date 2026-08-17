@@ -120,8 +120,10 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/resume-session/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/resume-session/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + scripts/ (find-status-docs.sh).
+    ".claude/skills/resume-session" = {
+      source = "${self}/dotfiles/bosko/claude/skills/resume-session";
+      recursive = true;
       force = true;
     };
     # Custom subagents (.claude/agents/*.md) — auto-discovered by the Agent tool,

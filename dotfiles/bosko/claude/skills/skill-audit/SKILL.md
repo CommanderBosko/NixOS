@@ -51,7 +51,7 @@ Note which skills already have `scripts/`, `assets/`, or a `config.json` — tho
 The skills don't depend on each other, so audit them in parallel. Partition all skills into 3–5 groups and spawn one sub-agent per group **in a single message**, each with `subagent_type: "skill-reviewer"` (see `dotfiles/bosko/claude/agents/skill-reviewer.md` — it already knows to stay read-only, verify facts empirically, and report in the tight per-item format below; you only need to hand it the rubric and its group's file list). Critical rules:
 
 - **Disjoint partitions** — no two agents own the same skill file. This keeps a later "fix it" pass conflict-free if each agent also owns the edits for its group.
-- Give every agent the **identical rubric** (below) and confirm the output format: per skill, only the lenses that genuinely apply, each as `Lens N: <finding> → <concrete change>`; one line for clean skills; end with "biggest wins".
+- Give every agent the **identical rubric** (below) and confirm the output format: per skill, only the lenses that genuinely apply, each as `Lens N: <finding> → <concrete change>`; one line for clean skills; `skill-reviewer` ends its own report with a one-line tally (reviewed/clean/with-findings) — no need to ask for anything further.
 
 ### The rubric (apply all to each skill)
 

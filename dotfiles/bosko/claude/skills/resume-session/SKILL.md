@@ -15,18 +15,13 @@ Before guessing filenames, check whether the project already names its own conve
 
 ### 2. Locate the docs
 
-Search the project root and one level down for common status-doc filenames. **Issue one `-iname` pattern per `find` call — never combine patterns with `-o`, and never use `-not`/`-exec`.** Some environments' `find` (e.g. an `rtk find` shim) reject compound predicates outright and fail the whole lookup rather than just matching less; running separate calls also parallelizes cleanly since they're independent:
+Search the project root and one level down for common status-doc filenames. The lookup itself is mechanical (one `-iname` pattern per `find` call — never combine patterns with `-o`, and never use `-not`/`-exec`, since some environments' `find` reject compound predicates outright and fail the whole lookup rather than just matching less), so it's handled by a script:
 
 ```bash
-find . -maxdepth 2 -iname "project-state.md"
-find . -maxdepth 2 -iname "session-summary.md"
-find . -maxdepth 2 -iname "STATUS.md"
-find . -maxdepth 2 -iname "PROGRESS.md"
-find . -maxdepth 2 -iname "NOTES.md"
-find . -maxdepth 2 -iname "CHANGELOG.md"
+bash <skill-base-dir>/scripts/find-status-docs.sh . project-state.md session-summary.md STATUS.md PROGRESS.md NOTES.md CHANGELOG.md
 ```
 
-Adapt the pattern list to what step 1 turned up, or to filenames the user names directly. Skip patterns that clearly don't fit the project's conventions rather than firing all of them blindly every time.
+Adapt the pattern list to what step 1 turned up, or to filenames the user names directly — pass only the patterns worth trying instead of firing the full default list blindly every time. The judgment is in choosing patterns; the lookup itself is not.
 
 ### 3. Read what's found
 
@@ -44,4 +39,4 @@ Cite which file(s) each fact came from, so the user can go straight to the sourc
 
 ## Gotchas
 
-- Don't combine multiple filename patterns into one `find -o` command, and don't use `-not`/`-exec` — some `find` shims reject compound predicates outright and fail the whole lookup instead of just matching less. Always issue one `-iname`/`-name` pattern per `find` call.
+- Don't combine multiple filename patterns into one `find -o` command, and don't use `-not`/`-exec` — some `find` shims reject compound predicates outright and fail the whole lookup instead of just matching less. `scripts/find-status-docs.sh` already issues one `-iname`/`-name` pattern per `find` call for this reason — don't reintroduce a compound call by hand.
