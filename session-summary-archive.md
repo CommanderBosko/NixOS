@@ -1,3 +1,27 @@
+## Session: 2026-08-14 — Routine flake-update-verify run (4 inputs bumped, verified, committed+pushed)
+
+**Focus**: Run `/flake-update-verify` end-to-end — bump all flake inputs, prove the result evaluates cleanly, commit and push the lock bump without applying it anywhere.
+
+### What changed (and why)
+- Ran the loop's default OFF-mode flow: steps 1-5 straight through, mandatory step-6 gate still enforced before touching git. Step 1 confirmed via the 2026-08-09 memory file (and a live `grep` of `flake.nix`) that no input pin is currently active.
+- `nix flake update` moved 4 inputs: `nixpkgs` `f13ff45a`→`0e251e24`, `home-manager` `367f7ef8`→`83b7606d`, `dms` `80bad610`→`fb9f00a6` (+ its `dank-qml-common` sub-input), `sops-nix` `f1406619`→`a8627b21`. `financeguru`/`disko`/`nix-colors`/`nix-flatpak`/`nixpkgs-stable` held steady.
+- Verified with both `flake-check` (shallow, all 4 hosts) and the loop's mandatory deep-eval (`toplevel.drvPath` per host) — all 4 hosts resolved real `.drv` paths clean. One non-blocking eval warning (`gemini-cli-0.47.0` nixpkgs removal notice) surfaced but didn't fail anything.
+
+### Decisions
+- User approved the step-6 AskUserQuestion gate ("Commit and push"), so `flake.lock` was committed alone (`4ea763c`) and pushed immediately — no separate confirmation needed for the push itself, per the skill's "unambiguous prior approval" carve-out.
+- No activation performed anywhere — explicitly out of scope for this loop; `/fleet-rollout` is the documented next step.
+
+### Issues / surprises
+- None. Single attempt, no retries, no revert path needed.
+
+### Next session
+- `/fleet-rollout` (or a per-host `nh os boot`/`switch`) to actually apply the 2026-08-14 flake bump — currently just committed+pushed, not live anywhere.
+- Same for the still-pending 2026-08-10 idle-lock bump and catch-up skill commits (see Known Issues in `project-state.md`) — can ride the same reboot.
+
+**Commits**: `4ea763c` (1 commit)
+
+---
+
 ## Session: 2026-08-10 — Niri idle-lock timeout bump + catch-up close on 3 unclosed sessions
 
 **Focus**: Small config change (swaylock idle timeout 5→10 min), plus a catch-up close covering 3 other sessions that ran earlier the same day without being closed out.
