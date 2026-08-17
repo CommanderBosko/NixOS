@@ -26,5 +26,19 @@
       "Bash(flatpak remote-info*)",
       "mcp__nixos__nix"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /home/bosko/NixOS/.claude/hooks/check-session-debt.sh",
+            "timeout": 10,
+            "statusMessage": "Checking for unclosed sessions"
+          }
+        ]
+      }
+    ]
   }
 }
