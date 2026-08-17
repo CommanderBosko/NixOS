@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-17 — SessionStart nudge hook confirmed live (session close only)
+
+**Focus**: Confirm the previous session's `SessionStart` catch-up-nudge hook actually fires, then close.
+
+### What changed (and why)
+- No code changes. Opened with the user confirming "It looks like the hook worked" — `.claude/hooks/check-session-debt.sh` (added last session, commit `11b18eb`) correctly greeted this new session since `11b18eb` had landed after the prior session's own close, the exact near-immediate test case that close was designed to set up.
+- Ran `/session-closer` to close this out.
+
+### Decisions
+- None new — this session only verified prior work and closed the session.
+
+### Issues / surprises
+- None. First real (non-simulated) fire of the hook worked as designed on the first opportunity.
+
+### Next session
+- The recurring session-closer catch-up gap (memory `project_session_closer_gap_202607`) is now resolved with its live-fire confirmed — don't re-flag as pending or unconfirmed.
+
+**Commits**: `11b18eb` (1 commit, landed in the prior session — closed here)
+
+---
+
 ## Session: 2026-08-17 — Custom agents (source-reviewer, skill-reviewer) built, tested, hardened
 
 **Focus**: Answer "would a specialized agent help, and when?" from real usage data, then build, live-test, and fix what the test surfaced.
@@ -91,29 +112,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Nothing pending from this session. If the "printer off at boot, powered on later" symptom recurs often, revisit the declined periodic-timer option.
 
 **Commits**: none (runtime-only session)
-
----
-
-## Session: 2026-08-14 — Claude Code Auto Mode enabled globally; gemini-cli warning triaged
-
-**Focus**: Explain a nixpkgs eval warning and a just-run `/auto-mode-setup` CLI command, then act on the follow-on decisions — no NixOS repo changes this session.
-
-### What changed (and why)
-- Triaged the `gemini-cli-0.47.0` "removal" eval warning from session 73's flake bump: it's nixpkgs' new `meta.problems.removal` mechanism (warn-level by nixpkgs default), surfacing Google's own deprecation of Gemini CLI for Antigravity CLI — confirmed non-blocking and that no `antigravity-cli` package exists in nixpkgs yet.
-- Walked through what the user's just-run `/auto-mode-setup` (a built-in Claude Code CLI command, not a project skill — searched both skill directories and found nothing, which caused some back-and-forth before finding it in `~/.claude/settings.json`) had actually configured: `autoMode.soft_deny`/`environment` rules scoped to this repo's risk profile.
-- Set `permissions.defaultMode: "auto"` in the global `~/.claude/settings.json` so Auto Mode is now the startup default for every project, not just this repo — done via the `update-config` skill, editing directly rather than through `/config` since the request was unambiguous.
-
-### Decisions
-- gemini-cli: offered do-nothing / suppress-the-warning / remove-the-package; user chose do-nothing — it stays installed in `modules/users.nix` for both `bosko` and `natty`.
-- Auto Mode rules: offered to scope the NixOS-specific `autoMode` rules into this project's own `.claude/settings.json` so they wouldn't leak into unrelated projects; user chose to keep one global ruleset instead. Recorded in memory `project_auto_mode_global` so this isn't re-proposed.
-
-### Issues / surprises
-- Initially told the user `/auto-mode-setup` didn't exist anywhere, since it's not a skill file in either skill directory — it's a native CLI command that writes straight to `~/.claude/settings.json`, invisible to a skill-file search. Corrected once the user pushed back and a settings.json mtime check confirmed it had actually run ~2 minutes earlier.
-
-### Next session
-- None — this session's changes (global `~/.claude/settings.json`) are already live; nothing pending on any host.
-
-**Commits**: none (no repo changes this session — Claude Code global config only)
 
 ---
 

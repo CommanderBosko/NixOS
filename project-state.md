@@ -1,8 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-08-17 (session 78)_
+_Last updated: 2026-08-17 (session 79)_
 
 ## Current Project State
+
+**Session-closer catch-up gap: the `SessionStart` nudge hook (`11b18eb`) fired live and worked, first real confirmation (2026-08-17, session 79).**
+- Session 78 closed with the hook's live-fire explicitly unverified ("SessionStart fires outside this turn"). This session opened with the user confirming it: "It looks like the hook worked" — `.claude/hooks/check-session-debt.sh` correctly greeted the new session since `11b18eb` had landed after session 78's own close, i.e. exactly the near-immediate test case session 78 set up on purpose.
+- No code changes this session — pure verification + close. Memory `project_session_closer_gap_202607` updated to record the confirmed live-fire; the recurring gap itself isn't eliminated by design (a session can still end without `/session-closer`), but the visibility mechanism is now proven, not just built.
 
 **Custom Claude Code agents (`source-reviewer`, `skill-reviewer`) built from real usage-log analysis, live-tested, 4 real findings fixed (2026-08-17, session 78) — plus catch-up narration of one unclosed same-day session.**
 - Catch-up: an unclosed same-day session (`da78102`) added a `find` compound-predicate gotcha to `skill-upgrade`'s SKILL.md — self-contained, already committed+pushed before this session started, narrated here only because it fell in the since-last-close window. This is the **3rd occurrence** of the recurring session-closer catch-up gap (see memory `project_session_closer_gap_202607`) — worth noting as a pattern, not re-diagnosing.
