@@ -48,11 +48,10 @@ Note which skills already have `scripts/`, `assets/`, or a `config.json` — tho
 
 ## Step 2 — Fan out the audit over DISJOINT skill sets
 
-The skills don't depend on each other, so audit them in parallel. Partition all skills into 3–5 groups and spawn one sub-agent per group **in a single message**. Critical rules:
+The skills don't depend on each other, so audit them in parallel. Partition all skills into 3–5 groups and spawn one sub-agent per group **in a single message**, each with `subagent_type: "skill-reviewer"` (see `dotfiles/bosko/claude/agents/skill-reviewer.md` — it already knows to stay read-only, verify facts empirically, and report in the tight per-item format below; you only need to hand it the rubric and its group's file list). Critical rules:
 
 - **Disjoint partitions** — no two agents own the same skill file. This keeps a later "fix it" pass conflict-free if each agent also owns the edits for its group.
-- Give every agent the **identical rubric** (below) and a tight output format: per skill, only the lenses that genuinely apply, each as `Lens N: <finding> → <concrete change>`; one line for clean skills; end with "biggest wins".
-- Tell agents this pass is **read-only** — report, don't edit.
+- Give every agent the **identical rubric** (below) and confirm the output format: per skill, only the lenses that genuinely apply, each as `Lens N: <finding> → <concrete change>`; one line for clean skills; end with "biggest wins".
 
 ### The rubric (apply all to each skill)
 

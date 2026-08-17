@@ -124,6 +124,17 @@
       source = "${self}/dotfiles/bosko/claude/skills/resume-session/SKILL.md";
       force = true;
     };
+    # Custom subagents (.claude/agents/*.md) — auto-discovered by the Agent tool,
+    # no further registration needed beyond the symlink. Both are fan-out units
+    # for existing skills' parallel sub-agent spawns (research, skill-audit).
+    ".claude/agents/source-reviewer.md" = {
+      source = "${self}/dotfiles/bosko/claude/agents/source-reviewer.md";
+      force = true;
+    };
+    ".claude/agents/skill-reviewer.md" = {
+      source = "${self}/dotfiles/bosko/claude/agents/skill-reviewer.md";
+      force = true;
+    };
   };
 
   # Once the NixOS-managed Claude Code policy is active
