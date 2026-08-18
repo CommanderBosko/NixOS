@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-18 — Third custom agent + agent-suggestion skill, run for real; weekly PR merged; Tailscale drafted
+
+**Focus**: Extend the custom-agent ecosystem (a `skill-suggestion` analog for agents), run it for real, and clear the weekly `improve-system` PR — plus a side evaluation of Tailscale.
+
+### What changed (and why)
+- Reviewed and merged weekly `improve-system` PR #10 (`b11c809`) — 4 small skill-audit fixes: an `AskUserQuestion` gate before `remote-rebuild`'s vpn-server deploy+reboot, a missing `force = true;` in `new-skill`'s scaffold snippet, and `create-loop`/`create-secret-scan` routing their commit-offer prompts through `AskUserQuestion`.
+- Built and shipped `agent-suggestion` (`d0b7ead`) — mines `Agent`-tool spawns for patterns worth turning into a custom sub-agent, the direct analog of `skill-suggestion`. Wired into `improve-system`'s Step 1 as a new item 3.
+- Ran it for real: fanned out 4 `transcript-scanner` sub-agents over all 84 project transcripts (87 spawns found, 4 task shapes), and every shape that recurs is already covered by `source-reviewer`/`skill-reviewer`/`transcript-scanner` — a clean, earned "nothing to build" verdict, not a shortcut.
+- Found and fixed a real bug along the way (`4feaa11`): an errored pre-rebuild smoke-test attempt was silently counting as a legitimate "last invocation" for cutoff purposes, which would have wrongly narrowed the scan window.
+- Ran `/research` + `/interview` on Tailscale (no repo changes) — drafted a recommendation (pilot Tailscale SaaS alongside the existing WireGuard hub, laptop first) and saved it to memory for whenever the user wants to pick it up.
+
+### Decisions
+- Recommended Tailscale SaaS over self-hosted Headscale for a future pilot, given no active pain point exists yet — Headscale's ongoing maintenance (TLS/DNS/reverse-proxy, Android client friction) isn't worth taking on to solve a hypothetical metadata-privacy concern. Purely a draft; nothing implemented.
+
+### Issues / surprises
+- The errored-invocation-cutoff bug above — a real gap in how `find-last-skill-invocation.sh`-style detection treats a failed prior attempt as if it were a genuine run.
+- `transcript-scanner`'s own build session's transcript fell outside this close's scan window despite its commit landing inside it — narrated from the commit message alone, which was self-sufficient; not chased further.
+
+### Next session
+- Rebuild + reboot to bring `4feaa11` live — the one commit from today that landed after this session's own mid-session rebuild.
+- Resume the Tailscale pilot only if the user wants to move on it — see memory `project_tailscale_evaluation`.
+
+**Commits**: `24cfc27..4feaa11` (4 commits: `24cfc27`, `b11c809`, `d0b7ead`, `4feaa11`)
+
+---
+
 ## Session: 2026-08-17 — SessionStart nudge hook confirmed live (session close only)
 
 **Focus**: Confirm the previous session's `SessionStart` catch-up-nudge hook actually fires, then close.
@@ -89,29 +115,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Not yet applied to any host — `nh os switch`/`boot` whenever convenient (can ride along with the upower fix above).
 
 **Commits**: `f17aeab` (1 commit)
-
----
-
-## Session: 2026-08-15 — Printer diagnosed and fixed live on gaming; new cups-browsed gap found
-
-**Focus**: Diagnose why Zen Browser couldn't see the network printer on gaming, fix it live, and set a default printer — no repo changes.
-
-### What changed (and why)
-- Ran the `printer-diagnose` skill against gaming: avahi discovery and `cups-browsed.conf` config both checked out fine, but `lpstat -p -d` showed no permanent CUPS queue — the print dialog was empty because CUPS itself had no destination, not because of anything Zen-specific.
-- User ran `sudo systemctl restart cups-browsed` themselves (gaming has no NOPASSWD sudo); confirmed live via `lpstat -p -d` that `Canon_TS9500_series` materialized as a real queue.
-- Set `Canon_TS9500_series` as the default printer via `lpoptions -d` (user-level, no sudo needed — libcups checks this before the system-wide default, and it's what GTK/Zen print dialogs read).
-
-### Decisions
-- Root-caused a trigger for this symptom distinct from the `841eb05` boot-race fix already in `modules/printing.nix`: the printer was powered on *after* boot, i.e. after the `cups-browsed-fixup` oneshot unit had already fired once at boot — so it never picked up the printer's later mDNS announcement. Confirmed via journal (zero `cups-browsed` activity between its boot-time restart and the manual fix).
-- Considered three mitigations (manual restart / periodic timer / udev-triggered restart) for this new trigger; user asked for the periodic-timer tradeoffs, then chose to keep doing a manual restart when it recurs rather than add standing infrastructure for an infrequent, self-inflicted scenario. See `project-state.md` Recent Decisions.
-
-### Issues / surprises
-- None — straightforward live diagnosis and fix, no repo files touched today.
-
-### Next session
-- Nothing pending from this session. If the "printer off at boot, powered on later" symptom recurs often, revisit the declined periodic-timer option.
-
-**Commits**: none (runtime-only session)
 
 ---
 

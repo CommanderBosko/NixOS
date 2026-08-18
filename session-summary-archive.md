@@ -1,3 +1,26 @@
+## Session: 2026-08-15 — Printer diagnosed and fixed live on gaming; new cups-browsed gap found
+
+**Focus**: Diagnose why Zen Browser couldn't see the network printer on gaming, fix it live, and set a default printer — no repo changes.
+
+### What changed (and why)
+- Ran the `printer-diagnose` skill against gaming: avahi discovery and `cups-browsed.conf` config both checked out fine, but `lpstat -p -d` showed no permanent CUPS queue — the print dialog was empty because CUPS itself had no destination, not because of anything Zen-specific.
+- User ran `sudo systemctl restart cups-browsed` themselves (gaming has no NOPASSWD sudo); confirmed live via `lpstat -p -d` that `Canon_TS9500_series` materialized as a real queue.
+- Set `Canon_TS9500_series` as the default printer via `lpoptions -d` (user-level, no sudo needed — libcups checks this before the system-wide default, and it's what GTK/Zen print dialogs read).
+
+### Decisions
+- Root-caused a trigger for this symptom distinct from the `841eb05` boot-race fix already in `modules/printing.nix`: the printer was powered on *after* boot, i.e. after the `cups-browsed-fixup` oneshot unit had already fired once at boot — so it never picked up the printer's later mDNS announcement. Confirmed via journal (zero `cups-browsed` activity between its boot-time restart and the manual fix).
+- Considered three mitigations (manual restart / periodic timer / udev-triggered restart) for this new trigger; user asked for the periodic-timer tradeoffs, then chose to keep doing a manual restart when it recurs rather than add standing infrastructure for an infrequent, self-inflicted scenario. See `project-state.md` Recent Decisions.
+
+### Issues / surprises
+- None — straightforward live diagnosis and fix, no repo files touched today.
+
+### Next session
+- Nothing pending from this session. If the "printer off at boot, powered on later" symptom recurs often, revisit the declined periodic-timer option.
+
+**Commits**: none (runtime-only session)
+
+---
+
 ## Session: 2026-08-14 — Claude Code Auto Mode enabled globally; gemini-cli warning triaged
 
 **Focus**: Explain a nixpkgs eval warning and a just-run `/auto-mode-setup` CLI command, then act on the follow-on decisions — no NixOS repo changes this session.
