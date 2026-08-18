@@ -137,9 +137,10 @@ filled script to `<repo-root>/.claude/skills/secret-scan/scripts/secret-scan.sh`
 
 ### 4. Offer to commit
 
-After verification passes, offer to commit the new skill (`.claude/skills/secret-scan/`).
-Draft a conventional commit message and commit immediately on yes — don't ask for
-line-by-line approval.
+After verification passes, use the **AskUserQuestion** tool to offer committing the new
+skill (`.claude/skills/secret-scan/`), with options **Commit now** (draft a conventional
+commit message and commit immediately, no line-by-line approval) and **Skip for now**
+(leave it uncommitted).
 
 ### 5. Confirm and hand off
 

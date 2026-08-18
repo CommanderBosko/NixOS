@@ -49,6 +49,8 @@ nixos-rebuild boot \
   --flake /home/bosko/NixOS#vpn-server
 ```
 
+This deploys and then reboots the sole public-facing remote host — the reboot drops every currently-connected client's WireGuard handshake (see Gotchas). Confirm before proceeding via the **AskUserQuestion** tool, options **Deploy and reboot** / **Cancel** — don't infer a "yes" from context, mirroring the confirm gate `nixos-gc`/`rollback`/`pin-input` use before their own state-changing steps.
+
 Run it (long — 5–15 min; stream output so the user sees progress):
 
 ```bash

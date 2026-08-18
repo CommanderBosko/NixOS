@@ -81,7 +81,7 @@ Before handing off, prove the loop file is well-formed:
 
 ### 5. Offer to commit
 
-After verification passes, offer to commit the new loop (the generated SKILL.md plus the `.claude/loops/<loop-name>/` dir). Draft a conventional commit message and commit immediately on yes — don't ask for line-by-line approval.
+After verification passes, use the **AskUserQuestion** tool to offer committing the new loop (the generated SKILL.md plus the `.claude/loops/<loop-name>/` dir), with options **Commit now** (draft a conventional commit message and commit immediately, no line-by-line approval) and **Skip for now** (leave it uncommitted).
 
 ### 6. Confirm and hand off
 
