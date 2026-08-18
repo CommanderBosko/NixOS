@@ -129,6 +129,7 @@
           "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/gaming.nix"
           "${self}/modules/nvidia.nix"
+          "${self}/modules/tailscale.nix"
           "${self}/hosts/gaming/virtualisation.nix"
           "${self}/hosts/gaming/jellyfin-server.nix"
           "${self}/hosts/gaming/pinchflat.nix"
