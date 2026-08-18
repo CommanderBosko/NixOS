@@ -72,6 +72,10 @@
       source = "${self}/dotfiles/bosko/claude/skills/skill-suggestion/SKILL.md";
       force = true;
     };
+    ".claude/skills/agent-suggestion/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/agent-suggestion/SKILL.md";
+      force = true;
+    };
     # Recursive dir symlink: covers SKILL.md + scripts/ (enumerate-skills.sh).
     ".claude/skills/skill-audit" = {
       source = "${self}/dotfiles/bosko/claude/skills/skill-audit";
