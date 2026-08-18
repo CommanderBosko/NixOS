@@ -69,13 +69,13 @@ If the user is generating a **password hash**, the canonical way is
 ## Step 3 — Write the secret
 
 All three modes below share the same `SOPS_AGE_KEY_FILE` export and `nix shell` wrapping —
-run via `scripts/sops-secret.sh` (relative to this skill's directory) rather than typing
-sops/nix-shell invocations by hand:
+run via `sops-secret.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual
+Bash-tool cwd) rather than typing sops/nix-shell invocations by hand:
 
 **Add or update a single key in an existing file** (no plaintext touches disk):
 
 ```bash
-scripts/sops-secret.sh set /home/bosko/NixOS/secrets/common.yaml new-key-name "the-secret-value"
+.claude/skills/add-secret/scripts/sops-secret.sh set /home/bosko/NixOS/secrets/common.yaml new-key-name "the-secret-value"
 ```
 
 sops decrypts in memory, sets the key, re-encrypts in place.
@@ -83,14 +83,14 @@ sops decrypts in memory, sets the key, re-encrypts in place.
 **Interactive edit / rotate** (let the user change it in `$EDITOR`):
 
 ```bash
-scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
+.claude/skills/add-secret/scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
 ```
 
 **Create a brand-new file** — writes the plaintext YAML under `umask 077`, then encrypts in
 place:
 
 ```bash
-scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key "the-value"
+.claude/skills/add-secret/scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key "the-value"
 ```
 
 When a secret value is sensitive and must not appear in the transcript (e.g. a key read

@@ -37,15 +37,15 @@ Ask the user the following questions (you may batch them into a single message).
 
 **Optional (ask only if relevant):**
 
-5. **Options to expose** — Should this module expose any `options` (e.g. an `enable` toggle, configurable values)? Most simple modules in this repo do NOT expose options — they are always-on when imported. Say yes only if the module needs to be conditionally enabled or configurable per-host. If unsure, default to no.
+5. **Options to expose** — Should this module expose any `options` (e.g. an `enable` toggle, configurable values)? Most simple modules in this repo do NOT expose options — they are always-on when imported. Present this as a pick-one via the **AskUserQuestion tool** (`Yes, expose options` / `No, always-on`) rather than free-form prose, defaulting the recommended option to "No, always-on" since that's this repo's dominant pattern. Skip the question if the user already said.
 
 6. **Packages needed** — Any `pkgs.*` packages to add to `environment.systemPackages`? List them.
 
 7. **Services needed** — Any `services.*` or `programs.*` to enable? List them.
 
-8. **Home Manager config** — Does this module need to configure anything via `home-manager.users.<name>`? If yes, for which user(s)?
+8. **Home Manager config** — Does this module need to configure anything via `home-manager.users.<name>`? Present this as a pick-one via the **AskUserQuestion tool** (`Yes` / `No`) rather than free-form prose; if yes, ask which user(s) in the same follow-up. Skip the question if the user already said.
 
-9. **Flake inputs needed** — Does this module need access to a flake input (e.g. `inputs.dms`, `inputs.nix-flatpak`)? If yes, which one?
+9. **Flake inputs needed** — Does this module need access to a flake input (e.g. `inputs.dms`, `inputs.nix-flatpak`)? Present this as a pick-one via the **AskUserQuestion tool** (`Yes` / `No`) rather than free-form prose; if yes, ask which input in the same follow-up. Skip the question if the user already said.
 
 ## Step 2 — Determine the correct file path
 

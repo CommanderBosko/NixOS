@@ -1,0 +1,8 @@
+Initial commit: <one-line project summary>
+
+- <primary purpose or feature>
+- <major components / structure>
+- <tech stack / key dependencies>
+- <configuration or setup included>
+- Add README.md with setup and usage documentation
+- Add .gitignore for <tech stack>

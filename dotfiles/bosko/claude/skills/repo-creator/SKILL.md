@@ -74,17 +74,12 @@ Review what `git status` would stage. If anything sensitive or unnecessary would
 staged, update `.gitignore` first — staging itself happens as part of step 9's script call.
 
 ### 8. Craft the initial commit message
-Intelligent and specific — never a bare "Initial commit". Structure:
-```
-Initial commit: <one-line project summary>
+Intelligent and specific — never a bare "Initial commit". Read `assets/commit-template.txt`
+and fill in its placeholders (repo-root-relative path is
+`dotfiles/bosko/claude/skills/repo-creator/assets/commit-template.txt` — this is a repo-managed
+global skill; resolve it from the "Base directory for this skill" path shown at launch if
+invoked from `~/.claude`).
 
-- <primary purpose or feature>
-- <major components / structure>
-- <tech stack / key dependencies>
-- <configuration or setup included>
-- Add README.md with setup and usage documentation
-- Add .gitignore for <tech stack>
-```
 End the message body with a `Co-Authored-By:` trailer using whatever model name the harness's own
 Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't hardcode a specific
 model name here, it will drift the next time the underlying model changes.
@@ -127,6 +122,11 @@ existing), `.gitignore` status, and the commit message used.
 - Never commit `.env`, private keys, or credential files.
 - Always SSH, never HTTPS remotes.
 - The job ends after a successful push — do not make further commits.
+
+## Assets
+
+- `assets/commit-template.txt` — the initial-commit-message skeleton with its placeholder
+  bullets. Read and fill it in Step 8.
 
 ## Memory
 

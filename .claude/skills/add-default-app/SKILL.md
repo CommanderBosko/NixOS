@@ -47,9 +47,9 @@ Run, in order:
 
 1. `nix flake check /home/bosko/NixOS` (or the `flake-check` skill) — shallow eval gate.
 2. The `deep-eval-check` skill — forces full evaluation across all 4 hosts.
-3. Build and inspect the **actual generated file**, not just eval success (relative to this skill's directory):
+3. Build and inspect the **actual generated file**, not just eval success (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd):
    ```bash
-   scripts/verify-mimeapps.sh <mimetype>
+   .claude/skills/add-default-app/scripts/verify-mimeapps.sh <mimetype>
    ```
    It builds gaming's generated `mimeapps.list` and prints the matching line, or "not found" with a non-zero exit if the mapping isn't there. Confirm the printed line reads exactly what was intended.
 4. The `nixos-dry-run` skill for a final gaming-host change-set preview.
@@ -60,7 +60,7 @@ Report the verified result to the user. Remind them a rebuild (`rebuild` + reboo
 
 ## Scripts
 
-- `scripts/verify-mimeapps.sh <mimetype>` — builds gaming's generated `mimeapps.list` and greps it for `<mimetype>`, printing the matching line (exit 0) or "not found" (exit 1). Used in Step 4.3.
+- `.claude/skills/add-default-app/scripts/verify-mimeapps.sh <mimetype>` — builds gaming's generated `mimeapps.list` and greps it for `<mimetype>`, printing the matching line (exit 0) or "not found" (exit 1). Used in Step 4.3.
 
 ## Gotchas
 

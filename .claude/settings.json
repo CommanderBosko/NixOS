@@ -24,6 +24,8 @@
       "Bash(/home/bosko/.claude/skills/git-commit/scripts/git-commit.sh status)",
       "Bash(/home/bosko/.claude/skills/git-push/scripts/push.sh status)",
       "Bash(flatpak remote-info*)",
+      "Bash(~/.claude/skills/lib/find-last-skill-invocation.sh*)",
+      "Bash(~/.claude/skills/lib/list-transcripts-since.sh*)",
       "mcp__nixos__nix"
     ]
   },

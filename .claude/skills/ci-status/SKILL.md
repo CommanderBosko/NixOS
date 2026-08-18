@@ -10,10 +10,10 @@ Report the verdict of the most recent GitHub Actions `flake check` run for `Comm
 
 ## Steps
 
-1. **Resolve, watch, and report** by running the script (relative to this skill's directory), passing the user's filter if they gave one:
+1. **Resolve, watch, and report** by running the script (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd), passing the user's filter if they gave one:
 
    ```bash
-   scripts/ci-status.sh [branch|commit-sha|run-id|title-substring]
+   .claude/skills/ci-status/scripts/ci-status.sh [branch|commit-sha|run-id|title-substring]
    ```
 
    It finds the matching run (newest `flake check` run if no filter), watches it to completion if `in_progress`/`queued` (allow up to 10 minutes — timeout 600000ms; the deep-eval job normally finishes in ~2–3 minutes), prints the run id/branch/title/status, and on failure prints the last 40 lines of the failing step's log. Exit code mirrors the run's own success/failure. If no run matches the filter, it prints the 10 most recent runs instead so you can pick by eye.
@@ -28,7 +28,7 @@ Report the verdict of the most recent GitHub Actions `flake check` run for `Comm
 
 ## Scripts
 
-- `scripts/ci-status.sh [filter]` — resolves the target run (branch, commit SHA, run ID, or title substring; newest run if omitted), watches it to completion if still running, and on failure prints the failed step's log tail. Read-only.
+- `.claude/skills/ci-status/scripts/ci-status.sh [filter]` — resolves the target run (branch, commit SHA, run ID, or title substring; newest run if omitted), watches it to completion if still running, and on failure prints the failed step's log tail. Read-only.
 
 ## Arguments
 

@@ -81,3 +81,12 @@ Tell the user the filename written, its `type`, and the one-line index hook adde
 ## Assets
 
 - `assets/memory-template.md` — the memory-file skeleton (frontmatter + body shape) and the `MEMORY.md` index-line format. Read and fill it in Steps 3 and 4.
+
+## Gotchas
+
+- **Step 3's `Read assets/memory-template.md` is a relative path — resolve it against this
+  skill's own base directory, not a guessed global one.** save-memory is project-local-only (it
+  lives at `/home/bosko/NixOS/.claude/skills/save-memory/`, no global copy exists), so reading
+  `~/.claude/skills/save-memory/assets/memory-template.md` fails with "No such file or directory."
+  Use the "Base directory for this skill" path shown when the skill launches, e.g.
+  `/home/bosko/NixOS/.claude/skills/save-memory/assets/memory-template.md`.

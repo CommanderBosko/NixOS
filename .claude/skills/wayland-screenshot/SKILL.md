@@ -58,3 +58,10 @@ Parse from the user's request:
 - **`/etc/set-environment` itself references unset variables** (e.g. `XDG_STATE_HOME`) — sourcing
   it under `set -u` errors out. `capture.sh` already disables `set -u` around the `source` call;
   keep that if editing the script.
+- **This skill only works on the machine Claude Code is running on.** `capture.sh` needs a live
+  local Wayland/niri session and a hardcoded local script path; running it via
+  `ssh <host> '.../capture.sh ...'` against a *different* host fails with `failed to create
+  display` even when that host's desktop session is genuinely up (observed against both `laptop`
+  and `natalie-laptop` during a cross-host theme check). For cross-host visual verification, run
+  this skill locally on the host in question (or ask the user to check that host's desktop
+  directly) — don't retry it over SSH.
