@@ -6,7 +6,11 @@
   # attribute name. Only host-specific networking belongs here.
 
   # WireGuard VPN client address for full-tunnel routing (DNS set in shared vpn.nix)
-  networking.wg-quick.interfaces.wg0.address = [ "10.10.0.4/24" ];
+  # Commented out along with modules/vpn.nix (flake.nix) while vpn-server is
+  # down (Oracle admin-disabled, 2026-08-18) — an address with no
+  # privateKeyFile/peers would just fail as a systemd unit at boot. Re-add
+  # alongside the flake.nix import once vpn-server is back.
+  # networking.wg-quick.interfaces.wg0.address = [ "10.10.0.4/24" ];
 
   # Do NOT auto-start the tunnel at boot on this host only. The full-tunnel
   # kill-switch route (table 51820, suppress_prefixlength 0) captures all
@@ -17,7 +21,8 @@
   # until the tunnel is torn down manually (`vpn-off`). gaming/laptop haven't
   # shown this failure, so their autostart is left at the default; here VPN
   # stays manual via the vpn-on/vpn-off aliases (modules/shell.nix).
-  networking.wg-quick.interfaces.wg0.autostart = false;
+  # (Also commented out with the rest of the wg0 config above, for now.)
+  # networking.wg-quick.interfaces.wg0.autostart = false;
 
   # natty also logs in over SSH on this host — list option, merges with the
   # shared "bosko" entry from desktop-networking.nix

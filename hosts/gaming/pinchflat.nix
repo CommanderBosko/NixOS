@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, ... }:
 
 # Pinchflat — self-hosted YouTube archiver (yt-dlp-backed), feeding the
 # existing Jellyfin library on this host.
@@ -41,17 +41,22 @@
   # yt-dlp downloads. Exempt only Pinchflat's UID from the tunnel via a
   # policy-routing rule so its traffic exits via the normal LAN gateway
   # instead, while the rest of the host stays fully tunneled.
-  networking.wg-quick.interfaces.wg0 = {
-    postUp = ''
-      PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
-      ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip rule add uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100
-    '';
-    postDown = ''
-      PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
-      ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
-    '';
-  };
+  #
+  # Commented out along with modules/vpn.nix (flake.nix) while vpn-server is
+  # down (Oracle admin-disabled, 2026-08-18) — there's no wg0 tunnel to
+  # split-exempt from right now. Re-add alongside the flake.nix import once
+  # vpn-server is back.
+  # networking.wg-quick.interfaces.wg0 = {
+  #   postUp = ''
+  #     PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
+  #     ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
+  #     ${pkgs.iproute2}/bin/ip rule add uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100
+  #   '';
+  #   postDown = ''
+  #     PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
+  #     ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
+  #   '';
+  # };
 
   # The UID exception above makes pinchflat's return traffic arrive on
   # enp4s0 while the global default route still points at wg0. NixOS's
@@ -59,6 +64,7 @@
   # rp_filter sysctl (already loose) and drops that as spoofed, hanging
   # every connection in SYN-SENT forever. Same asymmetric-routing fix
   # already applied on vpn-server (hosts/vpn-server/configuration.nix)
-  # for the same reason.
-  networking.firewall.checkReversePath = "loose";
+  # for the same reason. Commented out with the block above — nothing to
+  # route asymmetrically without the wg0 tunnel.
+  # networking.firewall.checkReversePath = "loose";
 }

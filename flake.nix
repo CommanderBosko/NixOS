@@ -75,7 +75,13 @@
       "${self}/modules/printing.nix"
       "${self}/modules/sddm.nix"
       "${self}/modules/shared-folder.nix"
-      "${self}/modules/vpn.nix"
+      # WireGuard client to vpn-server temporarily pulled from the fleet —
+      # Oracle admin-disabled that instance 2026-08-18 (see
+      # project_vpn_server_oracle_disabled memory), so the tunnel has no
+      # working endpoint. Tailscale (modules/tailscale.nix, per-host) is the
+      # mesh stopgap in the meantime. Re-add this line once vpn-server is
+      # back; modules/vpn.nix itself is untouched.
+      # "${self}/modules/vpn.nix"
     ];
 
     # Build a host. Sets networking.hostName from the attribute name and
