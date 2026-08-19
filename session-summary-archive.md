@@ -1,3 +1,24 @@
+## Session: 2026-08-16 — DMS battery display fixed via services.upower.enable
+
+**Focus**: Fix laptop/natalie-laptop showing no battery % in DMS's top-bar pill or Settings page.
+
+### What changed (and why)
+- Root-caused: `services.upower.enable` was never set on any DE module — Plasma auto-enables `upowerd` as a hidden dependency, but bare compositors like niri/Hyprland don't, the same class of gap the existing `accounts-daemon`/`power-profiles-daemon` workaround already covers. Confirmed live via `systemctl status upower` ("could not be found") before fixing.
+- Added `services.upower.enable = true;` to `modules/desktop-environments/niri.nix` (live on gaming/laptop/natalie-laptop) and mirrored it into `hyprland.nix` (same latent gap, unwired to any host yet).
+
+### Decisions
+- Fixed both the live DE module (niri) and the unwired one (hyprland) in the same commit rather than scoping to just niri, since the gap was structurally identical and hyprland was one line away.
+
+### Issues / surprises
+- None — root cause was found quickly by checking `systemctl status upower` directly rather than guessing at DMS config.
+
+### Next session
+- laptop and natalie-laptop still need their own `nh os switch`/`nh os boot` to bring this live (user applying manually); gaming already has it.
+
+**Commits**: `ae6e428` (1 commit)
+
+---
+
 ## Session: 2026-08-16 — financeguru flake input bumped
 
 **Focus**: Bump the `financeguru` flake input to latest and push.
