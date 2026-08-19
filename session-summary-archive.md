@@ -1,3 +1,23 @@
+## Session: 2026-08-16 — financeguru flake input bumped
+
+**Focus**: Bump the `financeguru` flake input to latest and push.
+
+### What changed (and why)
+- `/bump-input financeguru`: `6fa44d36` → `99490491` (2026-08-04 → 2026-08-16). Verified via `nixos-dry-run` on gaming — clean build, only `financeguru`/`source` derivations changed (+92.8 KiB), no kernel/bootloader/DE churn, recommendation `switch`.
+
+### Decisions
+- None beyond the routine bump — no config-level changes involved.
+
+### Issues / surprises
+- None.
+
+### Next session
+- Not yet applied to any host — `nh os switch`/`boot` whenever convenient (can ride along with the upower fix above).
+
+**Commits**: `f17aeab` (1 commit)
+
+---
+
 ## Session: 2026-08-15 — Printer diagnosed and fixed live on gaming; new cups-browsed gap found
 
 **Focus**: Diagnose why Zen Browser couldn't see the network printer on gaming, fix it live, and set a default printer — no repo changes.

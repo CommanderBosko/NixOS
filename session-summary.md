@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-18 — vpn-server outage root-caused (Oracle-side, no ETA); Tailscale stopgap expanded to all 3 hosts; wg0 pulled from the flake; improve-system swept 60 skills
+
+**Focus**: Diagnose why vpn-server was completely unreachable, ship a stopgap, then stabilize the fleet against the ongoing outage — plus the day's second `improve-system` pass. (4 back-to-back sessions closed together.)
+
+### What changed (and why)
+- Diagnosed vpn-server's total unreachability via `oci-cli`: Oracle administratively disabled the instance (`409 IncorrectState` on every action) and separately cut the tenancy's Always-Free A1 quota from 4/24 to 2/12 OCPU/GB. Not fixable via the API or from this repo — drafted Support-ticket text and handed it to the user; no automated "tell me when it's back" watcher built (declined — see Decisions).
+- Shipped Tailscale as an interim mesh stopgap: gaming first (`23e4fbd`, confirmed connected via `tailscale status`), then expanded to laptop + natalie-laptop (`34b9e72`, deep-eval verified, actual rebuild+auth left to the user — sudo-gated). Mesh-only, manual auth, doesn't reproduce wg0's egress-IP masking.
+- Pulled `modules/vpn.nix`/wg0 out of `desktopModules` entirely (`5b1ad16`, commented out not deleted) so no host files a failing `wg-quick-wg0` unit at boot while there's no working endpoint — also commented out the now-orphaned per-host `wg0.address` fragments and gaming's Pinchflat split-tunnel bypass that existed solely to support it.
+- Ran a second `improve-system` pass (`443fb9a`): `skill-upgrade` fixed 2 real misfires (`save-memory`'s bare template path, `wayland-screenshot`'s SSH-to-remote-host failure); `skill-audit` swept all 60 skills via 5 parallel agents, found and fixed 6 issues (3 verified bare-`scripts/...`-path bugs, an `AskUserQuestion` gap in `new-module`, an asset extraction in `repo-creator`, plus 2 new permission-allowlist entries); `skill-suggestion`/`agent-suggestion`/`claude-rules` all came back clean.
+
+### Decisions
+- Comment-out over delete for wg0/vpn.nix — it'll reconnect on its own once vpn-server is back, no re-wiring needed.
+- Tailscale expansion kept to the same manual-auth, mesh-only scope as gaming's stopgap — 3 ad-hoc hosts doesn't justify a sops `authKeyFile` yet, and exit-node/egress-masking stays explicitly deferred.
+- Declined building a vpn-server recovery watcher — the existing health-watchdog only fires on further outages, not recovery; user chose to self-watch for Oracle's reply instead.
+
+### Issues / surprises
+- Pinchflat's download bot-detection bypass depended on wg0's full-tunnel egress masking, which Tailscale mesh doesn't provide — flagged as a likely-broken-again gap, not verified either way this session.
+- A later `nh os switch` on gaming (inside the Tailscale-gaming session) very likely brought `443fb9a` and the prior session's `4feaa11` live in `~/.claude` too, inferred from the git-tree-builds-everything-committed reasoning rather than individually re-confirmed file-by-file.
+
+### Next session
+- laptop/natalie-laptop: `nh os boot`/`switch` + `sudo tailscale up` to complete the 3-host mesh.
+- Check whether Pinchflat downloads are still succeeding with wg0 down.
+- Once vpn-server is back: restore wg0 (grep `vpn.nix`/`wg0` across the 5 commented-out spots) and verify via `shared-module-check`.
+
+**Commits**: `443fb9a..5b1ad16` (4 commits: `443fb9a`, `23e4fbd`, `34b9e72`, `5b1ad16`)
+
+---
+
 ## Session: 2026-08-18 — Third custom agent + agent-suggestion skill, run for real; weekly PR merged; Tailscale drafted
 
 **Focus**: Extend the custom-agent ecosystem (a `skill-suggestion` analog for agents), run it for real, and clear the weekly `improve-system` PR — plus a side evaluation of Tailscale.
@@ -95,26 +123,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - laptop and natalie-laptop still need their own `nh os switch`/`nh os boot` to bring this live (user applying manually); gaming already has it.
 
 **Commits**: `ae6e428` (1 commit)
-
----
-
-## Session: 2026-08-16 — financeguru flake input bumped
-
-**Focus**: Bump the `financeguru` flake input to latest and push.
-
-### What changed (and why)
-- `/bump-input financeguru`: `6fa44d36` → `99490491` (2026-08-04 → 2026-08-16). Verified via `nixos-dry-run` on gaming — clean build, only `financeguru`/`source` derivations changed (+92.8 KiB), no kernel/bootloader/DE churn, recommendation `switch`.
-
-### Decisions
-- None beyond the routine bump — no config-level changes involved.
-
-### Issues / surprises
-- None.
-
-### Next session
-- Not yet applied to any host — `nh os switch`/`boot` whenever convenient (can ride along with the upower fix above).
-
-**Commits**: `f17aeab` (1 commit)
 
 ---
 
