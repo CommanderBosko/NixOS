@@ -13,9 +13,10 @@
   # restores device-to-device connectivity. wg0 (modules/vpn.nix) is left
   # entirely untouched; the two overlay networks coexist independently.
   #
-  # First-time auth is manual: after rebuild, run `sudo tailscale up` and
-  # follow the printed login URL. No authkey/sops secret wired up — this is
-  # a single ad-hoc host, not a fleet rollout (revisit authKeyFile via
-  # sops-nix if/when this expands past gaming, see fleet-rollout skill).
+  # First-time auth is manual on every host: after rebuild, run
+  # `sudo tailscale up` and follow the printed login URL. Expanded from
+  # gaming-only to laptop + natalie-laptop on 2026-08-18; manual per-host
+  # auth was deliberately kept (not an authKeyFile via sops-nix) — still
+  # just 3 ad-hoc hosts, not a scale where automated auth pays for itself.
   services.tailscale.enable = true;
 }

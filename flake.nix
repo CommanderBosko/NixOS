@@ -98,6 +98,7 @@
       de
       "${self}/modules/nvidia.nix"
       "${self}/modules/shared-folder-client.nix"
+      "${self}/modules/tailscale.nix"
     ];
   in
   {
@@ -155,6 +156,7 @@
           "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/nvidia.nix"
           "${self}/modules/shared-folder-client.nix"
+          "${self}/modules/tailscale.nix"
         ];
       };
 
