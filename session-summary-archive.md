@@ -1,3 +1,24 @@
+## Session: 2026-08-17 — SessionStart nudge hook confirmed live (session close only)
+
+**Focus**: Confirm the previous session's `SessionStart` catch-up-nudge hook actually fires, then close.
+
+### What changed (and why)
+- No code changes. Opened with the user confirming "It looks like the hook worked" — `.claude/hooks/check-session-debt.sh` (added last session, commit `11b18eb`) correctly greeted this new session since `11b18eb` had landed after the prior session's own close, the exact near-immediate test case that close was designed to set up.
+- Ran `/session-closer` to close this out.
+
+### Decisions
+- None new — this session only verified prior work and closed the session.
+
+### Issues / surprises
+- None. First real (non-simulated) fire of the hook worked as designed on the first opportunity.
+
+### Next session
+- The recurring session-closer catch-up gap (memory `project_session_closer_gap_202607`) is now resolved with its live-fire confirmed — don't re-flag as pending or unconfirmed.
+
+**Commits**: `11b18eb` (1 commit, landed in the prior session — closed here)
+
+---
+
 ## Session: 2026-08-17 — Custom agents (source-reviewer, skill-reviewer) built, tested, hardened
 
 **Focus**: Answer "would a specialized agent help, and when?" from real usage data, then build, live-test, and fix what the test surfaced.

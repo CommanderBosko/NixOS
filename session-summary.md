@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-19 — Pi-hole set up as a Tailscale global nameserver
+
+**Focus**: Walk through configuring pi-hole as a DNS resolver on the Tailscale admin dashboard, then verify it actually works.
+
+### What changed (and why)
+- No repo changes — this was entirely a Tailscale admin-console configuration (`login.tailscale.com/admin/dns`), outside the flake. Added pi-hole (`100.92.242.60`) as a global nameserver: "Restrict to domain" left off (needs to resolve everything, not one domain), "Use with exit node" turned on (keeps pi-hole authoritative once a Tailscale exit node exists later), "Override local DNS" enabled fleet-wide.
+- Tried to hand this off to browser automation (`claude-in-chrome`) first; user doesn't use Chrome, so walked them through the manual click-path instead.
+
+### Decisions
+- Kept this as a layer *on top of* session 82's flake-managed DNS override rather than replacing it — session 82 deliberately rejected this exact admin-console toggle as the primary mechanism (unreviewable, affects every device at once). What changed: the tailnet now has non-flake devices (pi-hole/famdash themselves, two phones) that the flake-managed override can never reach, so the admin-console setting fills that specific gap instead of being reconsidered as a replacement.
+
+### Issues / surprises
+- Discovered two new tailnet devices (`natalies-s23-ultra`, `pixel-6`) that joined sometime after session 82's close — not added this session, just noticed during verification. They have no flake-managed DNS fallback, unlike the 3 NixOS hosts.
+- laptop and natalie-laptop were offline during this session, so the new nameserver setting could only be verified on gaming (`host doubleclick.net` → `0.0.0.0` via the system resolver, matching a direct query to pi-hole; `github.com` still resolves normally; pi-hole's own log shows the test queries landing).
+
+### Next session
+- Confirm the same DNS/ad-block check on laptop and natalie-laptop once they're online.
+
+**Commits**: none (external dashboard config only)
+
+---
+
 ## Session: 2026-08-19 — Jellyfin opened up on the Tailscale interface
 
 **Focus**: Answer "does Jellyfin need adjusting for Tailscale?" by actually checking the firewall config, then fix and verify what was found.
@@ -105,27 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Resume the Tailscale pilot only if the user wants to move on it — see memory `project_tailscale_evaluation`.
 
 **Commits**: `24cfc27..4feaa11` (4 commits: `24cfc27`, `b11c809`, `d0b7ead`, `4feaa11`)
-
----
-
-## Session: 2026-08-17 — SessionStart nudge hook confirmed live (session close only)
-
-**Focus**: Confirm the previous session's `SessionStart` catch-up-nudge hook actually fires, then close.
-
-### What changed (and why)
-- No code changes. Opened with the user confirming "It looks like the hook worked" — `.claude/hooks/check-session-debt.sh` (added last session, commit `11b18eb`) correctly greeted this new session since `11b18eb` had landed after the prior session's own close, the exact near-immediate test case that close was designed to set up.
-- Ran `/session-closer` to close this out.
-
-### Decisions
-- None new — this session only verified prior work and closed the session.
-
-### Issues / surprises
-- None. First real (non-simulated) fire of the hook worked as designed on the first opportunity.
-
-### Next session
-- The recurring session-closer catch-up gap (memory `project_session_closer_gap_202607`) is now resolved with its live-fire confirmed — don't re-flag as pending or unconfirmed.
-
-**Commits**: `11b18eb` (1 commit, landed in the prior session — closed here)
 
 ---
 
