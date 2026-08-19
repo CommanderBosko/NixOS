@@ -14,9 +14,15 @@
       dns = "none";
     };
 
-    # Enable custom DNS servers
+    # Enable custom DNS servers. Points at pi-hole's stable Tailscale IP
+    # (not its LAN IP) so filtered DNS keeps working off the home LAN too —
+    # e.g. laptop/natalie-laptop away from home, as long as Tailscale is up.
+    # Requires pi-hole's own dns.listeningMode = "ALL" (set 2026-08-18; its
+    # default "LOCAL" mode silently drops queries from Tailscale's
+    # point-to-point /32 addressing). 1.1.1.1 stays as a fallback if
+    # Tailscale or pi-hole is unreachable.
     nameservers = [
-      "10.0.0.19"
+      "100.92.242.60"
       "1.1.1.1"
     ];
 
