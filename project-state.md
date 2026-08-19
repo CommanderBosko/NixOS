@@ -1,8 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-08-19 (session 84)_
+_Last updated: 2026-08-19 (session 85)_
 
 ## Current Project State
+
+**TCL Google TV + Amazon Fire TV Stick HD added to the Tailscale mesh (9 devices total) so Jellyfin's TV apps stop breaking on LAN-IP drift — device-side only, no repo changes (2026-08-19, session 85).**
+- User's stated pain: the Fire Stick travels and its saved Jellyfin server address (a LAN IP) stops resolving off the home network; the TCL TV stays home but needed manual re-fixing whenever its LAN IP drifted. Fix for both: join the tailnet, then point each device's Jellyfin app at gaming's stable `100.66.15.1:8096` instead of LAN auto-discovery (which is broadcast-based and doesn't cross onto the tailnet anyway).
+- Ran `/interview` first (lightweight path — a few blocking `AskUserQuestion`s, not the full brief+second-review ceremony) to pin down device OS and the real motivation, then `/research` (8 parallel `source-reviewer` agents, 6/8 usable) to confirm install paths before giving instructions, per standing CLAUDE.md rules.
+- **TCL TV**: confirmed Google TV/Android TV — installed Tailscale straight from the TV's built-in Google Play Store, no sideload needed.
+- **Fire Stick**: not in the Amazon Appstore search for this device (an HD, 1st-gen, standard Fire OS — not the Vega-OS "4K Select" that blocks sideloading outright). Had to sideload via Downloader. **Real gotcha hit and fixed**: Tailscale's own marketing page (`tailscale.com/download`) Android button links to the **Play Store listing**, not a raw APK — on Fire OS (no Google Play Services) that just shows the confusing symptom the user hit ("lists my other Android devices to install to, wants a Google sign-in, no Fire Stick option"). The actual raw-APK source is **`pkgs.tailscale.com/stable/`** (Tailscale's own package mirror — lists a `tailscale-android-universal-*.apk` directly, no sign-in). Use that for any future Fire OS/non-Play-Store Android sideload.
+- Both devices authed via Tailscale's remote-control-friendly QR-code flow. Jellyfin sign-in on both done via **Quick Connect** (code shown on the TV, approved from the Jellyfin web UI's profile menu on another device) rather than typing a password with a remote.
+- User confirmed both devices connected and Jellyfin working on all hosts. No flake/repo changes at all — Jellyfin's `tailscale0`:8096 firewall opening was already done in session 83. Memory updated: `project_tailscale_evaluation`, `project_jellyfin`. Nothing pending on this thread.
 
 **Pi-hole promoted to a Tailscale-admin-console global nameserver, layered on top of the existing flake-managed DNS override — closes the gap for devices the flake can't reach (2026-08-19, session 84).**
 - User asked how to route DNS through pi-hole via the Tailscale dashboard. Walked through the actual admin-console UI (Nameservers → Add nameserver → Custom → `100.92.242.60`), including two per-nameserver toggles: **"Restrict to domain"** left OFF (that mode turns a nameserver into split-DNS for one domain suffix — the opposite of what's wanted for fleet-wide ad-blocking) and **"Use with exit node"** turned ON (keeps pi-hole authoritative even once a Tailscale exit node exists — e.g. the still-unexplored Mullvad idea — instead of silently losing ad-blocking the moment one comes online). "Override local DNS" enabled so it's the default for the whole tailnet.
