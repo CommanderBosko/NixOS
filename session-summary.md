@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-19 — Jellyfin opened up on the Tailscale interface
+
+**Focus**: Answer "does Jellyfin need adjusting for Tailscale?" by actually checking the firewall config, then fix and verify what was found.
+
+### What changed (and why)
+- Grepped the real config instead of guessing: `hosts/gaming/jellyfin-server.nix`'s `networking.firewall.interfaces` only opened port 8096 on `enp4s0` (LAN) and `wg0` (WireGuard) — `tailscale0` wasn't listed anywhere, and `services.tailscale.enable` doesn't auto-open ports on its own (confirmed against the real NixOS option list). Since `wg0`/`modules/vpn.nix` is currently commented out for the Oracle outage, Tailscale was the only away-from-home path to Jellyfin, so this was a live gap, not theoretical.
+- Added `tailscale0.allowedTCPPorts = [ 8096 ]` to the existing firewall block (`daea421`); left DLNA/SSDP discovery LAN-only since it's broadcast/multicast and doesn't cross Tailscale anyway.
+- Advised on Jellyfin's dashboard-side "LAN Networks" setting (not flake-managed): `10.0.0.0/24,100.64.0.0/10` — the LAN subnet plus Tailscale's whole CGNAT range, so Tailscale clients get local-quality treatment and future tailnet devices don't need a dashboard edit. User applied it themselves.
+
+### Decisions
+- Recommended the Tailscale CGNAT block (`100.64.0.0/10`) over individual peer IPs for the LAN Networks setting — covers current and future tailnet devices with one entry.
+
+### Issues / surprises
+- None — clean root-cause, clean fix, clean verification.
+
+### Next session
+- Nothing pending on this thread. If wg0/vpn-server comes back, its existing `wg0.allowedTCPPorts` rule is already in place and needs no changes.
+
+**Commits**: `daea421` (1 commit)
+
+---
+
 ## Session: 2026-08-18 — Tailscale mesh completed (all 5 devices), pi-hole/famdash SSH fully fixed, DNS rerouted through pi-hole over Tailscale, VPN watchdog silenced
 
 **Focus**: Finish the Tailscale rollout, close out pi-hole/famdash SSH reachability, route desktop DNS through pi-hole over the mesh, and stop the now-purely-noisy VPN watchdog. (2 more back-to-back sessions closed together, same day as the previous close.)
@@ -104,32 +126,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - The recurring session-closer catch-up gap (memory `project_session_closer_gap_202607`) is now resolved with its live-fire confirmed — don't re-flag as pending or unconfirmed.
 
 **Commits**: `11b18eb` (1 commit, landed in the prior session — closed here)
-
----
-
-## Session: 2026-08-17 — Custom agents (source-reviewer, skill-reviewer) built, tested, hardened
-
-**Focus**: Answer "would a specialized agent help, and when?" from real usage data, then build, live-test, and fix what the test surfaced.
-
-### What changed (and why)
-- Catch-up: an unclosed same-day session (`da78102`) added a `find` compound-predicate gotcha to `skill-upgrade` — self-contained, already pushed before this session started. 3rd occurrence of the recurring session-closer catch-up gap.
-- Analyzed all 82 historical `Agent`-tool spawns across 10 transcripts: 66% were "fetch one URL, extract, report" (research skill + ad hoc reviews), 13 were "apply a fixed rubric to a disjoint skill partition, read-only" (skill-audit). Both were being re-typed as prose every call.
-- Built the repo's first `.claude/agents/*.md`: `source-reviewer` (haiku, WebFetch+WebSearch) and `skill-reviewer` (default model, Read/Grep/Glob/Bash). Wired into `research`/`skill-audit`. Committed `33f1b9e`, pushed.
-- Live-tested both after the user's rebuild: `/research` (n=3) and a full `/skill-audit` (59 skills, 54 clean, 4 real findings). Fixed all 4 (skill-audit's dead instruction, improve-system's ambiguous Arguments wording, fleet-rollout's missing AskUserQuestion gate, resume-session's inlined find loop → script) plus hardened skill-reviewer.md against a false positive it produced (flagged a real Claude-Code-bundled skill as phantom). Committed `82b5d1b`, pushed.
-
-### Decisions
-- Built both agents rather than just `source-reviewer` — the user chose "Both" when offered a narrower option.
-- Applied all 4 test findings immediately rather than deferring — user chose "Apply all 4" over a partial or report-only option.
-- After a request to assess further improvements, checked `skill-reviewer`'s `Bash`-access risk against the live managed permission policy (found already covered) rather than adding speculative restrictions; declared the agents done rather than pre-hardening against unobserved problems.
-
-### Issues / surprises
-- `skill-reviewer`'s one false positive (the "phantom" `fewer-permission-prompts` finding) was a genuine blind spot: it can't see the live Skill-tool roster with only Read/Grep/Glob/Bash, so it can't distinguish "doesn't exist" from "exists but isn't a repo file." Fixed via a Gotchas section in the agent definition itself.
-
-### Next session
-- Rebuild + reboot to bring `82b5d1b`'s fixes live in `~/.claude` (resume-session's new script, skill-reviewer's gotcha, improve-system/skill-audit wording fixes).
-- Watch for `skill-reviewer` reuse by `skill-upgrade`/`skill-suggestion` if either is ever wired to fan out — currently unexercised.
-
-**Commits**: `33f1b9e..82b5d1b` (2 commits)
 
 ---
 

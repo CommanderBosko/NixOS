@@ -1,3 +1,29 @@
+## Session: 2026-08-17 — Custom agents (source-reviewer, skill-reviewer) built, tested, hardened
+
+**Focus**: Answer "would a specialized agent help, and when?" from real usage data, then build, live-test, and fix what the test surfaced.
+
+### What changed (and why)
+- Catch-up: an unclosed same-day session (`da78102`) added a `find` compound-predicate gotcha to `skill-upgrade` — self-contained, already pushed before this session started. 3rd occurrence of the recurring session-closer catch-up gap.
+- Analyzed all 82 historical `Agent`-tool spawns across 10 transcripts: 66% were "fetch one URL, extract, report" (research skill + ad hoc reviews), 13 were "apply a fixed rubric to a disjoint skill partition, read-only" (skill-audit). Both were being re-typed as prose every call.
+- Built the repo's first `.claude/agents/*.md`: `source-reviewer` (haiku, WebFetch+WebSearch) and `skill-reviewer` (default model, Read/Grep/Glob/Bash). Wired into `research`/`skill-audit`. Committed `33f1b9e`, pushed.
+- Live-tested both after the user's rebuild: `/research` (n=3) and a full `/skill-audit` (59 skills, 54 clean, 4 real findings). Fixed all 4 (skill-audit's dead instruction, improve-system's ambiguous Arguments wording, fleet-rollout's missing AskUserQuestion gate, resume-session's inlined find loop → script) plus hardened skill-reviewer.md against a false positive it produced (flagged a real Claude-Code-bundled skill as phantom). Committed `82b5d1b`, pushed.
+
+### Decisions
+- Built both agents rather than just `source-reviewer` — the user chose "Both" when offered a narrower option.
+- Applied all 4 test findings immediately rather than deferring — user chose "Apply all 4" over a partial or report-only option.
+- After a request to assess further improvements, checked `skill-reviewer`'s `Bash`-access risk against the live managed permission policy (found already covered) rather than adding speculative restrictions; declared the agents done rather than pre-hardening against unobserved problems.
+
+### Issues / surprises
+- `skill-reviewer`'s one false positive (the "phantom" `fewer-permission-prompts` finding) was a genuine blind spot: it can't see the live Skill-tool roster with only Read/Grep/Glob/Bash, so it can't distinguish "doesn't exist" from "exists but isn't a repo file." Fixed via a Gotchas section in the agent definition itself.
+
+### Next session
+- Rebuild + reboot to bring `82b5d1b`'s fixes live in `~/.claude` (resume-session's new script, skill-reviewer's gotcha, improve-system/skill-audit wording fixes).
+- Watch for `skill-reviewer` reuse by `skill-upgrade`/`skill-suggestion` if either is ever wired to fan out — currently unexercised.
+
+**Commits**: `33f1b9e..82b5d1b` (2 commits)
+
+---
+
 ## Session: 2026-08-16 — DMS battery display fixed via services.upower.enable
 
 **Focus**: Fix laptop/natalie-laptop showing no battery % in DMS's top-bar pill or Settings page.
