@@ -6,10 +6,12 @@
   # mdns4_minimal (nsswitch) only resolves .local-suffixed names, and there's
   # no DNS record for the bare "gaming" hostname the mount below uses — so
   # without this, mount.cifs fails with "could not resolve address for
-  # gaming" and the automount unit hits start-limit-hit. Static IP from
-  # .claude/hosts.json; update here too if that ever drifts.
+  # gaming" and the automount unit hits start-limit-hit. Uses gaming's
+  # Tailscale IP (not the 10.0.0.251 LAN IP) so the share still resolves
+  # over the tailnet when client and server aren't on the same LAN — matches
+  # .claude/hosts.json's tailscaleIp; update here too if that ever drifts.
   networking.extraHosts = ''
-    10.0.0.251 gaming
+    100.66.15.1 gaming
   '';
 
   # Mounts gaming's "shared" Samba share at the same /srv/shared path used
