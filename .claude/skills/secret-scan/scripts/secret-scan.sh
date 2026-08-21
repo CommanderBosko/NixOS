@@ -54,12 +54,16 @@ done < <(git ls-files 'secrets/*.yaml' 2>/dev/null)
 
 echo
 echo "-- 3. Git history (all commits, excluding secrets/, .claude/skills/, and refs/stash) --"
-echo "     (scanning $(git rev-list --all --exclude=refs/stash --count) commits; this can take a moment)"
+echo "     (scanning $(git rev-list --exclude=refs/stash --all --count) commits; this can take a moment)"
 # refs/stash is deliberately excluded: git push never transmits it, so a stash-only hit
 # is a local WIP leftover, not a public exposure — including it here caused a false
 # "leaked in history" alarm over old stash entries that were never reachable from any
 # branch or tag (found 2026-07-27).
-allrev=$(git rev-list --all --exclude=refs/stash)
+# --exclude must come BEFORE --all/--branches/--tags/--remotes/--glob on the command line —
+# git only applies it to ref-selection flags that appear after it, so `--all --exclude=...`
+# is a silent no-op and refs/stash leaks back in (found 2026-08-20, re-triggered the exact
+# false alarm this comment describes, just via a different stale-stash set).
+allrev=$(git rev-list --exclude=refs/stash --all)
 histhit=0
 for desc_pat in \
   "private key block::$PRIV_BLOCK" \
