@@ -1,3 +1,31 @@
+## Session: 2026-08-18 — Tailscale mesh completed (all 5 devices), pi-hole/famdash SSH fully fixed, DNS rerouted through pi-hole over Tailscale, VPN watchdog silenced
+
+**Focus**: Finish the Tailscale rollout, close out pi-hole/famdash SSH reachability, route desktop DNS through pi-hole over the mesh, and stop the now-purely-noisy VPN watchdog. (2 more back-to-back sessions closed together, same day as the previous close.)
+
+### What changed (and why)
+- User finished the Tailscale rollout: rebuilt laptop/natalie-laptop and ran `sudo tailscale up` on each; installed Tailscale manually on pi-hole and famdash (non-flake, console-managed). All 5 devices confirmed live via `tailscale status` and the admin website — closes out session 81's top pending item.
+- Fixed pi-hole/famdash SSH in two parts: repointed `ssh.nix`'s aliases at their stable Tailscale IPs instead of drift-prone LAN IPs (`910a2d9`), then fixed the separate, longstanding key-trust denial by manually appending gaming's key to each Pi's `authorized_keys` via console (`a5a400d`). Both now connect cleanly from gaming.
+- Rerouted desktop DNS from pi-hole's LAN IP to its Tailscale IP (`30c73ee`) so filtered DNS keeps working for laptop/natalie-laptop off the home LAN — chosen via a short `/interview` (Option B: flake-managed swap) over a Tailscale admin-console DNS override (Option A). Pre-flight caught pi-hole's own `listeningMode = "LOCAL"` silently dropping tailnet-sourced queries; fixed to `ALL` with the user's sign-off before touching the flake. Only gaming has switched onto this so far.
+- Removed gaming's `vpn-health-check` watchdog entirely (`40cf9a5`) — it was just reliably alerting every 20 minutes on the already-known Oracle outage; stopped the live timer immediately too.
+
+### Decisions
+- DNS: Option B (flake-managed nameserver swap) over Option A (Tailscale admin-console override) — deterministic, reuses existing dry-run/deep-eval tooling, keeps a working fallback.
+- Flipped pi-hole's `listeningMode` to `ALL` after judging the open-resolver risk acceptable here (no port-forward, Tailscale's own firewall chain still gates non-tailnet traffic) — a real posture change to a live appliance, done with explicit sign-off.
+- Tailscale on pi-hole/famdash installed manually rather than retrofit into flake/`new-host` management — consistent with how they've always been treated.
+
+### Issues / surprises
+- pi-hole's default `listeningMode` almost silently killed the whole DNS-over-Tailscale change — caught by a pre-flight query test before editing the flake, not after.
+- The old "pi-hole bypassed during VPN tunnel" gotcha is currently moot (wg0 is out of the flake) but will need re-verifying against the new Tailscale-IP nameserver once wg0 is restored.
+
+### Next session
+- laptop/natalie-laptop: `nh os switch` to apply the pi-hole-over-Tailscale DNS change (verified clean, just needs applying).
+- Once vpn-server is back: restore wg0 (5 commented-out spots) and re-check the pi-hole-bypassed-during-VPN interaction against the new Tailscale-IP nameserver.
+- Check whether Pinchflat downloads are still working with wg0 down — still unverified.
+
+**Commits**: `910a2d9..40cf9a5` (4 commits: `910a2d9`, `a5a400d`, `30c73ee`, `40cf9a5`)
+
+---
+
 ## Session: 2026-08-18 — vpn-server outage root-caused (Oracle-side, no ETA); Tailscale stopgap expanded to all 3 hosts; wg0 pulled from the flake; improve-system swept 60 skills
 
 **Focus**: Diagnose why vpn-server was completely unreachable, ship a stopgap, then stabilize the fleet against the ongoing outage — plus the day's second `improve-system` pass. (4 back-to-back sessions closed together.)
