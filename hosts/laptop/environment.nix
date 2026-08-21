@@ -31,6 +31,10 @@
       settings.General = {
         Enable = "Source,Sink,Media,Socket";
         Experimental = true;
+        # BAP/LE Audio needs the ISO-socket kernel-experimental feature on top
+        # of Experimental=true, or bluetoothd logs "BAP requires ISO Socket
+        # which is not enabled" at boot and LE Audio codecs stay unavailable.
+        KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e";
       };
     };
 
