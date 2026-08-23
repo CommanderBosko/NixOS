@@ -14,7 +14,7 @@ Fetch the last 50 lines of journald output for a named service, either locally o
 Parse from the user's request:
 
 - **`<service>`** (required) — the journald unit / service name, e.g. `sddm`, `wg-quick-wg0`, `nginx`, `bluetooth`. If absent, ask in Step 1.
-- **`<host>`** (optional) — one of `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Default: the **local/current box** (no SSH). Remote targets are resolved from `.claude/hosts.json`.
+- **`<host>`** (optional) — one of the flake hosts listed in `.claude/hosts.json`'s `.flakeHosts` (currently `gaming`, `laptop`, `natalie-laptop`, `vpn-server`). Default: the **local/current box** (no SSH). Remote targets are resolved from `.claude/hosts.json`.
 
 ## Step 1 — Resolve the service and host
 
@@ -44,11 +44,7 @@ Print the full log output. Then add a brief summary below:
 
 ## Step 4 — Offer follow-up
 
-After showing logs, offer:
-
-> Want to see more lines (`-n 200`), follow live output (`-f`), or check a different service?
-
-Wait for the user to respond before running anything additional.
+After showing logs, present the follow-up choice via the **AskUserQuestion tool** rather than free-form prose, with options **More lines** (`-n 200`), **Follow live** (`-f`), and **Different service** (restart at Step 1). Wait for the user's pick before running anything additional.
 
 ---
 
