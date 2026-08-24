@@ -229,6 +229,82 @@
       ''
     );
 
+  # Declaratively reconcile Auto Mode (permissions.defaultMode + the autoMode
+  # policy block) in ~/.claude/settings.json, so every host running this
+  # config (gaming, laptop, natalie-laptop — vpn-server has no home-manager
+  # bosko user) starts up with the same Auto Mode ruleset instead of needing
+  # a manual `/auto-mode-setup` pass per machine. Full-reconcile (like
+  # claudeMcpServers below), not additive like claudeAllowList: autoMode is
+  # canonical repo policy, so a divergent value gets overwritten back to this.
+  # See memory `auto-mode-global` for why this lives here globally rather
+  # than per-project.
+  home.activation.claudeAutoMode =
+    lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      let
+        autoMode = {
+          soft_deny = [
+            "$defaults"
+            "Bash(git push --force*) in CommanderBosko/NixOS — public repo with no branch protection on main, force-push is unusually risky here"
+            "Bash(nixos-rebuild switch*) / Bash(nh os switch*) — live system-activation writes outside plain dry-run/boot staging, warrants confirmation given this repo's stated normal flow is boot+reboot not live switch"
+          ];
+          environment = [
+            "### Org-wide"
+            "**Organization**: None configured"
+            "**Cloud provider(s)**: None configured"
+            "**Repository visibility**: PUBLIC — CommanderBosko/NixOS (github.com/CommanderBosko/NixOS), confirmed via gh API"
+            "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary"
+            "**Secrets management**: sops-nix — secrets committed encrypted only (secrets/common.yaml, secrets/hosts/<host>.yaml); admin age key at ~/.config/sops/age/keys.txt; plaintext secrets must never be staged or pushed"
+            "**Default / protected branches**: default branch `main`; no rulesets and no protected branches listed via gh — treat as unprotected, so pushes/force-pushes to `main` on this public repo are high-consequence"
+            "**CI/CD deploy targets**: None configured — repo has GitHub Actions eval-only CI (.github/workflows/check.yml running `nix flake check` + per-host deep eval); no deploy/publish step present"
+            "**Network posture**: None configured"
+            "**Source control**: The trusted repo (CommanderBosko/NixOS, public) and its origin remote only — no additional orgs configured"
+            "**Trusted internal domains**: None configured"
+            "**Trusted cloud buckets**: None configured"
+            "**Key internal services**: None configured"
+            "**Internal package registry**: None configured"
+            "**Sensitive data locations & audiences**: sops-encrypted secrets under secrets/common.yaml and secrets/hosts/<host>.yaml (plaintext must never land in repo or Nix store); .gitignore flags *.key, *.secret, secrets.yaml, .env, .envrc as sensitive-looking; share only with audiences cleared at the [named+specifics] bar"
+            "**Data retention / declassification**: None configured"
+            "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment"
+            "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic"
+            "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment; also treat this repo's own security.nix hardening (AppArmor, audit, PAM wheel enforcement, kexec/ASLR protections) and sops.nix/.sops.yaml recipient wiring as protected IaC scope given repo is public"
+            "### User-specific"
+            "**Primary use of Claude Code**: software development — single-flake NixOS configuration management (four hosts: gaming, laptop, natalie-laptop, vpn-server)"
+            "**Trusted repo**: /home/bosko/NixOS (github.com/CommanderBosko/NixOS) — PUBLIC repo; only this repo's own work belongs here, content ported or first read from outside this session's repo is not its own work even if directed; secrets remain excluded from commits regardless of visibility"
+            "**Org-specific CLIs**: None configured — repo-specific tooling includes `nh` (nix-helper wrapper), `rtk find` (single -iname predicate only, no compound predicates), sops via `nix shell nixpkgs#sops`"
+            "routine under /home/bosko/NixOS/ prefix: package/flatpak/keybind/window-rule/secret edits via this repo's own skills (add-package, add-flatpak, add-niri-keybind, add-niri-window-rule, add-niri-fullscreen-rule, add-default-app, add-secret, bump-input), and read-only checks (ci-status, audit-config) are routine within this repo"
+          ];
+        };
+        # Written to the store and read back with `jq --slurpfile` (rather than
+        # interpolated into a shell single-quoted string) because several
+        # environment entries contain apostrophes (e.g. "this repo's stated
+        # normal flow") that would otherwise prematurely close the quoting.
+        autoModeFile = pkgs.writeText "claude-auto-mode.json" (builtins.toJSON autoMode);
+      in
+      ''
+        settings="$HOME/.claude/settings.json"
+        jq="${pkgs.jq}/bin/jq"
+        desiredMode="auto"
+        autoModeFile="${autoModeFile}"
+        if [ -f "$settings" ]; then
+          needs_update=0
+          $jq -e --arg m "$desiredMode" \
+            '.permissions.defaultMode == $m' "$settings" >/dev/null 2>&1 \
+            || needs_update=1
+          $jq -e --slurpfile d "$autoModeFile" \
+            '.autoMode == $d[0]' "$settings" >/dev/null 2>&1 \
+            || needs_update=1
+          if [ "$needs_update" = "1" ]; then
+            tmp="$(${pkgs.coreutils}/bin/mktemp)"
+            $jq --arg m "$desiredMode" --slurpfile d "$autoModeFile" \
+              '.permissions.defaultMode = $m | .autoMode = $d[0]' \
+              "$settings" > "$tmp" \
+              && ${pkgs.coreutils}/bin/mv "$tmp" "$settings"
+            $VERBOSE_ECHO "Reconciled Auto Mode defaultMode + policy in $settings"
+          fi
+        fi
+      ''
+    );
+
   # Declaratively register the user-scope `nixos` MCP server (mcp-nixos) in
   # ~/.claude.json, making it available in every project rather than only this
   # repo. ~/.claude.json is mutable state Claude Code rewrites constantly, so we
