@@ -4,6 +4,24 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-23 — No-op close (immediate re-run after prior close)
+
+**Focus**: `/session-closer` was invoked again right after the same-day close below, with no
+work done in between — a review/no-op session, not a coding one.
+
+### What changed (and why)
+- Nothing. `git status` clean, no commits since the `8915985` baseline (itself this same
+  day's prior close). `project-state.md` and `README.md` are left as-is since nothing
+  changed since they were last refreshed a few minutes earlier.
+
+### Next session
+- Same open items as the prior 2026-08-23 entry below (rebuild to bring `3230dfd` live,
+  apply the `041a0d1` flake bump + pending `ssh.nix` switch).
+
+**Commits**: none (clean tree)
+
+---
+
 ## Session: 2026-08-23 — Research-skill memory feature, flake bump, gaming boot re-triage
 
 **Focus**: Make `/research` persist its findings to memory (with prior-research cross-referencing and a staleness tag); catch-up close for a same-arc flake bump, a clean gaming boot triage, and a live WarDogs crash diagnosis.
