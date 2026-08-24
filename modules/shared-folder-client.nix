@@ -21,6 +21,17 @@
   # translated client-side to root:shared 0770 so anyone in the local
   # "shared" group can read/write it. x-systemd.automount + nofail keep
   # boot from hanging or failing if gaming is off.
+  #
+  # x-systemd.mounttimeout=2 (found 2026-08-23): this is an *automount* —
+  # any stat() on /srv/shared (e.g. starship's prompt, DMS's panel) blocks
+  # the calling process until the mount attempt resolves. When gaming is
+  # off/unreachable over Tailscale, that stat blocks for the full timeout on
+  # every single trigger — confirmed via journalctl showing repeated
+  # "Got automount request ... triggered by starship" entries each taking
+  # ~10s wall clock at the old default, which read as the whole terminal
+  # freezing for ~5-10s on every keypress. 2s keeps that stall short without
+  # affecting the success path (mount.cifs resolves in well under 1s when
+  # gaming is actually up).
   fileSystems."/srv/shared" = {
     device = "//gaming/shared";
     fsType = "cifs";
@@ -34,7 +45,7 @@
       "x-systemd.automount"
       "noauto"
       "x-systemd.idle-timeout=300"
-      "x-systemd.mounttimeout=10"
+      "x-systemd.mounttimeout=2"
       "_netdev"
       "nofail"
     ];
