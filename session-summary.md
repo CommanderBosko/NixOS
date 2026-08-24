@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-23 — Research-skill memory feature, flake bump, gaming boot re-triage
+
+**Focus**: Make `/research` persist its findings to memory (with prior-research cross-referencing and a staleness tag); catch-up close for a same-arc flake bump, a clean gaming boot triage, and a live WarDogs crash diagnosis.
+
+### What changed (and why)
+- `dotfiles/bosko/claude/skills/research/SKILL.md` (`3230dfd`): Step 2 now checks the project's memory dir for a prior finding on the topic before searching; Step 6 states whether new results reaffirm/update/contradict it; Step 7 persists sources+consensus+coverage to a `reference` memory via `save-memory`, tagged with a judged `Volatility: fast|slow` line so a later stale read can be flagged.
+- `dotfiles/bosko/claude/CLAUDE.md` (`3230dfd`): new "Stale Fast-Moving Research Memories" rule — proactively flags a recalled `Volatility: fast` memory older than 90 days as possibly stale.
+- `flake.lock` (`041a0d1`, via `/flake-update-verify`): nixpkgs/home-manager/dms bumped, verified clean (flake-check + 4-host deep-eval), committed+pushed lock-only.
+
+### Decisions
+- No architectural decisions this session — mostly additive feature work and routine verification.
+
+### Issues / surprises
+- `/boot-error-triage` re-run on gaming (testing the new Concise output style) came back clean — same benign AMD IRQ quirk as before, now memory-suppressed from re-flagging; user again declined the BIOS flash.
+- A live WarDogs "freeze" turned out to be a `GameThread` SIGSEGV followed by a 2-minute `systemd-coredump` write, not an actual hang — no config change, diagnostic only.
+
+### Next session
+- Rebuild + reboot gaming (or any host) to bring `3230dfd`'s research-skill/CLAUDE.md changes live in `~/.claude`.
+- Apply the `041a0d1` flake bump and the still-pending `ssh.nix` Tailscale-IP switch (session 87) — both can ride the same rebuild.
+
+**Commits**: `041a0d1..3230dfd` (2 commits)
+
+---
+
 ## Session: 2026-08-21 — Repo-wide Tailscale IP sweep
 
 **Focus**: Check the whole repo for old (non-Tailscale) IP addresses that should be using Tailscale IPs instead.
@@ -93,28 +117,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Confirm the same DNS/ad-block check on laptop and natalie-laptop once they're online.
 
 **Commits**: none (external dashboard config only)
-
----
-
-## Session: 2026-08-19 — Jellyfin opened up on the Tailscale interface
-
-**Focus**: Answer "does Jellyfin need adjusting for Tailscale?" by actually checking the firewall config, then fix and verify what was found.
-
-### What changed (and why)
-- Grepped the real config instead of guessing: `hosts/gaming/jellyfin-server.nix`'s `networking.firewall.interfaces` only opened port 8096 on `enp4s0` (LAN) and `wg0` (WireGuard) — `tailscale0` wasn't listed anywhere, and `services.tailscale.enable` doesn't auto-open ports on its own (confirmed against the real NixOS option list). Since `wg0`/`modules/vpn.nix` is currently commented out for the Oracle outage, Tailscale was the only away-from-home path to Jellyfin, so this was a live gap, not theoretical.
-- Added `tailscale0.allowedTCPPorts = [ 8096 ]` to the existing firewall block (`daea421`); left DLNA/SSDP discovery LAN-only since it's broadcast/multicast and doesn't cross Tailscale anyway.
-- Advised on Jellyfin's dashboard-side "LAN Networks" setting (not flake-managed): `10.0.0.0/24,100.64.0.0/10` — the LAN subnet plus Tailscale's whole CGNAT range, so Tailscale clients get local-quality treatment and future tailnet devices don't need a dashboard edit. User applied it themselves.
-
-### Decisions
-- Recommended the Tailscale CGNAT block (`100.64.0.0/10`) over individual peer IPs for the LAN Networks setting — covers current and future tailnet devices with one entry.
-
-### Issues / surprises
-- None — clean root-cause, clean fix, clean verification.
-
-### Next session
-- Nothing pending on this thread. If wg0/vpn-server comes back, its existing `wg0.allowedTCPPorts` rule is already in place and needs no changes.
-
-**Commits**: `daea421` (1 commit)
 
 ---
 
