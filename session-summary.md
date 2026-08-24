@@ -4,6 +4,42 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-23 — Real fix for the CIFS mount-timeout stall (missing hyphen)
+
+**Focus**: Session 86's fix for the `/srv/shared` terminal-stall bug turned out to be a
+silent no-op — track down why, fix it for real, verify live.
+
+### What changed (and why)
+- User reported the ~10s terminal freeze (whenever `gaming` is off/unreachable) was still
+  happening after session 86's fix. Found the fix never actually applied: it wrote
+  `x-systemd.mounttimeout=2` (no hyphen) in `modules/shared-folder-client.nix`, but the real
+  fstab keyword is `x-systemd.mount-timeout` (hyphenated, per `man systemd.mount`) — fstab
+  silently drops unrecognized options instead of erroring, so the 10→2s change never took
+  effect. `systemctl show srv-shared.mount` was the tell: `TimeoutUSec` still read systemd's
+  90s default even on the switched-in generation.
+- Fixed in two commits: `86ad36e` (first attempted the timeout drop, still with the typo)
+  then `24a1d2d` (corrected the hyphen). Also ruled out a user-raised alacritty-vs-kitty
+  angle — the trigger is starship on every prompt redraw, not terminal-specific; alacritty
+  isn't even installed on this system.
+
+### Decisions
+- Kept the shrink-not-eliminate scope from session 86 rather than chasing why
+  starship/DMS touch `/srv/shared` at all when it's unreachable — same tradeoff, still holds.
+
+### Issues / surprises
+- A previously "verified and pushed" fix silently never took effect for a whole session —
+  fstab's silent-drop behavior on unrecognized `x-systemd.*` options means a dry-run/deep-eval
+  pass proves the config *evaluates*, not that the option is actually a real, honored keyword.
+
+### Next session
+- **natalie-laptop still needs its own `nh os switch`/`nh os boot`** to pick up
+  `86ad36e`+`24a1d2d` (shares this module with laptop, not yet rebuilt with either commit).
+  laptop itself is confirmed live and verified (`TimeoutUSec` reads `2s`, real stall now ~2s).
+
+**Commits**: `86ad36e..24a1d2d` (2 commits)
+
+---
+
 ## Session: 2026-08-23 — No-op close (immediate re-run after prior close)
 
 **Focus**: `/session-closer` was invoked again right after the same-day close below, with no
@@ -89,52 +125,6 @@ work done in between — a review/no-op session, not a coding one.
 - laptop needs its own `nh os switch` to apply both fixes (config-only, no reboot). natalie-laptop needs a switch too, to pick up the shared Tailscale-IP change.
 
 **Commits**: `693d573..fc756c3` (2 commits) + this close's own `secret-scan.sh` fix
-
----
-
-## Session: 2026-08-19 — TCL TV and Fire Stick joined to the Tailnet
-
-**Focus**: Get the TCL Google TV and Amazon Fire TV Stick onto the Tailscale mesh so Jellyfin's TV apps use a stable address instead of a drifting LAN IP.
-
-### What changed (and why)
-- No repo changes — entirely device-side. Installed Tailscale on the TCL TV via the Google Play Store (no sideload needed) and on the Fire Stick via sideloading (not in the Amazon Appstore search for this device). Pointed each Jellyfin app at gaming's tailscale IP (`100.66.15.1:8096`) manually instead of relying on LAN auto-discovery, which is broadcast-based and doesn't cross onto the tailnet.
-- Ran `/interview` (lightweight path — a few blocking questions, not the full brief+review ceremony, since this was a well-scoped, quickly-diagnosable task) then `/research` (8 parallel `source-reviewer` agents, 6/8 usable sources) before giving install instructions, per standing CLAUDE.md rules.
-
-### Decisions
-- Lightweight interview path over the full ceremony — confirmed appropriate in hindsight, the task stayed a single bounded thread start to finish.
-- Manual Jellyfin server entry (tailscale IP) over relying on auto-discovery for both devices.
-
-### Issues / surprises
-- Real gotcha: Tailscale's own marketing download page (`tailscale.com/download`)'s Android button links to the **Play Store listing**, not a raw APK — useless on Fire OS (no Google Play Services), and produced exactly the confusing symptom the user hit ("lists my other Android devices, wants a Google sign-in, no Fire Stick option"). Fixed by using **`pkgs.tailscale.com/stable/`** instead — Tailscale's own package mirror, serves the raw `.apk` directly, no sign-in.
-- Confirmed the user's stick is a Fire TV Stick HD (1st gen) — a normal Fire-OS device, not the newer Vega-OS "4K Select" that blocks all sideloading outright.
-- Walked through Jellyfin Quick Connect for password-free sign-in on both remote-control-only devices.
-
-### Next session
-- None — thread fully closed. Both devices confirmed connected on the tailnet and Jellyfin confirmed working by the user.
-
-**Commits**: none (no repo changes this session)
-
----
-
-## Session: 2026-08-19 — Pi-hole set up as a Tailscale global nameserver
-
-**Focus**: Walk through configuring pi-hole as a DNS resolver on the Tailscale admin dashboard, then verify it actually works.
-
-### What changed (and why)
-- No repo changes — this was entirely a Tailscale admin-console configuration (`login.tailscale.com/admin/dns`), outside the flake. Added pi-hole (`100.92.242.60`) as a global nameserver: "Restrict to domain" left off (needs to resolve everything, not one domain), "Use with exit node" turned on (keeps pi-hole authoritative once a Tailscale exit node exists later), "Override local DNS" enabled fleet-wide.
-- Tried to hand this off to browser automation (`claude-in-chrome`) first; user doesn't use Chrome, so walked them through the manual click-path instead.
-
-### Decisions
-- Kept this as a layer *on top of* session 82's flake-managed DNS override rather than replacing it — session 82 deliberately rejected this exact admin-console toggle as the primary mechanism (unreviewable, affects every device at once). What changed: the tailnet now has non-flake devices (pi-hole/famdash themselves, two phones) that the flake-managed override can never reach, so the admin-console setting fills that specific gap instead of being reconsidered as a replacement.
-
-### Issues / surprises
-- Discovered two new tailnet devices (`natalies-s23-ultra`, `pixel-6`) that joined sometime after session 82's close — not added this session, just noticed during verification. They have no flake-managed DNS fallback, unlike the 3 NixOS hosts.
-- laptop and natalie-laptop were offline during this session, so the new nameserver setting could only be verified on gaming (`host doubleclick.net` → `0.0.0.0` via the system resolver, matching a direct query to pi-hole; `github.com` still resolves normally; pi-hole's own log shows the test queries landing).
-
-### Next session
-- Confirm the same DNS/ad-block check on laptop and natalie-laptop once they're online.
-
-**Commits**: none (external dashboard config only)
 
 ---
 

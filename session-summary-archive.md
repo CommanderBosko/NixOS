@@ -1,3 +1,49 @@
+## Session: 2026-08-19 — TCL TV and Fire Stick joined to the Tailnet
+
+**Focus**: Get the TCL Google TV and Amazon Fire TV Stick onto the Tailscale mesh so Jellyfin's TV apps use a stable address instead of a drifting LAN IP.
+
+### What changed (and why)
+- No repo changes — entirely device-side. Installed Tailscale on the TCL TV via the Google Play Store (no sideload needed) and on the Fire Stick via sideloading (not in the Amazon Appstore search for this device). Pointed each Jellyfin app at gaming's tailscale IP (`100.66.15.1:8096`) manually instead of relying on LAN auto-discovery, which is broadcast-based and doesn't cross onto the tailnet.
+- Ran `/interview` (lightweight path — a few blocking questions, not the full brief+review ceremony, since this was a well-scoped, quickly-diagnosable task) then `/research` (8 parallel `source-reviewer` agents, 6/8 usable sources) before giving install instructions, per standing CLAUDE.md rules.
+
+### Decisions
+- Lightweight interview path over the full ceremony — confirmed appropriate in hindsight, the task stayed a single bounded thread start to finish.
+- Manual Jellyfin server entry (tailscale IP) over relying on auto-discovery for both devices.
+
+### Issues / surprises
+- Real gotcha: Tailscale's own marketing download page (`tailscale.com/download`)'s Android button links to the **Play Store listing**, not a raw APK — useless on Fire OS (no Google Play Services), and produced exactly the confusing symptom the user hit ("lists my other Android devices, wants a Google sign-in, no Fire Stick option"). Fixed by using **`pkgs.tailscale.com/stable/`** instead — Tailscale's own package mirror, serves the raw `.apk` directly, no sign-in.
+- Confirmed the user's stick is a Fire TV Stick HD (1st gen) — a normal Fire-OS device, not the newer Vega-OS "4K Select" that blocks all sideloading outright.
+- Walked through Jellyfin Quick Connect for password-free sign-in on both remote-control-only devices.
+
+### Next session
+- None — thread fully closed. Both devices confirmed connected on the tailnet and Jellyfin confirmed working by the user.
+
+**Commits**: none (no repo changes this session)
+
+---
+
+## Session: 2026-08-19 — Pi-hole set up as a Tailscale global nameserver
+
+**Focus**: Walk through configuring pi-hole as a DNS resolver on the Tailscale admin dashboard, then verify it actually works.
+
+### What changed (and why)
+- No repo changes — this was entirely a Tailscale admin-console configuration (`login.tailscale.com/admin/dns`), outside the flake. Added pi-hole (`100.92.242.60`) as a global nameserver: "Restrict to domain" left off (needs to resolve everything, not one domain), "Use with exit node" turned on (keeps pi-hole authoritative once a Tailscale exit node exists later), "Override local DNS" enabled fleet-wide.
+- Tried to hand this off to browser automation (`claude-in-chrome`) first; user doesn't use Chrome, so walked them through the manual click-path instead.
+
+### Decisions
+- Kept this as a layer *on top of* session 82's flake-managed DNS override rather than replacing it — session 82 deliberately rejected this exact admin-console toggle as the primary mechanism (unreviewable, affects every device at once). What changed: the tailnet now has non-flake devices (pi-hole/famdash themselves, two phones) that the flake-managed override can never reach, so the admin-console setting fills that specific gap instead of being reconsidered as a replacement.
+
+### Issues / surprises
+- Discovered two new tailnet devices (`natalies-s23-ultra`, `pixel-6`) that joined sometime after session 82's close — not added this session, just noticed during verification. They have no flake-managed DNS fallback, unlike the 3 NixOS hosts.
+- laptop and natalie-laptop were offline during this session, so the new nameserver setting could only be verified on gaming (`host doubleclick.net` → `0.0.0.0` via the system resolver, matching a direct query to pi-hole; `github.com` still resolves normally; pi-hole's own log shows the test queries landing).
+
+### Next session
+- Confirm the same DNS/ad-block check on laptop and natalie-laptop once they're online.
+
+**Commits**: none (external dashboard config only)
+
+---
+
 ## Session: 2026-08-19 — Jellyfin opened up on the Tailscale interface
 
 **Focus**: Answer "does Jellyfin need adjusting for Tailscale?" by actually checking the firewall config, then fix and verify what was found.
