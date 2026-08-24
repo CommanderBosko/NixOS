@@ -1,3 +1,27 @@
+## Session: 2026-08-20 — Boot error triage on laptop (shared folder + bluetooth fixes)
+
+**Focus**: Triage a vague "saw some errors on boot" report on laptop into root-caused fixes.
+
+### What changed (and why)
+- Ran `/boot-error-triage`, filtered ~130 lines of known-benign `dbus-broker`/`gkr-pam` noise, and root-caused the 3 real candidates left: a failed `srv-shared.mount`, an ACPI BIOS firmware bug, and a bluetooth ISO-socket warning.
+- `modules/shared-folder-client.nix` (`693d573`): switched the `gaming` `extraHosts` entry from its LAN IP (`10.0.0.251`) to its Tailscale IP (`100.66.15.1`), so `/srv/shared` also resolves off the home LAN — same pattern already used for Jellyfin.
+- `hosts/laptop/environment.nix` (`fc756c3`): added bluez's `KernelExperimental` ISO-socket UUID alongside the existing `Experimental = true`, fixing the "BAP requires ISO Socket which is not enabled" warning so LE Audio codecs become available.
+
+### Decisions
+- Corrected the user's initial framing before acting: the CIFS mount failure wasn't an IP misconfiguration (the static IP was already correct and live) — `gaming` was simply powered off. Verified via LAN ARP + Tailscale status before proposing any fix, then asked what they actually wanted (switch to the Tailscale IP, which they confirmed).
+- Left the ACPI BIOS errors alone — confirmed via kernel.org Bugzilla #220583 as an upstream ASUS firmware bug (DSDT references a missing EC symbol), and confirmed live that the only functional impact is `sensors` can't read fan RPM; thermal management itself is unaffected. No kernel-side fix exists.
+
+### Issues / surprises
+- Both boot fixes verified clean on the first pass (`nixos-dry-run` + `shared-module-check`'s 4-host sweep, since the shared-folder file is shared with natalie-laptop).
+- The session-close `secret-scan` pass hit a real bug in the skill itself: `git rev-list --all --exclude=refs/stash` silently ignores `--exclude` because it comes after `--all` (git only honors it when it's first) — a prior session's "fix" for this exact class of false alarm had the flags in the wrong order the whole time. Root-caused to 13 stale, worthless local stashes (pre-sops-migration, ~2026-05-21) leaking an old plaintext password hash back into the scan. Fixed the flag order, and — after confirming with the user — dropped all 13 stashes. Also pruned 5 already-deleted-on-GitHub branches' stale local tracking refs that were contributing the same way. Scan is clean now.
+
+### Next session
+- laptop needs its own `nh os switch` to apply both fixes (config-only, no reboot). natalie-laptop needs a switch too, to pick up the shared Tailscale-IP change.
+
+**Commits**: `693d573..fc756c3` (2 commits) + this close's own `secret-scan.sh` fix
+
+---
+
 ## Session: 2026-08-19 — TCL TV and Fire Stick joined to the Tailnet
 
 **Focus**: Get the TCL Google TV and Amazon Fire TV Stick onto the Tailscale mesh so Jellyfin's TV apps use a stable address instead of a drifting LAN IP.

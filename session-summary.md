@@ -4,6 +4,45 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-24 — Auto Mode setup made declarative across all hosts
+
+**Focus**: Figure out why laptop needed its own manual `/auto-mode-setup` run despite Auto
+Mode supposedly being "global," then fix it so no host ever needs the manual pass again.
+
+### What changed (and why)
+- Confirmed gaming's `~/.claude/settings.json` already had the full `defaultMode`/`autoMode`
+  policy from an earlier setup — nothing to gain from re-running `/auto-mode-setup` there.
+- Root-caused the laptop confusion: "global" in the prior session's memory meant global
+  *across projects on one machine*, not across hosts — `~/.claude/settings.json` is
+  per-machine runtime state, so each host needs its own `/auto-mode-setup` pass.
+- User asked to have gaming's setup applied to laptop and natalie-laptop too. Instead of
+  another manual pass, added a `home.activation.claudeAutoMode` block to
+  `dotfiles/bosko/bosko-claude.nix` that full-reconciles `permissions.defaultMode="auto"`
+  plus the entire `autoMode.soft_deny`/`environment` policy into `~/.claude/settings.json`
+  on every rebuild — same full-reconcile pattern as the existing `claudeMcpServers` block.
+
+### Decisions
+- Full-reconcile (overwrite to canonical), not additive merge — autoMode is repo policy,
+  not user-editable state, matching the file's existing `claudeMcpServers` convention over
+  its `claudeAllowList` one.
+- vpn-server correctly excluded — no home-manager `bosko` user there, confirmed via
+  `modules/home-manager.nix`, so this only reaches gaming/laptop/natalie-laptop.
+
+### Issues / surprises
+- First implementation attempt shell-interpolated the JSON via a bash single-quoted string;
+  broke because several `environment` strings contain apostrophes ("this repo's stated
+  normal flow") that prematurely closed the quote — `nh os boot --dry` failed with a bash
+  syntax error. Fixed with `pkgs.writeText` + `jq --slurpfile`, which avoids shell quoting
+  of the content entirely.
+
+### Next session
+- laptop and natalie-laptop: pull + rebuild to pick up `f01382b` (user says they'll handle
+  this themselves).
+
+**Commits**: `f01382b` (1 commit)
+
+---
+
 ## Session: 2026-08-23 — Real fix for the CIFS mount-timeout stall (missing hyphen)
 
 **Focus**: Session 86's fix for the `/srv/shared` terminal-stall bug turned out to be a
@@ -101,30 +140,6 @@ work done in between — a review/no-op session, not a coding one.
 - All 3 desktop hosts still need their own `nh os switch` to pick up the new `ssh.nix` aliases (rides along with the already-pending session 86 switches for laptop/natalie-laptop).
 
 **Commits**: `2d3ab40` (1 commit)
-
----
-
-## Session: 2026-08-20 — Boot error triage on laptop (shared folder + bluetooth fixes)
-
-**Focus**: Triage a vague "saw some errors on boot" report on laptop into root-caused fixes.
-
-### What changed (and why)
-- Ran `/boot-error-triage`, filtered ~130 lines of known-benign `dbus-broker`/`gkr-pam` noise, and root-caused the 3 real candidates left: a failed `srv-shared.mount`, an ACPI BIOS firmware bug, and a bluetooth ISO-socket warning.
-- `modules/shared-folder-client.nix` (`693d573`): switched the `gaming` `extraHosts` entry from its LAN IP (`10.0.0.251`) to its Tailscale IP (`100.66.15.1`), so `/srv/shared` also resolves off the home LAN — same pattern already used for Jellyfin.
-- `hosts/laptop/environment.nix` (`fc756c3`): added bluez's `KernelExperimental` ISO-socket UUID alongside the existing `Experimental = true`, fixing the "BAP requires ISO Socket which is not enabled" warning so LE Audio codecs become available.
-
-### Decisions
-- Corrected the user's initial framing before acting: the CIFS mount failure wasn't an IP misconfiguration (the static IP was already correct and live) — `gaming` was simply powered off. Verified via LAN ARP + Tailscale status before proposing any fix, then asked what they actually wanted (switch to the Tailscale IP, which they confirmed).
-- Left the ACPI BIOS errors alone — confirmed via kernel.org Bugzilla #220583 as an upstream ASUS firmware bug (DSDT references a missing EC symbol), and confirmed live that the only functional impact is `sensors` can't read fan RPM; thermal management itself is unaffected. No kernel-side fix exists.
-
-### Issues / surprises
-- Both boot fixes verified clean on the first pass (`nixos-dry-run` + `shared-module-check`'s 4-host sweep, since the shared-folder file is shared with natalie-laptop).
-- The session-close `secret-scan` pass hit a real bug in the skill itself: `git rev-list --all --exclude=refs/stash` silently ignores `--exclude` because it comes after `--all` (git only honors it when it's first) — a prior session's "fix" for this exact class of false alarm had the flags in the wrong order the whole time. Root-caused to 13 stale, worthless local stashes (pre-sops-migration, ~2026-05-21) leaking an old plaintext password hash back into the scan. Fixed the flag order, and — after confirming with the user — dropped all 13 stashes. Also pruned 5 already-deleted-on-GitHub branches' stale local tracking refs that were contributing the same way. Scan is clean now.
-
-### Next session
-- laptop needs its own `nh os switch` to apply both fixes (config-only, no reboot). natalie-laptop needs a switch too, to pick up the shared Tailscale-IP change.
-
-**Commits**: `693d573..fc756c3` (2 commits) + this close's own `secret-scan.sh` fix
 
 ---
 
