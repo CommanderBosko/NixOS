@@ -2,8 +2,9 @@
 # rollback.sh — READ-ONLY helper for the rollback skill.
 # Lists recent system generations and resolves the rollback target (current
 # generation minus 1, or a passed target). Unprivileged — reads the profile
-# symlinks directly, no sudo. Does NOT activate anything; the skill performs
-# the actual `nixos-rebuild switch --rollback` itself after the user confirms.
+# symlinks directly, no sudo. Does NOT activate anything; the actual
+# `nixos-rebuild switch --rollback` (Step 3) is always handed off to the user
+# to run themselves, never executed by Claude directly (see SKILL.md).
 # Usage: rollback.sh [target-generation]
 set -uo pipefail
 

@@ -75,7 +75,7 @@ Merge the agents' findings into a single report, ordered by leverage, not by ski
 
 ## Step 4 — Report, don't auto-apply
 
-Present the report and stop. Offer to implement, recommending an order (bugs → shared config → big asset/script extractions → UX). Call out anything you'd **skip** as low-value or high-overhead (e.g. global-skill asset extraction needing symlink wiring; speculative frontmatter) and let the user decide.
+Present the report, recommending an implementation order (bugs → shared config → big asset/script extractions → UX). Call out anything you'd **skip** as low-value or high-overhead (e.g. global-skill asset extraction needing symlink wiring; speculative frontmatter). Then offer to implement via the **AskUserQuestion tool** — options **Implement now** (proceed to the "fix it" section below) and **Not now** (stop; the report stands as the deliverable) — rather than a free-form prose invitation.
 
 ## If the user says "fix it" — implement in priority order
 

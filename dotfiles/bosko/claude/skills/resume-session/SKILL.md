@@ -7,6 +7,10 @@ description: Locate and summarize whatever status/progress docs a project keeps 
 
 Find whatever status/progress docs this project keeps — the filenames vary per project — and read them back to the user as a concise catch-up: current state, what's in flight, what's next. This is a read-only recon skill; it doesn't edit anything.
 
+## Arguments
+
+- **Status-doc hints** (optional) — filenames or patterns the user names directly (e.g. "check NOTES.md" or "look in docs/status"). When given, pass only those patterns to `find-status-docs.sh` in Step 2 instead of firing the full default list. If omitted, Step 1's convention check and Step 2's default pattern list are used instead.
+
 ## Steps
 
 ### 1. Check for a documented convention first
