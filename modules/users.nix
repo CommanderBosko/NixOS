@@ -30,7 +30,6 @@
 
       packages = with pkgs; [
         claude-code
-        gemini-cli
         mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via bosko-claude.nix)
       ]
       # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server pins
@@ -71,9 +70,7 @@
       openssh.authorizedKeys.keys = [
       ];
 
-      packages = with pkgs; [
-        gemini-cli
-      ];
+      packages = [ ];
     };
   };
 
