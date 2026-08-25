@@ -1,4 +1,10 @@
-{ self, pkgs, lib, ... }:
+{
+  self,
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 
 {
   home.sessionPath = [ "$HOME/.local/bin" ];
@@ -305,36 +311,59 @@
       ''
     );
 
-  # Declaratively register the user-scope `nixos` MCP server (mcp-nixos) in
-  # ~/.claude.json, making it available in every project rather than only this
-  # repo. ~/.claude.json is mutable state Claude Code rewrites constantly, so we
-  # can't symlink it read-only; instead we reconcile the single .mcpServers.nixos
-  # key with jq. Idempotent: only rewrites when the entry is missing or differs,
-  # leaving the rest of the file (project history, auth, toggles) untouched.
-  # The mcp-nixos binary is provided as a user package (see users.nix).
+  # Declaratively register user-scope MCP servers in ~/.claude.json, making
+  # each available in every project rather than only this repo.
+  # ~/.claude.json is mutable state Claude Code rewrites constantly, so we
+  # can't symlink it read-only; instead we reconcile one .mcpServers.<name>
+  # key per server with jq. Idempotent: only rewrites when an entry is
+  # missing or differs, leaving the rest of the file (project history, auth,
+  # toggles) untouched.
   home.activation.claudeMcpServers =
     lib.hm.dag.entryAfter [ "writeBoundary" ] (
       let
-        desired = {
+        # mcp-nixos needs no auth — plain stdio command.
+        desiredNixos = {
           type = "stdio";
-          command = "mcp-nixos";
+          command = "mcp-nixos"; # user package, see users.nix
           args = [ ];
           env = { };
+        };
+        # tailscale-mcp authenticates via an OAuth client (secrets/common.yaml,
+        # see modules/sops.nix) whose two KEY=VALUE lines must never sit in
+        # ~/.claude.json in plaintext — command runs a wrapper that sources
+        # them from the sops-decrypted file at launch time instead of passing
+        # them through the `env` object below.
+        desiredTailscale = {
+          type = "stdio";
+          command = "${pkgs.bash}/bin/bash";
+          args = [
+            "-c"
+            "set -a; source ${osConfig.sops.secrets."tailscale-mcp-env".path}; set +a; exec tailscale-mcp"
+          ];
+          env = { };
+        };
+        servers = {
+          nixos = desiredNixos;
+          tailscale = desiredTailscale;
         };
       in
       ''
         claudejson="$HOME/.claude.json"
         jq="${pkgs.jq}/bin/jq"
-        desired='${builtins.toJSON desired}'
         if [ -f "$claudejson" ]; then
-          if ! $jq -e --argjson d "$desired" \
-            '.mcpServers.nixos == $d' "$claudejson" >/dev/null 2>&1; then
-            tmp="$(${pkgs.coreutils}/bin/mktemp)"
-            $jq --argjson d "$desired" '.mcpServers.nixos = $d' \
-              "$claudejson" > "$tmp" \
-              && ${pkgs.coreutils}/bin/mv "$tmp" "$claudejson"
-            $VERBOSE_ECHO "Registered user-scope nixos MCP server in $claudejson"
-          fi
+          ${lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (name: desired: ''
+              desired='${builtins.toJSON desired}'
+              if ! $jq -e --argjson d "$desired" \
+                '.mcpServers.${name} == $d' "$claudejson" >/dev/null 2>&1; then
+                tmp="$(${pkgs.coreutils}/bin/mktemp)"
+                $jq --argjson d "$desired" '.mcpServers.${name} = $d' \
+                  "$claudejson" > "$tmp" \
+                  && ${pkgs.coreutils}/bin/mv "$tmp" "$claudejson"
+                $VERBOSE_ECHO "Registered user-scope ${name} MCP server in $claudejson"
+              fi
+            '') servers
+          )}
         fi
       ''
     );

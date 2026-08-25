@@ -19,4 +19,16 @@
     sopsFile = ../secrets/common.yaml;
     neededForUsers = true;
   };
+
+  # Tailscale OAuth client credentials for the tailscale-mcp Claude Code
+  # connector (bosko-only, wired in dotfiles/bosko/bosko-claude.nix). An
+  # env-file-style secret like pinchflat-env (hosts/gaming/pinchflat.nix) —
+  # its decrypted content is two shell-sourceable KEY=VALUE lines, sourced
+  # by a wrapper at MCP-server-launch time so the raw values never sit in
+  # ~/.claude.json. owner=bosko so a user-level activation script can read
+  # it without root.
+  sops.secrets."tailscale-mcp-env" = {
+    sopsFile = ../secrets/common.yaml;
+    owner = "bosko";
+  };
 }

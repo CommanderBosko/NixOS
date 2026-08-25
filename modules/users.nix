@@ -31,6 +31,7 @@
       packages = with pkgs; [
         claude-code
         mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via bosko-claude.nix)
+        tailscale-mcp # MCP server backing the user-scope tailscale server (registered in ~/.claude.json via bosko-claude.nix); package in pkgs/tailscale-mcp.nix, overlay in modules/nix.nix
       ]
       # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server pins
       # stable, so guard on attribute existence rather than hardcoding it and
