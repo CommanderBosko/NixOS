@@ -6,6 +6,7 @@
 # Runs locally — for a remote host, the skill prefixes this whole invocation
 # with the resolved SSH command itself; this script has no host logic.
 set -uo pipefail
+shopt -s nullglob  # so an empty $DATADIR/* expands to nothing instead of erroring on the literal glob
 
 UNIT="${1:?usage: verify-service.sh <unit> [mount-path] [data-dir] [port-pattern]}"
 MOUNT="${2:-}"
