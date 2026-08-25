@@ -1,3 +1,25 @@
+## Session: 2026-08-21 — Repo-wide Tailscale IP sweep
+
+**Focus**: Check the whole repo for old (non-Tailscale) IP addresses that should be using Tailscale IPs instead.
+
+### What changed (and why)
+- Grepped the whole repo live for IP-shaped literals (`.nix` files + `.claude/`) rather than trusting memory, then triaged each hit before touching anything.
+- `dotfiles/common/configs/ssh.nix` (`2d3ab40`): switched the `laptop` and `natalie-laptop` SSH aliases from their LAN/DHCP IPs to their stable Tailscale IPs (`100.114.0.106`, `100.116.208.93`) — the same drift-prone pattern already fixed for `pi-hole`/`famdash`, and `natalie-laptop`'s LAN IP had already drifted once before (session 30). Also switched `gaming`'s alias to its Tailscale IP (`100.66.15.1`) per the user's call, even though its LAN IP is a static reservation with no drift risk — for consistency and off-LAN reachability.
+
+### Decisions
+- Used `AskUserQuestion` to scope two boundary calls rather than assuming: switch `gaming`'s alias too (yes), and update the `new-host` skill's server-template pi-hole DNS reference (no — that host type isn't Tailscale-joined by default).
+- Ruled out WireGuard mesh IPs (`10.10.0.0/24`), vpn-server's public Oracle IP, libvirt's bridge, `127.0.0.1`, and historical session-log mentions as out of scope — none are Tailscale-address candidates.
+
+### Issues / surprises
+- None — the fix was small and isolated once the repo-wide grep triage was done.
+
+### Next session
+- All 3 desktop hosts still need their own `nh os switch` to pick up the new `ssh.nix` aliases (rides along with the already-pending session 86 switches for laptop/natalie-laptop).
+
+**Commits**: `2d3ab40` (1 commit)
+
+---
+
 ## Session: 2026-08-20 — Boot error triage on laptop (shared folder + bluetooth fixes)
 
 **Focus**: Triage a vague "saw some errors on boot" report on laptop into root-caused fixes.
