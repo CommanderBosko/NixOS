@@ -1,27 +1,34 @@
 ---
 name: repo-creator
-description: Create and initialize a brand-new public GitHub repo under CommanderBosko from the current project, then push the first commit. Use when the user says "create a repo", "set up a github repo", "publish this to github", "initialize a new repo", "set this project up on github", or "make a new repo for this". One-time, at project inception only.
+description: Create and initialize a brand-new GitHub repo (public or private) under CommanderBosko from the current project, then push the first commit. Use when the user says "create a repo", "set up a github repo", "create a private repo", "publish this to github", "initialize a new repo", "set this project up on github", or "make a new repo for this". One-time, at project inception only.
 ---
 
 # Repo Creator
 
-Create, configure, and push a brand-new **public** GitHub repository for `CommanderBosko`
-over SSH — exactly once per project, at inception. Do it right the first time, leave a
-clean history, hand off a fully initialized repo.
+Create, configure, and push a brand-new GitHub repository for `CommanderBosko` over SSH
+— exactly once per project, at inception. Do it right the first time, leave a clean
+history, hand off a fully initialized repo.
 
 ## Identity & scope
 
 - GitHub account: `CommanderBosko`
 - Auth: SSH — remotes use `git@github.com:CommanderBosko/<repo-name>.git`
-- Visibility: **public**
+- Visibility: **public** or **private** — resolved per invocation, see Arguments
 - Default branch: `main`
 - This is a one-time setup. Once the first push succeeds, the job is done — no further
   commits.
 
 ## Arguments
 
-None — the repo name is inferred from the current working directory (Step 1), confirmed
-with the user only if the directory name is ambiguous.
+Optional: `public` or `private` (case-insensitive), naming the new repo's visibility.
+
+- If given, use it directly — no need to ask.
+- If omitted, ask via **AskUserQuestion** (options **Public** / **Private**, no default
+  recommendation — it depends entirely on the project) before Step 6. Visibility is a
+  one-time, consequential call made at project inception; don't default it silently.
+
+The repo name is inferred from the current working directory (Step 1), confirmed with the
+user only if the directory name is ambiguous.
 
 ## Workflow
 
@@ -60,11 +67,14 @@ non-zero, pause** — this skill is for new projects; use the AskUserQuestion to
 **Push existing history** / **Cancel**) to confirm the user wants to push existing history
 to a new remote before continuing.
 
-### 6. Create the GitHub repo
+### 6. Resolve visibility, then create the GitHub repo
+Resolve visibility first (see Arguments): use the given `public`/`private` argument, or ask
+via AskUserQuestion if none was given.
+
 ```bash
-scripts/create-repo.sh create <repo-name>
+scripts/create-repo.sh create <repo-name> <visibility>
 ```
-Runs `gh repo create CommanderBosko/<repo-name> --public --source=. --remote=origin --push=false`,
+Runs `gh repo create CommanderBosko/<repo-name> --<visibility> --source=. --remote=origin --push=false`,
 then normalizes the remote to SSH format if `gh` left it as HTTPS, and prints `git remote -v`.
 If `gh` is unavailable, fall back to the GitHub REST API via `curl`, or guide the user to
 create it manually and supply the SSH remote.
@@ -114,7 +124,7 @@ existing), `.gitignore` status, and the commit message used.
 - [ ] `.gitignore` exists and fits the stack
 - [ ] No secrets staged (tokens, passwords, `.env`)
 - [ ] Commit message is descriptive and project-specific
-- [ ] Repo visibility is public
+- [ ] Repo visibility matches what was chosen (public or private)
 
 ## Constraints
 

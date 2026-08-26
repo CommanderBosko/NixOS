@@ -6,7 +6,9 @@
 #                                             prints existing-commit-count so the
 #                                             caller can decide whether to pause
 #                                             and confirm before continuing
-#   create-repo.sh create <repo-name>      — gh repo create (public, SSH remote)
+#   create-repo.sh create <repo-name> <visibility>
+#                                           — gh repo create (visibility is 'public' or
+#                                             'private', SSH remote)
 #   create-repo.sh push <commit-msg-file>  — git add ., commit using the message
 #                                             file's contents, push -u origin main
 set -euo pipefail
@@ -31,8 +33,16 @@ case "$MODE" in
     fi
     ;;
   create)
-    REPO_NAME="${2:?usage: create-repo.sh create <repo-name>}"
-    gh repo create "CommanderBosko/$REPO_NAME" --public --source=. --remote=origin --push=false
+    REPO_NAME="${2:?usage: create-repo.sh create <repo-name> <visibility: public|private>}"
+    VISIBILITY="${3:?usage: create-repo.sh create <repo-name> <visibility: public|private>}"
+    case "$VISIBILITY" in
+      public|private) ;;
+      *)
+        echo "invalid visibility: $VISIBILITY (expected 'public' or 'private')" >&2
+        exit 1
+        ;;
+    esac
+    gh repo create "CommanderBosko/$REPO_NAME" --"$VISIBILITY" --source=. --remote=origin --push=false
     REMOTE_URL="$(git remote get-url origin)"
     case "$REMOTE_URL" in
       https://*)
@@ -50,7 +60,7 @@ case "$MODE" in
     git remote get-url origin
     ;;
   *)
-    echo "usage: create-repo.sh {init|create <repo-name>|push <commit-msg-file>}" >&2
+    echo "usage: create-repo.sh {init|create <repo-name> <visibility>|push <commit-msg-file>}" >&2
     exit 1
     ;;
 esac
