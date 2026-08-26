@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-25 (session 92) — Flake bump, 3 new skills, PR #12 merged, Tailscale MCP connector committed
+
+**Focus**: Close out a busy day spanning 6 sessions — flake maintenance, skill-suggestion sweep, weekly PR review, and Tailscale/pi-hole follow-up work.
+
+### What changed (and why)
+- `/flake-update-verify` bumped nixpkgs/home-manager/dms and pushed the lock-only commit (`c84892f`) after the mandatory eval-verified commit gate.
+- A `skill-suggestion`/`agent-suggestion` sweep shipped 3 new project-local skills via `ship-skill` — `pihole-api` (session-auth wrapper, retyped 6x by hand before this), `package-nix-tool` (external-tool packaging workflow, done twice before), `diagnose-hung-game` (Steam/Proton freeze runbook) — plus a real nullglob fix to `verify-service.sh`. Each smoke test caught and fixed a real live bug (see project-state.md for specifics).
+- `review-improve-system-pr`'s first real run against a live weekly PR: reviewed and merged PR #12 (5 self-verifiable skill fixes from the `improve-system` cloud routine).
+- Committed the already-built Tailscale MCP connector (`e8c183a`) — the connector itself was designed/packaged in an earlier session that day; this just shipped it.
+- Verified Tailscale/pi-hole health (all clean) and re-confirmed two already-tracked issues (natalie-laptop CIFS stall, pi-hole blocklist research) needed no new work.
+
+### Decisions
+- User declined bumping the 3 NixOS hosts' outdated Tailscale client for now ("skip for now") — not an oversight, a deliberate pass.
+- `package-nix-tool`'s smoke test deliberately only exercised the deterministic hash-resolution script, not a full end-to-end package build — judged too consequential for a smoke test.
+
+### Issues / surprises
+- Found a genuinely phantom skill: `save-memory` is listed as invocable in the roster but has no backing file anywhere (repo or `~/.claude`) — flagged for next session, not chased further.
+- Two stale memory notes corrected: `review-improve-system-pr` had "not yet run against a live PR" (now has, cleanly); `improve-system`'s "3rd run outcome UNCONFIRMED" was actually wrong — two real self-verifiable PRs (`443fb9a`, PR #12) have landed since the 2026-07-27 hardening.
+
+### Next session
+- gaming/laptop/natalie-laptop all need a rebuild to pick up the flake bump, the Tailscale MCP connector, `gemini-cli`'s removal, and PR #12's global-skill fixes — one reboot covers all of it.
+- Post-rebuild: live-verify the Tailscale MCP connector actually works from a real Claude Code session.
+- Investigate the phantom `save-memory` skill.
+
+**Commits**: `d3ea435..c84892f` (7 commits)
+
+---
+
 ## Session: 2026-08-24 (session 91) — Removed gemini-cli from all hosts and users
 
 **Focus**: Drop `gemini-cli` entirely — no longer in use.
@@ -116,30 +144,6 @@ work done in between — a review/no-op session, not a coding one.
   apply the `041a0d1` flake bump + pending `ssh.nix` switch).
 
 **Commits**: none (clean tree)
-
----
-
-## Session: 2026-08-23 — Research-skill memory feature, flake bump, gaming boot re-triage
-
-**Focus**: Make `/research` persist its findings to memory (with prior-research cross-referencing and a staleness tag); catch-up close for a same-arc flake bump, a clean gaming boot triage, and a live WarDogs crash diagnosis.
-
-### What changed (and why)
-- `dotfiles/bosko/claude/skills/research/SKILL.md` (`3230dfd`): Step 2 now checks the project's memory dir for a prior finding on the topic before searching; Step 6 states whether new results reaffirm/update/contradict it; Step 7 persists sources+consensus+coverage to a `reference` memory via `save-memory`, tagged with a judged `Volatility: fast|slow` line so a later stale read can be flagged.
-- `dotfiles/bosko/claude/CLAUDE.md` (`3230dfd`): new "Stale Fast-Moving Research Memories" rule — proactively flags a recalled `Volatility: fast` memory older than 90 days as possibly stale.
-- `flake.lock` (`041a0d1`, via `/flake-update-verify`): nixpkgs/home-manager/dms bumped, verified clean (flake-check + 4-host deep-eval), committed+pushed lock-only.
-
-### Decisions
-- No architectural decisions this session — mostly additive feature work and routine verification.
-
-### Issues / surprises
-- `/boot-error-triage` re-run on gaming (testing the new Concise output style) came back clean — same benign AMD IRQ quirk as before, now memory-suppressed from re-flagging; user again declined the BIOS flash.
-- A live WarDogs "freeze" turned out to be a `GameThread` SIGSEGV followed by a 2-minute `systemd-coredump` write, not an actual hang — no config change, diagnostic only.
-
-### Next session
-- Rebuild + reboot gaming (or any host) to bring `3230dfd`'s research-skill/CLAUDE.md changes live in `~/.claude`.
-- Apply the `041a0d1` flake bump and the still-pending `ssh.nix` Tailscale-IP switch (session 87) — both can ride the same rebuild.
-
-**Commits**: `041a0d1..3230dfd` (2 commits)
 
 ---
 
