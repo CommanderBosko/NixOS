@@ -1,3 +1,39 @@
+## Session: 2026-08-23 — Real fix for the CIFS mount-timeout stall (missing hyphen)
+
+**Focus**: Session 86's fix for the `/srv/shared` terminal-stall bug turned out to be a
+silent no-op — track down why, fix it for real, verify live.
+
+### What changed (and why)
+- User reported the ~10s terminal freeze (whenever `gaming` is off/unreachable) was still
+  happening after session 86's fix. Found the fix never actually applied: it wrote
+  `x-systemd.mounttimeout=2` (no hyphen) in `modules/shared-folder-client.nix`, but the real
+  fstab keyword is `x-systemd.mount-timeout` (hyphenated, per `man systemd.mount`) — fstab
+  silently drops unrecognized options instead of erroring, so the 10→2s change never took
+  effect. `systemctl show srv-shared.mount` was the tell: `TimeoutUSec` still read systemd's
+  90s default even on the switched-in generation.
+- Fixed in two commits: `86ad36e` (first attempted the timeout drop, still with the typo)
+  then `24a1d2d` (corrected the hyphen). Also ruled out a user-raised alacritty-vs-kitty
+  angle — the trigger is starship on every prompt redraw, not terminal-specific; alacritty
+  isn't even installed on this system.
+
+### Decisions
+- Kept the shrink-not-eliminate scope from session 86 rather than chasing why
+  starship/DMS touch `/srv/shared` at all when it's unreachable — same tradeoff, still holds.
+
+### Issues / surprises
+- A previously "verified and pushed" fix silently never took effect for a whole session —
+  fstab's silent-drop behavior on unrecognized `x-systemd.*` options means a dry-run/deep-eval
+  pass proves the config *evaluates*, not that the option is actually a real, honored keyword.
+
+### Next session
+- **natalie-laptop still needs its own `nh os switch`/`nh os boot`** to pick up
+  `86ad36e`+`24a1d2d` (shares this module with laptop, not yet rebuilt with either commit).
+  laptop itself is confirmed live and verified (`TimeoutUSec` reads `2s`, real stall now ~2s).
+
+**Commits**: `86ad36e..24a1d2d` (2 commits)
+
+---
+
 ## Session: 2026-08-23 — No-op close (immediate re-run after prior close)
 
 **Focus**: `/session-closer` was invoked again right after the same-day close below, with no

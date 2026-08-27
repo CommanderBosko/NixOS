@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-27 (session 94) — Godot 4 dev environment for Legions, promoted to a shared desktopModules module
+
+**Focus**: Add a durable godot-mono/dotnet-sdk dev environment for the Legions game project, then right-size its scope as requirements clarified.
+
+### What changed (and why)
+- Added `godot-mono` (4.7.2-stable, C#-enabled build) and `dotnet-sdk` (8.0.424) for game dev — first to gaming+laptop's `environment.nix` directly, then extracted into `modules/development.nix` (imported per-host, like `nvidia.nix`) once the user asked whether the resulting duplication was worth fixing.
+- User then said natty might develop too and asked to centralize dev tooling for all desktop users — promoted `development.nix` into `desktopModules` so it reaches gaming/laptop/natalie-laptop for both users, removing the two now-redundant per-host imports. Updated `CLAUDE.md`'s `desktopModules` bullet to match.
+- Separately, `repo-creator` (commit `9380a65`, the evening before) gained a required visibility argument — asks via `AskUserQuestion` with no default instead of silently defaulting to `--public`.
+
+### Decisions
+- See project-state.md Recent Decisions for the full writeup — the key one: scoped `development.nix` by *who needs it*, not by "is this a dev tool," and explicitly declined sweeping bosko-personal (`claude-code`/`mcp-nixos`/etc.) or already-universal (`kate`/`kitty`/etc.) packages into it even when asked to reconsider.
+
+### Issues / surprises
+- None — both refactors verified byte-identical package diffs before/after via dry-run + `shared-module-check`'s 4-host deep-eval.
+
+### Next session
+- gaming/laptop/natalie-laptop still need a rebuild to actually get `godot4`/`dotnet` on PATH — stacks with the existing pending-switch pile (2026-08-25 flake bump, Tailscale MCP connector, and everything older).
+
+**Commits**: `9380a65..512561e` (3 commits)
+
+---
+
 ## Session: 2026-08-25 (session 93) — Fixed a real git-permission injection bug flagged by Claude Code's own startup warning
 
 **Focus**: Fix the wildcard-before-subcommand permission rules Claude Code's startup popup flagged, then audit the rest for the same shape.
@@ -112,42 +134,6 @@ Mode supposedly being "global," then fix it so no host ever needs the manual pas
   this themselves).
 
 **Commits**: `f01382b` (1 commit)
-
----
-
-## Session: 2026-08-23 — Real fix for the CIFS mount-timeout stall (missing hyphen)
-
-**Focus**: Session 86's fix for the `/srv/shared` terminal-stall bug turned out to be a
-silent no-op — track down why, fix it for real, verify live.
-
-### What changed (and why)
-- User reported the ~10s terminal freeze (whenever `gaming` is off/unreachable) was still
-  happening after session 86's fix. Found the fix never actually applied: it wrote
-  `x-systemd.mounttimeout=2` (no hyphen) in `modules/shared-folder-client.nix`, but the real
-  fstab keyword is `x-systemd.mount-timeout` (hyphenated, per `man systemd.mount`) — fstab
-  silently drops unrecognized options instead of erroring, so the 10→2s change never took
-  effect. `systemctl show srv-shared.mount` was the tell: `TimeoutUSec` still read systemd's
-  90s default even on the switched-in generation.
-- Fixed in two commits: `86ad36e` (first attempted the timeout drop, still with the typo)
-  then `24a1d2d` (corrected the hyphen). Also ruled out a user-raised alacritty-vs-kitty
-  angle — the trigger is starship on every prompt redraw, not terminal-specific; alacritty
-  isn't even installed on this system.
-
-### Decisions
-- Kept the shrink-not-eliminate scope from session 86 rather than chasing why
-  starship/DMS touch `/srv/shared` at all when it's unreachable — same tradeoff, still holds.
-
-### Issues / surprises
-- A previously "verified and pushed" fix silently never took effect for a whole session —
-  fstab's silent-drop behavior on unrecognized `x-systemd.*` options means a dry-run/deep-eval
-  pass proves the config *evaluates*, not that the option is actually a real, honored keyword.
-
-### Next session
-- **natalie-laptop still needs its own `nh os switch`/`nh os boot`** to pick up
-  `86ad36e`+`24a1d2d` (shares this module with laptop, not yet rebuilt with either commit).
-  laptop itself is confirmed live and verified (`TimeoutUSec` reads `2s`, real stall now ~2s).
-
-**Commits**: `86ad36e..24a1d2d` (2 commits)
 
 ---
 
