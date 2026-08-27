@@ -102,6 +102,7 @@
       "${self}/hosts/laptop/environment.nix"
       "${self}/hosts/laptop/networking.nix"
       de
+      "${self}/modules/development.nix"
       "${self}/modules/nvidia.nix"
       "${self}/modules/shared-folder-client.nix"
       "${self}/modules/tailscale.nix"
@@ -134,6 +135,7 @@
           "${self}/hosts/gaming/environment.nix"
           "${self}/hosts/gaming/networking.nix"
           "${self}/modules/desktop-environments/niri.nix"
+          "${self}/modules/development.nix"
           "${self}/modules/gaming.nix"
           "${self}/modules/nvidia.nix"
           "${self}/modules/tailscale.nix"
