@@ -80,7 +80,7 @@ Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, 
 `flake.nix`'s `mkSystem` helper (also exported as `lib.mkSystem`) builds each host from `{ name, system ? x86_64-linux, nixpkgs ? nixos-unstable, modules }`: it sets `networking.hostName` and injects the shared `specialArgs`, so each host entry in `flake.nix` holds only its unique module list. Module lists compose in layers:
 
 - **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security, sops
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps, desktop-networking, emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
+- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps, desktop-networking, development, emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
 - Each host then adds its own desktop environment, hardware config, `environment.nix`/`networking.nix` (host-specific extras only), any host-only modules, and its `system.stateVersion` — **frozen at install time, never bump it on upgrades.**
 
 `nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) so the gaming host can drop it independently when the AMD card is installed; `amd.nix`/`gaming.nix` are gaming-only. The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no DE, no flatpaks).

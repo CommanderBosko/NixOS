@@ -69,6 +69,7 @@
       "${self}/modules/audio.nix"
       "${self}/modules/desktop-apps.nix"
       "${self}/modules/desktop-networking.nix"
+      "${self}/modules/development.nix"
       "${self}/modules/emulation.nix"
       "${self}/modules/home-manager.nix"
       "${self}/modules/jellyfin-client.nix"
@@ -102,7 +103,6 @@
       "${self}/hosts/laptop/environment.nix"
       "${self}/hosts/laptop/networking.nix"
       de
-      "${self}/modules/development.nix"
       "${self}/modules/nvidia.nix"
       "${self}/modules/shared-folder-client.nix"
       "${self}/modules/tailscale.nix"
@@ -135,7 +135,6 @@
           "${self}/hosts/gaming/environment.nix"
           "${self}/hosts/gaming/networking.nix"
           "${self}/modules/desktop-environments/niri.nix"
-          "${self}/modules/development.nix"
           "${self}/modules/gaming.nix"
           "${self}/modules/nvidia.nix"
           "${self}/modules/tailscale.nix"
