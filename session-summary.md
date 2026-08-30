@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-30 (session 96) — global `manager` agent built, calibration-tested, merged as PR #15
+
+**Focus**: Build a global "manager" delegate agent that decides tasks the way the user would, backed by a profile mined from their own Claude Code history.
+
+### What changed (and why)
+- Built `manager`, a global agent that decides delegated tasks the way this user would ("the smartest call, not necessarily the easiest") instead of interviewing at each step, plus `manager-profile.md` — mined via 12 parallel `transcript-scanner` agents across every project with Claude Code history, not just this one.
+- Ships in supervised training mode by default, six hard limits that always require confirmation (no data destruction/force-push, no touching secrets, no spending money, no direct privileged/live-system execution, no pushing straight to `main`, no mutating MCP calls), lands only via branch+PR.
+- New skill `refresh-manager-profile` re-mines transcripts incrementally on demand.
+
+### Decisions
+- The mined profile needed the user's own explicit sign-off before its first push — a standing rule baked into the profile itself, since it steers future unsupervised decisions.
+- `manager`'s `AskUserQuestion` fallback codified as "stop completely, never trust relayed consent" rather than assuming the tool is always reachable — see Issues below.
+
+### Issues / surprises
+- Live calibration test (synthetic sandbox repo, deleted after) found `AskUserQuestion` isn't available to `manager` when spawned as a background subagent — only an interactive main-session turn has it. The sandbox also had no `main` ref, so the "never push directly to a default branch" hard limit was live from the start; `manager` refused three escalating relay-consent attempts and only proceeded once the repo state became independently checkable. User graded this "exactly right, keep it this strict." Codified same-session (commit `c863102`).
+
+### Next session
+- None — fully live, `nh os switch` already applied, PR #15 squash-merged, CI green.
+
+**Commits**: `b56533e` (1 commit, 2 sub-commits squashed)
+
+---
+
 ## Session: 2026-08-30 (session 95) — save-memory promoted to a global skill, "phantom skill" mystery closed
 
 **Focus**: Answer whether `save-memory` was local or global, and promote it to global as requested.
@@ -95,28 +118,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Investigate the phantom `save-memory` skill.
 
 **Commits**: `d3ea435..c84892f` (7 commits)
-
----
-
-## Session: 2026-08-24 (session 91) — Removed gemini-cli from all hosts and users
-
-**Focus**: Drop `gemini-cli` entirely — no longer in use.
-
-### What changed (and why)
-- Removed `gemini-cli` from `modules/users.nix` for both `bosko` and `natty` — the only 2 references in the whole repo, both in this shared module (`commonModules`, so it covers all 4 hosts). `natty`'s package list is now empty.
-- Updated `README.md` (user-packages bullet, Users table, Recent Changes) to match; left historical mentions in `session-summary-archive.md` and `.claude/loops/flake-update-verify/` run logs alone as point-in-time records.
-
-### Decisions
-- Retired session 74/78's "leave the removal warning as-is" call along with the package — that nixpkgs `meta.problems.removal` eval warning (Google deprecating Gemini CLI for Antigravity CLI) is now moot.
-- Didn't touch `session-summary-archive.md` or old loop output/memory logs — those record what was true at the time, not live config.
-
-### Issues / surprises
-- None.
-
-### Next session
-- All 4 hosts still need a `switch`/`boot` to actually drop the package from the store (pure package-list change, no reboot required).
-
-**Commits**: `406b373` (1 commit)
 
 ---
 

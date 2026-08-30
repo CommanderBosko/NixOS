@@ -1,3 +1,25 @@
+## Session: 2026-08-24 (session 91) — Removed gemini-cli from all hosts and users
+
+**Focus**: Drop `gemini-cli` entirely — no longer in use.
+
+### What changed (and why)
+- Removed `gemini-cli` from `modules/users.nix` for both `bosko` and `natty` — the only 2 references in the whole repo, both in this shared module (`commonModules`, so it covers all 4 hosts). `natty`'s package list is now empty.
+- Updated `README.md` (user-packages bullet, Users table, Recent Changes) to match; left historical mentions in `session-summary-archive.md` and `.claude/loops/flake-update-verify/` run logs alone as point-in-time records.
+
+### Decisions
+- Retired session 74/78's "leave the removal warning as-is" call along with the package — that nixpkgs `meta.problems.removal` eval warning (Google deprecating Gemini CLI for Antigravity CLI) is now moot.
+- Didn't touch `session-summary-archive.md` or old loop output/memory logs — those record what was true at the time, not live config.
+
+### Issues / surprises
+- None.
+
+### Next session
+- All 4 hosts still need a `switch`/`boot` to actually drop the package from the store (pure package-list change, no reboot required).
+
+**Commits**: `406b373` (1 commit)
+
+---
+
 ## Session: 2026-08-24 — Auto Mode setup made declarative across all hosts
 
 **Focus**: Figure out why laptop needed its own manual `/auto-mode-setup` run despite Auto
