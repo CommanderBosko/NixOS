@@ -78,7 +78,7 @@ Close with:
 
 > When you are ready:
 > - Run `/nixos-dry-run` to preview what the bumped input would change in your system build.
-> - Run `/commit` to commit the updated `flake.lock`.
+> - Run `/git-commit` to commit the updated `flake.lock`.
 
 Do not run either automatically.
 

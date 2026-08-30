@@ -94,7 +94,7 @@ Show the user a short diff-style summary of what was added before writing.
 Tell the user the following steps are still needed to activate the peer:
 
 1. **Commit the change** — use `/commit` to stage and commit `hosts/vpn-server/configuration.nix`.
-2. **Deploy to vpn-server** — push the commit, then deploy with the `/remote-rebuild` skill (it targets `bosko@150.136.232.63` and uses vpn-server's correct `boot`+reboot flow). To do it by hand, `ssh bosko@150.136.232.63` and rebuild from the repo flake.
+2. **Deploy to vpn-server** — push the commit, then deploy with the `/remote-rebuild` skill (it resolves the target from `.claude/hosts.json` and uses vpn-server's correct `boot`+reboot flow). To do it by hand, resolve vpn-server's SSH target from `.claude/hosts.json` and rebuild from the repo flake.
 3. **Verify the peer connected** — run `/vpn-status` after the new device activates its tunnel to confirm the handshake shows up.
 
 ---
