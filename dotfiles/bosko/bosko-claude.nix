@@ -142,6 +142,12 @@
       recursive = true;
       force = true;
     };
+    # Single-file skill (no assets yet) — re-mines transcripts incrementally
+    # to keep manager-profile.md current; see manager.md below.
+    ".claude/skills/refresh-manager-profile/SKILL.md" = {
+      source = "${self}/dotfiles/bosko/claude/skills/refresh-manager-profile/SKILL.md";
+      force = true;
+    };
     # Custom subagents (.claude/agents/*.md) — auto-discovered by the Agent tool,
     # no further registration needed beyond the symlink. Both are fan-out units
     # for existing skills' parallel sub-agent spawns (research, skill-audit).
@@ -155,6 +161,21 @@
     };
     ".claude/agents/transcript-scanner.md" = {
       source = "${self}/dotfiles/bosko/claude/agents/transcript-scanner.md";
+      force = true;
+    };
+    # `manager` is a global delegate agent that decides tasks the way this
+    # user would, per manager-profile.md below — see dotfiles/bosko/claude/agents/manager.md
+    # for the full contract (hard limits, training-mode toggle, PR-only landing).
+    ".claude/agents/manager.md" = {
+      source = "${self}/dotfiles/bosko/claude/agents/manager.md";
+      force = true;
+    };
+    # manager's profile of the user's decision-making style, mined from Claude
+    # Code transcripts across every project (dotfiles/bosko/claude/skills/refresh-manager-profile
+    # keeps it current). Plain top-level file, not a skill — same pattern as
+    # .claude/CLAUDE.md above.
+    ".claude/manager-profile.md" = {
+      source = "${self}/dotfiles/bosko/claude/manager-profile.md";
       force = true;
     };
   };
