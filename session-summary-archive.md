@@ -1,3 +1,42 @@
+## Session: 2026-08-24 — Auto Mode setup made declarative across all hosts
+
+**Focus**: Figure out why laptop needed its own manual `/auto-mode-setup` run despite Auto
+Mode supposedly being "global," then fix it so no host ever needs the manual pass again.
+
+### What changed (and why)
+- Confirmed gaming's `~/.claude/settings.json` already had the full `defaultMode`/`autoMode`
+  policy from an earlier setup — nothing to gain from re-running `/auto-mode-setup` there.
+- Root-caused the laptop confusion: "global" in the prior session's memory meant global
+  *across projects on one machine*, not across hosts — `~/.claude/settings.json` is
+  per-machine runtime state, so each host needs its own `/auto-mode-setup` pass.
+- User asked to have gaming's setup applied to laptop and natalie-laptop too. Instead of
+  another manual pass, added a `home.activation.claudeAutoMode` block to
+  `dotfiles/bosko/bosko-claude.nix` that full-reconciles `permissions.defaultMode="auto"`
+  plus the entire `autoMode.soft_deny`/`environment` policy into `~/.claude/settings.json`
+  on every rebuild — same full-reconcile pattern as the existing `claudeMcpServers` block.
+
+### Decisions
+- Full-reconcile (overwrite to canonical), not additive merge — autoMode is repo policy,
+  not user-editable state, matching the file's existing `claudeMcpServers` convention over
+  its `claudeAllowList` one.
+- vpn-server correctly excluded — no home-manager `bosko` user there, confirmed via
+  `modules/home-manager.nix`, so this only reaches gaming/laptop/natalie-laptop.
+
+### Issues / surprises
+- First implementation attempt shell-interpolated the JSON via a bash single-quoted string;
+  broke because several `environment` strings contain apostrophes ("this repo's stated
+  normal flow") that prematurely closed the quote — `nh os boot --dry` failed with a bash
+  syntax error. Fixed with `pkgs.writeText` + `jq --slurpfile`, which avoids shell quoting
+  of the content entirely.
+
+### Next session
+- laptop and natalie-laptop: pull + rebuild to pick up `f01382b` (user says they'll handle
+  this themselves).
+
+**Commits**: `f01382b` (1 commit)
+
+---
+
 ## Session: 2026-08-23 — Real fix for the CIFS mount-timeout stall (missing hyphen)
 
 **Focus**: Session 86's fix for the `/srv/shared` terminal-stall bug turned out to be a

@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-30 (session 95) — save-memory promoted to a global skill, "phantom skill" mystery closed
+
+**Focus**: Answer whether `save-memory` was local or global, and promote it to global as requested.
+
+### What changed (and why)
+- Found `save-memory`'s `SKILL.md` + `assets/memory-template.md` sitting at `.claude/skills/save-memory/` (project-local) — not missing, just never checked there. Session 92 had flagged it a "phantom skill" after checking only the two global paths (`~/.claude/skills/`, `dotfiles/bosko/claude/skills/`).
+- Moved it to `dotfiles/bosko/claude/skills/save-memory/` and added a recursive-dir `home.file` entry in `bosko-claude.nix` (matching `interview`/`new-skill`'s pattern), so it now symlinks into `~/.claude/skills/` on every host.
+- Fixed the SKILL.md's own Gotchas section, which claimed "project-local-only, no global copy exists" — now points at the real global path.
+
+### Decisions
+- Read "if it's local, make it global" as a request to actually promote it, not just report the finding.
+
+### Issues / surprises
+- Session 92's "phantom skill" report was itself the bug — a simple missed-directory check, not a real registration mystery. Corrected in memory `project_skill_roster_state` and `project-state.md`.
+
+### Next session
+- All 3 desktop hosts still need a rebuild to pick this up in `~/.claude/skills/` (rides along with the existing pending-switch pile — no reboot needed, pure symlink change).
+
+**Commits**: `7b8c3e3` (1 commit)
+
+---
+
 ## Session: 2026-08-27 (session 94) — Godot 4 dev environment for Legions, promoted to a shared desktopModules module
 
 **Focus**: Add a durable godot-mono/dotnet-sdk dev environment for the Legions game project, then right-size its scope as requirements clarified.
@@ -95,45 +117,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - All 4 hosts still need a `switch`/`boot` to actually drop the package from the store (pure package-list change, no reboot required).
 
 **Commits**: `406b373` (1 commit)
-
----
-
-## Session: 2026-08-24 — Auto Mode setup made declarative across all hosts
-
-**Focus**: Figure out why laptop needed its own manual `/auto-mode-setup` run despite Auto
-Mode supposedly being "global," then fix it so no host ever needs the manual pass again.
-
-### What changed (and why)
-- Confirmed gaming's `~/.claude/settings.json` already had the full `defaultMode`/`autoMode`
-  policy from an earlier setup — nothing to gain from re-running `/auto-mode-setup` there.
-- Root-caused the laptop confusion: "global" in the prior session's memory meant global
-  *across projects on one machine*, not across hosts — `~/.claude/settings.json` is
-  per-machine runtime state, so each host needs its own `/auto-mode-setup` pass.
-- User asked to have gaming's setup applied to laptop and natalie-laptop too. Instead of
-  another manual pass, added a `home.activation.claudeAutoMode` block to
-  `dotfiles/bosko/bosko-claude.nix` that full-reconciles `permissions.defaultMode="auto"`
-  plus the entire `autoMode.soft_deny`/`environment` policy into `~/.claude/settings.json`
-  on every rebuild — same full-reconcile pattern as the existing `claudeMcpServers` block.
-
-### Decisions
-- Full-reconcile (overwrite to canonical), not additive merge — autoMode is repo policy,
-  not user-editable state, matching the file's existing `claudeMcpServers` convention over
-  its `claudeAllowList` one.
-- vpn-server correctly excluded — no home-manager `bosko` user there, confirmed via
-  `modules/home-manager.nix`, so this only reaches gaming/laptop/natalie-laptop.
-
-### Issues / surprises
-- First implementation attempt shell-interpolated the JSON via a bash single-quoted string;
-  broke because several `environment` strings contain apostrophes ("this repo's stated
-  normal flow") that prematurely closed the quote — `nh os boot --dry` failed with a bash
-  syntax error. Fixed with `pkgs.writeText` + `jq --slurpfile`, which avoids shell quoting
-  of the content entirely.
-
-### Next session
-- laptop and natalie-laptop: pull + rebuild to pick up `f01382b` (user says they'll handle
-  this themselves).
-
-**Commits**: `f01382b` (1 commit)
 
 ---
 
