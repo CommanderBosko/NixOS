@@ -136,6 +136,12 @@
       recursive = true;
       force = true;
     };
+    # Recursive dir symlink: covers SKILL.md + assets/ (memory-template.md).
+    ".claude/skills/save-memory" = {
+      source = "${self}/dotfiles/bosko/claude/skills/save-memory";
+      recursive = true;
+      force = true;
+    };
     # Custom subagents (.claude/agents/*.md) — auto-discovered by the Agent tool,
     # no further registration needed beyond the symlink. Both are fan-out units
     # for existing skills' parallel sub-agent spawns (research, skill-audit).
