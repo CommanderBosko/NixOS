@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-08-31 (session 97) — save-memory PR #16 merged via `manager`; auto-mode classifier root-caused for FinanceGuru
+
+**Focus**: Fix a cross-repo bug flagged by FinanceGuru (`save-memory` hardcoded NixOS's own memory dir) by delegating to `manager`; separately diagnose why FinanceGuru's session couldn't self-escalate its own permission mode.
+
+### What changed (and why)
+- FinanceGuru's session flagged `save-memory` hardcoding `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/` in three spots, correctly out-of-scope there since the skill's source lives here. Delegated the fix to `manager` rather than doing it by hand — first real cross-repo bug report routed to the delegate.
+- `manager` rewired all three hardcoded spots to resolve via the shared `find-transcript-dir.sh` lib (same one `research`/`refresh-manager-profile` use), bumped `save-memory` 0.2.0→0.2.1, ran `public-repo-guard` clean, landed via branch+PR (never self-merges). Reviewed and merged (`4475e6d`).
+
+### Decisions
+- FinanceGuru's `Blocked by classifier` errors (spawning `manager`, editing `settings.local.json`) traced to a real asymmetry: this repo's `autoMode.environment` profile names it as trusted, FinanceGuru's doesn't, and separately the classifier appears to hard-block a session from escalating its own permission mode when there's no human present to approve (background/agent-view session) — an interactive terminal doing the same toggle isn't gated. Advised the user to flip the mode from an actual interactive FinanceGuru session rather than try to route around the block. No repo change.
+
+### Issues / surprises
+- None new — both threads resolved cleanly.
+
+### Next session
+- All 3 desktop hosts still need a rebuild to pick up the PR #16 fix (stacks on the existing pending-switch pile — godot dev env, Tailscale MCP connector, 2026-08-25 flake bump, etc.).
+
+**Commits**: `4475e6d` (1 commit)
+
+---
+
 ## Session: 2026-08-30 (session 96) — global `manager` agent built, calibration-tested, merged as PR #15
 
 **Focus**: Build a global "manager" delegate agent that decides tasks the way the user would, backed by a profile mined from their own Claude Code history.
@@ -90,34 +111,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Nothing pending from this session.
 
 **Commits**: `599276f` (1 commit)
-
----
-
-## Session: 2026-08-25 (session 92) — Flake bump, 3 new skills, PR #12 merged, Tailscale MCP connector committed
-
-**Focus**: Close out a busy day spanning 6 sessions — flake maintenance, skill-suggestion sweep, weekly PR review, and Tailscale/pi-hole follow-up work.
-
-### What changed (and why)
-- `/flake-update-verify` bumped nixpkgs/home-manager/dms and pushed the lock-only commit (`c84892f`) after the mandatory eval-verified commit gate.
-- A `skill-suggestion`/`agent-suggestion` sweep shipped 3 new project-local skills via `ship-skill` — `pihole-api` (session-auth wrapper, retyped 6x by hand before this), `package-nix-tool` (external-tool packaging workflow, done twice before), `diagnose-hung-game` (Steam/Proton freeze runbook) — plus a real nullglob fix to `verify-service.sh`. Each smoke test caught and fixed a real live bug (see project-state.md for specifics).
-- `review-improve-system-pr`'s first real run against a live weekly PR: reviewed and merged PR #12 (5 self-verifiable skill fixes from the `improve-system` cloud routine).
-- Committed the already-built Tailscale MCP connector (`e8c183a`) — the connector itself was designed/packaged in an earlier session that day; this just shipped it.
-- Verified Tailscale/pi-hole health (all clean) and re-confirmed two already-tracked issues (natalie-laptop CIFS stall, pi-hole blocklist research) needed no new work.
-
-### Decisions
-- User declined bumping the 3 NixOS hosts' outdated Tailscale client for now ("skip for now") — not an oversight, a deliberate pass.
-- `package-nix-tool`'s smoke test deliberately only exercised the deterministic hash-resolution script, not a full end-to-end package build — judged too consequential for a smoke test.
-
-### Issues / surprises
-- Found a genuinely phantom skill: `save-memory` is listed as invocable in the roster but has no backing file anywhere (repo or `~/.claude`) — flagged for next session, not chased further.
-- Two stale memory notes corrected: `review-improve-system-pr` had "not yet run against a live PR" (now has, cleanly); `improve-system`'s "3rd run outcome UNCONFIRMED" was actually wrong — two real self-verifiable PRs (`443fb9a`, PR #12) have landed since the 2026-07-27 hardening.
-
-### Next session
-- gaming/laptop/natalie-laptop all need a rebuild to pick up the flake bump, the Tailscale MCP connector, `gemini-cli`'s removal, and PR #12's global-skill fixes — one reboot covers all of it.
-- Post-rebuild: live-verify the Tailscale MCP connector actually works from a real Claude Code session.
-- Investigate the phantom `save-memory` skill.
-
-**Commits**: `d3ea435..c84892f` (7 commits)
 
 ---
 

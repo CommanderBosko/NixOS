@@ -1,3 +1,31 @@
+## Session: 2026-08-25 (session 92) — Flake bump, 3 new skills, PR #12 merged, Tailscale MCP connector committed
+
+**Focus**: Close out a busy day spanning 6 sessions — flake maintenance, skill-suggestion sweep, weekly PR review, and Tailscale/pi-hole follow-up work.
+
+### What changed (and why)
+- `/flake-update-verify` bumped nixpkgs/home-manager/dms and pushed the lock-only commit (`c84892f`) after the mandatory eval-verified commit gate.
+- A `skill-suggestion`/`agent-suggestion` sweep shipped 3 new project-local skills via `ship-skill` — `pihole-api` (session-auth wrapper, retyped 6x by hand before this), `package-nix-tool` (external-tool packaging workflow, done twice before), `diagnose-hung-game` (Steam/Proton freeze runbook) — plus a real nullglob fix to `verify-service.sh`. Each smoke test caught and fixed a real live bug (see project-state.md for specifics).
+- `review-improve-system-pr`'s first real run against a live weekly PR: reviewed and merged PR #12 (5 self-verifiable skill fixes from the `improve-system` cloud routine).
+- Committed the already-built Tailscale MCP connector (`e8c183a`) — the connector itself was designed/packaged in an earlier session that day; this just shipped it.
+- Verified Tailscale/pi-hole health (all clean) and re-confirmed two already-tracked issues (natalie-laptop CIFS stall, pi-hole blocklist research) needed no new work.
+
+### Decisions
+- User declined bumping the 3 NixOS hosts' outdated Tailscale client for now ("skip for now") — not an oversight, a deliberate pass.
+- `package-nix-tool`'s smoke test deliberately only exercised the deterministic hash-resolution script, not a full end-to-end package build — judged too consequential for a smoke test.
+
+### Issues / surprises
+- Found a genuinely phantom skill: `save-memory` is listed as invocable in the roster but has no backing file anywhere (repo or `~/.claude`) — flagged for next session, not chased further.
+- Two stale memory notes corrected: `review-improve-system-pr` had "not yet run against a live PR" (now has, cleanly); `improve-system`'s "3rd run outcome UNCONFIRMED" was actually wrong — two real self-verifiable PRs (`443fb9a`, PR #12) have landed since the 2026-07-27 hardening.
+
+### Next session
+- gaming/laptop/natalie-laptop all need a rebuild to pick up the flake bump, the Tailscale MCP connector, `gemini-cli`'s removal, and PR #12's global-skill fixes — one reboot covers all of it.
+- Post-rebuild: live-verify the Tailscale MCP connector actually works from a real Claude Code session.
+- Investigate the phantom `save-memory` skill.
+
+**Commits**: `d3ea435..c84892f` (7 commits)
+
+---
+
 ## Session: 2026-08-24 (session 91) — Removed gemini-cli from all hosts and users
 
 **Focus**: Drop `gemini-cli` entirely — no longer in use.
