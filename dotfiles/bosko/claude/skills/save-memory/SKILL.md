@@ -2,7 +2,7 @@
 name: save-memory
 description: Triggers when user says "save a memory", "remember this", "write a memory", "save to memory", "add a memory", or "note this for next time". Writes one well-formed memory file (correct frontmatter + body) to the project memory dir and adds its one-line pointer to MEMORY.md.
 model: haiku
-version: 0.2.0
+version: 0.2.1
 ---
 
 # Save Memory
@@ -11,8 +11,16 @@ Persist a single fact as one memory file in this project's memory store, with va
 
 (Bucket: Utility — write one memory file plus its index line, every time.)
 
-Memory dir: `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/`
-Index file: `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/MEMORY.md`
+Memory dir: `<project-dir>/memory/`
+Index file: `<project-dir>/memory/MEMORY.md`
+
+`<project-dir>` is *this project's* Claude Code transcript directory, not a fixed one — this
+is a global skill and must resolve to whichever project actually invoked it. Resolve it with
+the shared lib script (the same one `research` and `refresh-manager-profile` use):
+
+```bash
+~/.claude/skills/lib/find-transcript-dir.sh   # prints ~/.claude/projects/<slug> for $PWD, or fails if none
+```
 
 ## Arguments
 
@@ -37,7 +45,7 @@ Do **not** save what the repo already records (code structure, past fixes, git h
 List the memory dir and read `MEMORY.md` to see if a file already covers this fact:
 
 ```bash
-ls /home/bosko/.claude/projects/-home-bosko-NixOS/memory/
+ls "$(~/.claude/skills/lib/find-transcript-dir.sh)/memory/"
 ```
 
 If one does, **update that file** instead of creating a duplicate. If a memory turns out to be wrong, delete it rather than stacking a contradicting one.
@@ -46,11 +54,11 @@ If one does, **update that file** instead of creating a duplicate. If a memory t
 
 Pick a short kebab-case `name` slug. The filename convention in this dir is `<type>_<slug>.md` (e.g. `project_vpn_setup.md`, `feedback_use_dry_run_skill.md`) — match the existing naming.
 
-Read `assets/memory-template.md` and write `<dir>/<type>_<slug>.md` from it, substituting `<kebab-case-slug>`, the `description`, the `type`, and the body. Drop the trailing HTML-comment block (it only documents the index line for Step 4). For feedback, follow the fact with a **Why:** line; for project, follow with **Why:** and **How to apply:** lines.
+Read `assets/memory-template.md` and write `<project-dir>/memory/<type>_<slug>.md` from it, substituting `<kebab-case-slug>`, the `description`, the `type`, and the body. Drop the trailing HTML-comment block (it only documents the index line for Step 4). For feedback, follow the fact with a **Why:** line; for project, follow with **Why:** and **How to apply:** lines.
 
 Fill the two metadata stamps so the file matches the shape the harness-written memories use (20/22 live files carry these — omitting them leaves the file inconsistent with the rest of the store):
 - **`node_type`** — always the literal `memory`.
-- **`originSessionId`** — the current session's UUID. Derive it from the transcript path: it's the basename (minus `.jsonl`) of the most-recently-modified file in `/home/bosko/.claude/projects/-home-bosko-NixOS/` — e.g. `ls -t /home/bosko/.claude/projects/-home-bosko-NixOS/*.jsonl | head -1`. If you genuinely can't resolve it, omit the line rather than writing a placeholder.
+- **`originSessionId`** — the current session's UUID. Derive it from the transcript path: it's the basename (minus `.jsonl`) of the most-recently-modified file in `<project-dir>` (the same directory resolved above) — e.g. `ls -t "$(~/.claude/skills/lib/find-transcript-dir.sh)"/*.jsonl | head -1`. If you genuinely can't resolve it, omit the line rather than writing a placeholder.
 
 Link liberally to related memories with `[[slug]]` — a link whose target doesn't exist yet is fine; it marks something worth writing later.
 
