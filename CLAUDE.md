@@ -61,7 +61,7 @@ nix flake update
 nh clean all --keep 3
 ```
 
-These are also available as shell aliases when running as bosko: `rebuild`, `dry-run`, `update`, `cleanup`.
+These are also available as shell aliases when running as bosko: `rebuild-boot`, `rebuild-switch`, `dry-run`, `update`, `cleanup`.
 
 ## Commit Style
 

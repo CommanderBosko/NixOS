@@ -41,11 +41,17 @@ in
           echo ""
           nh os boot ~/NixOS/. -H ${hostName} --dry
         '';
-        rebuild = ''
+        rebuild-boot = ''
           echo ""
           echo "Rebuilding your system"
           echo ""
           nh os boot ~/NixOS/. -H ${hostName}
+        '';
+        rebuild-switch = ''
+          echo ""
+          echo "Rebuilding your system"
+          echo ""
+          nh os switch ~/NixOS/. -H ${hostName}
         '';
         update = ''
           echo ""
