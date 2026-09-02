@@ -4,6 +4,27 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-02 (session 98) — rebuild-boot/rebuild-switch alias split; Meta+G launch-set fix
+
+**Focus**: Two small quality-of-life fixes on the gaming host — a shell alias split, and repairing/trimming the Meta+G app-launch keybind.
+
+### What changed (and why)
+- Added a `rebuild-switch` shell alias (`nh os switch`) alongside the existing one, renamed to `rebuild-boot` (was `rebuild`) to avoid confusion between the two apply modes. `modules/shell.nix` + `CLAUDE.md`'s alias list updated to match. Committed `dce0913`.
+- Meta+G was reported broken ("no longer opens Deezer"); live-testing showed it was never actually broken — `flatpak run dev.aunetx.deezer` just has a ~10s Electron cold-start and lands on a monitor (dell-3) easy to miss under the old bind's heavier load (kitty + 2× Zen + everything else at once). Fixed by trimming the launch set to what the user actually wanted: Steam, Vesktop, Lutris, Deezer, qBittorrent — dropping kitty and Zen. `dotfiles/common/configs/niri-config.kdl:387`, committed `a5fa6b1`.
+
+### Decisions
+- None beyond the fix itself — both were direct, unambiguous requests.
+
+### Issues / surprises
+- Meta+G's "broken" report was a false alarm caused by app-launch ordering/cold-start latency, not a real regression — worth remembering next time a multi-app spawn-sh bind gets blamed for one app "not opening."
+
+### Next session
+- All 3 niri hosts still need a rebuild/switch to pick up both fixes (no reboot needed for either) — stacks on the existing pending-switch pile (save-memory PR #16, godot dev env, Tailscale MCP connector, etc.).
+
+**Commits**: `dce0913`..`a5fa6b1` (2 commits)
+
+---
+
 ## Session: 2026-08-31 (session 97) — save-memory PR #16 merged via `manager`; auto-mode classifier root-caused for FinanceGuru
 
 **Focus**: Fix a cross-repo bug flagged by FinanceGuru (`save-memory` hardcoded NixOS's own memory dir) by delegating to `manager`; separately diagnose why FinanceGuru's session couldn't self-escalate its own permission mode.
@@ -89,28 +110,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - gaming/laptop/natalie-laptop still need a rebuild to actually get `godot4`/`dotnet` on PATH — stacks with the existing pending-switch pile (2026-08-25 flake bump, Tailscale MCP connector, and everything older).
 
 **Commits**: `9380a65..512561e` (3 commits)
-
----
-
-## Session: 2026-08-25 (session 93) — Fixed a real git-permission injection bug flagged by Claude Code's own startup warning
-
-**Focus**: Fix the wildcard-before-subcommand permission rules Claude Code's startup popup flagged, then audit the rest for the same shape.
-
-### What changed (and why)
-- Claude Code's own startup warning flagged `Bash(git -C * status)`/`Bash(git -C * log *)` in `.claude/settings.json` — the wildcard sat before the git subcommand, so an injected `-c`/`--exec-path` option could hide there and get auto-approved without a prompt. Found and fixed the same-shaped `Bash(git -C * diff*)` too, even though it wasn't in the popup.
-- Fix: hardcoded `/home/bosko/NixOS` (the only path these rules are ever actually used with, across every skill that calls `git -C`) instead of narrowing the wildcard — no injectable gap left before the subcommand.
-- Audited all three permission files (project `settings.json`/`settings.local.json`, global `~/.claude/settings.json`) for the same pattern — none found; every remaining wildcard is a safe trailing suffix.
-
-### Decisions
-- See project-state.md Recent Decisions for the full writeup.
-
-### Issues / surprises
-- None — clean fix, clean audit.
-
-### Next session
-- Nothing pending from this session.
-
-**Commits**: `599276f` (1 commit)
 
 ---
 

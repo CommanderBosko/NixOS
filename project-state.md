@@ -1,8 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-08-31 (session 97)_
+_Last updated: 2026-09-02 (session 98)_
 
 ## Current Project State
+
+**Two small quality-of-life fixes: `rebuild` alias split into `rebuild-boot`/`rebuild-switch`, and gaming's Meta+G launch set fixed/trimmed (2026-09-02, session 98).**
+- User asked for a new `rebuild-switch` shell alias (`nh os switch`) alongside the existing `rebuild`, and renamed `rebuild` → `rebuild-boot` to avoid confusion between the two apply modes. Edited `modules/shell.nix`'s `shellAliases` and updated `CLAUDE.md`'s Common Commands alias list to match. Committed `dce0913`. **Not yet live on any host** — needs a rebuild before the renamed/new aliases resolve in a fresh shell.
+- Separately, user reported Meta+G (gaming host) no longer opened Deezer and asked for the launch set to become Steam, Vesktop, Lutris, Deezer, qBittorrent. Live-tested first rather than guessing: the `flatpak run dev.aunetx.deezer` command was never actually broken — it opens fine, just with a ~10s Electron cold-start, landing on workspace "dell-3," easy to miss when it's buried under kitty + 2× Zen browser + everything else launching at once under the old heavier bind. Fix was narrowing the bind itself (kitty and Zen dropped, matching the new requested set) in the shared `dotfiles/common/configs/niri-config.kdl:387`. Verified via `nixos-dry-run` (clean, +7.1 KiB, `switch` recommended, no reboot needed). Committed `a5fa6b1`. Flagged to the user that this bind is shared across all 3 niri hosts — Steam/Lutris are gaming-only and will silently no-op on laptop/natalie-laptop. **Not yet applied to any host.**
 
 **`save-memory`'s per-project memory-dir bug fixed via the `manager` agent, PR #16 merged; separately, the auto-mode permission classifier was root-caused for a FinanceGuru session, no repo change (2026-08-31, session 97).**
 - FinanceGuru's own Claude session flagged (correctly, as out-of-scope there) that `save-memory` hardcoded `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/` in three places, so invoking it from any other project wrote memories into NixOS's own store instead of the caller's. Delegated the fix to the `manager` agent rather than doing it by hand — first real "bug report from a sibling repo, routed to `manager`" case. `manager` fixed all three hardcoded spots (dir/index line, Step 2's `ls`, Step 3's write path + `originSessionId`) to resolve via the shared `~/.claude/skills/lib/find-transcript-dir.sh` helper (same lib `research`/`refresh-manager-profile` already use), bumped `save-memory` 0.2.0→0.2.1, ran `public-repo-guard` clean, and landed via branch+PR (`fix/save-memory-project-dir`, commit `e864ae9`) per its never-self-merge rule. Reviewed the diff directly and merged (`4475e6d`). **Not yet live in any session** — needs `nh os boot` + rebuild, same as every other pending skill-source change below.
@@ -674,6 +678,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Current Goals
 
+- **All 3 niri hosts: rebuild to pick up the `rebuild-boot`/`rebuild-switch` alias split and the Meta+G launch-set fix** (session 98, `dce0913`+`a5fa6b1`) — both verified clean (dry-run/flake still evaluates); the niri fix needs no reboot (`switch` recommended), the alias rename just needs a fresh shell after activation. After rebuild, confirm Meta+G launches Steam/Vesktop/Lutris/Deezer/qBittorrent on gaming and that `rebuild-boot`/`rebuild-switch` both resolve. Can ride along with every other pending switch below.
 - **All 3 desktop hosts: rebuild to pick up `save-memory`'s PR #16 project-dir fix** (session 97, `4475e6d`) — pure `SKILL.md` text change (path resolution via `find-transcript-dir.sh`), no reboot needed. Can ride along with every other pending switch below.
 - **gaming/laptop/natalie-laptop: rebuild to pick up `development.nix` (godot-mono 4.7.2 + dotnet-sdk 8.0.424) now in `desktopModules`** (session 94, `c8290f5`+`512561e`) — verified clean via dry-run (gaming) + `shared-module-check` 4-host deep-eval. After rebuild, confirm `godot4` and `dotnet --version` both resolve on PATH. Can ride along with every other pending switch below.
 - **gaming/laptop/natalie-laptop: rebuild to pick up the 2026-08-25 flake bump (`c84892f`) and the Tailscale MCP connector (`e8c183a`)** (session 92) — both verified clean (flake-check + 4-host deep-eval); the connector needs its own post-rebuild live-verify per memory `project_tailscale_mcp_connector` (check `~/.claude.json`'s `.mcpServers.tailscale`, `/run/secrets/tailscale-mcp-env`, and a real tool call). Stacks on top of every other pending switch below — one reboot per host covers all of them.
@@ -898,6 +903,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **`rebuild-boot`/`rebuild-switch` alias split (`dce0913`) and Meta+G launch-set fix (`a5fa6b1`) not yet applied to any host** (session 98) — both verified clean; see Current Goals.
 - **`save-memory`'s PR #16 project-dir fix (`4475e6d`, session 97) not yet live in `~/.claude`** — repo-managed/symlinked `SKILL.md`, needs `nh os boot` + rebuild on all 3 desktop hosts before either this repo's or FinanceGuru's sessions pick up the fixed per-project path resolution.
 - **`development.nix` (godot-mono + dotnet-sdk) in `desktopModules` not yet applied to any host** (session 94, `c8290f5`+`512561e`) — reaches gaming/laptop/natalie-laptop for both users once switched; verified clean via dry-run + 4-host deep-eval. Stacks on the existing pending-switch pile below.
 - **2026-08-25 flake bump (`c84892f`) and Tailscale MCP connector (`e8c183a`) not yet applied to any host** (session 92) — nixpkgs/home-manager/dms all moved, connector fully packaged+secret-stored; both verified clean via flake-check + 4-host deep-eval. Stacks on the still-unapplied 2026-08-21 bump below — one reboot per host picks up both plus everything else pending.

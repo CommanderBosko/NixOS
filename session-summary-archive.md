@@ -1,3 +1,25 @@
+## Session: 2026-08-25 (session 93) — Fixed a real git-permission injection bug flagged by Claude Code's own startup warning
+
+**Focus**: Fix the wildcard-before-subcommand permission rules Claude Code's startup popup flagged, then audit the rest for the same shape.
+
+### What changed (and why)
+- Claude Code's own startup warning flagged `Bash(git -C * status)`/`Bash(git -C * log *)` in `.claude/settings.json` — the wildcard sat before the git subcommand, so an injected `-c`/`--exec-path` option could hide there and get auto-approved without a prompt. Found and fixed the same-shaped `Bash(git -C * diff*)` too, even though it wasn't in the popup.
+- Fix: hardcoded `/home/bosko/NixOS` (the only path these rules are ever actually used with, across every skill that calls `git -C`) instead of narrowing the wildcard — no injectable gap left before the subcommand.
+- Audited all three permission files (project `settings.json`/`settings.local.json`, global `~/.claude/settings.json`) for the same pattern — none found; every remaining wildcard is a safe trailing suffix.
+
+### Decisions
+- See project-state.md Recent Decisions for the full writeup.
+
+### Issues / surprises
+- None — clean fix, clean audit.
+
+### Next session
+- Nothing pending from this session.
+
+**Commits**: `599276f` (1 commit)
+
+---
+
 ## Session: 2026-08-25 (session 92) — Flake bump, 3 new skills, PR #12 merged, Tailscale MCP connector committed
 
 **Focus**: Close out a busy day spanning 6 sessions — flake maintenance, skill-suggestion sweep, weekly PR review, and Tailscale/pi-hole follow-up work.
