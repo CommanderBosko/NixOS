@@ -90,7 +90,7 @@ Changes written. Next steps:
    /nixos-dry-run
 
 2. If the dry-run looks good, commit:
-   /commit
+   /git-commit
 ```
 
 Do not rebuild. Do not stage files. Leave both of those to the user's own workflow.

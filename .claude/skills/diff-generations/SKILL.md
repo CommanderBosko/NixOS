@@ -49,7 +49,7 @@ If any changed package name contains `linux-`, `kernel`, or `initrd`, add:
 ## Script
 
 ```
-scripts/diff-generations.sh
+.claude/skills/diff-generations/scripts/diff-generations.sh
 ```
 
 ## Key facts

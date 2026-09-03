@@ -67,7 +67,7 @@ Use the Edit tool to insert the new line in the correct position. Do not rewrite
 After the edit is written, tell the user:
 
 1. Run `/nixos-dry-run` to preview the change before applying.
-2. Run `/commit` to commit the change.
+2. Run `/git-commit` to commit the change.
 
 Do not stage or commit — that is handled by the `/git-commit` skill.
 
@@ -78,6 +78,6 @@ Do not stage or commit — that is handled by the `/git-commit` skill.
 - Only the `"desktop": true` hosts in `.claude/hosts.json` (currently `gaming`, `laptop`, `natalie-laptop`) support Flatpak. Warn and stop if the user requests a headless host (`vpn-server`).
 - The entry format is a bare string with an inline comment — never an attrset.
 - 2-space indentation throughout the file (4 spaces total inside the list, matching the surrounding file style).
-- Do not stage or commit changes — leave that to `/commit`.
+- Do not stage or commit changes — leave that to `/git-commit`.
 - Do not add `origin = "flathub";` or any other attributes — the nix-flatpak module in this repo resolves origin from the plain string format automatically.
 - If the user wants to add the same app to multiple hosts, process each host's file in sequence, confirming each edit.

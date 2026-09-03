@@ -47,9 +47,10 @@ Invocation shape: `<topic>` or `<topic> <n>`.
 
 7. **Persist the findings to memory.** Once the report is posted, invoke the `save-memory` skill
    (via the `Skill` tool) to write or update one `reference`-type memory for this research topic —
-   `save-memory` is project-local (see Gotchas), so first confirm it's present in this project's
-   available-skills list; if it isn't, say plainly that no memory was saved for this project and move
-   on rather than silently skipping. Hand `save-memory` a single fact whose body covers, in one file:
+   `save-memory` is global/repo-managed, same as `research` itself (see Gotchas), but confirm it's
+   present in this project's available-skills list before invoking it (e.g. a machine that hasn't
+   rebuilt since it was added); if it isn't, say plainly that no memory was saved for this project and
+   move on rather than silently skipping. Hand `save-memory` a single fact whose body covers, in one file:
    - the consensus verdict (and any notable dissent) from Step 6;
    - the source list — one line per source with its link and takeaway;
    - a coverage note (n/m sources usable) and today's date as "Researched: YYYY-MM-DD";
@@ -76,4 +77,4 @@ Invocation shape: `<topic>` or `<topic> <n>`.
 
 - **What went wrong:** Step 5's "wait for all sub-agents to report back" was read as "actively poll for completion," leading to three consecutive malformed `ScheduleWakeup` calls in one session (missing `prompt`, then missing `delaySeconds`/`reason`) before giving up on it.
 - **How to avoid it:** don't call `ScheduleWakeup` to wait on sub-agents spawned via the `Agent` tool — that work is harness-tracked, so a completion notification arrives automatically as a later turn without any polling call. Just let the turn end after spawning; there is nothing to schedule.
-- **`save-memory` isn't available in every project** — it's a project-local skill (currently only shipped in this NixOS repo's `.claude/skills/`), unlike `research` itself which is global. Step 7 must check the available-skills list before invoking it, not assume it exists just because `research` does.
+- **`save-memory` isn't guaranteed available in every project** — it's global/repo-managed (symlinked into `~/.claude/skills/save-memory` via `bosko-claude.nix`'s `home.file`, from `dotfiles/bosko/claude/skills/save-memory`), the same mechanism as `research` itself, not a project-local skill. But a repo-managed skill only reaches `~/.claude` after a rebuild, so on a machine that hasn't rebuilt since it was added (or a non-Home-Manager machine) it may still be missing. Step 7 must check the available-skills list before invoking it, not assume it exists just because `research` does.
