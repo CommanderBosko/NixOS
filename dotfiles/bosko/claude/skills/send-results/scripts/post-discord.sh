@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
-# Posts a short summary + a file:// link back to a local file, to a Discord
-# channel via an incoming webhook. Generic, minimal, stable contract -- any
-# current or future skill can call this with just a file path and a summary
-# string; it doesn't need to know or care who's calling it.
+# Posts a short summary + a link to a Discord channel via an incoming
+# webhook. Generic, minimal, stable contract -- any current or future skill
+# can call this with just a URL and a summary string; it doesn't need to
+# know or care who's calling it or how the URL was built.
 #
-# Usage: post-discord.sh <file-path> <summary...>
-#   file-path   absolute (or resolvable) path to the file being reported on.
-#               Must exist -- this is a link back to a real artifact, not a
-#               free-floating message.
-#   summary     everything after the first argument, joined with spaces.
-#               Free text; gets truncated with a note if it would blow past
-#               Discord's message length cap.
+# Usage: post-discord.sh <url> <summary...>
+#   url       any link -- send-results builds this by publishing the
+#             reported file as a Claude Artifact first (see SKILL.md; a
+#             prior version of this script built a file:// link directly,
+#             but Discord never renders that scheme as clickable, on any
+#             device -- confirmed 2026-09-04, not fixable via payload
+#             formatting, see the SKILL.md Gotchas entry before reverting).
+#   summary   everything after the first argument, joined with spaces.
+#             Free text; gets truncated with a note if it would blow past
+#             Discord's message length cap.
 #
 # Reads the webhook URL from the sops-nix-managed secret at
 # /run/secrets/discord-webhook-url (see send-results's SKILL.md Setup section
 # for how that secret gets provisioned -- it involves a human creating a
 # real Discord webhook, which this script cannot do for you). Exits non-zero
-# with a clear, actionable message if the secret isn't there yet, if the
-# target file doesn't exist, or if the POST itself fails.
-#
-# The file:// link only resolves when clicked from the same machine that ran
-# this script -- accepted limitation, not a bug (see SKILL.md).
+# with a clear, actionable message if the secret isn't there yet, or if the
+# POST itself fails.
 set -uo pipefail
 
 SECRET_PATH="/run/secrets/discord-webhook-url"
 
 if [ "$#" -lt 2 ]; then
-  echo "usage: post-discord.sh <file-path> <summary...>" >&2
+  echo "usage: post-discord.sh <url> <summary...>" >&2
   exit 1
 fi
 
-FILE_PATH="$1"
+LINK="$1"
 shift
 SUMMARY="$*"
 
@@ -53,22 +53,13 @@ if [ -z "$WEBHOOK_URL" ]; then
   exit 1
 fi
 
-if [ ! -e "$FILE_PATH" ]; then
-  echo "File not found: $FILE_PATH" >&2
-  exit 1
-fi
-
-ABS_PATH="$(readlink -f -- "$FILE_PATH" 2>/dev/null)"
-[ -z "$ABS_PATH" ] && ABS_PATH="$FILE_PATH"
-FILE_URL="file://$ABS_PATH"
-
 # Discord's message content cap is 2000 chars; leave headroom for the link line.
 MAX_SUMMARY=1800
 if [ "${#SUMMARY}" -gt "$MAX_SUMMARY" ]; then
   SUMMARY="${SUMMARY:0:$MAX_SUMMARY}... (truncated)"
 fi
 
-CONTENT="$(printf '%s\n\n📄 %s' "$SUMMARY" "$FILE_URL")"
+CONTENT="$(printf '%s\n\n📄 %s' "$SUMMARY" "$LINK")"
 
 PAYLOAD="$(python3 -c '
 import json, sys
