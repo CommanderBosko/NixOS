@@ -31,4 +31,14 @@
     sopsFile = ../secrets/common.yaml;
     owner = "bosko";
   };
+
+  # Discord webhook URL for the send-results Claude Code skill (bosko-only,
+  # wired in dotfiles/bosko/claude/skills/send-results). owner=bosko so the
+  # skill's script can read it without root. The secret value itself is
+  # added by the user directly (never by an agent) via add-secret's
+  # sops-secret.sh -- see send-results/SKILL.md's Setup section.
+  sops.secrets."discord-webhook-url" = {
+    sopsFile = ../secrets/common.yaml;
+    owner = "bosko";
+  };
 }
