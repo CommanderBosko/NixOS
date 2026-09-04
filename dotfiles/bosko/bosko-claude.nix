@@ -148,6 +148,32 @@
       source = "${self}/dotfiles/bosko/claude/skills/refresh-manager-profile/SKILL.md";
       force = true;
     };
+    # Dream suite (long-term-memory improvement orchestration), 4 skills:
+    # session-analysis (cross-project transcript mining, mode-dispatched) →
+    # improve-memory (reconcile against real memory + CLAUDE.md files) →
+    # send-results (generic Discord-webhook reporting, any skill can call it)
+    # → dream (orchestrator + run log). All recursive dir symlinks: each
+    # covers SKILL.md + scripts/ (improve-memory also has assets/).
+    ".claude/skills/session-analysis" = {
+      source = "${self}/dotfiles/bosko/claude/skills/session-analysis";
+      recursive = true;
+      force = true;
+    };
+    ".claude/skills/improve-memory" = {
+      source = "${self}/dotfiles/bosko/claude/skills/improve-memory";
+      recursive = true;
+      force = true;
+    };
+    ".claude/skills/send-results" = {
+      source = "${self}/dotfiles/bosko/claude/skills/send-results";
+      recursive = true;
+      force = true;
+    };
+    ".claude/skills/dream" = {
+      source = "${self}/dotfiles/bosko/claude/skills/dream";
+      recursive = true;
+      force = true;
+    };
     # Custom subagents (.claude/agents/*.md) — auto-discovered by the Agent tool,
     # no further registration needed beyond the symlink. Both are fan-out units
     # for existing skills' parallel sub-agent spawns (research, skill-audit).
