@@ -1,11 +1,11 @@
 ---
 name: improve-system
-description: One command to upgrade the whole Claude ecosystem — chains skill-upgrade, skill-suggestion, agent-suggestion, claude-rules, skill-audit, and fewer-permission-prompts into a single pass, auto-applying low-risk additive fixes and confirming structural ones. Use when the user says "improve-system", "/improve-system", "upgrade my Claude setup", "improve my system", "tune up my skills", or "run a Claude ecosystem sweep".
+description: One command to upgrade the whole Claude ecosystem — chains skill-upgrade, skill-suggestion, agent-suggestion, claude-rules, skill-audit, and fewer-permission-prompts into a single pass, auto-applying low-risk additive fixes and confirming structural ones, then reports the consolidated summary to Discord via send-results. Use when the user says "improve-system", "/improve-system", "upgrade my Claude setup", "improve my system", "tune up my skills", or "run a Claude ecosystem sweep".
 ---
 
 # Improve System
 
-A single orchestrator that runs your six Claude-ecosystem maintenance skills in one pass and leaves the setup healthier than it found it. It **coordinates** the underlying skills — it does not reimplement them, so each stays independently runnable and there is no logic drift.
+A single orchestrator that runs your six Claude-ecosystem maintenance skills in one pass, leaves the setup healthier than it found it, and reports the outcome to Discord. It **coordinates** the underlying skills — it does not reimplement them, so each stays independently runnable and there is no logic drift.
 
 (Bucket: Orchestration — its job is to sequence and gate other skills, not to do their work. Invoke each sub-skill via the Skill tool; never copy its steps inline.)
 
@@ -59,9 +59,20 @@ Several of these skills edit **repo-managed global skills** under `dotfiles/bosk
 - Remind the user that repo-managed skill/agent edits only reach `~/.claude` after `nh os boot /home/bosko/NixOS` **and a reboot** (it only stages the change for next boot — there's no live `nh os switch` in the normal flow here). No new session is needed beyond that — the symlink resolves in the same running session as soon as it's updated, since skill/agent discovery reads from disk per-invocation.
 - A brand-new skill or agent also needs its `home.file` symlink entry added to `dotfiles/bosko/bosko-claude.nix` before the rebuild.
 
+## Step 5 — Report to Discord
+
+Always runs, even on a focus-argument partial pass and even when every step came back clean — a clean pass is a result worth reporting, not a reason to skip the notification.
+
+1. Write the Step 3 consolidated report (applied / awaiting-your-call / clean), plus Step 4's certify status if it ran, to `~/.claude/improve-system/report-<ts>.md` (`<ts>` = `date +%Y%m%d-%H%M%S`; create the directory if it doesn't exist). This is the same content already shown in chat — just captured to a file so `send-results` has something to publish.
+2. Hand it off:
+   ```
+   Skill send-results: <report-file> "<one-line summary: N low-risk fixes applied, M structural items awaiting approval, rest clean>"
+   ```
+3. If `send-results` fails (e.g. the Discord webhook secret isn't configured — see its own Setup section), report that plainly to the user — a failed notification is not the same as a failed sweep, but don't let it pass silently.
+
 ## Arguments
 
-Optional focus argument in the user's phrasing — e.g. "improve-system, skills only" or "improve-system, just permissions". If given, run only the matching sub-skills — **skills-only** = `skill-upgrade` + `skill-suggestion` + `agent-suggestion` + `skill-audit` (plus Step 4's certify/remind); **permissions** = `fewer-permission-prompts`; **rules** = `claude-rules`. With no argument, run all six.
+Optional focus argument in the user's phrasing — e.g. "improve-system, skills only" or "improve-system, just permissions". If given, run only the matching sub-skills — **skills-only** = `skill-upgrade` + `skill-suggestion` + `agent-suggestion` + `skill-audit` (plus Step 4's certify/remind); **permissions** = `fewer-permission-prompts`; **rules** = `claude-rules`. With no argument, run all six. Step 5 (Discord report) still runs regardless of focus scope.
 
 ## Gotchas
 
@@ -71,3 +82,4 @@ Optional focus argument in the user's phrasing — e.g. "improve-system, skills 
 - **This skill is itself repo-managed.** It must be in `bosko-claude.nix`'s `home.file` list and rebuilt before its `~/.claude/skills/improve-system` symlink appears.
 - **`fewer-permission-prompts` (Step 2, item 6) has emitted invalid `settings.json`.** Observed across past sessions: it wrote permission entries with empty parentheses (e.g. `Bash()`), which fail Claude Code settings validation (`permissions.deny.N: Empty parentheses`), and it shelled out to `jq`/`python3` that returned `command not found` on this host. When orchestrating this step, auto-apply only concrete non-empty `permissions.allow` strings, drop any empty-paren entry before writing, and don't assume `jq` is on PATH.
 - **A "nothing to act on" verdict must be earned by actually checking the logs, not inferred from context.** Asked in passing whether a pass was worth running, a prior response guessed "session was small, no friction" purely from what was still visible in the conversation, without invoking `skill-upgrade`'s transcript-grep step (`~/.claude/projects/<slug>/*.jsonl`) — it read as a real assessment but wasn't one. A "no work needed" conclusion is a perfectly fine outcome, but it must always follow from actually running that check first — never state a verdict, even offhand, as if the check happened when it didn't.
+- **`send-results` publishes the report as a Claude Artifact, which leaves the local machine.** Same trade-off `send-results` itself documents — the consolidated report (skill names, file paths, proposed changes) becomes a shareable `https://` link, starting private but cacheable once shared. That's expected for this step, not a bug; don't route Step 5 through anything else to avoid it.
