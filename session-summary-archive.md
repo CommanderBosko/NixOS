@@ -1,3 +1,25 @@
+## Session: 2026-08-27 (session 94) — Godot 4 dev environment for Legions, promoted to a shared desktopModules module
+
+**Focus**: Add a durable godot-mono/dotnet-sdk dev environment for the Legions game project, then right-size its scope as requirements clarified.
+
+### What changed (and why)
+- Added `godot-mono` (4.7.2-stable, C#-enabled build) and `dotnet-sdk` (8.0.424) for game dev — first to gaming+laptop's `environment.nix` directly, then extracted into `modules/development.nix` (imported per-host, like `nvidia.nix`) once the user asked whether the resulting duplication was worth fixing.
+- User then said natty might develop too and asked to centralize dev tooling for all desktop users — promoted `development.nix` into `desktopModules` so it reaches gaming/laptop/natalie-laptop for both users, removing the two now-redundant per-host imports. Updated `CLAUDE.md`'s `desktopModules` bullet to match.
+- Separately, `repo-creator` (commit `9380a65`, the evening before) gained a required visibility argument — asks via `AskUserQuestion` with no default instead of silently defaulting to `--public`.
+
+### Decisions
+- See project-state.md Recent Decisions for the full writeup — the key one: scoped `development.nix` by *who needs it*, not by "is this a dev tool," and explicitly declined sweeping bosko-personal (`claude-code`/`mcp-nixos`/etc.) or already-universal (`kate`/`kitty`/etc.) packages into it even when asked to reconsider.
+
+### Issues / surprises
+- None — both refactors verified byte-identical package diffs before/after via dry-run + `shared-module-check`'s 4-host deep-eval.
+
+### Next session
+- gaming/laptop/natalie-laptop still need a rebuild to actually get `godot4`/`dotnet` on PATH — stacks with the existing pending-switch pile (2026-08-25 flake bump, Tailscale MCP connector, and everything older).
+
+**Commits**: `9380a65..512561e` (3 commits)
+
+---
+
 ## Session: 2026-08-25 (session 93) — Fixed a real git-permission injection bug flagged by Claude Code's own startup warning
 
 **Focus**: Fix the wildcard-before-subcommand permission rules Claude Code's startup popup flagged, then audit the rest for the same shape.
