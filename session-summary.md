@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-05 (session 101) — improve-system via manager agent (PR #18), guardrail-flagged files reviewed and merged, secret-scan scope fix
+
+**Focus**: Run the weekly `improve-system` sweep via the `manager` agent, review and merge its PR, and fix `session-closer`'s secret-scan step to cover everything committed since its own last run instead of just the README.
+
+### What changed (and why)
+- **`session-closer`'s STEP 5B rescoped** (`c002816`) — `secret-scan` already unconditionally scans the whole tree + full git history; the skill's own framing undersold that as README-only. Split into its own step, explicitly scoped to everything committed since `session-closer`'s last run.
+- **`manager` agent ran `/improve-system` end-to-end, opened PR #18, merged as `dd2f534`** — 2 skill-upgrade Gotchas, a real `shared-module-check` correctness bug fixed (missed a module wired directly into 2+ hosts' own lists, not just `commonModules`/`desktopModules`) via new shared `.claude/lib/classify-shared-file.sh`, a new project-local `ship-nix-change` skill (verify-chain + commit/push) smoke-tested by using it for the PR's own commit, 7 read-only permission entries, and several doc-staleness fixes. Declined a new custom agent and a `pr-merge-sync` skill (neither cleared the reuse bar).
+- An earlier same-day manual `/improve-system` walkthrough was interrupted mid-Step-1 in favor of delegating the whole run to `manager` instead — no commit resulted.
+
+### Decisions
+- Merged PR #18 despite `review-improve-system-pr`'s guardrail flagging 2 files (`classify-shared-file.sh`, `settings.json`) as outside its strict skill-dir boundary — reviewed both directly, content matched the PR body and fixed a real bug, no `.nix` touched. Guardrail did its job surfacing the crossing; content review is what cleared it.
+
+### Issues / surprises
+- None this session — no code-quality or tool misfires surfaced worth a skill-upgrade Gotcha.
+
+### Next session
+- All 3 desktop hosts: rebuild+reboot to bring PR #18's repo-managed `dotfiles/bosko/claude/skills/*` fixes live in `~/.claude` (project-local parts already live).
+- laptop/natalie-laptop still carry the whole session-92-through-100 backlog untouched.
+
+**Commits**: `c002816..dd2f534` (2 commits)
+
+---
+
 ## Session: 2026-09-04 (session 100) — hplip/flatpak boot fixes, improve-system Discord step, gaming reboot confirmed live
 
 **Focus**: Root-cause a broken gaming dry-run and a boot-time flatpak failure surfaced by `/boot-error-triage`, add a Discord report step to `improve-system`, then close out by verifying (not assuming) how much of session 99's backlog gaming's earlier reboot actually picked up.
@@ -95,29 +118,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - All 3 desktop hosts still need a rebuild to pick up the PR #16 fix (stacks on the existing pending-switch pile — godot dev env, Tailscale MCP connector, 2026-08-25 flake bump, etc.).
 
 **Commits**: `4475e6d` (1 commit)
-
----
-
-## Session: 2026-08-30 (session 96) — global `manager` agent built, calibration-tested, merged as PR #15
-
-**Focus**: Build a global "manager" delegate agent that decides tasks the way the user would, backed by a profile mined from their own Claude Code history.
-
-### What changed (and why)
-- Built `manager`, a global agent that decides delegated tasks the way this user would ("the smartest call, not necessarily the easiest") instead of interviewing at each step, plus `manager-profile.md` — mined via 12 parallel `transcript-scanner` agents across every project with Claude Code history, not just this one.
-- Ships in supervised training mode by default, six hard limits that always require confirmation (no data destruction/force-push, no touching secrets, no spending money, no direct privileged/live-system execution, no pushing straight to `main`, no mutating MCP calls), lands only via branch+PR.
-- New skill `refresh-manager-profile` re-mines transcripts incrementally on demand.
-
-### Decisions
-- The mined profile needed the user's own explicit sign-off before its first push — a standing rule baked into the profile itself, since it steers future unsupervised decisions.
-- `manager`'s `AskUserQuestion` fallback codified as "stop completely, never trust relayed consent" rather than assuming the tool is always reachable — see Issues below.
-
-### Issues / surprises
-- Live calibration test (synthetic sandbox repo, deleted after) found `AskUserQuestion` isn't available to `manager` when spawned as a background subagent — only an interactive main-session turn has it. The sandbox also had no `main` ref, so the "never push directly to a default branch" hard limit was live from the start; `manager` refused three escalating relay-consent attempts and only proceeded once the repo state became independently checkable. User graded this "exactly right, keep it this strict." Codified same-session (commit `c863102`).
-
-### Next session
-- None — fully live, `nh os switch` already applied, PR #15 squash-merged, CI green.
-
-**Commits**: `b56533e` (1 commit, 2 sub-commits squashed)
 
 ---
 
