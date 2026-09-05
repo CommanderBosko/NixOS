@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-05 (session 102) — Deezer boot-race stagger fix, Steam dropdown-menu bug root-caused (upstream, no fix)
+
+**Focus**: Fix a real Mod+G bug on gaming (Deezer silently losing its launch race) and investigate a separate Steam UI bug (dropdown menus flashing under niri).
+
+### What changed (and why)
+- **`Mod+G`'s Deezer flatpak leg delayed 3s** (`fcb2cc5`) — `flatpak run dev.aunetx.deezer` left zero trace anywhere in the logs at the exact Mod+G keypress, while all 4 native-binary legs (Steam, Vesktop, Lutris, qBittorrent) succeeded normally; re-running the same command manually worked fine, pointing to a boot-time CPU-contention race (Steam's updater + 3 other apps forking at once) rather than a broken command. Delayed the flatpak leg so it launches after that initial burst clears.
+
+### Decisions
+- **Steam's dropdown-menu flash/vanish bug is a known open upstream issue** (`xwayland-satellite#156`), not fixable from this repo. Checked the release history before considering a version pin — gaming's 0.8.2 is already the newest release and every release since the issue was filed shipped popup fixes without closing it, so a pin would only be a downgrade. Tried the niri-wiki GPU-rendering toggle (wrong fix — that's documented for a different, unrelated "black window" bug) and suggested untested next steps (`-system-composer` flag, keyboard-only menu nav, Big Picture Mode).
+- **User declined a scheduled cloud routine to watch the GitHub issue for a close/fix** — no routine created; revisit manually.
+
+### Issues / surprises
+- None worth a skill-upgrade Gotcha this session.
+
+### Next session
+- **gaming: rebuild (switch)** to apply the Deezer stagger fix, then confirm via a real Mod+G press.
+- Steam dropdown bug has no fix pending — check `xwayland-satellite#156` manually next time it comes up.
+- Secret-scan: ran via existing `secret-scan` skill, clean.
+
+**Commits**: `fcb2cc5` (1 commit)
+
+---
+
 ## Session: 2026-09-05 (session 101) — improve-system via manager agent (PR #18), guardrail-flagged files reviewed and merged, secret-scan scope fix
 
 **Focus**: Run the weekly `improve-system` sweep via the `manager` agent, review and merge its PR, and fix `session-closer`'s secret-scan step to cover everything committed since its own last run instead of just the README.
@@ -97,27 +120,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - All 3 niri hosts still need a rebuild/switch to pick up both fixes (no reboot needed for either) — stacks on the existing pending-switch pile (save-memory PR #16, godot dev env, Tailscale MCP connector, etc.).
 
 **Commits**: `dce0913`..`a5fa6b1` (2 commits)
-
----
-
-## Session: 2026-08-31 (session 97) — save-memory PR #16 merged via `manager`; auto-mode classifier root-caused for FinanceGuru
-
-**Focus**: Fix a cross-repo bug flagged by FinanceGuru (`save-memory` hardcoded NixOS's own memory dir) by delegating to `manager`; separately diagnose why FinanceGuru's session couldn't self-escalate its own permission mode.
-
-### What changed (and why)
-- FinanceGuru's session flagged `save-memory` hardcoding `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/` in three spots, correctly out-of-scope there since the skill's source lives here. Delegated the fix to `manager` rather than doing it by hand — first real cross-repo bug report routed to the delegate.
-- `manager` rewired all three hardcoded spots to resolve via the shared `find-transcript-dir.sh` lib (same one `research`/`refresh-manager-profile` use), bumped `save-memory` 0.2.0→0.2.1, ran `public-repo-guard` clean, landed via branch+PR (never self-merges). Reviewed and merged (`4475e6d`).
-
-### Decisions
-- FinanceGuru's `Blocked by classifier` errors (spawning `manager`, editing `settings.local.json`) traced to a real asymmetry: this repo's `autoMode.environment` profile names it as trusted, FinanceGuru's doesn't, and separately the classifier appears to hard-block a session from escalating its own permission mode when there's no human present to approve (background/agent-view session) — an interactive terminal doing the same toggle isn't gated. Advised the user to flip the mode from an actual interactive FinanceGuru session rather than try to route around the block. No repo change.
-
-### Issues / surprises
-- None new — both threads resolved cleanly.
-
-### Next session
-- All 3 desktop hosts still need a rebuild to pick up the PR #16 fix (stacks on the existing pending-switch pile — godot dev env, Tailscale MCP connector, 2026-08-25 flake bump, etc.).
-
-**Commits**: `4475e6d` (1 commit)
 
 ---
 

@@ -1,3 +1,24 @@
+## Session: 2026-08-31 (session 97) — save-memory PR #16 merged via `manager`; auto-mode classifier root-caused for FinanceGuru
+
+**Focus**: Fix a cross-repo bug flagged by FinanceGuru (`save-memory` hardcoded NixOS's own memory dir) by delegating to `manager`; separately diagnose why FinanceGuru's session couldn't self-escalate its own permission mode.
+
+### What changed (and why)
+- FinanceGuru's session flagged `save-memory` hardcoding `/home/bosko/.claude/projects/-home-bosko-NixOS/memory/` in three spots, correctly out-of-scope there since the skill's source lives here. Delegated the fix to `manager` rather than doing it by hand — first real cross-repo bug report routed to the delegate.
+- `manager` rewired all three hardcoded spots to resolve via the shared `find-transcript-dir.sh` lib (same one `research`/`refresh-manager-profile` use), bumped `save-memory` 0.2.0→0.2.1, ran `public-repo-guard` clean, landed via branch+PR (never self-merges). Reviewed and merged (`4475e6d`).
+
+### Decisions
+- FinanceGuru's `Blocked by classifier` errors (spawning `manager`, editing `settings.local.json`) traced to a real asymmetry: this repo's `autoMode.environment` profile names it as trusted, FinanceGuru's doesn't, and separately the classifier appears to hard-block a session from escalating its own permission mode when there's no human present to approve (background/agent-view session) — an interactive terminal doing the same toggle isn't gated. Advised the user to flip the mode from an actual interactive FinanceGuru session rather than try to route around the block. No repo change.
+
+### Issues / surprises
+- None new — both threads resolved cleanly.
+
+### Next session
+- All 3 desktop hosts still need a rebuild to pick up the PR #16 fix (stacks on the existing pending-switch pile — godot dev env, Tailscale MCP connector, 2026-08-25 flake bump, etc.).
+
+**Commits**: `4475e6d` (1 commit)
+
+---
+
 ## Session: 2026-08-30 (session 96) — global `manager` agent built, calibration-tested, merged as PR #15
 
 **Focus**: Build a global "manager" delegate agent that decides tasks the way the user would, backed by a profile mined from their own Claude Code history.

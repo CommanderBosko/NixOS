@@ -1,8 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-09-05 (session 101)_
+_Last updated: 2026-09-05 (session 102)_
 
 ## Current Project State
+
+**Gaming's Mod+G Deezer-flatpak boot-race fixed; separately root-caused (not fixed) a Steam dropdown-menu bug under niri + xwayland-satellite — upstream, watcher declined (2026-09-05, session 102).**
+- **`flatpak run dev.aunetx.deezer` was silently losing its Mod+G launch race on a cold-booted gaming session** — user reported Meta+G not starting Deezer again. All 4 native-binary legs (Steam, Vesktop, Lutris, qBittorrent) left systemd/journald traces from the exact keypress; Deezer's flatpak leg left zero trace anywhere — no scope, no error. Manually re-running the identical `spawn-sh` command line worked cleanly, confirming Deezer itself is fine; the difference was timing, ~22s after niri start, contending with Steam's updater and three other apps forking at once. Fixed by delaying the flatpak leg 3s (`(sleep 3; flatpak run dev.aunetx.deezer) &`) so it launches after the initial CPU burst clears, in the shared `dotfiles/common/configs/niri-config.kdl:387`. Committed `fcb2cc5`. **Not yet applied to any host** — real proof needs a rebuild + live Mod+G press on gaming.
+- **Steam's File/Store/Library/Community dropdown menus flash and vanish under niri** — root-caused to a known, open upstream bug in `xwayland-satellite` ([`Supreeeme/xwayland-satellite#156`](https://github.com/Supreeeme/xwayland-satellite/issues/156)): those menus are XWayland override-redirect popups that xwayland-satellite mishandles positioning/mapping for under niri. Confirmed gaming's version (0.8.2, via nixpkgs-unstable) is already the newest release and every release since the issue was filed shipped popup-detection fixes without closing it — checked the release history directly before suggesting anything, since a version pin was floated and would have been a straight downgrade for zero benefit. Tried the niri-wiki-documented CEF GPU-rendering toggle (didn't help — that fix is documented for a *different* bug, the "black Steam window" one) and suggested `steam -system-composer` / keyboard-only menu nav / Big Picture Mode as untested next steps. **User declined a scheduled cloud routine to watch the issue for a close/fix** — no routine created; check back on `#156` manually whenever asked. Not fixable from this repo's config.
 
 **Weekly `improve-system` run via the `manager` agent landed PR #18 (9 skill fixes, a new `ship-nix-change` skill, and a real `shared-module-check` correctness-bug fix); reviewed and merged despite two guardrail-flagged files; `session-closer`'s secret-scan step re-scoped to the whole tracked-since-last-close range (2026-09-04/05, session 101).**
 - **An earlier same-day manual `/improve-system` walkthrough was interrupted mid-Step-1 by the user**, who chose to delegate the whole run to the `manager` agent instead rather than continue by hand — no commit resulted from the interrupted attempt.
@@ -700,6 +704,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Current Goals
 
+- **gaming: rebuild (switch, no reboot needed) to apply the Mod+G Deezer stagger fix** (session 102, `fcb2cc5`) — after switching, confirm Deezer now opens alongside Steam/Vesktop/Lutris/qBittorrent on a real Mod+G press from a cold-booted session. Shared dotfile, so laptop/natalie-laptop pick it up too on their own next rebuild (Deezer/Steam/Lutris are gaming-only apps, harmless no-op elsewhere).
+- **Steam dropdown-menu bug (xwayland-satellite#156) has no fix yet — check back manually, no automated watcher exists** (session 102) — user declined a scheduled routine; next time it's touched, try `steam -system-composer` (untested) or just re-check the upstream issue.
 - **All 3 desktop hosts: rebuild+reboot to pick up PR #18's repo-managed skill fixes** (session 101, `dd2f534`) — `dotfiles/bosko/claude/skills/{agent-suggestion,dream,improve-memory,refresh-manager-profile,session-analysis,skill-upgrade}` are symlinked-global and need it; the project-local `ship-nix-change`/`shared-module-check`/`nix-repl`/`.claude/settings.json` changes in the same PR are already live. Can ride along with every other pending switch below.
 - **gaming: DONE (session 100)** — the 20:44 2026-09-04 reboot (confirmed via `who -b`) picked up the entire backlog below down through session 92's items; live-verified directly (skill symlinks, `gemini-cli` absence, `dotnet --version`) rather than assumed. **The `godot4`/`dotnet --version` verification criterion in session 94's item below is corrected: the resolving binary is `godot4-mono`/`godot-mono`, not `godot4`.** laptop/natalie-laptop still need their own rebuild+reboot to pick up everything through session 92 (each bullet below still applies to those two hosts).
 - **gaming: reboot pending to activate the hplip drop + flatpak `network-online.target` ordering fix** (session 100, `ae3b40b`+`cfb8caa`) — both already `nh os boot`-staged (confirmed via direct store inspection), just needs the actual reboot. laptop/natalie-laptop pick up the flatpak fix (shared `modules/desktop-apps.nix`) on their next rebuild too; hplip's removal is fleet-wide (shared `modules/printing.nix`) as well.
@@ -938,6 +944,8 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **gaming's Mod+G Deezer stagger fix (`fcb2cc5`, session 102) not yet applied to any host** — shared niri config, `switch` recommended (no reboot needed); see Current Goals.
+- **Steam dropdown menus (File/Store/Library/Community) flash and disappear under niri on gaming — upstream bug, no fix available** (session 102) — root-caused to open `xwayland-satellite` issue [`#156`](https://github.com/Supreeeme/xwayland-satellite/issues/156); gaming already runs the newest release (0.8.2) and a version pin would be a straight downgrade. Not fixable from this repo. User declined a scheduled watcher routine; see Current Goals.
 - **PR #18's repo-managed skill fixes (`dd2f534`, session 101) not yet live in `~/.claude`** — `dotfiles/bosko/claude/skills/{agent-suggestion,dream,improve-memory,refresh-manager-profile,session-analysis,skill-upgrade}` need `nh os boot` + reboot; see Current Goals. The project-local skill/lib/permission changes in the same PR are already live.
 - **gaming: hplip drop + flatpak `network-online.target` fix are `nh os boot`-staged but not yet rebooted** (session 100, `ae3b40b`+`cfb8caa`) — confirmed staged via direct store inspection; see Current Goals. laptop/natalie-laptop haven't picked up either fix yet (both touch shared modules).
 - **`improve-system`'s new Discord-report Step 5 (`92e6075`, session 100) not yet live in `~/.claude`** — repo-managed/symlinked `SKILL.md`, needs its own `nh os boot` + rebuild (not included in gaming's currently-staged generation).
@@ -1006,6 +1014,10 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 102 next steps** (see Current Goals for full detail):
+1. **gaming: rebuild (switch)** to apply the Mod+G Deezer stagger fix, then confirm Deezer opens alongside the other 4 apps on a real Mod+G press.
+2. Steam dropdown-menu bug — no fix pending, check back on `xwayland-satellite#156` manually next time it's touched.
 
 **Session 101 next steps** (see Current Goals for full detail):
 1. **All 3 desktop hosts: rebuild+reboot** to bring PR #18's repo-managed skill fixes live in `~/.claude` (can ride along with every other pending switch).
