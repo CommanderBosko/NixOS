@@ -3,7 +3,13 @@
 {
   services.printing = {
     enable = true;
-    drivers = with pkgs; [ brlaser gutenprint hplip ];
+    # hplip dropped 2026-09-04: its pyqt5 dependency fails to build against
+    # python3.14 (the new default as of nixpkgs 0968519e) — sip targets ABI
+    # v12, which PyQt5.QtCore doesn't support yet. Upstream nixpkgs/pyqt5
+    # regression, not a config bug. Not a functional loss: the only printer
+    # in use is a Canon TS9500, covered by gutenprint; hplip is HP-only.
+    # Revisit if an HP printer is ever added, or once pyqt5 catches up.
+    drivers = with pkgs; [ brlaser gutenprint ];
     # cups-browsed defaults CreateIPPPrinterQueues to LocalOnly (IPP-over-USB
     # only) and never auto-creates queues for real network IPP printers
     # discovered via avahi — without this, network printers show up in
