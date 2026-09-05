@@ -1,3 +1,25 @@
+## Session: 2026-08-30 (session 95) — save-memory promoted to a global skill, "phantom skill" mystery closed
+
+**Focus**: Answer whether `save-memory` was local or global, and promote it to global as requested.
+
+### What changed (and why)
+- Found `save-memory`'s `SKILL.md` + `assets/memory-template.md` sitting at `.claude/skills/save-memory/` (project-local) — not missing, just never checked there. Session 92 had flagged it a "phantom skill" after checking only the two global paths (`~/.claude/skills/`, `dotfiles/bosko/claude/skills/`).
+- Moved it to `dotfiles/bosko/claude/skills/save-memory/` and added a recursive-dir `home.file` entry in `bosko-claude.nix` (matching `interview`/`new-skill`'s pattern), so it now symlinks into `~/.claude/skills/` on every host.
+- Fixed the SKILL.md's own Gotchas section, which claimed "project-local-only, no global copy exists" — now points at the real global path.
+
+### Decisions
+- Read "if it's local, make it global" as a request to actually promote it, not just report the finding.
+
+### Issues / surprises
+- Session 92's "phantom skill" report was itself the bug — a simple missed-directory check, not a real registration mystery. Corrected in memory `project_skill_roster_state` and `project-state.md`.
+
+### Next session
+- All 3 desktop hosts still need a rebuild to pick this up in `~/.claude/skills/` (rides along with the existing pending-switch pile — no reboot needed, pure symlink change).
+
+**Commits**: `7b8c3e3` (1 commit)
+
+---
+
 ## Session: 2026-08-27 (session 94) — Godot 4 dev environment for Legions, promoted to a shared desktopModules module
 
 **Focus**: Add a durable godot-mono/dotnet-sdk dev environment for the Legions game project, then right-size its scope as requirements clarified.

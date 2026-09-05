@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-04 (session 100) — hplip/flatpak boot fixes, improve-system Discord step, gaming reboot confirmed live
+
+**Focus**: Root-cause a broken gaming dry-run and a boot-time flatpak failure surfaced by `/boot-error-triage`, add a Discord report step to `improve-system`, then close out by verifying (not assuming) how much of session 99's backlog gaming's earlier reboot actually picked up.
+
+### What changed (and why)
+- **`hplip` dropped** (`ae3b40b`) — the same-day flake bump made `python3.14` the nixpkgs default; hplip's `pyqt5` dependency doesn't build against it yet (upstream sip/PyQt5 ABI regression, not a config bug). No functional loss — the in-use printer (Canon TS9500) is already covered by `gutenprint`.
+- **`flatpak-managed-install.service` DNS race fixed** (`cfb8caa`) — a `/boot-error-triage` run found the unit racing `network-online.target` at boot, self-healing via systemd's restart a minute later. Fixed in the shared `modules/desktop-apps.nix` (all 3 desktop hosts) with an explicit `After=`/`Wants=network-online.target`.
+- **`improve-system` gained a Step 5** (`92e6075`) — reports its consolidated summary to Discord via `send-results`, mirroring `dream`, always runs even on a clean pass.
+- **Verified gaming's 20:44 reboot actually absorbed session 99's backlog**, rather than assuming — confirmed via live symlink resolution (`dream`/`send-results`/`save-memory`), `gemini-cli`'s absence from PATH, and `dotnet --version`. Corrected one stale assumption along the way: the Godot binary is `godot4-mono`/`godot-mono`, not `godot4`.
+
+### Decisions
+- Kept the flatpak-race and hplip fixes as separate commits despite landing the same evening — unrelated root causes and blast radii, better for future `git log`/`bisect`.
+- `improve-system`'s Discord step always runs, even all-clean, matching `dream`'s existing precedent — a silent unattended pass shouldn't look identical to one that never ran.
+
+### Issues / surprises
+- The session-closer transcript-cutoff detector missed this close's own preceding sessions again (same slash-command-invocation gap noted in the skill's own Gotchas) — `find-last-skill-invocation.sh` reported a cutoff of 22:52 (this session's own `/session-closer` text), skipping 6 real transcripts between the 20:36 baseline commit and then. Recovered by cross-checking `git log`'s last `chore(session):` commit timestamp directly, per the skill's documented workaround.
+
+### Next session
+- Reboot gaming to activate the hplip/flatpak fixes; one more `nh os boot` first (or after) to pick up `improve-system`'s Step 5.
+- laptop/natalie-laptop still carry the whole session-92-through-99 backlog untouched.
+
+**Commits**: `ae3b40b..92e6075` (3 commits)
+
+---
+
 ## Session: 2026-09-03/04 (session 99) — `/dream` suite built, merged, and run for real; PR #14 merged; flake bumped
 
 **Focus**: Review the weekly `improve-system` PR, build and ship the `/dream` memory-improvement suite (4 new global skills), fix a real bug it hit on first live use, run it for real for the first time, and bump flake inputs again.
@@ -93,28 +118,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - None — fully live, `nh os switch` already applied, PR #15 squash-merged, CI green.
 
 **Commits**: `b56533e` (1 commit, 2 sub-commits squashed)
-
----
-
-## Session: 2026-08-30 (session 95) — save-memory promoted to a global skill, "phantom skill" mystery closed
-
-**Focus**: Answer whether `save-memory` was local or global, and promote it to global as requested.
-
-### What changed (and why)
-- Found `save-memory`'s `SKILL.md` + `assets/memory-template.md` sitting at `.claude/skills/save-memory/` (project-local) — not missing, just never checked there. Session 92 had flagged it a "phantom skill" after checking only the two global paths (`~/.claude/skills/`, `dotfiles/bosko/claude/skills/`).
-- Moved it to `dotfiles/bosko/claude/skills/save-memory/` and added a recursive-dir `home.file` entry in `bosko-claude.nix` (matching `interview`/`new-skill`'s pattern), so it now symlinks into `~/.claude/skills/` on every host.
-- Fixed the SKILL.md's own Gotchas section, which claimed "project-local-only, no global copy exists" — now points at the real global path.
-
-### Decisions
-- Read "if it's local, make it global" as a request to actually promote it, not just report the finding.
-
-### Issues / surprises
-- Session 92's "phantom skill" report was itself the bug — a simple missed-directory check, not a real registration mystery. Corrected in memory `project_skill_roster_state` and `project-state.md`.
-
-### Next session
-- All 3 desktop hosts still need a rebuild to pick this up in `~/.claude/skills/` (rides along with the existing pending-switch pile — no reboot needed, pure symlink change).
-
-**Commits**: `7b8c3e3` (1 commit)
 
 ---
 
