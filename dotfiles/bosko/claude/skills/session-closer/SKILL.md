@@ -141,26 +141,42 @@ accurate — only update what changed; the **Recent Changes** section should cov
 1-3 sessions.
 
 **No sensitive or secret information — the README is public.** Don't carry a redaction
-rubric here: a project-local `secret-scan` skill owns exactly this. After you finish
-writing/editing the README, check whether `<repo-root>/.claude/skills/secret-scan/SKILL.md`
-exists.
-
-- **If it exists**, **invoke `secret-scan`** for the public-safety pass — it covers key
-  material (private keys, password hashes, API/service tokens), and whatever else it was
-  tuned for during this project's own interview (real network coordinates, personal data,
-  etc., where applicable). Redact anything it flags in the README, prefer describing
-  secrets as managed-elsewhere rather than naming values, and note any redaction in the
-  session summary.
-- **If it's absent**, use **AskUserQuestion** to offer: **create one now** (runs
-  `/create-secret-scan` to generate a project-tuned scan, then use it for this pass —
-  recommended) or **skip with a manual pass** (a one-off grep for common secret patterns —
-  private key headers, `password`/`token`/`api_key`/`secret` literals — across the changed
-  files, for this close-out only). Either way, note in the session summary which path was
-  taken so the gap doesn't silently repeat next close-out.
+rubric here or scan the README in isolation: STEP 5B runs a full-session secret scan that
+covers this file along with everything else this close touches.
 
 Read the skeleton from `assets/readme-template.md` (relative to this skill's directory)
 and fill it in (or use it as the section skeleton when updating an existing README),
 preserving existing accurate sections rather than blanking them.
+
+---
+
+## STEP 5B — Secret-scan everything committed since the last close
+
+Before staging anything, run a public-safety pass over **every file committed since
+session-closer's own last run** — not just the README, and not just this session's own
+new commits. STEP 1's baseline (`git log | grep 'chore(session):' | head -1`, or
+`--since=midnight` on a first run) is the same scope: if that baseline spans several
+unclosed prior sessions, this scan covers all of them too, since nobody secret-scanned
+those commits at the time either. Check whether
+`<repo-root>/.claude/skills/secret-scan/SKILL.md` exists.
+
+- **If it exists**, **invoke `secret-scan`**. It takes no arguments and unconditionally
+  scans the whole working tree plus the full git history — so one invocation already
+  covers every commit since the baseline (and everything before it). Don't re-scope it to
+  "just the README" or "just the changed files"; that undersells what it actually checks
+  and what this gate is for. If it flags something in *any* file this session's commits
+  touched (not only README prose), fix it at the source per the skill's own remediation
+  guidance — move a leaked secret into sops, encrypt a plaintext `secrets/*.yaml`, or
+  rewrite history for something already pushed — rather than just rewording the README
+  around it.
+- **If it's absent**, use **AskUserQuestion** to offer: **create one now** (runs
+  `/create-secret-scan` to generate a project-tuned scan, then use it for this pass —
+  recommended) or **skip with a manual pass** (a one-off grep for common secret patterns —
+  private key headers, `password`/`token`/`api_key`/`secret` literals — across every file
+  changed since the baseline, for this close-out only). Either way, note in the session
+  summary which path was taken so the gap doesn't silently repeat next close-out.
+
+Note any finding or redaction in the session summary regardless of which path was taken.
 
 ---
 
@@ -226,7 +242,7 @@ reminders so you never re-list completed work as pending.
 - **`secret-scan` isn't available in every project's skill list** (observed in a
   non-NixOS-repo project with no `secret-scan` skill present) — it's generated
   per-project by `/create-secret-scan`, not a global skill. Don't silently substitute a
-  manual grep and move on: ask the user (AskUserQuestion, see STEP 5) whether to generate
+  manual grep and move on: ask the user (AskUserQuestion, see STEP 5B) whether to generate
   one now or skip with a manual pass just for this close-out, and record which path was
   taken in the session summary either way.
 - **`scripts/rotate-session-summary.sh` is relative to the *skill's* directory, not the
