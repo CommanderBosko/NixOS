@@ -14,11 +14,10 @@ On-demand incremental refresh of the `manager` agent's profile (`dotfiles/bosko/
 The profile draws on every project this user has run Claude Code in, not a fixed list — new projects should be picked up automatically:
 
 ```bash
-echo "$HOME/NixOS"
-for d in "$HOME"/projects/*/; do echo "${d%/}"; done
+~/.claude/skills/lib/list-all-projects.sh
 ```
 
-For each resulting project directory, this is a candidate — not every one will have transcript history (some are throwaway or predate Claude Code use there).
+This reads the ground-truth `cwd` field out of each project's own transcripts rather than globbing directory names — a one-level glob under `~/projects/*/` would silently miss a real project that lives a level deeper (e.g. `~/projects/Codingame/Mad-Pod-Racing`, whose slugified transcript-dir name contains a literal hyphen that a glob-and-unslugify approach can't tell apart from a path separator). Each output line is `<real-project-path-or-UNKNOWN><TAB><transcript-dir>` — for each line, the real-project-path column is a candidate (skip any `UNKNOWN` row; there's no real project directory to mine memory-adjacent context from). Not every candidate will have transcript history worth mining (some are throwaway or predate Claude Code use there).
 
 ### 2. Get a per-project cutoff and file list
 

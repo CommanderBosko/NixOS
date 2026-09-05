@@ -40,9 +40,15 @@ fresh every time rather than trusting a stale cached copy.
 
 ## Phase A — Apply approved fixes (both modes)
 
-1. Read `last_overview_file` from the run log. If it's `null` (no overview has ever been
-   produced), there's nothing to apply — skip to Phase B (full mode) or stop (apply-fixes
-   mode), and say so plainly rather than silently doing nothing.
+1. Read `last_overview_file` from the run log. If it's `null`, don't assume that means no
+   overview has ever been produced — the run log itself could be lost/reset while real
+   overview files still exist on disk. Fall back first:
+   ```bash
+   ~/.claude/skills/dream/scripts/dream-state.sh latest-overview
+   ```
+   Only if that also comes back empty is there genuinely nothing to apply — skip to Phase B
+   (full mode) or stop (apply-fixes mode), and say so plainly rather than silently doing
+   nothing.
 2. Otherwise re-check its live status:
    ```bash
    ~/.claude/skills/dream/scripts/dream-state.sh overview-status <last_overview_file>

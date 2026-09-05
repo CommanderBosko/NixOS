@@ -25,10 +25,16 @@ Run `git -C /home/bosko/NixOS diff --name-only` (uncommitted changes) — also c
 
 ### 2. Check whether any changed file is shared
 
-Read `/home/bosko/NixOS/flake.nix` live and check whether any changed file is listed under `commonModules` or `desktopModules`, or is `flake.nix` itself. Don't hardcode a copy of those lists — they drift.
+For each changed file, run:
 
-- **If nothing shared changed** (only `hosts/<host>/*`, or a DE module not imported anywhere) — say so plainly and stop. No sweep needed; a local `nixos-dry-run` or `de-smoke-check` (for an unwired DE module) is the right tool instead.
-- **If a shared file changed** — proceed to Step 3.
+```bash
+bash /home/bosko/NixOS/.claude/lib/classify-shared-file.sh <file>
+```
+
+It reads `flake.nix` live and prints `SHARED: <reason>` or `LOCAL` — never hardcode a copy of the module lists yourself. A file counts as shared not just when it's listed inside the `commonModules`/`desktopModules` array bodies, but also when it's wired directly into 2+ hosts' own per-host module lists without going through either named array (e.g. `modules/desktop-environments/niri.nix`, imported directly by `gaming` and `natalie-laptop`'s host blocks and via `laptopModules` for `laptop` — none of which route through `desktopModules`). A plain membership check against just the two named arrays misses exactly this case.
+
+- **If nothing shared changed** (every result is `LOCAL`) — say so plainly and stop. No sweep needed; a local `nixos-dry-run` or `de-smoke-check` (for a DE module the classifier reports `LOCAL` because no host currently imports it at all) is the right tool instead.
+- **If any changed file classifies as `SHARED`** — proceed to Step 3.
 
 ### 3. Run the 4-host sweep
 
@@ -67,8 +73,16 @@ Tell the user:
 - The per-host PASS/FAIL table
 - If a fix was suggested or applied, one line pointing at the `pkgs ? <attrName>` guard pattern and which files it touched
 
+## Scripts
+
+- `.claude/lib/classify-shared-file.sh <file>` — read-only classifier (Step 2). Reads `flake.nix` live and prints `SHARED: <reason>` or `LOCAL`; shared by `ship-nix-change` too so the classification logic only lives in one place.
+
 ## Key facts
 
 - Read-only through Step 4 — evaluation only, never builds or activates. Step 5's fix (if needed) is the only step that edits files.
 - This is the shared-file counterpart to `de-smoke-check` (unwired DE modules) and the mandatory pre-`fleet-rollout` gate that `deep-eval-check` already documents — this skill just adds the trigger discipline of *always* reaching for the 4-host sweep specifically when a shared file changed, instead of leaving that judgment call to memory.
 - Working directory: `/home/bosko/NixOS`.
+
+## Gotchas
+
+- **A plain membership check against the two named arrays (`commonModules`/`desktopModules`) misses a module wired directly into 2+ hosts' own per-host module lists.** Found 2026-09-04 via `skill-audit`: `modules/desktop-environments/niri.nix` is imported directly by `gaming`'s and `natalie-laptop`'s host blocks (and via `laptopModules` for `laptop`) — three hosts — without ever appearing in `desktopModules`, so the old Step 2 test silently skipped the 4-host sweep for the one DE module actually in production use. Fixed by routing Step 2 through `classify-shared-file.sh`, which also checks for direct multi-host references, not just array membership.

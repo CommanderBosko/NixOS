@@ -7,6 +7,17 @@ description: Authenticate to the pi-hole host's local REST API (session-based au
 
 Run authenticated calls against the pi-hole host's local REST API (`http://127.0.0.1/api/...`, reachable only from the pi-hole host itself) without hand-rolling the curl/SID dance each time. (Bucket: Utility)
 
+## Arguments
+
+Parse from the user's request — these are the values that actually vary per call:
+
+- **Method + path** (required) — the `/api/...` endpoint and HTTP verb (`GET`/`POST`/`PUT`/`DELETE`), e.g. `GET /api/lists?type=block`.
+- **Blocklist URL** — for add/disable/delete calls, the adlist's URL (gets URL-encoded as a path segment for PUT/DELETE, or placed in the JSON body's `address` field for POST).
+- **Comment** — free-text label for a newly added list (POST body's `comment` field).
+- **Enabled flag** — `true`/`false`, for enabling or disabling an existing list (PUT body's `enabled` field).
+
+If the user's phrasing doesn't map cleanly to one of the common calls below, pass whatever path/method/body the task needs directly to the script (see Step 1).
+
 ## How auth works
 
 Pi-hole v6's API is session-based: you POST the CLI password (readable only via `sudo`) to `/api/auth` to mint a session ID (SID), then send that SID as a `sid:` header on every subsequent call. `scripts/pihole-api.sh` does this whole dance in one SSH round-trip per invocation — call it fresh each time rather than trying to cache a SID between calls.

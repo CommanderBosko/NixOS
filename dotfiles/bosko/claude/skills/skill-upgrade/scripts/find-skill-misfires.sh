@@ -35,9 +35,17 @@ fi
 
 cd "$TRANSCRIPT_DIR"
 python3 - "$FILES" <<'PYEOF'
-import json, sys
+import json, re, sys
 
 files = sys.argv[1].split("\n")
+# A user-typed slash command (e.g. `/skill-audit`) is injected by Claude Code
+# as plain user-turn string content, not an assistant `Skill` tool_use -- so
+# current_skill tracking must also catch this, or every misfire that happens
+# during a slash-command-invoked skill gets mis-attributed to whatever skill
+# (or None) was active before it. Mirrors find-last-skill-invocation.sh's
+# already-fixed detection, generalized to capture whichever skill name
+# matched rather than checking against one fixed name.
+slash_re = re.compile(r"<command-name>/([a-zA-Z0-9_-]+)</command-name>")
 
 for fn in files:
     fn = fn.strip()
@@ -57,6 +65,11 @@ for fn in files:
                 except (ValueError, json.JSONDecodeError):
                     continue
                 content = obj.get("message", {}).get("content")
+                if isinstance(content, str):
+                    m = slash_re.search(content)
+                    if m:
+                        current_skill = m.group(1)
+                    continue
                 if not isinstance(content, list):
                     continue
                 for c in content:
