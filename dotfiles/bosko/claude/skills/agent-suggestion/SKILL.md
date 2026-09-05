@@ -61,7 +61,7 @@ If nothing in the conversation or logs clears the bar, say so plainly and stop �
 For each candidate on **Build it as proposed** (or after applying the user's tweaks):
 
 1. Write `dotfiles/bosko/claude/agents/<name>.md` with proper frontmatter (`name`, `description`, `tools`, `model` if warranted, `color`) and a system-prompt body following the existing agents' conventions: resolve its own scope if none was handed to it, stay read-only unless the task genuinely requires otherwise, define a concrete report format, end with a one-line tally instruction, and add a `Gotchas` section only if seeded by a known failure mode (not speculative).
-2. Add its `.claude/agents/<name>.md` entry to `dotfiles/bosko/bosko-claude.nix`'s `home.file` block — mirror the existing three-entry pattern exactly (`source = "${self}/dotfiles/bosko/claude/agents/<name>.md"; force = true;`).
+2. Add its `.claude/agents/<name>.md` entry to `dotfiles/bosko/bosko-claude.nix`'s `home.file` block — mirror any existing agent entry's pattern exactly (`source = "${self}/dotfiles/bosko/claude/agents/<name>.md"; force = true;`). Don't cite a specific entry count in this instruction — it keeps drifting upward as agents are added (three at this skill's own creation, four as of 2026-09-04).
 3. Actually edit the call site(s) named in step 4 to spawn `subagent_type: "<name>"` instead of the old prose brief. This handoff is the real payoff — don't stop at just writing the agent file.
 
 ### 6. Confirm + certify
@@ -90,3 +90,11 @@ Report what was built: the agent name, where it was written, and which call site
   productive run. If the reported cutoff lands inside the *current* session and no completed
   pass (proposal made, or explicit "nothing qualifies" verdict) is visible at that timestamp,
   treat it as a failed/incomplete attempt and widen to the full history for that run instead.
+- **Two ad hoc tool misfires during log-mining (observed 2026-09-04/05):** a hand-typed
+  `tail -+201` on a misfire-scan pipe failed with `tail: invalid option -- '+'` — GNU tail wants
+  `tail -n +201`, not `tail -+201`. Separately, a `ScheduleWakeup` call used as a fallback
+  heartbeat while waiting on several `Agent`-tool sub-agent spawns failed with `` `prompt` is
+  required when `stop` is not true`` — `ScheduleWakeup` always needs `prompt` (and
+  `delaySeconds`/`reason`) even when it's just a heartbeat, and per `research`'s own Gotchas,
+  work spawned via the `Agent` tool doesn't need polling at all: the harness delivers a
+  completion notification automatically, so just let the turn end after spawning.

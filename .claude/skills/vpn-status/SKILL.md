@@ -22,7 +22,7 @@ Check WireGuard peer connectivity on the Oracle Cloud ARM VPN server (`vpn-serve
    Peer              Status    Last Handshake       Transfer (rx/tx)
    gaming            Active    42 seconds ago       14.2 MiB / 3.1 MiB
    laptop            Idle      8 minutes ago        2.0 MiB / 512 KiB
-   natalie-laptop    Offline   2 hours ago           —
+   natalie-laptop    Offline   2 hours ago          890 MiB / 210 MiB
    ```
 
    Present that table as-is. If a peer's resolved name looks like `unknown:<pubkey prefix>`, its

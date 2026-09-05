@@ -25,11 +25,10 @@ Invocation inputs (gather any the user didn't already give in Step 1):
 - **`.sops.yaml`** — recipient map. `keys:` lists age public keys (admin + one per host,
   each derived from that host's SSH ed25519 host key). `creation_rules:` say which
   recipients each file is encrypted to, matched by `path_regex`.
-- **`secrets/common.yaml`** — shared secrets, encrypted to **admin + all hosts**.
-  Currently: `bosko-hashedPassword`, `natty-hashedPassword`, `tailscale-mcp-env`. Don't
-  assume this list is exhaustive — check the file live
-  (`grep -o '^[a-zA-Z0-9_-]*:' secrets/common.yaml`) rather than trusting it, same as the
-  per-host guidance below.
+- **`secrets/common.yaml`** — shared secrets, encrypted to **admin + all hosts**. The key
+  list changes over time (already has entries beyond the original three) — always check
+  the file live (`grep -o '^[a-zA-Z0-9_-]*:' secrets/common.yaml`) rather than trusting an
+  inline enumeration here, same as the per-host guidance below.
 - **`secrets/hosts/<host>.yaml`** — per-host secrets, encrypted to **admin + that host
   only**. Every host holds `wg-private-key` (its WireGuard key); `gaming.yaml` additionally
   holds `pinchflat-env`. Don't assume "each holds exactly one key" — check the file live
