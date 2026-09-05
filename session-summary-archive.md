@@ -1,3 +1,24 @@
+## Session: 2026-09-02 (session 98) — rebuild-boot/rebuild-switch alias split; Meta+G launch-set fix
+
+**Focus**: Two small quality-of-life fixes on the gaming host — a shell alias split, and repairing/trimming the Meta+G app-launch keybind.
+
+### What changed (and why)
+- Added a `rebuild-switch` shell alias (`nh os switch`) alongside the existing one, renamed to `rebuild-boot` (was `rebuild`) to avoid confusion between the two apply modes. `modules/shell.nix` + `CLAUDE.md`'s alias list updated to match. Committed `dce0913`.
+- Meta+G was reported broken ("no longer opens Deezer"); live-testing showed it was never actually broken — `flatpak run dev.aunetx.deezer` just has a ~10s Electron cold-start and lands on a monitor (dell-3) easy to miss under the old bind's heavier load (kitty + 2× Zen + everything else at once). Fixed by trimming the launch set to what the user actually wanted: Steam, Vesktop, Lutris, Deezer, qBittorrent — dropping kitty and Zen. `dotfiles/common/configs/niri-config.kdl:387`, committed `a5fa6b1`.
+
+### Decisions
+- None beyond the fix itself — both were direct, unambiguous requests.
+
+### Issues / surprises
+- Meta+G's "broken" report was a false alarm caused by app-launch ordering/cold-start latency, not a real regression — worth remembering next time a multi-app spawn-sh bind gets blamed for one app "not opening."
+
+### Next session
+- All 3 niri hosts still need a rebuild/switch to pick up both fixes (no reboot needed for either) — stacks on the existing pending-switch pile (save-memory PR #16, godot dev env, Tailscale MCP connector, etc.).
+
+**Commits**: `dce0913`..`a5fa6b1` (2 commits)
+
+---
+
 ## Session: 2026-08-31 (session 97) — save-memory PR #16 merged via `manager`; auto-mode classifier root-caused for FinanceGuru
 
 **Focus**: Fix a cross-repo bug flagged by FinanceGuru (`save-memory` hardcoded NixOS's own memory dir) by delegating to `manager`; separately diagnose why FinanceGuru's session couldn't self-escalate its own permission mode.

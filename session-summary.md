@@ -4,6 +4,26 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-05 (session 103) — kitty full-screen window-rule fix
+
+**Focus**: Make kitty open full screen on gaming instead of half.
+
+### What changed (and why)
+- **`open-maximized true` added to kitty's window-rule** (`ba155a2`) — kitty's existing `hosts/gaming/niri-overlay.kdl` rule only pinned it to workspace `asus-1`, so it opened at half size (Mod+F equivalent was never set). Confirmed the live app-id via `niri msg windows`, then added the line to the existing block via `add-niri-fullscreen-rule` rather than creating a duplicate rule.
+
+### Decisions
+- None beyond reusing the existing window-rule block (see project-state.md Recent Decisions).
+
+### Issues / surprises
+- None.
+
+### Next session
+- **gaming: rebuild (switch)** to apply the fix, then `/wayland-screenshot kitty` to confirm it opens full screen.
+
+**Commits**: `ba155a2` (1 commit)
+
+---
+
 ## Session: 2026-09-05 (session 102) — Deezer boot-race stagger fix, Steam dropdown-menu bug root-caused (upstream, no fix)
 
 **Focus**: Fix a real Mod+G bug on gaming (Deezer silently losing its launch race) and investigate a separate Steam UI bug (dropdown menus flashing under niri).
@@ -99,27 +119,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - A real `/dream` run from the live (post-rebuild) `~/.claude/skills/` symlinks is still untested.
 
 **Commits**: `75addf7`..`2d11999` (4 commits)
-
----
-
-## Session: 2026-09-02 (session 98) — rebuild-boot/rebuild-switch alias split; Meta+G launch-set fix
-
-**Focus**: Two small quality-of-life fixes on the gaming host — a shell alias split, and repairing/trimming the Meta+G app-launch keybind.
-
-### What changed (and why)
-- Added a `rebuild-switch` shell alias (`nh os switch`) alongside the existing one, renamed to `rebuild-boot` (was `rebuild`) to avoid confusion between the two apply modes. `modules/shell.nix` + `CLAUDE.md`'s alias list updated to match. Committed `dce0913`.
-- Meta+G was reported broken ("no longer opens Deezer"); live-testing showed it was never actually broken — `flatpak run dev.aunetx.deezer` just has a ~10s Electron cold-start and lands on a monitor (dell-3) easy to miss under the old bind's heavier load (kitty + 2× Zen + everything else at once). Fixed by trimming the launch set to what the user actually wanted: Steam, Vesktop, Lutris, Deezer, qBittorrent — dropping kitty and Zen. `dotfiles/common/configs/niri-config.kdl:387`, committed `a5fa6b1`.
-
-### Decisions
-- None beyond the fix itself — both were direct, unambiguous requests.
-
-### Issues / surprises
-- Meta+G's "broken" report was a false alarm caused by app-launch ordering/cold-start latency, not a real regression — worth remembering next time a multi-app spawn-sh bind gets blamed for one app "not opening."
-
-### Next session
-- All 3 niri hosts still need a rebuild/switch to pick up both fixes (no reboot needed for either) — stacks on the existing pending-switch pile (save-memory PR #16, godot dev env, Tailscale MCP connector, etc.).
-
-**Commits**: `dce0913`..`a5fa6b1` (2 commits)
 
 ---
 
