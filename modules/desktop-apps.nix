@@ -53,4 +53,15 @@
   # (verified working live, 2026-07-19) — not the actual host theme, but no
   # longer a jarring white titlebar.
   services.flatpak.overrides."dev.aunetx.deezer".Environment.GTK_THEME = "Adwaita:dark";
+
+  # nix-flatpak's generated unit only orders After=multi-user.target, so on
+  # every boot it races DNS coming up and fails once ("Could not resolve
+  # hostname" for dl.flathub.org) before systemd's 60s on-failure restart
+  # retries it successfully. Harmless (self-heals), but it trains you to
+  # ignore a real failed-unit signal at boot — wait on network-online.target
+  # instead so it only runs once network is actually usable.
+  systemd.services.flatpak-managed-install = {
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+  };
 }
