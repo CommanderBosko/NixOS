@@ -384,7 +384,7 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
     Mod+B hotkey-overlay-title="Open the Browser: normal + private (right)" { spawn-sh "(xdg-open https:// || flatpak run app.zen_browser.zen) & (sleep 0.5; flatpak run app.zen_browser.zen --private-window) &"; }
     Mod+E hotkey-overlay-title="Open the File Manager: thunar" { spawn "thunar"; }
-    Mod+G hotkey-overlay-title="Launch Initial Setup: Steam, Vesktop, Lutris, Deezer, qBittorrent" { spawn-sh "steam & vesktop & lutris & flatpak run dev.aunetx.deezer & qbittorrent &"; }
+    Mod+G hotkey-overlay-title="Launch Initial Setup: Steam, Vesktop, Lutris, Deezer, qBittorrent" { spawn-sh "steam & vesktop & lutris & (sleep 3; flatpak run dev.aunetx.deezer) & qbittorrent &"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
