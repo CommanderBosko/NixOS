@@ -54,7 +54,7 @@ Only when the `nixos` MCP is unavailable (offline, server down), fall back to th
 truncate to ~80 lines — is handled by the script:
 
 ```bash
-scripts/search-pkg.sh "<query>"
+<skill-base-dir>/scripts/search-pkg.sh "<query>"
 ```
 
 It already emits the `Search results for "<query>":` header, the formatted blocks, and the
@@ -111,3 +111,14 @@ To install a package, use /add-package and provide the pkgs.<name> attribute sho
 - Prefer the `nixos` MCP; only reach for the `nix search` fallback when the MCP is unavailable. `nix search` can be slow (10–30 s) on a cold cache — that slowness is the reason the MCP is primary.
 - This search always targets `nixpkgs` (the flake input), not a local overlay or a specific channel.
 - Do not suggest packages from `nur` or other non-nixpkgs sources unless the user explicitly asks.
+
+## Gotchas
+
+- **This skill is global/repo-managed** (source at
+  `dotfiles/bosko/claude/skills/search-pkg/` in the NixOS repo, symlinked to
+  `~/.claude/skills/search-pkg/` via Home Manager). Always invoke `scripts/search-pkg.sh`
+  by the absolute `<skill-base-dir>/scripts/search-pkg.sh` path shown when the skill
+  launches, never a bare `scripts/search-pkg.sh` — that resolves against whatever project
+  happens to be the cwd, not this skill's own directory (found by `skill-audit`,
+  2026-09-06 — the same recurring mistake documented in `session-closer`'s, `save-memory`'s,
+  and `session-analysis`'s Gotchas).
