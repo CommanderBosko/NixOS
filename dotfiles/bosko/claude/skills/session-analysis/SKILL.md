@@ -88,27 +88,9 @@ pattern," already used by `session-closer`/`skill-suggestion`/`skill-audit`.
 
 Aggregate every sub-agent's findings into `~/.claude/dream/analysis-<ISO8601>.md`
 (timestamp format: `date -u +%Y%m%dT%H%M%SZ`, e.g. `20260903T193000Z` — filesystem-safe,
-still valid ISO-8601 basic format). Shape:
-
-```markdown
-# Session Analysis — dream — <human-readable date>
-
-Since: <since-timestamp, or "full history">
-Projects scanned: <N total> (<M> memory-only / no transcripts)
-
-## Project: /home/bosko/NixOS
-
-- [decision] <one-line finding, self-contained>
-- [gotcha] <...>
-
-## Project: /home/bosko/projects/bitburner
-
-(no candidate findings this pass)
-
-## Project: UNKNOWN (transcript dir: ~/.claude/projects/-home-bosko-projects-farmer)
-
-(memory-only project — no transcripts to mine)
-```
+still valid ISO-8601 basic format). Read `<skill-base-dir>/assets/analysis-template.md` and
+fill it in — it holds the file's shape (header, Since/Projects-scanned lines, one
+`## Project: <path>` section per project with its findings or a "nothing to mine" note).
 
 Keep one project section per project found in the manifest, even ones with nothing found
 or nothing to mine — `improve-memory` uses the full project list, not just the ones with
@@ -131,6 +113,11 @@ alongside `dream)`, and a matching `## Mode: time-analysis` section here — don
 - `scripts/scan-projects.sh <mode> [since-iso-timestamp]` — mode dispatch + manifest
   (Step 1). Depends on the shared `~/.claude/skills/lib/list-all-projects.sh` and
   `list-transcripts-since.sh`.
+
+## Assets
+
+- `assets/analysis-template.md` — the `dream`-mode analysis file's shape (Step 3). Read and
+  fill it; never rewrite the layout inline.
 
 ## Gotchas
 

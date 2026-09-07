@@ -59,7 +59,7 @@ commands, no judgment) so they're handled by `scripts/create-repo.sh`; only the
 history-pause decision and the commit-message drafting stay here.
 
 ```bash
-scripts/create-repo.sh init
+<skill-base-dir>/scripts/create-repo.sh init
 ```
 Initializes git and checks out `main` if this isn't a repo yet; if it already is, ensures
 the branch is `main` and prints `existing-commits: <n>`. **If `existing-commits` is
@@ -72,7 +72,7 @@ Resolve visibility first (see Arguments): use the given `public`/`private` argum
 via AskUserQuestion if none was given.
 
 ```bash
-scripts/create-repo.sh create <repo-name> <visibility>
+<skill-base-dir>/scripts/create-repo.sh create <repo-name> <visibility>
 ```
 Runs `gh repo create CommanderBosko/<repo-name> --<visibility> --source=. --remote=origin --push=false`,
 then normalizes the remote to SSH format if `gh` left it as HTTPS, and prints `git remote -v`.
@@ -97,7 +97,7 @@ model name here, it will drift the next time the underlying model changes.
 ### 9. Commit & push
 Write the crafted message (step 8) to a temp file, then:
 ```bash
-scripts/create-repo.sh push <commit-msg-file>
+<skill-base-dir>/scripts/create-repo.sh push <commit-msg-file>
 ```
 Stages everything (`git add .`), commits with `-F <commit-msg-file>`, and pushes with
 `-u origin main`. Never `--force`, never `--no-verify`.
@@ -144,3 +144,15 @@ This skill runs in the main conversation, which already has the project memory s
 If you learn something durable about how the user sets up new projects (preferred license,
 default stack choices, naming conventions), save it through the normal memory workflow.
 Don't save ephemeral per-repo details — `git log` is authoritative for those.
+
+## Gotchas
+
+- **This skill is global/repo-managed** (source at
+  `dotfiles/bosko/claude/skills/repo-creator/` in the NixOS repo, symlinked to
+  `~/.claude/skills/repo-creator/` via Home Manager). Always invoke
+  `scripts/create-repo.sh` by the absolute `<skill-base-dir>/scripts/create-repo.sh` path
+  shown when the skill launches, never a bare `scripts/create-repo.sh` — this skill is
+  invoked from the *new* project's directory (Step 1 uses the cwd as the repo name), not
+  from the skill's own directory, so a bare relative path resolves against the wrong repo
+  and fails (found by `skill-audit`, 2026-09-06 — the same recurring mistake documented in
+  `session-closer`'s, `save-memory`'s, and `session-analysis`'s Gotchas).
