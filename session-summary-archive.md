@@ -1,3 +1,30 @@
+## Session: 2026-09-03/04 (session 99) — `/dream` suite built, merged, and run for real; PR #14 merged; flake bumped
+
+**Focus**: Review the weekly `improve-system` PR, build and ship the `/dream` memory-improvement suite (4 new global skills), fix a real bug it hit on first live use, run it for real for the first time, and bump flake inputs again.
+
+### What changed (and why)
+- **PR #14** (weekly `improve-system` sweep, 8 doc-only `SKILL.md` fixes) reviewed via the `manager` agent and merged (`75addf7`) after independently re-verifying every fix against live repo state.
+- **`/dream` suite** — 4 new global skills (`session-analysis`, `improve-memory`, `send-results`, `dream`) built via `manager`, merged as PR #17 (`256a7cc`). Mines every project's session history for durable memory-worthy facts, reconciles them against real memory + CLAUDE.md, and reports to Discord via a new `discord-webhook-url` sops secret.
+- **`send-results` fixed same-day** (`0748119`) — Discord never renders `file://` links as clickable, on any device. Redesigned to publish the reported file as a Claude Artifact and link to the resulting `https://` URL instead. Live-tested end-to-end (real Artifact, real Discord post, confirmed clickable).
+- **First-ever full-history `/dream` run** — no repo commit (writes to `~/.claude/dream/` + project memory dirs). Mined all 12 known projects via 21 parallel `transcript-scanner` batches, ~70 candidates, auto-applied 13 wikilink fixes + 8 file updates + 9 new memory files; nothing needed human sign-off.
+- **Flake bump** (`2d11999`) — nixpkgs/home-manager/dms/dank-qml-common/financeguru/sops-nix moved; `financeguru` finally unstuck after 5 frozen runs. Verified clean, not yet applied to any host.
+
+### Decisions
+- Accepted the trade-off that `send-results`' reported content now leaves the local machine (published as a shareable Artifact) since a local-only link could never actually be clickable in Discord.
+- PR #14's merge came back flagged with a "Blocked by classifier" security warning; manually audited the merging subagent's full tool-call trace, found nothing wrong, and reported it to the user as verified-clean-but-flagged rather than either dismissing it or treating the flag as proof of a real problem.
+
+### Issues / surprises
+- The first `/dream` build attempt died mid-way from an API rate limit (no `/loop` active to schedule a resume) after most of the work was already staged — a manager subagent that hits a rate limit fails outright rather than pausing, and a failed background task doesn't self-retry. A second manager continuation picked up the staged branch, verified it, and finished.
+- `/dream`'s first real run found its own tracking memory (`project_dream_memory_suite`) had already gone stale within the same day — corrected automatically as part of the run.
+
+### Next session
+- All 3 desktop hosts still need a rebuild to pick up the flake bump, the `/dream` suite, `send-results`' fix, and the Discord secret — stacks on the existing pending-switch pile (rebuild-boot/switch split, Meta+G fix, save-memory PR #16, godot dev env, Tailscale MCP connector, etc.).
+- A real `/dream` run from the live (post-rebuild) `~/.claude/skills/` symlinks is still untested.
+
+**Commits**: `75addf7`..`2d11999` (4 commits)
+
+---
+
 ## Session: 2026-09-02 (session 98) — rebuild-boot/rebuild-switch alias split; Meta+G launch-set fix
 
 **Focus**: Two small quality-of-life fixes on the gaming host — a shell alias split, and repairing/trimming the Meta+G app-launch keybind.
