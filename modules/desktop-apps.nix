@@ -27,6 +27,7 @@
     megasync
     onlyoffice-desktopeditors
     qalculate-qt
+    system-config-printer # GUI print-queue manager (view/cancel/pause jobs)
     thunar
     thunar-volman # Auto-mount + notification on removable-media insertion for Thunar
     vesktop
