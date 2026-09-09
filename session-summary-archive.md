@@ -1,3 +1,26 @@
+## Session: 2026-09-05 (session 102) — Deezer boot-race stagger fix, Steam dropdown-menu bug root-caused (upstream, no fix)
+
+**Focus**: Fix a real Mod+G bug on gaming (Deezer silently losing its launch race) and investigate a separate Steam UI bug (dropdown menus flashing under niri).
+
+### What changed (and why)
+- **`Mod+G`'s Deezer flatpak leg delayed 3s** (`fcb2cc5`) — `flatpak run dev.aunetx.deezer` left zero trace anywhere in the logs at the exact Mod+G keypress, while all 4 native-binary legs (Steam, Vesktop, Lutris, qBittorrent) succeeded normally; re-running the same command manually worked fine, pointing to a boot-time CPU-contention race (Steam's updater + 3 other apps forking at once) rather than a broken command. Delayed the flatpak leg so it launches after that initial burst clears.
+
+### Decisions
+- **Steam's dropdown-menu flash/vanish bug is a known open upstream issue** (`xwayland-satellite#156`), not fixable from this repo. Checked the release history before considering a version pin — gaming's 0.8.2 is already the newest release and every release since the issue was filed shipped popup fixes without closing it, so a pin would only be a downgrade. Tried the niri-wiki GPU-rendering toggle (wrong fix — that's documented for a different, unrelated "black window" bug) and suggested untested next steps (`-system-composer` flag, keyboard-only menu nav, Big Picture Mode).
+- **User declined a scheduled cloud routine to watch the GitHub issue for a close/fix** — no routine created; revisit manually.
+
+### Issues / surprises
+- None worth a skill-upgrade Gotcha this session.
+
+### Next session
+- **gaming: rebuild (switch)** to apply the Deezer stagger fix, then confirm via a real Mod+G press.
+- Steam dropdown bug has no fix pending — check `xwayland-satellite#156` manually next time it comes up.
+- Secret-scan: ran via existing `secret-scan` skill, clean.
+
+**Commits**: `fcb2cc5` (1 commit)
+
+---
+
 ## Session: 2026-09-05 (session 101) — improve-system via manager agent (PR #18), guardrail-flagged files reviewed and merged, secret-scan scope fix
 
 **Focus**: Run the weekly `improve-system` sweep via the `manager` agent, review and merge its PR, and fix `session-closer`'s secret-scan step to cover everything committed since its own last run instead of just the README.

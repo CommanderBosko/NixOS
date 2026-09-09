@@ -720,6 +720,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Current Goals
 
+- **natalie-laptop: rebuild (boot, reboot recommended) to drop the VirtualBox host module** (session 107, `4237d7d`) — removes `hosts/natalie-laptop/virtualisation.nix` and its `vboxusers` group membership; it was never rebuilt onto in the first place (still owed its original from-source VirtualBox build), so this just clears a stale pending item rather than reversing anything live. Verified clean via `shared-module-check` 4-host deep-eval.
 - **All 3 desktop hosts: rebuild (switch, no reboot needed) to pick up `system-config-printer`** (session 106, `f535057`) — verified clean via `shared-module-check` 4-host deep-eval. After rebuild, confirm the app launches and shows the print queue (Canon TS9500 via gutenprint). Can ride along with every other pending switch below.
 - **All 3 desktop hosts: rebuild to pick up the 2026-09-07 flake bump (nixpkgs/home-manager/dms)** (session 104, `f780dba`, PR #21) — verified clean (flake-check + 4-host deep-eval); `/fleet-rollout` is the way to apply. Carries no xwayland-satellite fix (still 0.8.2, issue #156 still open — nothing to retest re: the Steam dropdown bug).
 - **All 3 desktop hosts: rebuild+reboot to pick up PR #20's repo-managed skill fixes** (session 104, `da25cc2`) — `repo-creator`/`search-pkg`'s bare-relative-path fixes and `session-analysis`'s new `assets/analysis-template.md` are all under `dotfiles/bosko/claude/skills/`, symlinked-global. Can ride along with every other pending switch below.
@@ -1040,6 +1041,9 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 107 next steps** (see Current Goals for full detail):
+1. **natalie-laptop: rebuild (boot)** to drop the VirtualBox host module — no functional loss expected, it was still pending its first-ever build.
 
 **Session 106 next steps** (see Current Goals for full detail):
 1. **All 3 desktop hosts: rebuild (switch)** to pick up `system-config-printer`, then launch it and confirm it shows the print queue.
