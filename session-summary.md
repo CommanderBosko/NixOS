@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-09 (session 105) — xwayland-satellite 0.8.1 pin, kitty revert, Secure Boot Q&A
+
+**Focus**: Test a real fix for the Steam dropdown-menu bug after user pushback on the earlier "no fix worth trying" call, revert a kitty window-rule the user changed their mind on, and answer a Secure Boot capability question.
+
+### What changed (and why)
+- **`xwayland-satellite` pinned to 0.8.1 (`4201283`)** — user challenged the session-102 conclusion with a Reddit report of 0.8.1 fixing the bug. Couldn't verify the thread directly, but re-reading 0.8.2's own changelog ("fixes for some popup regressions") showed the earlier reasoning assumed fixes were purely additive, which was wrong. Pinned the narrower, cheaply-revertible 0.8.1 (not the originally-floated untested 0.8) via a dedicated second `nixpkgs` input + overlay in `niri.nix`, isolated from the rest of nixpkgs. Verified: gaming dry-run shows only the intended diff, 4-host deep-eval clean. Not yet applied to any host — needs a switch + a real Steam relaunch to know if it worked.
+- **Kitty's `open-maximized` window-rule reverted on gaming (`c9e624d`)** — user changed their mind back to half-size; the `asus-1` workspace pin stays.
+- **Secure Boot capability question re-answered** — hardware supports it, but MBR+GRUB blocks it today; a real migration (GPT + systemd-boot + lanzaboote) would be needed. Matches existing memory, no new decision; user left to confirm the actual game's anti-cheat requirement first.
+
+### Decisions
+- Corrected the earlier "downgrade has zero benefit" call rather than defending it once the changelog evidence contradicted it — see project-state.md Recent Decisions for the full reasoning.
+- Used a scoped second-nixpkgs-input overlay instead of `pin-input` (which would've rolled back all of nixpkgs) to keep the experiment isolated and trivially revertible.
+
+### Issues / surprises
+- First attempt at the overlay produced a duplicate `let`/`in` syntax error; caught and fixed before it reached a dry-run.
+- The overlay's initial form triggered a `stdenv.hostPlatform.system` deprecation warning on all 3 niri hosts; fixed before committing.
+
+### Next session
+- gaming: rebuild (switch) to apply both the Deezer stagger fix and the xwayland-satellite pin, then relaunch Steam to test the dropdown menus. Revert (`git revert 4201283`) if it doesn't help.
+- No action pending on kitty or Secure Boot.
+
+**Commits**: `faa5ca8..4201283` (2 commits: kitty revert, xwayland-satellite pin)
+
+---
+
 ## Session: 2026-09-07 (session 104) — flake bump + skill-fix PRs reviewed/merged, btop GPU investigated
 
 **Focus**: Review and merge two PRs opened by delegated agents (a manager-run `/flake-update-verify`, the weekly `improve-system` sweep), check the xwayland-satellite Steam bug for a fix, and look into btop's missing GPU panel.
@@ -91,31 +116,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - laptop/natalie-laptop still carry the whole session-92-through-100 backlog untouched.
 
 **Commits**: `c002816..dd2f534` (2 commits)
-
----
-
-## Session: 2026-09-04 (session 100) — hplip/flatpak boot fixes, improve-system Discord step, gaming reboot confirmed live
-
-**Focus**: Root-cause a broken gaming dry-run and a boot-time flatpak failure surfaced by `/boot-error-triage`, add a Discord report step to `improve-system`, then close out by verifying (not assuming) how much of session 99's backlog gaming's earlier reboot actually picked up.
-
-### What changed (and why)
-- **`hplip` dropped** (`ae3b40b`) — the same-day flake bump made `python3.14` the nixpkgs default; hplip's `pyqt5` dependency doesn't build against it yet (upstream sip/PyQt5 ABI regression, not a config bug). No functional loss — the in-use printer (Canon TS9500) is already covered by `gutenprint`.
-- **`flatpak-managed-install.service` DNS race fixed** (`cfb8caa`) — a `/boot-error-triage` run found the unit racing `network-online.target` at boot, self-healing via systemd's restart a minute later. Fixed in the shared `modules/desktop-apps.nix` (all 3 desktop hosts) with an explicit `After=`/`Wants=network-online.target`.
-- **`improve-system` gained a Step 5** (`92e6075`) — reports its consolidated summary to Discord via `send-results`, mirroring `dream`, always runs even on a clean pass.
-- **Verified gaming's 20:44 reboot actually absorbed session 99's backlog**, rather than assuming — confirmed via live symlink resolution (`dream`/`send-results`/`save-memory`), `gemini-cli`'s absence from PATH, and `dotnet --version`. Corrected one stale assumption along the way: the Godot binary is `godot4-mono`/`godot-mono`, not `godot4`.
-
-### Decisions
-- Kept the flatpak-race and hplip fixes as separate commits despite landing the same evening — unrelated root causes and blast radii, better for future `git log`/`bisect`.
-- `improve-system`'s Discord step always runs, even all-clean, matching `dream`'s existing precedent — a silent unattended pass shouldn't look identical to one that never ran.
-
-### Issues / surprises
-- The session-closer transcript-cutoff detector missed this close's own preceding sessions again (same slash-command-invocation gap noted in the skill's own Gotchas) — `find-last-skill-invocation.sh` reported a cutoff of 22:52 (this session's own `/session-closer` text), skipping 6 real transcripts between the 20:36 baseline commit and then. Recovered by cross-checking `git log`'s last `chore(session):` commit timestamp directly, per the skill's documented workaround.
-
-### Next session
-- Reboot gaming to activate the hplip/flatpak fixes; one more `nh os boot` first (or after) to pick up `improve-system`'s Step 5.
-- laptop/natalie-laptop still carry the whole session-92-through-99 backlog untouched.
-
-**Commits**: `ae3b40b..92e6075` (3 commits)
 
 ---
 
