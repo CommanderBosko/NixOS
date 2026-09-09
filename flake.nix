@@ -8,6 +8,14 @@
     # Stable nixpkgs — used by vpn-server for stability
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
 
+    # TEMPORARY: pinned nixpkgs rev carrying xwayland-satellite 0.8.1 — the
+    # last release before 0.8.2's popup-positioning regression broke Steam's
+    # dropdown menus under niri (Supreeeme/xwayland-satellite#156). Consumed
+    # only by the overlay in modules/desktop-environments/niri.nix, which
+    # pulls just that one package — this does NOT hold back nixpkgs itself.
+    # Remove this input + the overlay once upstream fixes the regression.
+    nixpkgs-xwayland-satellite-pin.url = "github:nixos/nixpkgs/a5cbcfe954791221bfffe2307f7d1a1bf61a871e";
+
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
