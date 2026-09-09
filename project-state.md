@@ -4,6 +4,11 @@ _Last updated: 2026-09-09 (session 105)_
 
 ## Current Project State
 
+**`system-config-printer` added as the Linux equivalent of Windows' print-queue GUI — no niri host had one (2026-09-09, session 106).**
+- User asked whether there's a Linux equivalent to Windows' print-queue viewer. There wasn't live: `kdePackages.print-manager` only exists in the unused `plasma.nix` DE module (no host imports it — confirmed via `flake.nix`, all 3 desktop hosts use `niri.nix`), so nothing gave a GUI print-queue view on gaming/laptop/natalie-laptop. Added the DE-agnostic `system-config-printer` (GTK) to `modules/desktop-apps.nix` instead of the KDE one, since niri is the DE actually in use everywhere.
+- Scoped via `AskUserQuestion`: user chose "any desktop host" (all 3, via the shared module) and `system-config-printer` over `kdePackages.print-manager`.
+- Verified via `shared-module-check` (file is listed in `desktopModules`) — 4-host deep-eval all PASS. Committed `f535057`. **Not yet applied to any host** — pure package addition, `switch` recommended, no reboot needed; can ride along with every other pending switch below.
+
 **xwayland-satellite pinned to 0.8.1 as a real experiment against the Steam dropdown bug (reversing the earlier "no benefit" call); gaming's kitty full-screen change reverted per user request; Secure Boot question re-answered from existing memory (2026-09-09, session 105).**
 - **`xwayland-satellite` pinned to 0.8.1 via a dedicated overlay, to test against the Steam dropdown-menu bug** (`4201283`) — user pushed back on the session-102/104 conclusion that no version pin was worth trying; re-checking the 0.8.2 changelog confirmed it says "fixes for some popup regressions", meaning 0.8.1 itself introduced regressions 0.8.2 only partially patched. That makes a 0.8.1 pin (not the originally-floated straight downgrade to 0.8, which stayed untested) a real experiment, not a zero-benefit rollback — correcting the earlier root-cause writeup. Implementation: new `nixpkgs-xwayland-satellite-pin` flake input locked to the nixpkgs commit that shipped 0.8.1, plus an overlay in `modules/desktop-environments/niri.nix` pulling only that one package from it — nixpkgs itself, and every other package, stays on the current rev. Hit one deprecation warning mid-work (`'system' has been renamed to 'stdenv.hostPlatform.system'`), fixed before committing. Verified: gaming dry-run shows exactly `xwayland-satellite 0.8.2 → 0.8.1` (−22.4 KiB, `switch` recommended); `shared-module-check` 4-host deep-eval clean (niri.nix is shared across gaming/laptop/natalie-laptop). **Not yet applied to any host, not yet pushed.** Revert is a single `git revert` away once upstream `#156` closes for real — see memory `project_steam_dropdown_menu_bug` (updated).
 - **Kitty's `open-maximized true` window-rule on gaming reverted** (`c9e624d`) — user changed their mind, wants kitty back to opening at half size; the `asus-1` workspace pin stays. Verified via `nixos-dry-run` (no reboot needed), committed+pushed same session.
@@ -715,6 +720,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Current Goals
 
+- **All 3 desktop hosts: rebuild (switch, no reboot needed) to pick up `system-config-printer`** (session 106, `f535057`) — verified clean via `shared-module-check` 4-host deep-eval. After rebuild, confirm the app launches and shows the print queue (Canon TS9500 via gutenprint). Can ride along with every other pending switch below.
 - **All 3 desktop hosts: rebuild to pick up the 2026-09-07 flake bump (nixpkgs/home-manager/dms)** (session 104, `f780dba`, PR #21) — verified clean (flake-check + 4-host deep-eval); `/fleet-rollout` is the way to apply. Carries no xwayland-satellite fix (still 0.8.2, issue #156 still open — nothing to retest re: the Steam dropdown bug).
 - **All 3 desktop hosts: rebuild+reboot to pick up PR #20's repo-managed skill fixes** (session 104, `da25cc2`) — `repo-creator`/`search-pkg`'s bare-relative-path fixes and `session-analysis`'s new `assets/analysis-template.md` are all under `dotfiles/bosko/claude/skills/`, symlinked-global. Can ride along with every other pending switch below.
 - ~~gaming: rebuild (switch, no reboot needed) to apply the kitty full-screen fix~~ (session 103, `ba155a2`) — **REVERTED (session 105, `c9e624d`)**: user changed their mind before ever switching onto it: kitty stays pinned to `asus-1` but no longer opens maximized. No rebuild needed for this item any more.
@@ -1034,6 +1040,9 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 106 next steps** (see Current Goals for full detail):
+1. **All 3 desktop hosts: rebuild (switch)** to pick up `system-config-printer`, then launch it and confirm it shows the print queue.
 
 **Session 105 next steps** (see Current Goals for full detail):
 1. **gaming: rebuild (switch)** to apply the Mod+G Deezer stagger fix AND the xwayland-satellite 0.8.1 pin, then relaunch Steam to test whether the dropdown menus behave. Revert (`git revert 4201283`) if not.

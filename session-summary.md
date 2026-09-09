@@ -4,6 +4,26 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-09 (session 106) — system-config-printer added
+
+**Focus**: Add a Linux equivalent of Windows' print-queue GUI (there wasn't one live on any niri host).
+
+### What changed (and why)
+- **`system-config-printer` added to `modules/desktop-apps.nix`** (`f535057`) — `kdePackages.print-manager` existed only in the unused `plasma.nix` DE module, so no niri host (gaming/laptop/natalie-laptop) had a print-queue viewer. Chose the DE-agnostic GTK equivalent over the KDE one to match the DE actually in use.
+
+### Decisions
+- Scoped via `AskUserQuestion`: all 3 desktop hosts (shared module) + `system-config-printer` over `kdePackages.print-manager`.
+
+### Issues / surprises
+- None.
+
+### Next session
+- All 3 desktop hosts: rebuild (switch) to pick it up, then confirm the queue viewer launches.
+
+**Commits**: `f535057` (1 commit)
+
+---
+
 ## Session: 2026-09-09 (session 105) — xwayland-satellite 0.8.1 pin, kitty revert, Secure Boot Q&A
 
 **Focus**: Test a real fix for the Steam dropdown-menu bug after user pushback on the earlier "no fix worth trying" call, revert a kitty window-rule the user changed their mind on, and answer a Secure Boot capability question.
@@ -93,29 +113,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Secret-scan: ran via existing `secret-scan` skill, clean.
 
 **Commits**: `fcb2cc5` (1 commit)
-
----
-
-## Session: 2026-09-05 (session 101) — improve-system via manager agent (PR #18), guardrail-flagged files reviewed and merged, secret-scan scope fix
-
-**Focus**: Run the weekly `improve-system` sweep via the `manager` agent, review and merge its PR, and fix `session-closer`'s secret-scan step to cover everything committed since its own last run instead of just the README.
-
-### What changed (and why)
-- **`session-closer`'s STEP 5B rescoped** (`c002816`) — `secret-scan` already unconditionally scans the whole tree + full git history; the skill's own framing undersold that as README-only. Split into its own step, explicitly scoped to everything committed since `session-closer`'s last run.
-- **`manager` agent ran `/improve-system` end-to-end, opened PR #18, merged as `dd2f534`** — 2 skill-upgrade Gotchas, a real `shared-module-check` correctness bug fixed (missed a module wired directly into 2+ hosts' own lists, not just `commonModules`/`desktopModules`) via new shared `.claude/lib/classify-shared-file.sh`, a new project-local `ship-nix-change` skill (verify-chain + commit/push) smoke-tested by using it for the PR's own commit, 7 read-only permission entries, and several doc-staleness fixes. Declined a new custom agent and a `pr-merge-sync` skill (neither cleared the reuse bar).
-- An earlier same-day manual `/improve-system` walkthrough was interrupted mid-Step-1 in favor of delegating the whole run to `manager` instead — no commit resulted.
-
-### Decisions
-- Merged PR #18 despite `review-improve-system-pr`'s guardrail flagging 2 files (`classify-shared-file.sh`, `settings.json`) as outside its strict skill-dir boundary — reviewed both directly, content matched the PR body and fixed a real bug, no `.nix` touched. Guardrail did its job surfacing the crossing; content review is what cleared it.
-
-### Issues / surprises
-- None this session — no code-quality or tool misfires surfaced worth a skill-upgrade Gotcha.
-
-### Next session
-- All 3 desktop hosts: rebuild+reboot to bring PR #18's repo-managed `dotfiles/bosko/claude/skills/*` fixes live in `~/.claude` (project-local parts already live).
-- laptop/natalie-laptop still carry the whole session-92-through-100 backlog untouched.
-
-**Commits**: `c002816..dd2f534` (2 commits)
 
 ---
 
