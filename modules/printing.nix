@@ -1,6 +1,10 @@
 { pkgs, ... }:
 
 {
+  environment.systemPackages = with pkgs; [
+    system-config-printer # GUI print-queue manager (view/cancel/pause jobs)
+  ];
+
   services.printing = {
     enable = true;
     # hplip dropped 2026-09-04: its pyqt5 dependency fails to build against
