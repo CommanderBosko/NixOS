@@ -36,13 +36,13 @@ It reads `flake.nix` live and prints `SHARED: <reason>` or `LOCAL` — never har
 - **If nothing shared changed** (every result is `LOCAL`) — say so plainly and stop. No sweep needed; a local `nixos-dry-run` or `de-smoke-check` (for a DE module the classifier reports `LOCAL` because no host currently imports it at all) is the right tool instead.
 - **If any changed file classifies as `SHARED`** — proceed to Step 3.
 
-### 3. Run the 4-host sweep
+### 3. Run the sweep across every flake host
 
 ```bash
 bash /home/bosko/NixOS/.claude/skills/deep-eval-check/scripts/deep-eval-check.sh
 ```
 
-This deep-evaluates `gaming`, `laptop`, `natalie-laptop`, and `vpn-server`'s full build graphs — not just a shallow "is it a derivation" check.
+This deep-evaluates every host in `.flakeHosts` (`hosts.json`'s single source of truth — currently `gaming`, `laptop`, `natalie-laptop`, and `vpn-server`, but never hardcode that list yourself) full build graphs — not just a shallow "is it a derivation" check.
 
 ### 4. Report per-host PASS/FAIL
 
@@ -62,9 +62,9 @@ This self-heals once a future stable point-release backports the package — no 
 
 If the failure isn't an availability gap (a real syntax error, a genuinely broken option, an assertion failure), diagnose it normally — don't force the availability-gap explanation onto an unrelated bug.
 
-### 6. Don't clear the change until all 4 hosts pass
+### 6. Don't clear the change until every host passes
 
-Re-run Step 3 after any fix. Only report the change as safe to commit/dry-run/rebuild once `gaming`, `laptop`, `natalie-laptop`, and `vpn-server` all PASS.
+Re-run Step 3 after any fix. Only report the change as safe to commit/dry-run/rebuild once every host in `.flakeHosts` PASSes.
 
 ## Report
 

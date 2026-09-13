@@ -16,7 +16,7 @@ PRIV_BLOCK='-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'
 AGE_SECRET='AGE-SECRET-KEY-1[0-9A-Z]{50,}'
 PW_HASH='\$6\$[A-Za-z0-9./]{6,}\$[A-Za-z0-9./]{20,}'
 WG_INLINE='privateKey[[:space:]]*=[[:space:]]*"[A-Za-z0-9+/]{43}='
-GH_TOKEN='ghp_[A-Za-z0-9]{30,}'
+GH_TOKEN='gh[pousr]_[A-Za-z0-9]{30,}'
 AWS_KEY='AKIA[0-9A-Z]{16}'
 
 findings=0
