@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-13 (session 108) — printing.nix cleanup + first full /dream run since 2026-09-04
+
+**Focus**: One small config refactor, plus running the `/dream` memory-improvement suite end-to-end for the first time in over a week.
+
+### What changed (and why)
+- **`system-config-printer` moved from `modules/desktop-apps.nix` to `modules/printing.nix`** (`dc37a1f`) — groups it with the rest of the printing stack instead of the generic app list. Zero functional diff, both files already in `desktopModules`.
+- **`/dream` full run**: mined 6 active projects since 2026-09-04, auto-applied 6 memory changes (2 new files, 2 enriched, 2 index updates) across NixOS + FinanceGuru, 0 flagged for review. Writes go to `~/.claude/dream/` and per-project memory dirs — nothing lands in this repo's git history.
+
+### Decisions
+- None new this session — the printing.nix move was a straightforward "commit and push it" with no open questions.
+
+### Issues / surprises
+- An earlier, separate session asked about intermittent "no internet connection" app errors (ping working fine) but ended before any diagnosis — flagged in `project-state.md` for next time, not resolved here.
+- Secret-scan: clean (working tree + full git history).
+
+### Next session
+- No new host action added — rides along with the existing rebuild backlog (system-config-printer, 2026-09-07 flake bump, PR #20/#21 skill fixes, xwayland-satellite pin).
+- If the internet-connectivity report recurs, diagnose it fresh.
+
+**Commits**: `c33e20e..dc37a1f` (1 commit)
+
+---
+
 ## Session: 2026-09-09 (session 107) — VirtualBox removed from natalie-laptop
 
 **Focus**: Remove the VirtualBox host from natalie-laptop; it was no longer needed and still hadn't been rebuilt onto.
@@ -91,26 +114,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Revisit btop's GPU panel if asked again (fix identified, not applied).
 
 **Commits**: `b366685..f780dba` (2 commits — both PR merges, no new work this session)
-
----
-
-## Session: 2026-09-05 (session 103) — kitty full-screen window-rule fix
-
-**Focus**: Make kitty open full screen on gaming instead of half.
-
-### What changed (and why)
-- **`open-maximized true` added to kitty's window-rule** (`ba155a2`) — kitty's existing `hosts/gaming/niri-overlay.kdl` rule only pinned it to workspace `asus-1`, so it opened at half size (Mod+F equivalent was never set). Confirmed the live app-id via `niri msg windows`, then added the line to the existing block via `add-niri-fullscreen-rule` rather than creating a duplicate rule.
-
-### Decisions
-- None beyond reusing the existing window-rule block (see project-state.md Recent Decisions).
-
-### Issues / surprises
-- None.
-
-### Next session
-- **gaming: rebuild (switch)** to apply the fix, then `/wayland-screenshot kitty` to confirm it opens full screen.
-
-**Commits**: `ba155a2` (1 commit)
 
 ---
 

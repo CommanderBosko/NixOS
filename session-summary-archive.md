@@ -1,3 +1,23 @@
+## Session: 2026-09-05 (session 103) — kitty full-screen window-rule fix
+
+**Focus**: Make kitty open full screen on gaming instead of half.
+
+### What changed (and why)
+- **`open-maximized true` added to kitty's window-rule** (`ba155a2`) — kitty's existing `hosts/gaming/niri-overlay.kdl` rule only pinned it to workspace `asus-1`, so it opened at half size (Mod+F equivalent was never set). Confirmed the live app-id via `niri msg windows`, then added the line to the existing block via `add-niri-fullscreen-rule` rather than creating a duplicate rule.
+
+### Decisions
+- None beyond reusing the existing window-rule block (see project-state.md Recent Decisions).
+
+### Issues / surprises
+- None.
+
+### Next session
+- **gaming: rebuild (switch)** to apply the fix, then `/wayland-screenshot kitty` to confirm it opens full screen.
+
+**Commits**: `ba155a2` (1 commit)
+
+---
+
 ## Session: 2026-09-05 (session 102) — Deezer boot-race stagger fix, Steam dropdown-menu bug root-caused (upstream, no fix)
 
 **Focus**: Fix a real Mod+G bug on gaming (Deezer silently losing its launch race) and investigate a separate Steam UI bug (dropdown menus flashing under niri).

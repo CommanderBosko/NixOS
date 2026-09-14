@@ -1,8 +1,14 @@
 # NixOS Project State
 
-_Last updated: 2026-09-09 (session 105)_
+_Last updated: 2026-09-13 (session 108)_
 
 ## Current Project State
+
+**`system-config-printer` moved into `printing.nix` for better cohesion; a full `/dream` memory-improvement run executed for the first time since 2026-09-04; two informational/dead-end threads noted (2026-09-13, session 108).**
+- **`system-config-printer` relocated from `modules/desktop-apps.nix` to `modules/printing.nix`** (`dc37a1f`) — user asked to move it since it's more fitting grouped with the rest of the printing stack; both files already sit in `desktopModules` so no rewiring was needed. Pure module reorganization, zero functional diff (same package, same hosts). Verified via `nixos-dry-run` (clean, path churn only). Committed+pushed directly per the user's explicit "commit and push it." **Not yet applied to any host** — rides along with the existing rebuild backlog below.
+- **`/dream` full run completed (since-cutoff 2026-09-04) — 6 auto-applied memory changes, 0 flagged for review, no repo changes.** Mined 6 active projects (12 scanned total, including this one) via 7 parallel `transcript-scanner` batches → `analysis-20260913T195746Z.md` (~35 candidate items) → reconciled via `improve-memory` → `overview-20260913T200300Z.md`: 2 new memory files (NixOS btop-panel gotcha; FinanceGuru manager-audit-loop practices), 2 existing files enriched (NixOS manager-agent gotchas; Steam dropdown fallback), 2 `MEMORY.md` index updates. All writes land in `~/.claude/dream/` and per-project memory dirs, none tracked in this repo — no NixOS git commit results from this run. Posted to Discord with a link to the published overview Artifact. The prior overview (`overview-20260904T194649Z.md`) is still `PENDING_REVIEW` — nothing from it was applied.
+- **xwayland-satellite status re-checked, no change** — still 0.8.2 in nixpkgs unstable, upstream issue #156 still open, zero new activity. The existing 0.8.1 pin (session 105, `4201283`, not yet applied to any host) remains the live experiment; nothing new to retest.
+- **An abandoned session asked about intermittent "no internet connection" app errors despite `ping 1.1.1.1` working, but ended before any diagnosis** — the transcript shows only the user's question, no tool calls or reply. Not investigated, not resolved — if the symptom recurs, start fresh (check DNS resolution and per-app proxy settings first; ICMP succeeding while apps fail is a classic DNS/captive-portal split, not proof the network itself is fine).
 
 **`system-config-printer` added as the Linux equivalent of Windows' print-queue GUI — no niri host had one (2026-09-09, session 106).**
 - User asked whether there's a Linux equivalent to Windows' print-queue viewer. There wasn't live: `kdePackages.print-manager` only exists in the unused `plasma.nix` DE module (no host imports it — confirmed via `flake.nix`, all 3 desktop hosts use `niri.nix`), so nothing gave a GUI print-queue view on gaming/laptop/natalie-laptop. Added the DE-agnostic `system-config-printer` (GTK) to `modules/desktop-apps.nix` instead of the KDE one, since niri is the DE actually in use everywhere.
@@ -721,7 +727,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 ## Current Goals
 
 - **natalie-laptop: rebuild (boot, reboot recommended) to drop the VirtualBox host module** (session 107, `4237d7d`) — removes `hosts/natalie-laptop/virtualisation.nix` and its `vboxusers` group membership; it was never rebuilt onto in the first place (still owed its original from-source VirtualBox build), so this just clears a stale pending item rather than reversing anything live. Verified clean via `shared-module-check` 4-host deep-eval.
-- **All 3 desktop hosts: rebuild (switch, no reboot needed) to pick up `system-config-printer`** (session 106, `f535057`) — verified clean via `shared-module-check` 4-host deep-eval. After rebuild, confirm the app launches and shows the print queue (Canon TS9500 via gutenprint). Can ride along with every other pending switch below.
+- **All 3 desktop hosts: rebuild (switch, no reboot needed) to pick up `system-config-printer`** (session 106, `f535057`; relocated into `modules/printing.nix` session 108, `dc37a1f`, no functional change) — verified clean via `shared-module-check` 4-host deep-eval. After rebuild, confirm the app launches and shows the print queue (Canon TS9500 via gutenprint). Can ride along with every other pending switch below.
 - **All 3 desktop hosts: rebuild to pick up the 2026-09-07 flake bump (nixpkgs/home-manager/dms)** (session 104, `f780dba`, PR #21) — verified clean (flake-check + 4-host deep-eval); `/fleet-rollout` is the way to apply. Carries no xwayland-satellite fix (still 0.8.2, issue #156 still open — nothing to retest re: the Steam dropdown bug).
 - **All 3 desktop hosts: rebuild+reboot to pick up PR #20's repo-managed skill fixes** (session 104, `da25cc2`) — `repo-creator`/`search-pkg`'s bare-relative-path fixes and `session-analysis`'s new `assets/analysis-template.md` are all under `dotfiles/bosko/claude/skills/`, symlinked-global. Can ride along with every other pending switch below.
 - ~~gaming: rebuild (switch, no reboot needed) to apply the kitty full-screen fix~~ (session 103, `ba155a2`) — **REVERTED (session 105, `c9e624d`)**: user changed their mind before ever switching onto it: kitty stays pinned to `asus-1` but no longer opens maximized. No rebuild needed for this item any more.
@@ -967,6 +973,7 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 
 ## Known Issues / Tech Debt
 
+- **Intermittent "no internet connection" app-level errors reported once (2026-09-13), never diagnosed** — session ended right after the report, before any investigation. Next occurrence: check DNS resolution and per-app proxy/network settings first, since `ping 1.1.1.1` succeeding only proves raw ICMP reachability, not DNS or HTTP-layer connectivity.
 - **xwayland-satellite 0.8.1 pin (`4201283`, session 105) not yet applied to any host — test not yet run.** Real experiment against the Steam dropdown-menu bug (correcting the session 102/104 "no fix worth trying" call — 0.8.2's changelog admits 0.8.1 introduced its own popup regressions). See Current Goals; revert with `git revert 4201283` if it doesn't help.
 - **2026-09-07 flake bump (`f780dba`, PR #21, session 104) not yet applied to any host** — nixpkgs/home-manager/dms moved, verified clean (flake-check + 4-host deep-eval); see Current Goals.
 - **PR #20's repo-managed skill fixes (`da25cc2`, session 104) not yet live in `~/.claude`** — `dotfiles/bosko/claude/skills/{repo-creator,search-pkg,session-analysis}` need `nh os boot` + reboot; see Current Goals.
@@ -1041,6 +1048,10 @@ The `remote-rebuild` skill has been updated to deploy as `bosko@150.136.232.63` 
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 108 next steps** (see Current Goals for full detail):
+1. No new host action added — the `printing.nix` move rides along with the existing rebuild backlog (system-config-printer, the 2026-09-07 flake bump, PR #20/#21 skill fixes, the xwayland-satellite pin).
+2. If the "no internet connection" symptom recurs, diagnose it fresh (see Known Issues) — nothing was actually investigated the one time it was raised.
 
 **Session 107 next steps** (see Current Goals for full detail):
 1. **natalie-laptop: rebuild (boot)** to drop the VirtualBox host module — no functional loss expected, it was still pending its first-ever build.
