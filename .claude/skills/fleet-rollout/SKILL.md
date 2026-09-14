@@ -84,8 +84,12 @@ current host passes its health sweep.**
 
 3. **Pre-flight: flake evaluates** — invoke the `flake-check` skill (or
    `nh os boot /home/bosko/NixOS --dry` via the `nixos-dry-run` skill) once against the
-   whole flake.
-   - Done-rule: evaluation completes with no errors.
+   whole flake, then invoke the `deep-eval-check` skill to deep-evaluate every host's full
+   build graph — a shallow `flake-check` pass alone is not sufficient guarantee before a
+   live rollout to all four hosts (`deep-eval-check`'s own SKILL.md names itself as a
+   required pre-step here).
+   - Done-rule: evaluation completes with no errors AND `deep-eval-check` reports PASS for
+     every host.
 
 4. **Per host, in order — DRY-RUN GATE.** For the current host:
    - Local host: invoke `nixos-dry-run` (`nh os boot /home/bosko/NixOS --dry`).
