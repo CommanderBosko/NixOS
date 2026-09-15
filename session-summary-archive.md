@@ -1,3 +1,27 @@
+## Session: 2026-09-07 (session 104) — flake bump + skill-fix PRs reviewed/merged, btop GPU investigated
+
+**Focus**: Review and merge two PRs opened by delegated agents (a manager-run `/flake-update-verify`, the weekly `improve-system` sweep), check the xwayland-satellite Steam bug for a fix, and look into btop's missing GPU panel.
+
+### What changed (and why)
+- **PR #21 merged (`f780dba`)** — manager agent ran `/flake-update-verify`, bumped nixpkgs/home-manager/dms, verified clean (flake-check + 4-host deep-eval + public-repo-guard). Landed as a branch+PR rather than the skill's literal direct push, per the manager's own absolute no-direct-push-to-main rule. Not yet applied to any host.
+- **PR #20 merged (`da25cc2`)** — weekly `improve-system` sweep fixed the recurring bare-relative-script-path bug in `repo-creator`/`search-pkg`, extracted `session-analysis`'s inline template to `assets/`. Repo-managed global skills, needs rebuild+reboot to go live.
+- **xwayland-satellite checked, still unfixed** — version unchanged (0.8.2) across both nixpkgs revs, upstream issue #156 still open with no activity. Nothing to retest.
+- **btop GPU panel root-caused, not fixed** — `btop.conf`'s `shown_boxes` omits `gpu0`; NVML is available. Session was interrupted before applying a fix.
+
+### Decisions
+- Manager's hard limit against direct pushes to `main` overrode `/flake-update-verify`'s literal step and this repo's own direct-push precedent for flake bumps — treated as non-negotiable, not a judgment call.
+
+### Issues / surprises
+- Local `main` had drifted 2 commits behind `origin/main` (PR #20/#21 merges happened in a prior session not yet fast-forwarded locally) — fast-forwarded before this close so the git-changes baseline scan reflected reality.
+
+### Next session
+- Rebuild all 3 desktop hosts to pick up the flake bump + PR #20's skill fixes.
+- Revisit btop's GPU panel if asked again (fix identified, not applied).
+
+**Commits**: `b366685..f780dba` (2 commits — both PR merges, no new work this session)
+
+---
+
 ## Session: 2026-09-05 (session 103) — kitty full-screen window-rule fix
 
 **Focus**: Make kitty open full screen on gaming instead of half.
