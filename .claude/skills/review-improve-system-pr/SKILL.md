@@ -47,3 +47,11 @@ Report: the PR number, files changed, and the outcome — merged / held for manu
 ## Scripts
 
 - `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` — finds the open weekly improve-system PR and checks its changed files against the auto-apply guardrail; read-only, exit 0/1/2 as described in Step 1.
+
+## Gotchas
+
+- **`gh pr diff` only accepts one pathspec after `--`.** Hit for real 2026-09-05: running
+  `gh pr diff <number> --repo CommanderBosko/NixOS -- file1 file2` to scope Step 2's diff to
+  specific changed files failed with `accepts at most 1 arg(s), received 3`. Step 2's plain
+  `gh pr diff <number> --repo CommanderBosko/NixOS` (no path filter) already shows the full
+  diff — don't add a multi-file pathspec to narrow it.

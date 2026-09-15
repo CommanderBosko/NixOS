@@ -98,3 +98,8 @@ Tell the user the filename written, its `type`, and the one-line index hook adde
   `~/.claude/skills/save-memory/` via Home Manager), so the asset resolves at
   `~/.claude/skills/save-memory/assets/memory-template.md` — use the "Base directory for this
   skill" path shown when the skill launches rather than guessing a project-local path.
+- **Step 2's "read `MEMORY.md`" only shows an `ls` of the memory dir, not an actual `Read`
+  call on the file.** Hit for real 2026-08-30: Step 4's `Edit` on `MEMORY.md` failed with
+  `File has not been read yet. Read it first before writing to it.` because the file had only
+  been listed, never opened. Explicitly `Read` `MEMORY.md` itself (not just `ls` the
+  directory) before attempting Step 4's edit.
