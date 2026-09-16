@@ -74,18 +74,18 @@ Once confirmed, use the **AskUserQuestion** tool to ask what happens next, with 
 
 ## Rules
 
-- Never skip straight to writing code or designing architecture. The deliverable of this skill is a confirmed understanding, not an implementation.
+- Don't move into writing code or designing architecture until the goal is confirmed — for a genuinely fuzzy or multi-part request that means the full brief-and-review ceremony (steps 3–8); for a well-scoped, already-diagnosed fix it can mean just 1–3 blocking clarifying questions (see Gotchas). Either way, the deliverable before building starts is a confirmed understanding, not an assumption.
 - If the user gives a one-line answer to a big question, ask a follow-up — don't accept vagueness.
 - It's fine to challenge assumptions respectfully ("You said it must scale to millions — is that real for v1, or future?").
 - Keep your own talking short; the user should be doing most of the talking.
-- Never skip the key-decisions verification (step 5). Every key decision must get an explicit yes or a correction before the brief — no important choice rides on an unstated assumption.
+- Verify every key decision explicitly before treating the goal as settled — via step 5's full confirmation pass for a fuzzy/multi-part request, or via the answers to those same 1–3 blocking questions for a well-scoped fix. No important choice rides on an unstated assumption either way.
 - Set the success criteria up front (step 1) and have a second AI check the final brief (step 7) — don't hand off a brief that hasn't been measured against a clear bar and read by an independent reviewer.
 - Default to the **AskUserQuestion** tool for every question in this skill — waves (step 3), key-decision confirmations (step 5), and hand-off (step 8). Only fall back to plain-text prose when a question is genuinely open-ended with no sensible options to offer (e.g. step 2's opening prompt).
 
 ## Gotchas
 
 - **AskUserQuestion times out after 60s if the user is away** (observed 2026-07-02, and in one earlier session). A timeout is NOT an answer — never proceed as if defaults were accepted. On timeout, restate the same wave as plain numbered text with a recommended default per question so the user can answer asynchronously in one reply, and mark the interview as paused, not advanced.
-- **A well-scoped, already-diagnosed technical task doesn't need the full ceremony** (observed 2026-07-07: invoked for a Qt platform-plugin bug fix where the root cause was already found via git history — running Steps 3–8 in full would have meant writing a Project Brief and spawning a second-AI review subagent for what was really a 30-minute fix). If the request is a single concrete fix with a clear, already-implied success criterion (a specific error, a known repro, a bounded diagnosis), skip straight to 1–3 blocking clarifying questions via AskUserQuestion, skip the Project Brief and second-AI-review, and proceed once answered. Reserve the full ceremony (angles, brief, independent review) for genuinely fuzzy, multi-part, or open-ended-scope requests.
+- **Case that established the well-scoped-fix exception in Rules above** (observed 2026-07-07): invoked for a Qt platform-plugin bug fix where the root cause was already found via git history — running Steps 3–8 in full would have meant writing a Project Brief and spawning a second-AI review subagent for what was really a 30-minute fix. A single concrete fix with a clear, already-implied success criterion (a specific error, a known repro, a bounded diagnosis) qualifies for the shortcut; reserve the full ceremony for genuinely fuzzy, multi-part, or open-ended-scope requests.
 
 ## Assets
 

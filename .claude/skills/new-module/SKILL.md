@@ -7,7 +7,7 @@ version: 0.2.0
 
 # New NixOS Module Scaffolder
 
-Interactively gather the information needed, then write a correctly-structured NixOS module file into the right location in this repo. Follow all conventions exactly as described below — do not deviate from them.
+Interactively gather the information needed, then write a correctly-structured NixOS module file into the right location in this repo. Match the conventions described below by default; deviate only when the new module has a genuine structural difference from existing ones, and call that out explicitly rather than silently improvising.
 
 ## Arguments
 

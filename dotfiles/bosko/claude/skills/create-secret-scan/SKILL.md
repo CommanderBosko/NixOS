@@ -77,8 +77,9 @@ asking blind.
    worth adding (Stripe keys, an internal API token format, a JWT signing key literal)?
    Optional — leave empty if the baseline covers it.
 6. **Full git-history scan** — scan every commit (catches secrets committed then
-   removed)? Default **yes**; only say no for a very large/old repo where it'd be too
-   slow to be useful in practice.
+   removed)? Default **yes**; only say no when the repo's actual size makes it
+   impractically slow — check with `git rev-list --count HEAD` (commit count) or
+   `du -sh .git` (clone size) rather than eyeballing "large/old".
 7. **.gitignore coverage to check** — which extensions/globs should be gitignored for
    this project's scheme (e.g. `.env`, `*.pem`, `*.key`, plus `*.age` for
    sops/age-based schemes)? Propose a sensible default from the scheme answer.

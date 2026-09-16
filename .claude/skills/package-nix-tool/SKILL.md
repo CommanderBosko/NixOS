@@ -26,13 +26,19 @@ Gather up front (ask only for what's missing):
 
 Before writing anything, confirm the tool genuinely needs a from-scratch package — don't
 duplicate something upstream already ships. Use the `search-pkg` skill (backed by the `nixos`
-MCP server) to search nixpkgs by name and by likely alternate names. If it's already packaged,
-stop here and just add the existing attribute instead of this whole workflow. If not found, note
-the search you ran and what you checked (e.g. "checked via mcp-nixos search, <date>") — this
+MCP server) to search nixpkgs by name and by likely alternate names (see Step 2 for what to do
+with what you find). If not found at all, note the search you ran and what you checked (e.g.
+"checked via mcp-nixos search, <date>") — this
 repo's convention is to record that check as a comment at the top of the new `pkgs/<name>.nix`
 (see `pkgs/tailscale-mcp.nix`'s opening comment for the exact style).
 
 ## Step 2 — Inspect the upstream repo to pick the builder
+
+If it's already packaged **and covers what this repo actually needs**, stop here and just add the
+existing attribute instead of this whole workflow. If the existing nixpkgs package is missing
+something this repo specifically requires (a patch, an unreleased version/fix, a build flag
+nixpkgs doesn't expose), continue with this workflow instead — note in Step 3's opening comment
+what's missing and why the nixpkgs version doesn't suffice.
 
 Fetch the repo (WebFetch the GitHub repo page, or `gh repo view`/`gh api` for file contents) and
 determine which Nix builder fits, based on what the repo actually ships:
@@ -160,4 +166,5 @@ evaluates.
   `npmDepsHash` to `lib.fakeHash` at once only ever surfaces the `src.hash` mismatch — Nix can't
   evaluate far enough to hit the deps-hash mismatch until the src hash is already correct.
 - Don't skip Step 1. Packaging something that already has a nixpkgs attribute means carrying a
-  maintenance burden (rebuilds, security patches) this repo doesn't need to own.
+  maintenance burden (rebuilds, security patches) this repo doesn't need to own — unless that
+  attribute is missing something this repo specifically requires, per Step 1's branch for that case.

@@ -28,7 +28,7 @@ Passing an empty string (first-ever run) lists the full transcript history inste
 ### 2. Scan for candidates
 
 Review everything done so far this session, **plus** the transcripts listed in step 1. Look for:
-- A task performed **two or more times**, or a 4+ step sequence that could be cleanly reused
+- A task performed **two or more times**, or a single sequence whose complexity and reuse potential would clearly pay back the cost of turning it into a skill
 - Manual workflows the user walked through (commands run, files edited, decisions made in a repeatable order)
 - Friction the user hit that a skill could remove
 
@@ -38,7 +38,7 @@ The transcript list from step 1 is a stronger reuse signal than "done twice this
 
 ### 3. Rank every viable candidate
 
-Don't collapse to a single pick. List **every** workflow that clears the reuse bar (repeated 2+ times, or a 4+ step reusable sequence), ranked by reuse value. If nothing in the conversation or logs is reusable, say so plainly and stop — do not invent a skill just to have one. A list of one is fine if that's genuinely all that qualifies — don't pad it, and don't artificially trim a longer list down to one.
+Don't collapse to a single pick. List **every** workflow that clears the reuse bar (repeated 2+ times, or complex/reusable enough to pay back a skill's setup cost), ranked by reuse value. If nothing in the conversation or logs is reusable, say so plainly and stop — do not invent a skill just to have one. A list of one is fine if that's genuinely all that qualifies — don't pad it, and don't artificially trim a longer list down to one.
 
 ### 4. Propose them
 

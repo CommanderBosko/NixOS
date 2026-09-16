@@ -12,7 +12,7 @@ history, hand off a fully initialized repo.
 ## Identity & scope
 
 - GitHub account: `CommanderBosko`
-- Auth: SSH — remotes use `git@github.com:CommanderBosko/<repo-name>.git`
+- Auth: SSH by default — remotes use `git@github.com:CommanderBosko/<repo-name>.git`; fall back to HTTPS only if SSH isn't set up for this account yet (see Constraints)
 - Visibility: **public** or **private** — resolved per invocation, see Arguments
 - Default branch: `main`
 - This is a one-time setup. Once the first push succeeds, the job is done — no further
@@ -76,6 +76,8 @@ via AskUserQuestion if none was given.
 ```
 Runs `gh repo create CommanderBosko/<repo-name> --<visibility> --source=. --remote=origin --push=false`,
 then normalizes the remote to SSH format if `gh` left it as HTTPS, and prints `git remote -v`.
+(This normalization step assumes SSH is actually set up — if the user has told you it isn't,
+skip that sub-step and leave the remote as HTTPS instead.)
 If `gh` is unavailable, fall back to the GitHub REST API via `curl`, or guide the user to
 create it manually and supply the SSH remote.
 
@@ -130,7 +132,7 @@ existing), `.gitignore` status, and the commit message used.
 
 - Never push to an existing repo with history without explicit confirmation.
 - Never commit `.env`, private keys, or credential files.
-- Always SSH, never HTTPS remotes.
+- Default to SSH; only use HTTPS if the user doesn't have SSH access configured for GitHub (no key added, `ssh -T git@github.com` fails) — normalize back to SSH once it is set up.
 - The job ends after a successful push — do not make further commits.
 
 ## Assets

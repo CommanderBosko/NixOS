@@ -8,11 +8,11 @@ Whenever `/init` is run in this repo, invoke the `claude-rules` skill immediatel
 
 ## Skill Awareness
 
-If you notice you've performed the same multi-step task twice in a session — or if a task involved 4+ steps that could be cleanly reused — proactively offer to create a skill for it. Say something like: "I've done this a few times now — want me to create a skill so you can invoke it with a single phrase?" If the user agrees, invoke the `new-skill` skill to build it interactively. Prefer project-local scope for NixOS-specific workflows, global scope for general-purpose utilities.
+If you notice you've performed the same multi-step task twice in a session — or a task's complexity and repeat potential clearly outweigh the setup cost of building a skill for it — proactively offer to create one. Say something like: "I've done this a few times now — want me to create a skill so you can invoke it with a single phrase?" If the user agrees, invoke the `new-skill` skill to build it interactively. Prefer project-local scope for NixOS-specific workflows, global scope for general-purpose utilities.
 
 ## Scope First (Interview)
 
-Before you do any work, use the `/interview` skill to pin down the real goal with me — don't start building from a fuzzy or assumed understanding of the request. Surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before touching the config. All interview questions and decision confirmations go through the **AskUserQuestion** tool (see Ask via AskUserQuestion below), not plain-text prose.
+Use the `/interview` skill to pin down the real goal with me before starting work whose scope or target is genuinely unclear — don't build against a guessed-at understanding of the request when guessing wrong would mean redoing the work. Skip it when the ask is already concrete (a single, already-diagnosed fix, a narrowly-scoped request) — a few blocking clarifying questions are enough there. When you do run it, surface the unknowns, confirm scope and constraints, and only proceed once the target is clear. Do this in tandem with the Verification Plan below: the interview establishes *what* we're building and how we'll know it's done, and the verification plan establishes *how we'll prove* it works. Lay out both together, up front, before touching the config. All interview questions and decision confirmations go through the **AskUserQuestion** tool (see Ask via AskUserQuestion below), not plain-text prose.
 
 ## Verification Plan
 
@@ -21,6 +21,8 @@ Before you do any work, mention how you could verify the work with the `/verify`
 ## Parallelize with Sub-Agents
 
 **This rule is your standing authorization to spawn sub-agents — you do not need to ask first.** Once scope and the verification plan are set, before starting any task with more than one independent part, stop and run a parallelization check. This is a required step, not an aspiration: ask "Can I split this into pieces that don't depend on each other's output?" If yes, spawn one sub-agent per piece in a single message and let them run concurrently.
+
+Each spawned sub-agent must stay strictly inside the piece it was assigned — the exact file list or task boundary given in its prompt — and must not wander into a sibling agent's piece or the synthesis step reserved for you. A sub-agent that does more than its assigned slice (e.g. re-reading files assigned to another agent, or drawing conclusions across the whole task instead of just its piece) has gone out of scope, not "being extra helpful" — treat that as a bug to correct, the same way you would a wrong file edit.
 
 Trigger parallelization whenever you hit any of these:
 - About to research, search, or read across 2+ areas of the tree that don't depend on each other.

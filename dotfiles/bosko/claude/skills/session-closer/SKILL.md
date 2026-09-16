@@ -182,7 +182,9 @@ Note any finding or redaction in the session summary regardless of which path wa
 
 ## STEP 6 — Commit and push
 
-No confirmation needed — draft and execute directly.
+No confirmation needed — draft and execute directly. (Invoking `/session-closer` is itself the
+consent to push, per `git-push`'s Rules — this skill's own job description already says "push to
+GitHub," unlike a bare "push" reaching `git-push` directly.)
 
 1. Stage the docs: `git add project-state.md README.md session-summary.md`
    (plus `session-summary-archive.md` if you rotated, plus any files touched in Step 1).

@@ -5,7 +5,7 @@ description: Re-mine Claude Code session transcripts across all known projects f
 
 # Refresh Manager Profile
 
-On-demand incremental refresh of the `manager` agent's profile (`dotfiles/bosko/claude/manager-profile.md`, symlinked to `~/.claude/manager-profile.md`). Mines only transcript activity since the last time this skill ran per project — never a full re-mine — the same since-last-run idiom `skill-suggestion`/`skill-upgrade`/`skill-audit` already use.
+On-demand incremental refresh of the `manager` agent's profile (`dotfiles/bosko/claude/manager-profile.md`, symlinked to `~/.claude/manager-profile.md`). Defaults to mining only transcript activity since the last time this skill ran per project — the same since-last-run idiom `skill-suggestion`/`skill-upgrade`/`skill-audit` already use — but falls back to a full re-mine for a project when there's a specific reason the incremental pass could have missed something (e.g. right after fixing a bug in the incremental-scan logic itself, or on explicit user request).
 
 ## Steps
 
@@ -28,7 +28,7 @@ CUTOFF=$(~/.claude/skills/lib/find-last-skill-invocation.sh refresh-manager-prof
 ~/.claude/skills/lib/list-transcripts-since.sh "$CUTOFF" "<project-dir>"
 ```
 
-A project with no transcript directory fails soft (empty output) — skip it. A project with an empty file list has nothing new since last refresh — skip it too; don't pad the run by re-mining it. Only projects with a non-empty new-file list proceed to step 3. If **every** project comes back empty (including on a first-ever run, where `find-transcript-dir.sh` may simply find nothing new since the initial full mining pass), report that plainly and stop — there's nothing to update.
+A project with no transcript directory fails soft (empty output) — skip it. A project with an empty file list has nothing new since last refresh — skip it too; don't pad the run by re-mining it. Exception: if the user asked for a full re-mine, or the incremental-scan logic itself was just fixed, pass an empty cutoff for the affected project(s) instead of the discovered one — `list-transcripts-since.sh` treats that as "list the full history." Only projects with a non-empty new-file list proceed to step 3. If **every** project comes back empty (including on a first-ever run, where `find-transcript-dir.sh` may simply find nothing new since the initial full mining pass), report that plainly and stop — there's nothing to update.
 
 ### 3. Fan out mining across projects with new activity
 

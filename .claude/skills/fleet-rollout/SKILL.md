@@ -49,12 +49,14 @@ is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). The order below is the rollout policy — fixed, fail-fast, desktops first so the server is last to receive a bad change:
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to desktops-first, server last:
 
 1. `gaming`
 2. `laptop`
 3. `natalie-laptop`
 4. `vpn-server`
+
+If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `vpn-server` imports, or a desktop-environment/GPU change that's meaningless on the headless server — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
 
 The host this loop runs on is the **local** host — deploy it with `nh os switch`. All
 other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`,

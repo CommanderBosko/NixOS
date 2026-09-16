@@ -37,7 +37,7 @@ Most candidates show up as `general-purpose`/`Explore` spawns carrying a hand-ty
 
 A candidate must clear **all three** of these tests to qualify — this is the exact heuristic derived 2026-08-17 from a real audit of 82 `Agent`-tool spawns across 10 sessions, the same analysis that produced the existing `source-reviewer` and `skill-reviewer` agents. It's established precedent, not something to re-derive from scratch each run:
 
-1. **Recurring** — the shape appears across multiple sessions or orchestrators, not a one-off. A single occurrence never qualifies, no matter how clean the shape looks.
+1. **Recurring** — the shape appears across multiple sessions or orchestrators, or a single occurrence sits in a context structurally guaranteed to repeat (e.g. the next run of a scheduled routine). A one-off with no such guarantee doesn't qualify, no matter how clean the shape looks.
 2. **Cold-start compatible** — the subtask needs no inherited conversation context. If it depends on context only the parent session has, `fork` is already the right tool for it — that's disqualifying, not a design detail to route around.
 3. **Stable/describable** — same tools, same output shape, same model choice every time, currently being re-typed as prose per call instead of reused.
 

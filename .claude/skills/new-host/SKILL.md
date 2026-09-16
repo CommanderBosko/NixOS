@@ -7,7 +7,7 @@ version: 0.4.0
 
 # New NixOS Host Scaffolder
 
-Interactively gather the information needed, then write all the correctly-structured host files into the right location in this repo. The file contents come from byte-exact templates under this skill's `assets/` directory — read and fill them rather than reproducing Nix from memory. Follow all conventions exactly as described below — do not deviate from them.
+Interactively gather the information needed, then write all the correctly-structured host files into the right location in this repo. The file contents come from byte-exact templates under this skill's `assets/` directory — read and fill them rather than reproducing Nix from memory. Match the conventions described below by default; deviate only when the new host has a genuine structural difference from the existing pattern, and call that out explicitly rather than silently improvising.
 
 ## Arguments
 

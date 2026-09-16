@@ -22,10 +22,14 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 3. Show which commits are ahead of the upstream (from step 1's output) before pushing.
 
 4. Confirm:
-   - **Skip confirmation** if the user's original request was an unambiguous push command with no
-     conditions attached (e.g. "push it", "just push", "push now") — proceed straight to step 5.
-   - **Ask for confirmation** in all other cases (e.g. "push", "push my changes"), via the
-     AskUserQuestion tool with options **Proceed** / **Cancel**.
+   - **Skip confirmation** if the user's original request was an unambiguous, unconditional
+     go-ahead to push right now (e.g. "push it", "just push", "push now", or any clearly
+     equivalent phrasing) — proceed straight to step 5.
+   - **Ask for confirmation** whenever that intent isn't clearly there (e.g. a bare "push" or
+     "push my changes" with nothing else signaling "right now, unconditionally"), via the
+     AskUserQuestion tool with options **Proceed** / **Cancel**. Judge the actual phrasing and
+     context — the examples above illustrate the two ends, not an exhaustive list to
+     pattern-match against.
 
 5. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` — determines whether the
    branch has an upstream, pushes accordingly (`git push -u origin <branch>` if not, `git push`
@@ -39,6 +43,7 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 - Only force push if the user explicitly requests it AND the branch is not main/master
 - Do not push if there are no commits ahead of origin (nothing to push)
 - If the push is rejected (non-fast-forward), explain why and suggest `git pull --rebase` rather than force pushing
+- Step 4's confirm-skip check is for a standalone push request reaching this skill directly. A skill whose own description/invocation already commits to pushing (e.g. `session-closer`'s end-of-session close, which is a "wrap up and push" ask by name) treats that invocation itself as the consent and doesn't re-ask here — that's intentional, not a gap in this skill's confirm logic.
 
 ## Gotchas
 

@@ -48,8 +48,8 @@ Every skill must fit cleanly into **one** of these four buckets. The best skills
 
 State which bucket this skill lands in and confirm it with the user. Then apply the gate:
 
-- **If it spans 2+ buckets, stop and split it** (or trim its scope) before drafting. Two independent jobs = two skills.
-- **Exception:** an Orchestration skill that *coordinates* other skills is not straddling — chaining a Utility + a Verification step is exactly its job. The straddle test is whether the skill does two **independent** jobs that could each stand alone, not whether it calls more than one tool.
+- **Stop and split it (or trim its scope) before drafting if it does two jobs that would each be useful on their own** — two independent jobs = two skills. Spanning 2+ buckets is usually the symptom of this, not the test itself.
+- **Exception:** an Orchestration skill that *coordinates* other skills is not straddling — chaining a Utility + a Verification step is exactly its job. The straddle test is whether the skill does two **independent** jobs that could each stand alone, not whether it calls more than one tool or touches more than one bucket.
 - A red flag for a hidden straddle: the description contains "save X **then** synthesize Y" or "do A **and also** B" where A and B don't depend on each other.
 
 Record the chosen bucket — it goes in the draft (see step 4).
