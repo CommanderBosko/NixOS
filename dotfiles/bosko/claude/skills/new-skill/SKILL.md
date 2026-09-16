@@ -97,25 +97,7 @@ Present the full draft SKILL.md to the user with a brief explanation of any choi
 
 Determine the target path by scope:
 
-- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). When managed, **do NOT write to `~/.claude/skills/`** — that path is read-only and an untracked file there is wiped on the next rebuild. Instead:
-  1. Write the SKILL.md (and, if step 2b flagged any, `scripts/<name>.sh`) to `dotfiles/bosko/claude/skills/<name>/`.
-  2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`. If the skill has (or is likely to grow) `scripts/`/`assets/` files, prefer a **recursive** directory entry from the start — mirroring the several existing global skills already using `recursive = true` (grep `bosko-claude.nix` for the pattern) — so a script added later needs no further wiring:
-     ```nix
-     ".claude/skills/<name>" = {
-       source = "${self}/dotfiles/bosko/claude/skills/<name>";
-       recursive = true;
-       force = true;
-     };
-     ```
-     Otherwise (a plain single-file skill, no `scripts/`/`assets/`), use the simpler file-by-file form:
-     ```nix
-     ".claude/skills/<name>/SKILL.md" = {
-       source = "${self}/dotfiles/bosko/claude/skills/<name>/SKILL.md";
-       force = true;
-     };
-     ```
-  3. `git add dotfiles/bosko/claude/skills/<name>/ dotfiles/bosko/bosko-claude.nix` — flake evaluation only sees tracked files, so the new file(s) must be staged before a dry-run/rebuild.
-  4. Optionally run `nh os boot /home/bosko/NixOS --dry` (or the `nixos-dry-run` skill) to confirm the config still evaluates. The `~/.claude/skills/<name>/` symlink appears only **after** a real rebuild (`nh os boot /home/bosko/NixOS`).
+- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). If so, read `references/write-global-hm-managed.md` for the exact write + wiring steps before writing the file.
 - **Global, plain `~/.claude`** (no Home Manager managing it): write directly to `~/.claude/skills/<name>/SKILL.md`.
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to the current working directory). First check if `.claude/skills/` exists; create it if not (via `mkdir -p`). Auto-discovered immediately — no rebuild.
 
@@ -146,3 +128,7 @@ Tell the user:
 ## Assets
 
 - `assets/skill-template.md` — the SKILL.md scaffold. Read it in step 4 and fill its `<…>` placeholders (name, description/trigger phrases, bucket, steps) to draft the new skill. Drop the surrounding code fence from the final written file.
+
+## References
+
+- `references/write-global-hm-managed.md` — the symlink/`home.file`/rebuild mechanics for writing a new global skill, or editing an existing one, in this Home-Manager-managed repo. Read it in step 6 when scope is Global here.

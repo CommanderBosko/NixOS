@@ -81,7 +81,7 @@ Use this only when the user explicitly asked for options. Mirrors the standard N
 
 ### Template C: Desktop environment module — `assets/module-de.nix.tmpl`
 
-Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`. The template's trailing comment shows the Home Manager variant.
+Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`. The template's trailing comment shows the Home Manager variant. Read `references/adding-a-de.md` before Step 7's dry-run suggestion below — a DE module needs `de-smoke-check`, not a plain dry-run, since no host may import it yet.
 
 Key characteristics:
 - Enables the compositor or DE via `services.desktopManager.<de>.enable` or `programs.<compositor>.enable`.
@@ -149,3 +149,7 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `assets/module-simple.nix.tmpl` — Template A: simple always-on module.
 - `assets/module-options.nix.tmpl` — Template B: module with `options` (includes commented `lib.mkOption` example).
 - `assets/module-de.nix.tmpl` — Template C: desktop-environment module (includes commented Home Manager variant).
+
+## References
+
+- `references/adding-a-de.md` — why a DE module needs `de-smoke-check` instead of a plain dry-run to actually verify. Read it when Step 1's module type is `desktop-environment`.

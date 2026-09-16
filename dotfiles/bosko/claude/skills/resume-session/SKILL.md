@@ -43,4 +43,4 @@ Cite which file(s) each fact came from, so the user can go straight to the sourc
 
 ## Gotchas
 
-- Don't combine multiple filename patterns into one `find -o` command, and don't use `-not`/`-exec` — some `find` shims reject compound predicates outright and fail the whole lookup instead of just matching less. `scripts/find-status-docs.sh` already issues one `-iname`/`-name` pattern per `find` call for this reason — don't reintroduce a compound call by hand.
+- `scripts/find-status-docs.sh` already issues one `-iname`/`-name` pattern per `find` call, per the global `find`-compound-predicate rule (see `~/.claude/CLAUDE.md`) — don't reintroduce a compound call by hand if editing it.

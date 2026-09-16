@@ -41,11 +41,7 @@ When you need a decision, choice, or clarification from the user — not just in
 
 ## Editing Claude Skills
 
-The global Claude Code skills are **owned by this repo**, not by `~/.claude`. Source lives in `dotfiles/bosko/claude/skills/<name>/SKILL.md`; `dotfiles/bosko/bosko-claude.nix` symlinks each one into `~/.claude/skills/<name>/SKILL.md` via Home Manager `home.file`.
-
-- **Always edit the repo copy** under `dotfiles/bosko/claude/skills/`. The `~/.claude/skills/` path is a read-only `/nix/store` symlink — editing it directly is impossible, and the change wouldn't survive a rebuild anyway.
-- A new skill must be added to the `home.file` list in `bosko-claude.nix`, then rebuilt before its symlink appears.
-- Edits to an existing skill's `SKILL.md` only take effect in `~/.claude` after a rebuild (`nh os boot /home/bosko/NixOS`); the live session keeps using the old store path until then.
+Editing a global Claude skill (`dotfiles/bosko/claude/skills/`)? See `new-skill`'s `references/write-global-hm-managed.md` for the symlink/rebuild mechanics — never edit `~/.claude/skills/` directly, it's a read-only store symlink.
 
 ## Common Commands
 
@@ -99,4 +95,4 @@ Part of `commonModules` (applies to all hosts): AppArmor, Linux audit daemon, PA
 
 ### Adding a New Desktop Environment
 
-Use the `new-module` skill to scaffold `modules/desktop-environments/<name>.nix` and wire it into a host's flake entry. The gotcha: a normal `nh os boot --dry` only exercises whichever DE the target host already has wired in, so it silently verifies nothing about a module not currently imported by any host (true for most of them). Use the `de-smoke-check` skill instead — it deep-evaluates that module's `lib.deSmoke` build graph directly, catching real eval errors a shallow dry-run would miss.
+Adding a new DE? See `new-module`'s `references/adding-a-de.md` — a plain dry-run won't verify a module no host imports yet; that's what `de-smoke-check` is for.

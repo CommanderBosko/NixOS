@@ -46,7 +46,7 @@
       recursive = true;
       force = true;
     };
-    # Recursive dir symlink: covers SKILL.md + assets/ (skill-template.md).
+    # Recursive dir symlink: covers SKILL.md + assets/ (skill-template.md) + references/ (write-global-hm-managed.md).
     ".claude/skills/new-skill" = {
       source = "${self}/dotfiles/bosko/claude/skills/new-skill";
       recursive = true;
@@ -78,17 +78,19 @@
       source = "${self}/dotfiles/bosko/claude/skills/skill-suggestion/SKILL.md";
       force = true;
     };
-    ".claude/skills/agent-suggestion/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/agent-suggestion/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + references/ (gotchas.md).
+    ".claude/skills/agent-suggestion" = {
+      source = "${self}/dotfiles/bosko/claude/skills/agent-suggestion";
+      recursive = true;
       force = true;
     };
-    # Recursive dir symlink: covers SKILL.md + scripts/ (enumerate-skills.sh).
+    # Recursive dir symlink: covers SKILL.md + scripts/ (enumerate-skills.sh) + references/ (gotchas.md).
     ".claude/skills/skill-audit" = {
       source = "${self}/dotfiles/bosko/claude/skills/skill-audit";
       recursive = true;
       force = true;
     };
-    # Recursive dir symlink: covers SKILL.md + scripts/ (find-skill-misfires.sh).
+    # Recursive dir symlink: covers SKILL.md + scripts/ (find-skill-misfires.sh) + references/ (gotchas.md).
     ".claude/skills/skill-upgrade" = {
       source = "${self}/dotfiles/bosko/claude/skills/skill-upgrade";
       recursive = true;
@@ -112,12 +114,16 @@
       recursive = true;
       force = true;
     };
-    ".claude/skills/improve-system/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/improve-system/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + references/ (gotchas.md).
+    ".claude/skills/improve-system" = {
+      source = "${self}/dotfiles/bosko/claude/skills/improve-system";
+      recursive = true;
       force = true;
     };
-    ".claude/skills/research/SKILL.md" = {
-      source = "${self}/dotfiles/bosko/claude/skills/research/SKILL.md";
+    # Recursive dir symlink: covers SKILL.md + references/ (stale-memory-policy.md).
+    ".claude/skills/research" = {
+      source = "${self}/dotfiles/bosko/claude/skills/research";
+      recursive = true;
       force = true;
     };
     ".claude/skills/ship-skill/SKILL.md" = {
@@ -131,6 +137,7 @@
       force = true;
     };
     # Recursive dir symlink: covers SKILL.md + scripts/ (find-status-docs.sh).
+    # (No references/ dir — its one Gotcha stayed inline, per the skill-lightening pass.)
     ".claude/skills/resume-session" = {
       source = "${self}/dotfiles/bosko/claude/skills/resume-session";
       recursive = true;
@@ -153,7 +160,9 @@
     # improve-memory (reconcile against real memory + CLAUDE.md files) →
     # send-results (generic Discord-webhook reporting, any skill can call it)
     # → dream (orchestrator + run log). All recursive dir symlinks: each
-    # covers SKILL.md + scripts/ (improve-memory also has assets/).
+    # covers SKILL.md + scripts/ (improve-memory also has assets/); session-analysis
+    # also has references/ (planned-modes.md, concurrency-cap-gotcha.md), send-results
+    # also has references/ (why-artifact-not-file-link.md).
     ".claude/skills/session-analysis" = {
       source = "${self}/dotfiles/bosko/claude/skills/session-analysis";
       recursive = true;

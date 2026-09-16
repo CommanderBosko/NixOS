@@ -55,11 +55,11 @@ Keep each gotcha to one or two sentences. Don't pad with hypotheticals — only 
 
 ### 4. Amend the skill
 
-If the skill already has a `## Gotchas` section, append the new entry. Otherwise add a
-`## Gotchas` section at the end of the file. This is a purely additive, reversible edit to a file
-you're already trusted to maintain — auto-apply it directly (matches how `improve-system`
-classifies this same edit when it orchestrates this skill) and report what was added in Step 5,
-rather than pausing for a per-skill confirm.
+If the target skill already has a `references/gotchas.md` — or its inline `## Gotchas` section already runs past two or three short bullets — append the new entry to `references/gotchas.md` instead (create it if it doesn't exist yet, with a one-line topic header, and make sure SKILL.md's `## Gotchas` section carries an accurate one-line pointer to it). This keeps heavy, narrow-case Gotchas content out of SKILL.md's always-loaded body, per this repo's skill-lightening convention.
+
+Otherwise (a skill with no gotchas yet, or only one or two short ones) append directly to its inline `## Gotchas` section — don't create a reference file just for a single short entry. If the skill has no `## Gotchas` section at all, add one at the end of the file.
+
+Either way, this is a purely additive, reversible edit to a file you're already trusted to maintain — auto-apply it directly (matches how `improve-system` classifies this same edit when it orchestrates this skill) and report what was added, and where (inline vs. `references/gotchas.md`), in Step 5, rather than pausing for a per-skill confirm.
 
 ### 5. Verify and report
 
@@ -71,36 +71,4 @@ per-invocation.
 
 ## Gotchas
 
-- **`nixos-dry-run` is project-local to `~/NixOS`, not a global skill** — invoking it via the
-  Skill tool from a different project's working directory fails with
-  `Unknown skill: nixos-dry-run` (observed from a FinanceGuru session). When step 5 runs from
-  outside `~/NixOS`, verify with the direct command instead:
-  `nh os boot /home/bosko/NixOS --dry`.
-- **`find-last-skill-invocation.sh` misses slash-command invocations.** It only greps for
-  assistant-initiated `Skill` tool_use entries — when this skill (or the skill being fed to
-  `find-skill-misfires.sh`'s `since-timestamp` arg in Step 1) is run the normal way, via a
-  user-typed `/skill-upgrade`, Claude Code injects the instructions as user-turn content
-  instead, so the detector never records it. `session-closer` already paid for this discovery
-  for real (2026-08-02: reported a stale cutoff after two runs had actually happened since) —
-  worth a mild irony flag, since fixing exactly this kind of undocumented gotcha in *other*
-  skills is this skill's entire job. Cross-check a skill-specific commit marker in `git log`
-  if the reported cutoff looks suspiciously old before trusting the misfire scan's scope.
-  **Fixed 2026-08-10:** the script now also matches a `<command-name>/<skill-name></command-name>`
-  slash-command turn (plain user-turn string content), not just `Skill` tool_use — this gotcha's
-  workaround should be needed less going forward, but keep the cross-check habit since other gaps
-  may still exist.
-- **Step 2 mis-resolved a project-local-only skill as global.** Tried to `Read`
-  `~/.claude/skills/new-background-loop/SKILL.md` for a skill that only exists at
-  `.claude/skills/new-background-loop/SKILL.md` in the bitburner project — no global copy exists
-  at all — and got `File does not exist`. Same failure class as the `nixos-dry-run` gotcha above,
-  just recurring against a different skill. Step 2's instructions above now say to check
-  project-local first for this reason.
-- **Step 2's own "find its source `SKILL.md`" hit the compound-predicate `find` failure.** Ran
-  `find /home/bosko/NixOS -path "*dotfiles/.../skill-upgrade*" -o -path "*dotfiles/.../new-skill*"`
-  to locate two skills' repo copies at once; `rtk find` rejected it outright (`does not support
-  compound predicates or actions`) — the exact failure class the user's global CLAUDE.md flags as
-  "the single most common tool-call failure across this user's projects." Recovered by switching
-  to `grep -n <pattern> <file1> <file2>` against the already-known repo-managed paths, but wasted
-  a turn first. When locating one or more flagged skills' source files in Step 2, go straight to
-  `grep`/one `find` call per skill (never `-o`/`-not`/`-exec`) instead of trying to combine paths
-  in a single `find`.
+See `references/gotchas.md` for past misfires before trusting a misfire scan's completeness.
