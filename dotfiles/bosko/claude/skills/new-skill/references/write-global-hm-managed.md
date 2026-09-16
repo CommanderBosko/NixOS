@@ -14,8 +14,8 @@ The global Claude Code skills are **owned by this repo**, not by `~/.claude`. So
 
 When managed, **do NOT write to `~/.claude/skills/`** — that path is read-only and an untracked file there is wiped on the next rebuild. Instead:
 
-1. Write the SKILL.md (and, if it needs one, `scripts/<name>.sh`) to `dotfiles/bosko/claude/skills/<name>/`.
-2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`. If the skill has (or is likely to grow) `scripts/`/`assets/` files, prefer a **recursive** directory entry from the start — mirroring the several existing global skills already using `recursive = true` (grep `bosko-claude.nix` for the pattern) — so a script added later needs no further wiring:
+1. Write the SKILL.md (and, if it needs one, `scripts/<name>.sh` and/or `references/<topic>.md`) to `dotfiles/bosko/claude/skills/<name>/`.
+2. Add a `home.file` entry to `dotfiles/bosko/bosko-claude.nix`. If the skill has (or is likely to grow) `scripts/`/`assets/`/`references/` files, prefer a **recursive** directory entry from the start — mirroring the several existing global skills already using `recursive = true` (grep `bosko-claude.nix` for the pattern) — so a sibling file added later needs no further wiring. **This is not optional for a skill with any sibling file**: a file-by-file entry (only `SKILL.md`) silently leaves that sibling invisible to `~/.claude` even after a rebuild — found for real 2026-09-16, when `research`, `agent-suggestion`, and `improve-system` each turned out to be wired file-by-file and had to be converted after gaining a `references/` dir.
    ```nix
    ".claude/skills/<name>" = {
      source = "${self}/dotfiles/bosko/claude/skills/<name>";

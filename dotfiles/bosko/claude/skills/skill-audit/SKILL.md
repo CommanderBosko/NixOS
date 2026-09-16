@@ -61,6 +61,7 @@ The skills don't depend on each other, so audit them in parallel. Partition all 
 4. **Re-entered config → `config.json`** — a constant or **list** re-typed inline every run (paths, host/target maps, rosters) — especially one that has **drifted** between skills → lift into one shared JSON read at runtime. A single repo-path constant is fine; flag clusters and drift-prone lists.
 5. **AskUserQuestion** — a pick-one / multiple-choice prompt (or destructive yes/no gate) asked in free-form prose → present via the AskUserQuestion tool with defined options (preserve "skip if the user already supplied it"). Leave deliberately conversational interviews alone.
 6. **Invocation arguments** — inputs the user supplies in their phrasing (slug, file path, target host, package, person). Document them in a `## Arguments` prose section (mirror `verify-service`). ⚠️ Do **not** add an `arguments:` YAML frontmatter key unless its support is confirmed — that's a slash-command feature, not a SKILL.md one.
+7. **Heavy/narrow context → `references/`** — a Gotchas-style incident writeup, a multi-branch procedure where only one branch applies per run, a large edge-case list, or verbose history/rationale that loads on *every* invocation but only actually matters for *one* narrow sub-case → extract to `references/<topic>.md` and leave a one-line pointer in its place (mirror `session-closer`'s or `skill-upgrade`'s `references/gotchas.md`). Leave a single short (1-3 sentence) Gotcha, or content core to every run, inline — the split isn't worth it at that size.
 
 ## Step 3 — Synthesize one prioritized report
 
@@ -68,7 +69,7 @@ Merge the agents' findings into a single report, ordered by leverage, not by ski
 
 1. **Correctness bugs first.** The audit surfaces real bugs, not just style — usually from inline-duplicated constants that drifted (a wrong host/user, a stale roster, a list naming things that no longer exist). **Verify each empirically before reporting it** (run the command, read the file) — the "documentation" may be the stale copy, not the truth.
 2. **Cross-cutting wins** — one shared config that de-dupes N skills; the single biggest template extraction; lists that should be live-derived instead of stored.
-3. **Per-lens rollup** — the remaining script/asset/AskUserQuestion/arguments candidates.
+3. **Per-lens rollup** — the remaining script/asset/reference/AskUserQuestion/arguments candidates.
 4. Name the skills that are already clean (so the user sees the sweep was complete).
 
 **Report every finding that survives verification — across every skill, every lens — not just the single highest-priority one.** A list of one is fine if that's genuinely all the sweep turned up; don't truncate a longer list for brevity. Be blunt; skip clean skills; lead with what matters.
@@ -83,7 +84,7 @@ Present the report, recommending an implementation order (bugs → shared config
 - **Verify empirically as you go** — run the scripts you extract (read-only paths), `bash -n` every script, and prove drift fixes against the live system. Don't guess at a value you can test.
 - Re-derive drift-prone data **live** rather than re-hardcoding it (enumerate inputs/DE modules from the tree; resolve hosts from the shared config).
 - For NixOS repos: after touching anything the flake evaluates (or a symlinked global skill), run a dry-run (`nixos-dry-run`) to certify it still evaluates. Project-local `.claude/` changes don't affect the flake.
-- Adding a **new global skill** (or new sibling files for one) requires the Home Manager `home.file` symlink entry + a rebuild before it appears in `~/.claude`.
+- Adding a **new global skill** (or new sibling files for one) requires the Home Manager `home.file` symlink entry + a rebuild before it appears in `~/.claude`. If the skill's existing entry is the file-by-file form (only `SKILL.md`), giving it its first `scripts/`, `assets/`, or `references/` file requires converting that entry to the recursive directory form first — a file-by-file entry silently leaves the new sibling invisible even after a rebuild (see this skill's own `references/gotchas.md` for the 2026-09-16 incident).
 
 ## Gotchas
 
