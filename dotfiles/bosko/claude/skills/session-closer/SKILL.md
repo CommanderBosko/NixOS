@@ -84,9 +84,11 @@ that vanish otherwise:
 - **Blockers and surprises** — anything that bit you and would bite again.
 - **New dependencies / architectural shifts.**
 
-Be specific — never "made improvements." Instead: "Moved WireGuard private keys into
-sops-nix so the repo could be public; kept the endpoint IP in-repo since it's not a
-secret."
+Be specific, not vague. State the concrete decision and the reason behind it — including
+alternatives rejected, if relevant. A vague verb ("made improvements," "cleaned things
+up," "fixed some bugs") without the decision underneath it fails this bar. Done looks
+like: someone who wasn't in the session can tell exactly what changed and why from the
+sentence alone.
 
 ---
 
