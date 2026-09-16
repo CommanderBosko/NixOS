@@ -1,3 +1,28 @@
+## Session: 2026-09-09 (session 105) — xwayland-satellite 0.8.1 pin, kitty revert, Secure Boot Q&A
+
+**Focus**: Test a real fix for the Steam dropdown-menu bug after user pushback on the earlier "no fix worth trying" call, revert a kitty window-rule the user changed their mind on, and answer a Secure Boot capability question.
+
+### What changed (and why)
+- **`xwayland-satellite` pinned to 0.8.1 (`4201283`)** — user challenged the session-102 conclusion with a Reddit report of 0.8.1 fixing the bug. Couldn't verify the thread directly, but re-reading 0.8.2's own changelog ("fixes for some popup regressions") showed the earlier reasoning assumed fixes were purely additive, which was wrong. Pinned the narrower, cheaply-revertible 0.8.1 (not the originally-floated untested 0.8) via a dedicated second `nixpkgs` input + overlay in `niri.nix`, isolated from the rest of nixpkgs. Verified: gaming dry-run shows only the intended diff, 4-host deep-eval clean. Not yet applied to any host — needs a switch + a real Steam relaunch to know if it worked.
+- **Kitty's `open-maximized` window-rule reverted on gaming (`c9e624d`)** — user changed their mind back to half-size; the `asus-1` workspace pin stays.
+- **Secure Boot capability question re-answered** — hardware supports it, but MBR+GRUB blocks it today; a real migration (GPT + systemd-boot + lanzaboote) would be needed. Matches existing memory, no new decision; user left to confirm the actual game's anti-cheat requirement first.
+
+### Decisions
+- Corrected the earlier "downgrade has zero benefit" call rather than defending it once the changelog evidence contradicted it — see project-state.md Recent Decisions for the full reasoning.
+- Used a scoped second-nixpkgs-input overlay instead of `pin-input` (which would've rolled back all of nixpkgs) to keep the experiment isolated and trivially revertible.
+
+### Issues / surprises
+- First attempt at the overlay produced a duplicate `let`/`in` syntax error; caught and fixed before it reached a dry-run.
+- The overlay's initial form triggered a `stdenv.hostPlatform.system` deprecation warning on all 3 niri hosts; fixed before committing.
+
+### Next session
+- gaming: rebuild (switch) to apply both the Deezer stagger fix and the xwayland-satellite pin, then relaunch Steam to test the dropdown menus. Revert (`git revert 4201283`) if it doesn't help.
+- No action pending on kitty or Secure Boot.
+
+**Commits**: `faa5ca8..4201283` (2 commits: kitty revert, xwayland-satellite pin)
+
+---
+
 ## Session: 2026-09-07 (session 104) — flake bump + skill-fix PRs reviewed/merged, btop GPU investigated
 
 **Focus**: Review and merge two PRs opened by delegated agents (a manager-run `/flake-update-verify`, the weekly `improve-system` sweep), check the xwayland-satellite Steam bug for a fix, and look into btop's missing GPU panel.
