@@ -36,3 +36,17 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   (observed 2026-08-03: `uptime: invalid option -- 'p'`, same for `-s`) — this system's
   `uptime` is the coreutils build, not procps-ng, so neither flag exists. Use `who -b`
   instead to get the boot timestamp.
+- **STEP 5's `README.md` edit failed twice in a row (2026-09-07, session 104)** by
+  constructing `old_string` from a remembered/assumed section structure (guessed a
+  `## Recent Changes` section with specific prior-entry text) instead of the file's actual
+  current content — both attempts got `String to replace not found in file`, and the real
+  anchor turned out to belong to a different section (`## Features`) with different
+  surrounding text entirely. `Read` the current `README.md` immediately before building the
+  Edit's `old_string`; never reconstruct it from memory of what a prior session's entry
+  probably looked like.
+- **The `scripts/...`-must-be-absolute rule (above) also applies to `assets/` reads, not
+  just scripts.** Hit for real: `Read`ing
+  `.claude/skills/session-closer/assets/session-summary-template.md` (project-root-relative)
+  404'd before self-correcting to the absolute `~/.claude/skills/session-closer/assets/...`
+  path from the "Base directory for this skill" line. Same root cause, same fix — use the
+  absolute base-dir path for every `assets/` file too, not only `scripts/`.

@@ -81,6 +81,11 @@ Substitutions when filling a template:
   it into the substitution list before — following the template literally would write
   `system.stateVersion = "<current-nixos-release>";` into the new host's config instead
   of the real version.
+- **`server` type only:** replace `<pihole-ip>` (in `assets/server/networking.nix`'s
+  `nameservers` list) with pi-hole's current LAN IP, read live via
+  `jq -r '.hosts["pi-hole"].ip' .claude/hosts.json` — never hardcode it. hosts.json's own
+  notes flag this address as drift-prone (it already changed once, in an early-Aug 2026
+  outage), so re-read it at fill time rather than trusting a remembered value.
 - `hardware-configuration.nix`'s **body** (everything except that one comment line) is
   always written **as-is** (it's a placeholder); the real file is generated on the target
   machine — see Step 7.

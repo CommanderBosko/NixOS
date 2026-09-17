@@ -43,10 +43,14 @@ Use the **exact name of the current working directory** (e.g. `/home/bosko/pixel
 - Decide what to include/exclude.
 
 ### 3. Create or improve `README.md`
-If none exists, create a substantive one: project name as H1, accurate description, tech
-stack/dependencies, setup/install steps (based on what you find), usage examples if
-applicable, and a License section (default MIT unless the project says otherwise). If one
-exists, enhance it only where it's sparse.
+If none exists, read `assets/readme-template.md` (repo-root-relative path
+`dotfiles/bosko/claude/skills/repo-creator/assets/readme-template.md` — resolve from the "Base
+directory for this skill" path shown at launch if invoked from `~/.claude`) and fill its
+placeholders from what Step 2 found: project name as H1, accurate description, tech
+stack/dependencies, setup/install steps, usage examples if applicable (omit that section if
+there's nothing runnable to show), and a License section (default MIT unless the project says
+otherwise). If a README already exists, enhance it only where it's sparse — don't overwrite an
+existing one with the template's structure.
 
 ### 4. Create `.gitignore` (if missing/incomplete)
 Tailor to the detected stack. Always exclude `.env`, `*.log`, build artifacts, and IDE
@@ -139,6 +143,8 @@ existing), `.gitignore` status, and the commit message used.
 
 - `assets/commit-template.txt` — the initial-commit-message skeleton with its placeholder
   bullets. Read and fill it in Step 8.
+- `assets/readme-template.md` — the README skeleton with its placeholder sections. Read and
+  fill it in Step 3.
 
 ## Memory
 

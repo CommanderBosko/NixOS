@@ -60,7 +60,9 @@ explicit approval first — see the commit gate above.
 
 2. **Pre-flight: clean working tree** — so the only change after the update is
    `flake.lock`. Run `git -C /home/bosko/NixOS status --porcelain`.
-   - Done-rule: output empty. If dirty, stop and ask me to commit/stash first — do NOT
+   - Done-rule: output empty. If dirty, stop and use the **AskUserQuestion** tool with
+     options **Commit first** (hand off to `git-commit`, then re-check), **Stash first**
+     (`git stash -u`, then re-check), and **Abort** — don't ask in free prose, and do NOT
      update on top of unrelated changes.
 
 3. **Snapshot the current lock** — capture the pre-update lock for a clean restore path:

@@ -27,3 +27,15 @@ Load this when Step 1's reported cutoff looks suspiciously old, or a raw tool ca
   `delaySeconds`/`reason`) even when it's just a heartbeat, and per `research`'s own Gotchas,
   work spawned via the `Agent` tool doesn't need polling at all: the harness delivers a
   completion notification automatically, so just let the turn end after spawning.
+- **A brand-new agent can't be smoke-tested via `subagent_type: "<name>"` in the same session
+  it was built** (confirmed 2026-09-16, building `skill-builder`): `Agent` rejected it outright
+  with `Agent type '<name>' not found` — repo-managed agents only reach the harness's known
+  roster after `nh os boot` **and a reboot**, unlike a repo-managed *skill*, which the `Skill`
+  tool can still resolve from its repo path pre-rebuild when invoked from within the repo.
+  There is no equivalent same-session fallback for agents. To satisfy `improve-system`'s
+  post-build smoke-test step anyway, spawn a `general-purpose` agent instead and paste the new
+  agent file's full body (frontmatter tool list + system prompt) into its prompt verbatim as
+  literal instructions to follow, plus a concrete test scenario — this exercises the
+  instructions for real, just under a different dispatch name. Report the result as an
+  "approximate pre-rebuild test," not a real `subagent_type` dispatch, so it's not mistaken for
+  proof the live wiring works.

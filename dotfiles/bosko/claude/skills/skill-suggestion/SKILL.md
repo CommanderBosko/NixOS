@@ -52,7 +52,7 @@ Use the **AskUserQuestion** tool to ask which to proceed with (multi-select if t
 
 ### 5. Build them
 
-For each candidate on **Build it as proposed** (or after applying the user's tweaks), hand off to the `new-skill` skill to draft and write the file, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed. Skip cleanly over any marked **Skip it**.
+For each candidate on **Build it as proposed** (or after applying the user's tweaks): a single approved candidate hands off directly to the `new-skill` skill, passing the pre-filled goal, triggers, scope, and steps so the user isn't re-interviewed. **Two or more approved candidates in the same pass** spawn one `skill-builder` sub-agent per candidate in parallel (`Agent` tool, `subagent_type: "skill-builder"`) instead of building them one at a time — each spawn gets that candidate's full spec (name, goal, triggers, scope, steps, and a grounding-transcript reference if one exists) so it can build non-interactively with no shared context needed. Skip cleanly over any marked **Skip it**.
 
 ### 6. Confirm
 
@@ -69,4 +69,7 @@ Report each skill built: its name, where it was written, the invocation phrases,
   — a silently-wrong cutoff here directly corrupts the candidate ranking in Step 3. If the
   reported cutoff looks suspiciously old given known recent activity, cross-check
   `git log --oneline | grep 'chore(session):' | head -1` (or any other skill-specific commit
-  marker) as a sanity check before trusting it.
+  marker) as a sanity check before trusting it. **Fixed 2026-08-10:** the script now also
+  matches a `<command-name>/<skill-name></command-name>` slash-command turn (plain user-turn
+  string content), not just `Skill` tool_use — this gotcha's workaround should be needed less
+  going forward, but keep the cross-check habit since other gaps may still exist.

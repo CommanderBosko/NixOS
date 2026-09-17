@@ -198,6 +198,13 @@
       source = "${self}/dotfiles/bosko/claude/agents/transcript-scanner.md";
       force = true;
     };
+    # `skill-builder` is the fan-out unit for building 2+ approved skill
+    # candidates in parallel (see dotfiles/bosko/claude/agents/skill-builder.md);
+    # used by skill-suggestion's Step 5.
+    ".claude/agents/skill-builder.md" = {
+      source = "${self}/dotfiles/bosko/claude/agents/skill-builder.md";
+      force = true;
+    };
     # `manager` is a global delegate agent that decides tasks the way this
     # user would, per manager-profile.md below — see dotfiles/bosko/claude/agents/manager.md
     # for the full contract (hard limits, training-mode toggle, PR-only landing).

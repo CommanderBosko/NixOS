@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# next-vpn-ip.sh — determine the next available VPN peer address and the
-# server's current public key, for the /new-peer skill (Steps 2 and 4).
+# next-vpn-ip.sh — determine the next available VPN peer address, the
+# server's current public key, and the server's current endpoint, for the
+# /new-peer skill (Steps 2 and 4).
 #
-# Runs two read-only lookups (never guesses/hardcodes):
+# Runs read-only lookups (never guesses/hardcodes):
 #   1. hosts.json vpnIp values (flake hosts that already have an entry)
 #   2. every 10.10.0.x address literally assigned in the vpn-server config
 #      (covers ad-hoc peers — phones, non-NixOS devices — with no hosts.json entry)
-# then takes the higher of the two highest octets and adds 1.
+# then takes the higher of the two highest octets and adds 1. The public key and
+# endpoint are both read live from modules/vpn.nix so a future endpoint change
+# (this is a cloud VM's public IP) can't silently go stale in a template.
 #
-# Output (two lines on stdout):
+# Output (three lines on stdout):
 #   NEXT_IP=10.10.0.<n>
 #   SERVER_PUBKEY=<key>
+#   SERVER_ENDPOINT=<ip:port>
 set -uo pipefail
 
 REPO=/home/bosko/NixOS
@@ -46,3 +50,10 @@ if [ -z "$PUBKEY" ]; then
   exit 1
 fi
 echo "SERVER_PUBKEY=${PUBKEY}"
+
+ENDPOINT=$(grep -oE 'endpoint = "[^"]+"' "$VPN_MODULE" | head -1 | sed -E 's/endpoint = "([^"]+)"/\1/')
+if [ -z "$ENDPOINT" ]; then
+  echo "next-vpn-ip.sh: could not find server endpoint in $VPN_MODULE" >&2
+  exit 1
+fi
+echo "SERVER_ENDPOINT=${ENDPOINT}"

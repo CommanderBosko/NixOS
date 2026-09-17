@@ -11,7 +11,7 @@
 
     # Enable custom DNS servers
     nameservers = [
-      "10.0.0.19"
+      "<pihole-ip>"
       "1.1.1.1"
     ];
 

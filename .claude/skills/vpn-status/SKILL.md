@@ -9,6 +9,10 @@ version: 0.1.0
 
 Check WireGuard peer connectivity on the Oracle Cloud ARM VPN server (`vpn-server` in `.claude/hosts.json`). This is a safe, read-only operation.
 
+## Arguments
+
+None — it always targets `vpn-server`.
+
 ## Instructions
 
 1. Run `scripts/vpn-status.sh`. It SSHes to the server, runs `sudo wg show wg0 dump`, and does the

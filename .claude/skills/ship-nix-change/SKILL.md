@@ -11,6 +11,10 @@ Chain the right verification skill(s) for whatever changed, then hand off to `co
 
 Shipping a NixOS config edit always needs the same shape of check-then-commit sequence, but which extra check applies depends on *what* changed — a host-local file only needs a local dry-run, a shared file needs the full 4-host sweep, an unwired DE module needs `de-smoke-check` instead. Reassembling this by hand each time is error-prone: one past session skipped the dry-run step entirely before committing. This skill makes the right chain automatic instead of re-derived from memory every time.
 
+## Arguments
+
+None — it operates on the current git diff/staged changes, not a user-supplied target.
+
 ## Steps
 
 ### 1. Resolve changed files

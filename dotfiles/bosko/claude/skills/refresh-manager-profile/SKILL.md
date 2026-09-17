@@ -7,6 +7,10 @@ description: Re-mine Claude Code session transcripts across all known projects f
 
 On-demand incremental refresh of the `manager` agent's profile (`dotfiles/bosko/claude/manager-profile.md`, symlinked to `~/.claude/manager-profile.md`). Defaults to mining only transcript activity since the last time this skill ran per project — the same since-last-run idiom `skill-suggestion`/`skill-upgrade`/`skill-audit` already use — but falls back to a full re-mine for a project when there's a specific reason the incremental pass could have missed something (e.g. right after fixing a bug in the incremental-scan logic itself, or on explicit user request).
 
+## Arguments
+
+Optional: a request for a full re-mine instead of the incremental since-last-run scan (e.g. "fully re-mine the manager profile", or "re-mine <project>" to scope it to one project). When given, Step 2 passes an empty cutoff for the affected project(s) instead of the discovered one. With no argument, every project runs its normal incremental scan.
+
 ## Steps
 
 ### 1. Discover the scan universe

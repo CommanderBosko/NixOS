@@ -9,6 +9,10 @@ version: 0.2.0
 
 Update all flake inputs for `/home/bosko/NixOS` and present a human-readable summary of what changed. Do not commit or rebuild automatically — leave those to the user.
 
+## Arguments
+
+None — it always updates every input via `--flake /home/bosko/NixOS`, with no user-supplied scoping.
+
 ## Step 0 — Check for an active pin before updating
 
 A temporary pin set via `/pin-input` (lock-file only, `flake.nix`'s `url` is untouched) has no

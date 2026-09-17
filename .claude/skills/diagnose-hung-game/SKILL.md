@@ -52,19 +52,17 @@ Gather from the user (or infer from context) before starting:
 4. **Locate the Sentry crash-handler DB** (if the game bundles Sentry — most Unreal/Unity
    titles with third-party crash reporting do):
    ```bash
-   find "<game-dir>/.sentry-native" -maxdepth 2
+   .claude/skills/diagnose-hung-game/scripts/diagnose-hung-game.sh --sentry "<game-dir>"
    ```
-   If a `.sentry-native/<run-id>.run/` or `.sentry-native/reports/` directory exists, list it
-   with `ls -la --time-style=full-iso` and compare its timestamps against when the game
-   froze — a report written right around the hang time is a strong signal of a caught crash
-   (vs. a hard hang with no crash handler ever firing).
+   If a `.sentry-native/<run-id>.run/` or `.sentry-native/reports/` directory exists, compare
+   its listed timestamps against when the game froze — a report written right around the hang
+   time is a strong signal of a caught crash (vs. a hard hang with no crash handler ever
+   firing).
 
 5. **Check the Steam/Proton/reaper/crashpad process chain and journal around the crash
    time:**
    ```bash
-   ps aux | grep -i -E "reaper|proton|steam.exe|steamwebhelper|SteamLaunch|start_protected_game|crashpad" | grep -v grep
-   journalctl --since "<approx-crash-time>" 2>&1 | grep -i -E "segfault|oom|killed process|core.?dump|out of memory|signal|<game-name>|proton"
-   coredumpctl list --since "<approx-crash-time>"
+   .claude/skills/diagnose-hung-game/scripts/diagnose-hung-game.sh --proton-chain "<approx-crash-time>" "<game-name>"
    ```
    A live `reaper`/`crashpad` process with the game itself gone usually means Proton's
    wrapper caught the exit; a segfault/coredump hit pinpoints a hard crash vs. a silent hang.
@@ -73,9 +71,7 @@ Gather from the user (or infer from context) before starting:
    game's own install dir or the Proton compatdata prefix depending on version, so check
    both:
    ```bash
-   find "<game-dir>/Saved/Logs" -maxdepth 1 2>&1
-   find "<game-dir>" -iname "Saved" 2>&1
-   find "/home/bosko/.local/share/Steam/steamapps/compatdata/<appid>" -iname "*.log" 2>&1 | grep -i -E "<game-name>|saved"
+   .claude/skills/diagnose-hung-game/scripts/diagnose-hung-game.sh --ue-logs "<game-dir>" "<appid>" "<game-name>"
    ```
    If neither location has a `Saved/Logs`, note that explicitly rather than assuming the
    game doesn't log — some titles log under the compatdata `AppData` tree instead; widen the
@@ -94,10 +90,14 @@ Gather from the user (or infer from context) before starting:
 ## Scripts
 
 - `.claude/skills/diagnose-hung-game/scripts/diagnose-hung-game.sh <game-pattern> [pid]` —
-  runs the fixed, judgment-free command battery (steps 1-5 and 7 above): host/uptime,
+  runs the fixed, judgment-free command battery (steps 1-2 and 4-5 above): host/uptime,
   process lookup + PID resolution, `nvidia-smi`, memory/load, per-thread
   status/wchan/top-CPU-threads, and the kernel-journal grep. Prints the sudo `dmesg`
   command as a suggested manual step rather than running it. Called by Step 1.
+- `... --sentry <game-dir>` — Step 4's Sentry crash-handler DB lookup.
+- `... --proton-chain <crash-time> [game-name]` — Step 5's Steam/Proton/reaper/crashpad
+  process-chain and journal/coredump check.
+- `... --ue-logs <game-dir> <appid> [game-name]` — Step 6's Unreal Engine `Saved/Logs` search.
 
 ## Gotchas
 
