@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-16 (session 111) — creative-example audit, references/-routing refactor, gap closure, twice-run improve-system
+
+**Focus**: Pure Claude-ecosystem maintenance — no NixOS config/host changes. Audit skills for embedded creative examples, route heavy inline context to `references/` files, close the gap so new skills get the same treatment at creation time, and run `/improve-system`.
+
+### What changed (and why)
+- **`skill-upgrade` swept all 70 skills for creative examples** (a fully-composed sentence offered as a copy-target vs. a fixed schema, which is fine) — one hit: `session-closer`'s WireGuard/sops-nix worked example risked pattern-matching toward that domain. Rewrote as an interface (what's-needed/constraint/done-looks-like) instead. Committed `7b8fd41`.
+- **16 new `references/*.md` files extracted verbatim** from both CLAUDE.md files and 14 SKILL.md files, replacing heavy rare-case blocks with one-line pointers. Two of 5 parallel review forks got contaminated by the orchestrator's own status narration mid-run (one tried to kill sibling agents) — stopped, read their 28 files directly instead. Found and fixed a real gap: `research`/`agent-suggestion`/`improve-system` were symlinked file-by-file in `bosko-claude.nix`, so their new `references/` dirs would've been invisible to `~/.claude` even after a rebuild — switched to recursive symlinks. Committed `1c994b6`.
+- **Closed the gap for future skills**: `new-skill` gained Step 2c (routes heavy/narrow context to `references/` at draft time, mirroring Step 2b's scripts logic); `skill-audit` gained a 7th rubric lens for the same pattern. Committed `f284a62`.
+- **`/improve-system` run twice** (full pass + scoped follow-up): built and wired a new `skill-builder` custom sub-agent for parallel skill drafting, rewired `skill-suggestion` to use it; 71-skill `skill-audit` sweep landed 11 fixes (script/asset extraction, 2 new AskUserQuestion gates, drift-prone hardcoded values now read live from `hosts.json`/`vpn.nix`); `fewer-permission-prompts` added 3 entries. Committed `1f9ddc6`. Second pass caught one live misfire (stale-content `Edit` failure) and added 2 more gotchas.
+
+### Decisions
+- Fork contamination (both times this session) was handled by stopping the affected forks and doing the work directly rather than trusting a corrected re-run — filed as product feedback, not re-attempted with the same approach.
+
+### Issues / surprises
+- A brand-new repo-managed custom agent (`skill-builder`) isn't dispatchable by name until after `nh os boot` + reboot — smoke-tested via a general-purpose agent standing in instead. Documented as a gotcha for next time.
+- Secret-scan: clean (working tree + full git history).
+
+### Next session
+- **All 3 desktop hosts: rebuild+reboot** to bring all 4 commits' skill/agent/CLAUDE.md changes live in `~/.claude` — the new `skill-builder` agent specifically needs the reboot to be dispatchable.
+
+**Commits**: `7b8fd41..1f9ddc6` (4 commits)
+
+---
+
 ## Session: 2026-09-15 (session 110) — absolutist-rules audit across both CLAUDE.md files and all 71 skills
 
 **Focus**: Audit every "never"/"always"/fixed-threshold rule in both CLAUDE.md files and every skill for judgment calls disguised as absolutes, then rewrite the ones that qualify and resolve any real contradictions found.
@@ -94,26 +118,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **natalie-laptop: rebuild (boot)** to drop the module from the running system — no functional loss expected since it was never actually built onto.
 
 **Commits**: `1554be3..4237d7d` (1 commit)
-
----
-
-## Session: 2026-09-09 (session 106) — system-config-printer added
-
-**Focus**: Add a Linux equivalent of Windows' print-queue GUI (there wasn't one live on any niri host).
-
-### What changed (and why)
-- **`system-config-printer` added to `modules/desktop-apps.nix`** (`f535057`) — `kdePackages.print-manager` existed only in the unused `plasma.nix` DE module, so no niri host (gaming/laptop/natalie-laptop) had a print-queue viewer. Chose the DE-agnostic GTK equivalent over the KDE one to match the DE actually in use.
-
-### Decisions
-- Scoped via `AskUserQuestion`: all 3 desktop hosts (shared module) + `system-config-printer` over `kdePackages.print-manager`.
-
-### Issues / surprises
-- None.
-
-### Next session
-- All 3 desktop hosts: rebuild (switch) to pick it up, then confirm the queue viewer launches.
-
-**Commits**: `f535057` (1 commit)
 
 ---
 

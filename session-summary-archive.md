@@ -1,3 +1,23 @@
+## Session: 2026-09-09 (session 106) — system-config-printer added
+
+**Focus**: Add a Linux equivalent of Windows' print-queue GUI (there wasn't one live on any niri host).
+
+### What changed (and why)
+- **`system-config-printer` added to `modules/desktop-apps.nix`** (`f535057`) — `kdePackages.print-manager` existed only in the unused `plasma.nix` DE module, so no niri host (gaming/laptop/natalie-laptop) had a print-queue viewer. Chose the DE-agnostic GTK equivalent over the KDE one to match the DE actually in use.
+
+### Decisions
+- Scoped via `AskUserQuestion`: all 3 desktop hosts (shared module) + `system-config-printer` over `kdePackages.print-manager`.
+
+### Issues / surprises
+- None.
+
+### Next session
+- All 3 desktop hosts: rebuild (switch) to pick it up, then confirm the queue viewer launches.
+
+**Commits**: `f535057` (1 commit)
+
+---
+
 ## Session: 2026-09-09 (session 105) — xwayland-satellite 0.8.1 pin, kitty revert, Secure Boot Q&A
 
 **Focus**: Test a real fix for the Steam dropdown-menu bug after user pushback on the earlier "no fix worth trying" call, revert a kitty window-rule the user changed their mind on, and answer a Secure Boot capability question.
