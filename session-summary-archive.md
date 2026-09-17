@@ -1,3 +1,24 @@
+## Session: 2026-09-09 (session 107) — VirtualBox removed from natalie-laptop
+
+**Focus**: Remove the VirtualBox host from natalie-laptop; it was no longer needed and still hadn't been rebuilt onto.
+
+### What changed (and why)
+- **`hosts/natalie-laptop/virtualisation.nix` deleted, `flake.nix` import dropped** (`4237d7d`) — user asked to remove VirtualBox, believed only present on natalie-laptop (confirmed correct — grep found no other host referencing it). The `vboxusers` group membership lived in the same file, so it's gone too.
+
+### Decisions
+- No replacement virtualisation setup requested — this is a straight removal, not a swap.
+
+### Issues / surprises
+- None. This work was done in a prior session but left uncommitted at the user's request ("nothing to commit until you say so"); this close finally lands it.
+- Secret-scan: clean (working tree + full git history).
+
+### Next session
+- **natalie-laptop: rebuild (boot)** to drop the module from the running system — no functional loss expected since it was never actually built onto.
+
+**Commits**: `1554be3..4237d7d` (1 commit)
+
+---
+
 ## Session: 2026-09-09 (session 106) — system-config-printer added
 
 **Focus**: Add a Linux equivalent of Windows' print-queue GUI (there wasn't one live on any niri host).
