@@ -1,7 +1,7 @@
 ---
 name: add-secret
 description: Triggers when the user says "add a secret", "add a sops secret", "edit a secret", "rotate a secret", "new secret", "encrypt a secret", or "change a password hash". Adds, edits, or rotates a sops-nix-managed secret in this repo and reminds the user to wire it up and rebuild.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Add / Edit a sops Secret
@@ -18,7 +18,8 @@ Invocation inputs (gather any the user didn't already give in Step 1):
 - **Secret key name** — the short kebab/snake key (e.g. `restic-password`, `bosko-hashedPassword`).
 - **Scope / target file** — `secrets/common.yaml` (all hosts), `secrets/hosts/<host>.yaml`
   (one host), or a new file (new grouping).
-- **Value & operation** — the plaintext value, or "edit"/"rotate" an existing key.
+- **Operation** — new key, or edit/rotate an existing one. The plaintext value itself is
+  never gathered as a chat input — see Step 1.
 
 ## Repo layout (read this first)
 
@@ -49,9 +50,14 @@ Ask, in one message:
    - **All hosts** → `secrets/common.yaml`.
    - **One specific host** → `secrets/hosts/<host>.yaml`.
    - **A new grouping** → a new file; you'll add a `creation_rule` for it (Step 2).
-3. **Value** — the plaintext value, or "edit the existing one" / "rotate it".
-4. **New or existing?** Adding a key, or changing an existing one. Present this as a
+3. **New or existing?** Adding a key, or changing an existing one. Present this as a
    pick-one (new key / edit existing) via the **AskUserQuestion tool** if unclear.
+
+**Do not ask the user to state the plaintext value in chat.** A value typed into a normal
+message persists in the session transcript indefinitely — exactly what this skill exists to
+avoid. The key name and scope are all that's needed here; the actual value is captured later
+(Step 3) via a scratchpad file the user writes with a `!`-prefixed command, which does not
+get saved to the transcript.
 
 If the user is generating a **password hash**, the canonical way is
 `mkpasswd -m sha-512` (`nix shell nixpkgs#mkpasswd --command mkpasswd -m sha-512`).
@@ -70,35 +76,46 @@ If the user is generating a **password hash**, the canonical way is
 
 ## Step 3 — Write the secret
 
-All three modes below share the same `SOPS_AGE_KEY_FILE` export and `nix shell` wrapping —
-run via `sops-secret.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual
-Bash-tool cwd) rather than typing sops/nix-shell invocations by hand:
+**The agent must never run `sops-secret.sh set|create|edit` itself.** All three modes touch
+the plaintext value (or, for `edit`, need a real interactive terminal the agent's Bash tool
+doesn't have) — always construct the exact command below and have the **user** run it
+themselves via a `!`-prefixed input, the same way an ephemeral API-key handoff works. `!`
+commands execute in the session but aren't written to the persisted transcript, so this is
+the one point in the flow where the plaintext value is allowed to exist at all.
 
-**Add or update a single key in an existing file** (no plaintext touches disk):
+**First, have the user capture the value into a scratchpad file** (never type the value into
+a normal chat message):
 
-```bash
-.claude/skills/add-secret/scripts/sops-secret.sh set /home/bosko/NixOS/secrets/common.yaml new-key-name "the-secret-value"
+```
+! umask 077 && cat > <scratchpad>/secret_value <<< 'PASTE_VALUE_HERE'
 ```
 
-sops decrypts in memory, sets the key, re-encrypts in place.
+(`<scratchpad>` is this session's scratchpad directory — see the system prompt's "Scratchpad
+Directory" note.)
 
-**Interactive edit / rotate** (let the user change it in `$EDITOR`):
+**Then hand the user the matching write command, also via `!`:**
 
-```bash
-.claude/skills/add-secret/scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
+Add or update a single key in an existing file:
+
+```
+! .claude/skills/add-secret/scripts/sops-secret.sh set /home/bosko/NixOS/secrets/common.yaml new-key-name <scratchpad>/secret_value
 ```
 
-**Create a brand-new file** — writes the plaintext YAML under `umask 077`, then encrypts in
-place:
+Create a brand-new file:
 
-```bash
-.claude/skills/add-secret/scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key "the-value"
+```
+! .claude/skills/add-secret/scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key <scratchpad>/secret_value
 ```
 
-When a secret value is sensitive and must not appear in the transcript (e.g. a key read
-over SSH), capture it into a temp file with `umask 077` and feed it from there rather than
-echoing it — `sops-secret.sh` takes the value as an argument, so pull from that temp file
-rather than pasting the value into the command yourself.
+Interactive edit/rotate (opens `$EDITOR`, needs a real terminal):
+
+```
+! .claude/skills/add-secret/scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
+```
+
+`sops-secret.sh`'s `set`/`create` modes take the value as a **file path**, not an inline
+argument, specifically so the plaintext can never appear as literal text in a command the
+agent authors. Wait for the user to confirm the command ran before moving to Step 5.
 
 ## Step 4 — Wire it into NixOS
 
@@ -122,26 +139,47 @@ services.foo.passwordFile = config.sops.secrets."new-key-name".path;
 
 ## Step 5 — Verify
 
-Run the verify script — it exports the admin age key, confirms the file decrypts, and
-confirms the values are encrypted on disk (`ENC[`):
+The agent runs this directly — it's safe, since it only ever prints a masked comparison or
+an OK/FAILED status, never plaintext.
+
+**General file health** (always run this after any write):
 
 ```bash
 /home/bosko/NixOS/.claude/skills/add-secret/scripts/verify-secret.sh secrets/<file>.yaml [host]
 ```
 
-A non-zero exit means the file failed to decrypt or is not encrypted — investigate before
-staging anything.
+Confirms the file decrypts and the values are encrypted on disk (`ENC[`) — never prints
+decrypted content.
+
+**Confirm a specific key round-tripped correctly** (after a `set`/`create`, while the
+scratchpad value-file from Step 3 still exists):
+
+```bash
+/home/bosko/NixOS/.claude/skills/add-secret/scripts/verify-secret.sh secrets/<file>.yaml --key '["new-key-name"]' --expect <scratchpad>/secret_value
+```
+
+Prints only a masked match/mismatch (`MATCH — round-trips correctly (ab12...ef90)`), never
+the full value. A non-zero exit on either check means investigate before staging anything.
 
 If you changed nix wiring, evaluate before rebuilding:
 `nix eval .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath --raw >/dev/null && echo OK`
 
-## Step 6 — Stage and remind to rebuild
+## Step 6 — Clean up, stage, and remind to rebuild
+
+Delete the scratchpad plaintext file now that Step 5 has confirmed the encrypted copy is
+correct:
+
+```bash
+rm -f <scratchpad>/secret_value
+```
+
+Then stage:
 
 ```bash
 git -C /home/bosko/NixOS add .sops.yaml secrets/
 ```
 
-Then tell the user which hosts need a rebuild for the change to take effect (a secret in
+Tell the user which hosts need a rebuild for the change to take effect (a secret in
 `common.yaml` affects all hosts; a per-host file affects just that host). Decryption
 happens at **activation**, so a rebuild — not just an eval — is required on each affected
 host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-push` skills handle that.
@@ -149,15 +187,28 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
 ## Scripts
 
 - `.claude/skills/add-secret/scripts/verify-secret.sh <secret-file> [host]` — decrypts the
-  file with the admin age key and confirms it's encrypted on disk (Step 5).
+  file with the admin age key and confirms it's encrypted on disk, printing only OK/FAILED
+  (Step 5). With `--key <sops-path> --expect <value-file>` instead, confirms one specific key
+  matches an expected value via masked comparison — never prints the full value.
 - `.claude/skills/add-secret/scripts/host-age-key.sh <host>` — derives a host's age public
   key from its SSH ed25519 host key, for adding a new anchor to `.sops.yaml` (Step 2).
-- `.claude/skills/add-secret/scripts/sops-secret.sh {set|edit|create} <file> [key] [value]` —
+- `.claude/skills/add-secret/scripts/sops-secret.sh {set|edit|create} <file> [key] [value-file]` —
   the three everyday sops write operations (Step 3), sharing one `SOPS_AGE_KEY_FILE` export
-  and `nix shell` wrapping instead of three separately-typed command blocks.
+  and `nix shell` wrapping. `set`/`create` take the value as a **file path**, never inline —
+  see Step 3 for why. **The agent must never invoke this script itself** — only the user, via
+  a `!` command.
 
 ## Gotchas
 
+- **The agent must never run `sops-secret.sh set|create|edit`, and must never ask the user to
+  type a plaintext value into a normal chat message.** `modules/sops.nix`'s own comment states
+  this convention explicitly ("the secret value itself is added by the user directly, never
+  by an agent"). The skill's original implementation (pre-v0.3.0) violated it in two places:
+  `sops-secret.sh set` took the value as an inline argument the agent would run directly, and
+  `verify-secret.sh` printed the *entire* decrypted file (every secret in it, not just the one
+  being checked) to the transcript. Both are fixed as of v0.3.0 (2026-09-17, found while
+  adding `jellyfin-api-key` to `secrets/hosts/gaming.yaml`). If a future edit reintroduces an
+  inline-value code path or a full-plaintext print, that's a regression, not a simplification.
 - **Never `git add` a plaintext secret.** Encrypt in place first; verify with the `ENC[`
   check above before staging.
 - A secret added to `common.yaml` is decryptable by **every** host. For least privilege,
