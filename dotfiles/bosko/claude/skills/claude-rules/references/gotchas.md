@@ -1,0 +1,6 @@
+# Claude Rules — Gotchas
+
+## `/verify` is not model-invocable
+
+- **What went wrong:** the canonical "Verification Plan" block (`assets/rules.md`) says to "state how you'll verify it with the `/verify` skill." Read literally, agents in projects carrying this rule tried to actually invoke it via the Skill tool and got `Skill verify cannot be used with Skill tool due to disable-model-invocation` every time — no `/verify` `SKILL.md` exists anywhere on this machine (project-local or dotfiles-managed) to fix; it's a user-only slash command, not model-invocable. This recurred 3 times in one project's scan window across unrelated tasks (a dispatch-implementation change, a dev-watch session, and a NetscriptDefinitions lookup).
+- **How to avoid it:** never call `Skill(verify)` — it will always fail. When the Verification Plan rule is active, fulfill it by stating the verification plan directly in prose up front (which commands/checks you'll run and how you'll confirm each part works), which is what the rule actually asks for; the `/verify` mention describes a user-invocable slash command as a hint for the human, not an instruction to invoke it programmatically. Per the "canonical wording, don't rewrite" rule above, this is documented as a Gotcha rather than a change to `assets/rules.md` — raise it with the user directly if the wording itself should change.

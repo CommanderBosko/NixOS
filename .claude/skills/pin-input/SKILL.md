@@ -172,7 +172,7 @@ Then suggest:
 
 > When you are ready:
 > - Run `/nixos-dry-run` to preview what this pinned revision would change in your system build.
-> - Run `/commit` to commit the updated `flake.lock` (and `flake.nix` if permanently pinned).
+> - Run `/git-commit` to commit the updated `flake.lock` (and `flake.nix` if permanently pinned).
 
 Do not run either of those automatically.
 
