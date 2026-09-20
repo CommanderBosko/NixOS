@@ -118,7 +118,7 @@ Then remind them of the next steps:
 > 1. Preview the change: `/nixos-dry-run`
 > 2. If the dry-run looks good, run `rebuild` in your terminal to apply (requires TTY/sudo), then reboot to activate the new DE
 > 3. After rebooting, run `/wayland-screenshot` to confirm the new DE actually came up looking right
-> 4. Commit the change: `/commit`
+> 4. Commit the change: `/git-commit`
 
 ---
 

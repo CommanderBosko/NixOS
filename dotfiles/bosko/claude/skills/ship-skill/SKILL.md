@@ -39,5 +39,5 @@ Report: the skill name, where it was written, the smoke-test result, the commit 
 
 ## Key facts
 
-- For global/repo-managed skills, remind the user that the `~/.claude/skills/<name>/` symlink only appears after `nh os boot /home/bosko/NixOS` **+ reboot** — the repo copy works in the meantime when invoked from within this repo.
+- For global/repo-managed skills, remind the user that the `~/.claude/skills/<name>/` symlink only appears after `nh os boot /home/bosko/NixOS` **+ reboot** — it is not invocable via the Skill tool or a `/<name>` slash command until then. In the meantime, the repo copy can only be run by reading `dotfiles/bosko/claude/skills/<name>/SKILL.md` directly and following its steps by hand, not through normal skill discovery.
 - This skill does not skip Step 3's smoke-test even under time pressure — an untested skill committed to the repo is worse than no skill, since future sessions will trust and invoke it.
