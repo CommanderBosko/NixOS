@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-20 (session 113) — flake bump, pi-hole list sync, pin re-check
+
+**Focus**: Routine maintenance across four short threads after the 09-17 close: a lock-only flake bump, repairing pi-hole's list-sync config, and two xwayland-satellite pin checks.
+
+### What changed (and why)
+- **`/flake-update-verify` bumped disko/dms/financeguru/home-manager/nixpkgs/sops-nix** (`f978b9c`); flake-check and per-host deep-eval passed on all 4 hosts. Committed lock-only and pushed, **not activated** — it stacks on the still-unapplied 2026-09-07 bump, so one `/fleet-rollout` covers both.
+- **pi-hole `pihole-updatelists` conf repaired** (on the pi-hole host, no repo change). The "alias" is really `/usr/local/sbin/pihole-updatelists` + a systemd timer. Its conf was missing HaGeZi TIF (live since 2026-08-25 via REST, never added to the conf), so I added it. It also still listed RPiList-Malware, which wasn't on the pi-hole; checked it's alive (updated 2026-09-14, ~596K domains) and re-added it at the user's request. Gravity 3.29M → 3.89M, **29 lists** now.
+- **xwayland-satellite pin re-checked twice** (`pinned-package-status-check`): #156 still open, no maintainer reply, 0.8.2 still the newest release → keep the 0.8.1 pin.
+- Answered "what is OpenPrinting?" (the CUPS/cups-browsed stack this repo already runs) — no change.
+
+### Decisions
+- Left the two deliberately-disabled lists (FadeMind add.Risk, Mandiant APT1) disabled — their comment no longer matches the tool's managed marker, so the timer can't re-enable them.
+- Lock-only bump left un-applied per `/flake-update-verify`'s scope; rollout is a separate, sudo-gated user action.
+
+### Issues / surprises
+- A first fetch of xwayland-satellite issue #156 reported 0 comments — the fetch missing them, not the issue; the GitHub API confirmed 23.
+- Close-out found three stale items in `project-state.md` (Current Goals, Known Issues, a Next Steps line) still saying the xwayland 0.8.1 pin was unapplied/untested, contradicting session 110's own confirmation that gaming gen 414 has it and the user confirmed the fix. Struck through and corrected.
+
+### Next session
+- All 3 desktop hosts: rebuild (`boot` recommended) for the 2026-09-20 bump + backlog via `/fleet-rollout`.
+- OpenSubtitles plugin still waits on the user's opensubtitles.com credentials.
+- README's Current Status/Recent Changes still need the dedicated trim pass flagged in session 112.
+
+**Commits**: `d994dd2..f978b9c` (1 commit)
+
+---
+
 ## Session: 2026-09-17 (session 112) — Jellyfin plugin rollout + add-secret skill security fix
 
 **Focus**: Research the Jellyfin plugin ecosystem (declarative config, YouTube metadata, others), roll out what's actionable via a new Jellyfin API key, and safely encrypt that key.
@@ -101,29 +128,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild+reboot all 3 desktop hosts to bring the `improve-system` gotcha live in `~/.claude` (repo-managed global skill) — rides along with the existing backlog.
 
 **Commits**: `b0f5a75..f5f4a0f` (3 commits)
-
----
-
-## Session: 2026-09-13 (session 108) — printing.nix cleanup + first full /dream run since 2026-09-04
-
-**Focus**: One small config refactor, plus running the `/dream` memory-improvement suite end-to-end for the first time in over a week.
-
-### What changed (and why)
-- **`system-config-printer` moved from `modules/desktop-apps.nix` to `modules/printing.nix`** (`dc37a1f`) — groups it with the rest of the printing stack instead of the generic app list. Zero functional diff, both files already in `desktopModules`.
-- **`/dream` full run**: mined 6 active projects since 2026-09-04, auto-applied 6 memory changes (2 new files, 2 enriched, 2 index updates) across NixOS + FinanceGuru, 0 flagged for review. Writes go to `~/.claude/dream/` and per-project memory dirs — nothing lands in this repo's git history.
-
-### Decisions
-- None new this session — the printing.nix move was a straightforward "commit and push it" with no open questions.
-
-### Issues / surprises
-- An earlier, separate session asked about intermittent "no internet connection" app errors (ping working fine) but ended before any diagnosis — flagged in `project-state.md` for next time, not resolved here.
-- Secret-scan: clean (working tree + full git history).
-
-### Next session
-- No new host action added — rides along with the existing rebuild backlog (system-config-printer, 2026-09-07 flake bump, PR #20/#21 skill fixes, xwayland-satellite pin).
-- If the internet-connectivity report recurs, diagnose it fresh.
-
-**Commits**: `c33e20e..dc37a1f` (1 commit)
 
 ---
 
