@@ -4,6 +4,37 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-21 (session 114) — PR #25 merge, repo reorganization, secrets split + exposure incident
+
+**Focus**: One long day across three sessions: merge the weekly improve-system PR, reorganize misplaced/duplicated config the way the `printing.nix` move did, and split the Claude-tooling secrets into a desktop-only file — during which a `!`-command secret exposure surfaced and was contained.
+
+### What changed (and why)
+- **PR #25 merged** (`18b5a0e`) after the `manager` agent reviewed it; the review script's guardrail flagged four new `references/*.md` files, cleared by reading them.
+- **Reorganization** (`85fd55a..6eb3488`, `088ff1b`, `36d278f`): config moved next to the modules that own it, shared DMS/niri and vpn-server pieces split out, `bosko-claude.nix` auto-wires skills from `readDir` (new skill = `git add` only), CI deep-eval deduped into one script that reports every failing host, README 179 KB → ~29 KB, `project-state.md` rotated (~300 KB archived). Verified by 4-host deep-eval, all DE modules, a new `lib.moduleSmoke`, a gaming dry-run, and a before/after diff of evaluated contents.
+- **`secrets/desktop.yaml`** (`e4defb1`): `tailscale-mcp-env` + `discord-webhook-url` moved out of `common.yaml` so vpn-server can't decrypt them; new desktop-only `modules/claude-mcp.nix`. Both credentials rotated; live-verified on gaming (Tailscale token exchange, `/send-results` → HTTP 204).
+- **`add-secret` fixed** (`f774ff3`, `dea9338`): `!` commands are echoed into the transcript, so values are now captured in a separate terminal with `read -rs`; `sops-secret.sh` encodes via `jq` (the old code folded a two-line secret into one line and broke on quotes/backslashes).
+
+### Decisions
+- Verified the refactor by evaluated-content diff, not `drvPath` (Home Manager embeds the flake source path).
+- Kept both Claude installs (comment added); kept session docs at the repo root (moving them would need ~10 `session-closer` edits — rotation fixed the real problem, size).
+- Redacted only *dead* credentials from old logs; left live logs and the login password hashes alone (user declined rotating the hashes for now).
+- Skipped: shared `bluetooth.nix`, SSH-pubkey dedupe, moving the OnlyOffice overlay, the commented-out pinchflat wg0 block.
+
+### Issues / surprises
+- `add-secret` told the agent `!` commands weren't persisted; following it put a fresh Tailscale OAuth client secret in the session log (client regenerated). A first re-creation also over-scoped the client (`oauth_keys`) and was replaced.
+- A count-only sweep of all ~150 transcripts found three more exposures: two dead credentials (redacted, backups in `~/.claude/redaction-backup-20260921`) and the two live login password hashes; `history.jsonl` and the exposing session's own log still await redaction.
+- One agent was denied `shred` on the plaintext scratch files, so the user deleted them; the agent hit a usage limit mid-run and was resumed.
+- Close-out: gaming's 2026-09-20 10:09 reboot (gen 418, after the last close) had already applied the 09-07/09-20 bumps, so the previous "not activated" wording was stale. Secret scan: clean across the tree and 1795 commits.
+
+### Next session
+- laptop + natalie-laptop: `git pull` then rebuild (`/fleet-rollout`); check `/mcp` on each.
+- Revoke the pre-rotation Tailscale OAuth client after both rebuild; finish the redaction; decide on the login-hash rotation.
+- Watch the first CI run of `lib.moduleSmoke`; close the `references/` boundary gap in `review-improve-system-pr`.
+
+**Commits**: `fa8b671..dea9338` (12 commits)
+
+---
+
 ## Session: 2026-09-20 (session 113) — flake bump, pi-hole list sync, pin re-check
 
 **Focus**: Routine maintenance across four short threads after the 09-17 close: a lock-only flake bump, repairing pi-hole's list-sync config, and two xwayland-satellite pin checks.
@@ -105,29 +136,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild (no reboot needed) any host to bring the rewrite live in `~/.claude` — rides along with the existing backlog.
 
 **Commits**: `48e856c` (1 commit)
-
----
-
-## Session: 2026-09-14 (session 109) — improve-system PR review + send-results root-cause + skill-suggestion/upgrade sweep
-
-**Focus**: Review and merge the weekly `improve-system` PR, find out why it skipped its Discord notification, and run a combined skill-suggestion/skill-upgrade pass across the full transcript history.
-
-### What changed (and why)
-- **PR #23 (weekly `improve-system` sweep, 4 skill fixes) reviewed via `review-improve-system-pr` and merged** (`b0f5a75`) — guardrail held, content independently verified. Project-local, live immediately.
-- **Root-caused the skipped `/send-results` notification**: the routine's tracking issue closed right after posting its consolidated report, skipping Step 5 (write the report file + hand off to `send-results`) entirely. Added a Gotcha to `improve-system/SKILL.md` so a future run checks the report file actually exists before declaring done (`e1ac4b4` → `69ca7f5`).
-- **4 parallel `transcript-scanner` agents mined 94 transcripts for skill-suggestion candidates**, plus an inline skill-upgrade misfire scan. Built `pinned-package-status-check` (new, project-local) — generalizes a "has xwayland-satellite been fixed yet" check run by hand 3-4 times. A second candidate (`pihole-manage-list`) turned out to duplicate the existing `pihole-api` skill — caught before building it. Added 2 Gotchas (`save-memory`, `review-improve-system-pr`). Committed `f5f4a0f`.
-
-### Decisions
-- Dropped `pihole-manage-list` once a direct check of `.claude/skills/` showed `pihole-api` already covers the same ground — the scanning batch that raised it had an incomplete view of the roster.
-
-### Issues / surprises
-- The `/send-results` skip wasn't a wiring bug — the cloud routine's own tracking-issue sequence jumped straight to closing instead of running its mandatory Step 5.
-- Secret-scan: clean (working tree + full git history).
-
-### Next session
-- Rebuild+reboot all 3 desktop hosts to bring the `improve-system` gotcha live in `~/.claude` (repo-managed global skill) — rides along with the existing backlog.
-
-**Commits**: `b0f5a75..f5f4a0f` (3 commits)
 
 ---
 
