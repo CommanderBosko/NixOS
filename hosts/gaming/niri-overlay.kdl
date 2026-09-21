@@ -74,3 +74,11 @@ window-rule {
     match app-id=r#"^thunar$"#
     open-on-workspace "dell-5"
 }
+
+// Initial-setup launcher for the pinned apps above. Gaming-only because Steam
+// and Lutris are installed only here; binds in an included file merge into the
+// shared config's `binds`. Deezer's flatpak start is delayed 3s since it
+// silently lost the launch race on a cold-booted session.
+binds {
+    Mod+G hotkey-overlay-title="Launch Initial Setup: Steam, Vesktop, Lutris, Deezer, qBittorrent" { spawn-sh "steam & vesktop & lutris & (sleep 3; flatpak run dev.aunetx.deezer) & qbittorrent &"; }
+}

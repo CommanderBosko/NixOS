@@ -19,14 +19,6 @@ Text Font=monospace,9,-1,2,400,0,0,0,0,0,0,0,0,0,0,1
 Text Font Features=
 Word Wrap Marker=false
 
-[MainWindow]
-1646x926 screen: Height=847
-1646x926 screen: Width=1630
-1920x1080 screen: Height=1001
-1920x1080 screen: Width=942
-2057x1157 screen: Height=1084
-2057x1157 screen: Width=1028
-
 [UiSettings]
 ColorScheme=BreezeDark
 

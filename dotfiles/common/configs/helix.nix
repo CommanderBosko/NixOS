@@ -4,7 +4,6 @@
     # Packages
     packages = with pkgs; [
       bash-language-server
-      clang-tools
       gofumpt
       gopls
       jdt-language-server
@@ -45,11 +44,13 @@
       };
     };
 
-    # Languages and language servers
+    # Languages and language servers. Each entry merges by `name` into helix's
+    # built-in language, so unset keys (scope, ...) are inherited; list values
+    # (file-types, language-servers) replace the built-in list outright, dropping
+    # every built-in entry not repeated here.
     languages.language = [
       {
         name = "bash";
-        scope = "source.bash";
         file-types = [
           "sh"
           "bash"
@@ -66,8 +67,6 @@
       }
       {
         name = "c";
-        scope = "source.c";
-        file-types = [ "c" ];
         auto-format = false;
         formatter = {
           command = "${pkgs.clang-tools}/bin/clang-format";
@@ -76,7 +75,6 @@
       }
       {
         name = "cpp";
-        scope = "source.cpp";
         file-types = [
           "cpp"
           "cc"
@@ -94,8 +92,6 @@
       }
       {
         name = "css";
-        scope = "source.css";
-        file-types = [ "css" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
@@ -108,8 +104,6 @@
       }
       {
         name = "go";
-        scope = "source.go";
-        file-types = [ "go" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.gofumpt;
@@ -117,25 +111,18 @@
         language-servers = [ "gopls" ];
       }
       {
+        # No formatter: terraform-ls has no `fmt` subcommand and terraform
+        # itself isn't installed.
         name = "hcl";
-        scope = "source.hcl";
         file-types = [
           "tf"
           "hcl"
         ];
         auto-format = false;
-        formatter = {
-          command = lib.getExe pkgs.terraform-ls;
-          args = [
-            "fmt"
-            "-"
-          ];
-        };
         language-servers = [ "terraform-ls" ];
       }
       {
         name = "html";
-        scope = "text.html.basic";
         file-types = [ "html" ];
         auto-format = false;
         formatter = {
@@ -149,14 +136,12 @@
       }
       {
         name = "java";
-        scope = "source.java";
         file-types = [ "java" ];
         auto-format = false;
         language-servers = [ "jdtls" ];
       }
       {
         name = "javascript";
-        scope = "source.js";
         file-types = [
           "js"
           "mjs"
@@ -174,7 +159,6 @@
       }
       {
         name = "json";
-        scope = "source.json";
         file-types = [
           "json"
           "jsonc"
@@ -191,7 +175,6 @@
       }
       {
         name = "lua";
-        scope = "source.lua";
         file-types = [ "lua" ];
         auto-format = false;
         formatter = {
@@ -202,7 +185,6 @@
       }
       {
         name = "markdown";
-        scope = "source.md";
         file-types = [
           "md"
           "markdown"
@@ -219,8 +201,6 @@
       }
       {
         name = "nix";
-        scope = "source.nix";
-        file-types = [ "nix" ];
         auto-format = false;
         formatter.command = lib.getExe pkgs.nixfmt;
         language-servers = [
@@ -230,7 +210,6 @@
       }
       {
         name = "python";
-        scope = "source.python";
         file-types = [ "py" ];
         auto-format = false;
         formatter = {
@@ -244,8 +223,6 @@
       }
       {
         name = "rust";
-        scope = "source.rust";
-        file-types = [ "rs" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.rustfmt;
@@ -254,7 +231,6 @@
       }
       {
         name = "toml";
-        scope = "source.toml";
         file-types = [ "toml" ];
         auto-format = false;
         formatter = {
@@ -268,7 +244,6 @@
       }
       {
         name = "yaml";
-        scope = "source.yaml";
         file-types = [
           "yaml"
           "yml"
