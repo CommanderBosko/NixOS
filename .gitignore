@@ -16,3 +16,7 @@ dotfiles/bosko/claude/knowledge/raw/
 # Config files like baseline-allowlist.md ARE tracked.
 .claude/loops/**/output-*.md
 .claude/loops/**/memory-*.md
+
+# Claude Code per-machine state — never shared (settings.json IS tracked).
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

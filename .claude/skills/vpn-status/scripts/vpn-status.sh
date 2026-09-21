@@ -9,8 +9,8 @@
 # of truth at .claude/hosts.json — do not re-hardcode either here.
 set -euo pipefail
 
-HOSTS_JSON="/home/bosko/NixOS/.claude/hosts.json"
-VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' "$HOSTS_JSON")"
+source /home/bosko/NixOS/.claude/lib/hosts.sh
+VPN_SSH="$(hosts_ssh vpn-server)"
 
 echo "==> WireGuard VPN status — ${VPN_SSH}"
 echo ""
@@ -54,7 +54,7 @@ fmt_ago() {
 printf "%-16s %-8s %-22s %s\n" "Peer" "Status" "Last Handshake" "Transfer (rx/tx)"
 
 echo "$DUMP" | tail -n +2 | while IFS=$'\t' read -r pubkey _psk _endpoint _allowed hs rx tx _keepalive; do
-  name="$(jq -r --arg pk "$pubkey" '.vpn.peers[$pk] // ("unknown:" + ($pk[0:12]))' "$HOSTS_JSON")"
+  name="$(hosts_jq -r --arg pk "$pubkey" '.vpn.peers[$pk] // ("unknown:" + ($pk[0:12]))')"
 
   if [ "$hs" = "0" ]; then
     status="Offline"

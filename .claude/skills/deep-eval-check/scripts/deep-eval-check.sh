@@ -1,23 +1,8 @@
 #!/usr/bin/env bash
 # Deep-evaluate every flake host's build graph (not just a shallow "is it a
-# derivation" check). Host list is read live from .claude/hosts.json's
-# .flakeHosts — never hardcode it here.
-set -uo pipefail
-
-REPO="/home/bosko/NixOS"
-HOSTS=$(jq -r '.flakeHosts[]' "$REPO/.claude/hosts.json")
-
-overall=0
-for host in $HOSTS; do
-  echo "=== $host ==="
-  if drv=$(nix eval --raw "$REPO#nixosConfigurations.$host.config.system.build.toplevel.drvPath" 2>&1); then
-    echo "PASS: $drv"
-  else
-    echo "FAIL:"
-    echo "$drv"
-    overall=1
-  fi
-  echo
-done
-
-exit $overall
+# derivation" check). Thin wrapper over the shared .claude/lib/deep-eval.sh —
+# the same script CI runs — which reads the host list live from the flake's
+# nixosConfigurations (never hosts.json or a hardcoded copy), keeps going past
+# a failing host, prints a per-host verdict, and exits non-zero if any failed.
+# Extra args (host names, --list, --flake, --set) pass straight through.
+exec "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../lib" && pwd)/deep-eval.sh" "$@"

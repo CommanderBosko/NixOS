@@ -19,11 +19,11 @@ This skill is driven by three inputs (any not supplied in the prompt are asked f
 
 ## Current inputs in this repo
 
-Never trust a hardcoded roster — it rots. Enumerate the inputs **live** using the shared helper
+Never trust a hardcoded roster — it rots. Enumerate the inputs **live** using the shared helper's `--names` mode
 (also used by `/bump-input`):
 
 ```bash
-/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh
+/home/bosko/NixOS/.claude/lib/show-pin-state.sh --names
 ```
 
 Some inputs declare `inputs.nixpkgs.follows = "nixpkgs"`, so pinning `nixpkgs` also moves the nixpkgs revision those inputs see. Never hardcode the list of followers — it changes as inputs are added. Derive it live:
@@ -38,7 +38,7 @@ Always mention the current followers (by name, from the live grep above) when th
 
 ## Step 1 — Show current state
 
-Run the shared helper (also used by nothing else — this one is `/pin-input`-only, unlike the two below):
+Run the same shared helper without `--names` (its default table mode is used only by `/pin-input`):
 
 ```bash
 /home/bosko/NixOS/.claude/lib/show-pin-state.sh
@@ -181,8 +181,8 @@ Do not run either of those automatically.
 ## Shared scripts
 
 - The lock diff in Step 6 is rendered by `/home/bosko/NixOS/.claude/lib/flake-lock-diff.sh`, shared with `/update` and `/bump-input`. It diffs the committed `flake.lock` against the working tree (optional `$1` git ref overrides the OLD side) and prints aligned `name  old8 -> new8  (date)` lines, or `flake.lock unchanged.`. Do not hand-roll the rev/date parse — call the script, then append the human-chosen pin target as a context line.
-- The input list above is rendered by `/home/bosko/NixOS/.claude/lib/list-flake-inputs.sh`, shared with `/bump-input`. Do not hand-roll the `nix flake metadata` parse — call the script.
-- The current-state table in Step 1 is rendered by `/home/bosko/NixOS/.claude/lib/show-pin-state.sh` (used only by `/pin-input`). It resolves each input's `follows` chain and locked rev via `nix flake metadata --json` — do not hand-roll that parse either.
+- The input list above is rendered by `/home/bosko/NixOS/.claude/lib/show-pin-state.sh --names`, shared with `/bump-input`. Do not hand-roll the `nix flake metadata` parse — call the script.
+- The current-state table in Step 1 is rendered by the same script without `--names` (table mode is used only by `/pin-input`). It resolves each input's `follows` chain and locked rev via `nix flake metadata --json` — do not hand-roll that parse either.
 
 ## Key constraints
 

@@ -10,10 +10,21 @@ on:
     # Weekly de-smoke run (Mondays 06:00 UTC) — see the de-smoke job below
     - cron: "0 6 * * 1"
 
+# Read-only: nothing in here pushes, comments, or publishes.
+permissions:
+  contents: read
+
 # A newer push supersedes any in-flight run for the same ref
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Every deep-eval step below runs the ONE shared script, .claude/lib/deep-eval.sh
+# (also what the /deep-eval-check skill runs locally). It evaluates every member
+# of a flake attrset, keeps going past a failing member, prints a per-member
+# verdict, and exits non-zero if any failed — so one broken host never hides the
+# rest. To cover another attrset, append a step running
+# `bash .claude/lib/deep-eval.sh --set <attr>` (see the de-smoke job).
 
 jobs:
   eval:
@@ -31,18 +42,20 @@ jobs:
       - name: nix flake check
         run: nix flake check --no-build
 
-      # The real gate: force the FULL system derivation of every host
-      # (gaming, laptop, natalie-laptop, vpn-server). Eval-only, no builds;
-      # cross-arch is fine — evaluating the aarch64 vpn-server needs no
-      # aarch64 builder. sops secrets stay encrypted; eval never decrypts them.
+      # The real gate: force the FULL system derivation of every host in
+      # nixosConfigurations. Eval-only, no builds; cross-arch is fine —
+      # evaluating the aarch64 vpn-server needs no aarch64 builder. sops
+      # secrets stay encrypted; eval never decrypts them.
       - name: deep-evaluate every host
-        run: |
-          for host in $(nix eval --raw --apply 'c: builtins.concatStringsSep " " (builtins.attrNames c)' .#nixosConfigurations); do
-            echo "::group::$host"
-            nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath"
-            echo
-            echo "::endgroup::"
-          done
+        run: bash .claude/lib/deep-eval.sh
+
+      # .claude/hosts.json drives the host-touching skills (ssh-host,
+      # fleet-status, fleet-rollout, ...); fail if its flake hosts drift from
+      # the flake's real nixosConfigurations. Runs even if an earlier step
+      # failed so both signals are reported.
+      - name: hosts.json matches nixosConfigurations
+        if: ${{ !cancelled() }}
+        run: bash .claude/lib/check-hosts-json.sh
 
   # Unused DE modules are never evaluated by the host builds above, so they can
   # rot silently across nixpkgs bumps. lib.deSmoke exposes the laptop config
@@ -58,10 +71,13 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
 
       - name: deep-evaluate laptop with each DE module
-        run: |
-          for de in $(nix eval --raw --apply 'a: builtins.concatStringsSep " " (builtins.attrNames a)' .#lib.deSmoke); do
-            echo "::group::$de"
-            nix eval --raw ".#lib.deSmoke.$de.config.system.build.toplevel.drvPath"
-            echo
-            echo "::endgroup::"
-          done
+        run: bash .claude/lib/deep-eval.sh --set lib.deSmoke
+
+      # Modules no host imports right now (amd.nix, vpn.nix) — evaluated so they
+      # can't rot silently while unused.
+      - name: deep-evaluate unused modules
+        run: bash .claude/lib/deep-eval.sh --set lib.moduleSmoke
+
+      # Further weekly smoke sets go here, one step each, e.g.:
+      #   - name: deep-evaluate <what>
+      #     run: bash .claude/lib/deep-eval.sh --set lib.<name>

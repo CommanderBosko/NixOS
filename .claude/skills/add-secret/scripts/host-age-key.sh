@@ -10,9 +10,9 @@ if [[ -z "$HOST" ]]; then
   exit 2
 fi
 
-HOSTS_JSON="/home/bosko/NixOS/.claude/hosts.json"
-SSH_TARGET="$(jq -r --arg h "$HOST" '.hosts[$h].ssh' "$HOSTS_JSON")"
-if [[ -z "$SSH_TARGET" || "$SSH_TARGET" == "null" ]]; then
+source /home/bosko/NixOS/.claude/lib/hosts.sh
+SSH_TARGET="$(hosts_ssh "$HOST")"
+if [[ -z "$SSH_TARGET" ]]; then
   echo "error: no .hosts[\"$HOST\"].ssh entry in $HOSTS_JSON" >&2
   exit 2
 fi

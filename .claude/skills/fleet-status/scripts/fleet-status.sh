@@ -9,14 +9,14 @@
 # source of truth at .claude/hosts.json — do not re-hardcode them here.
 set -uo pipefail
 
-HOSTS_JSON="/home/bosko/NixOS/.claude/hosts.json"
+source /home/bosko/NixOS/.claude/lib/hosts.sh
 
-mapfile -t HOSTS < <(jq -r '.flakeHosts[]' "$HOSTS_JSON")
+mapfile -t HOSTS < <(hosts_flake_names)
 declare -A SSH_TARGET
 while IFS=$'\t' read -r name ssh; do
   SSH_TARGET[$name]="$ssh"
-done < <(jq -r '.hosts | to_entries[] | select(.value.flakeHost) | "\(.key)\t\(.value.ssh)"' "$HOSTS_JSON")
-VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' "$HOSTS_JSON")"
+done < <(hosts_flake_ssh_pairs)
+VPN_SSH="$(hosts_ssh vpn-server)"
 SELF="$(hostname)"
 
 # Unprivileged probe run on each host; emits one pipe-delimited line.
@@ -62,7 +62,7 @@ else
   now=$(date +%s)
   while read -r peer hs; do
     [ -z "$peer" ] && continue
-    n=$(jq -r --arg p "$peer" '.vpn.peers[$p] // $p' "$HOSTS_JSON")
+    n=$(hosts_vpn_peer_name "$peer")
     if [ "${hs:-0}" -gt 0 ]; then
       printf "  %-16s %ss ago\n" "$n" "$((now - hs))"
     else

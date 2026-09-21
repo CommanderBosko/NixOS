@@ -12,11 +12,11 @@ set -euo pipefail
 # required to read the password." Print the exact command per host and hand
 # off — the user runs each one themselves (or via the `!` prefix locally).
 
-HOSTS_JSON="/home/bosko/NixOS/.claude/hosts.json"
+source /home/bosko/NixOS/.claude/lib/hosts.sh
 
-for host in $(jq -r '.flakeHosts[]' "$HOSTS_JSON"); do
+for host in $(hosts_flake_names); do
   [ "$host" = "vpn-server" ] && continue
-  ssh_target="$(jq -r ".hosts[\"$host\"].ssh" "$HOSTS_JSON")"
+  ssh_target="$(hosts_ssh "$host")"
   echo "$host ($ssh_target):"
   if [ "$host" = "$(hostname)" ]; then
     echo "  sudo systemctl restart wg-quick-wg0"
