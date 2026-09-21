@@ -1,6 +1,10 @@
 { pkgs, ... }:
 
 {
+  # Not imported by any host right now — staged for the gaming GPU swap (swap
+  # nvidia.nix for this in flake.nix's gamingModules). lib.moduleSmoke.amd
+  # evaluates it so it can't rot while unused.
+
   # Load AMDGPU driver at initrd
   boot.initrd.kernelModules = [ "amdgpu" ];
 

@@ -55,19 +55,25 @@
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
   let
-    # Modules shared by all systems. bootloader.nix is GRUB/x86 — vpn-server
-    # overrides it with systemd-boot via mkForce in its configuration.nix.
+    # Host/network facts shared with the Claude tooling (.claude/hosts.json is
+    # the single source of truth for IPs and WireGuard addresses); modules take
+    # it as the `hostsData` argument instead of hardcoding addresses.
+    hostsData = builtins.fromJSON (builtins.readFile ./.claude/hosts.json);
+
+    # Modules shared by all systems, headless vpn-server included. Anything
+    # that only makes sense on a desktop (bootloader/kernel, fonts, flatpak…)
+    # lives in desktopModules so vpn-server doesn't have to override it.
     # system.stateVersion is per-host (frozen at each machine's install time).
     commonModules = [
-      "${self}/modules/bootloader.nix"
       "${self}/modules/claude-code.nix"
       "${self}/modules/firmware.nix"
-      "${self}/modules/fonts.nix"
       "${self}/modules/localisation.nix"
       "${self}/modules/nix.nix"
       "${self}/modules/security.nix"
       "${self}/modules/shell.nix"
       "${self}/modules/sops.nix"
+      "${self}/modules/ssh.nix"
+      "${self}/modules/starship.nix"
       "${self}/modules/users.nix"
     ];
 
@@ -75,15 +81,20 @@
       home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
       "${self}/modules/audio.nix"
+      # GRUB + zen kernel (x86 desktops); vpn-server owns its own boot config
+      "${self}/modules/bootloader.nix"
       "${self}/modules/desktop-apps.nix"
       "${self}/modules/desktop-networking.nix"
       "${self}/modules/development.nix"
       "${self}/modules/emulation.nix"
+      "${self}/modules/flatpak.nix"
+      "${self}/modules/fonts.nix"
       "${self}/modules/home-manager.nix"
       "${self}/modules/jellyfin-client.nix"
       "${self}/modules/printing.nix"
       "${self}/modules/sddm.nix"
-      "${self}/modules/shared-folder.nix"
+      # Mesh VPN on every desktop; first-time auth is manual (`tailscale up`)
+      "${self}/modules/tailscale.nix"
       # WireGuard client to vpn-server temporarily pulled from the fleet —
       # Oracle admin-disabled that instance 2026-08-18 (see
       # project_vpn_server_oracle_disabled memory), so the tunnel has no
@@ -99,7 +110,7 @@
     mkSystem = { name, system ? "x86_64-linux", nixpkgs ? inputs.nixpkgs, modules }:
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs self system; };
+        specialArgs = { inherit hostsData inputs self system; };
         modules = [ { networking.hostName = name; } ] ++ modules;
       };
 
@@ -109,12 +120,27 @@
       # Machine-specific modules
       "${self}/hosts/laptop/hardware-configuration.nix"
       "${self}/hosts/laptop/environment.nix"
-      "${self}/hosts/laptop/networking.nix"
       de
       "${self}/modules/nvidia.nix"
+      "${self}/modules/qbittorrent.nix"
       "${self}/modules/shared-folder-client.nix"
-      "${self}/modules/tailscale.nix"
     ];
+
+    # The gaming host's module list, parameterised over the GPU module and
+    # any extra modules — reused by lib.moduleSmoke.
+    gamingModules = { gpu ? "${self}/modules/nvidia.nix", extra ? [ ] }: desktopModules ++ [
+      # Machine-specific modules
+      "${self}/hosts/gaming/hardware-configuration.nix"
+      "${self}/hosts/gaming/environment.nix"
+      "${self}/hosts/gaming/networking.nix"
+      "${self}/modules/desktop-environments/niri.nix"
+      "${self}/modules/gaming.nix"
+      gpu
+      "${self}/hosts/gaming/virtualisation.nix"
+      "${self}/hosts/gaming/jellyfin-server.nix"
+      "${self}/hosts/gaming/pinchflat.nix"
+      "${self}/hosts/gaming/samba-shared.nix"
+    ] ++ extra;
   in
   {
     # Custom library functions
@@ -132,25 +158,27 @@
         modules = laptopModules "${self}/modules/desktop-environments/${de}.nix";
       });
 
+    # Smoke-eval targets for modules no host imports right now: amd.nix (staged
+    # for the gaming GPU swap) and vpn.nix (WireGuard client, out while
+    # vpn-server is down). Same idea as deSmoke — they'd otherwise rot silently
+    # across nixpkgs bumps; CI forces each one (eval-only, no builds).
+    lib.moduleSmoke = {
+      amd = mkSystem {
+        name = "gaming";
+        modules = gamingModules { gpu = "${self}/modules/amd.nix"; };
+      };
+      vpn = mkSystem {
+        name = "gaming";
+        modules = gamingModules { extra = [ "${self}/modules/vpn.nix" ]; };
+      };
+    };
+
     # Configure nix configurations
     nixosConfigurations = {
       # Gaming
       gaming = mkSystem {
         name = "gaming";
-        modules = desktopModules ++ [
-          # Machine-specific modules
-          "${self}/hosts/gaming/hardware-configuration.nix"
-          "${self}/hosts/gaming/environment.nix"
-          "${self}/hosts/gaming/networking.nix"
-          "${self}/modules/desktop-environments/niri.nix"
-          "${self}/modules/gaming.nix"
-          "${self}/modules/nvidia.nix"
-          "${self}/modules/tailscale.nix"
-          "${self}/hosts/gaming/virtualisation.nix"
-          "${self}/hosts/gaming/jellyfin-server.nix"
-          "${self}/hosts/gaming/pinchflat.nix"
-          "${self}/hosts/gaming/samba-shared.nix"
-        ];
+        modules = gamingModules { };
       };
 
       # Laptop
@@ -169,8 +197,8 @@
           "${self}/hosts/natalie-laptop/networking.nix"
           "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/nvidia.nix"
+          "${self}/modules/qbittorrent.nix"
           "${self}/modules/shared-folder-client.nix"
-          "${self}/modules/tailscale.nix"
         ];
       };
 

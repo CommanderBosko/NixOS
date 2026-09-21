@@ -10,17 +10,29 @@
 #   - ask:  git history/remote, NixOS gc/rollback, and system/process commands
 #   - PreToolUse hooks (both matcher: "Bash", both fire independently):
 #       - blocks the classic self-recursive fork bomb
-#       - routes commands through rtk (modules/users.nix) to cut token usage;
+#       - routes commands through rtk (installed below) to cut token usage;
 #         rtk itself defers to Claude's native deny/ask rules on match, so the
 #         two hooks don't fight each other
 #
 # Deliberately NOT set up via `rtk init -g`: that writes the hook straight into
 # ~/.claude/settings.json, which the trimClaudeSettings HM activation
-# (bosko-claude.nix) strips clean on every rebuild once this managed file
+# (dotfiles/bosko/claude-hm/settings.nix) strips clean on every rebuild once this managed file
 # exists. Declaring it here is the only form that survives a rebuild.
+#
+# Also owns bosko's Claude tooling: the claude-code binary, the MCP servers
+# registered in ~/.claude.json (dotfiles/bosko/claude-hm/mcp.nix), rtk, and the
+# sops secrets those tools read.
 { pkgs, ... }:
 
 let
+  # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server pins
+  # stable, so guard on attribute existence rather than hardcoding it and
+  # breaking that host's eval. Picks itself up automatically once a future
+  # stable point-release backports the package. Used both for the package and
+  # for the PreToolUse hook below (the hook must only exist where the binary
+  # does, or `claude` would hit "command not found" on every Bash call).
+  hasRtk = pkgs ? rtk;
+
   # jq inspects the Bash command and denies the fork bomb pattern
   # `name(){ ... | ... & }; name`. Pinned to the store path so it resolves
   # regardless of the user's PATH. Backslashes are doubled for jq string escaping.
@@ -101,11 +113,7 @@ let
           ];
         }
       ]
-      # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server
-      # pins stable, so it doesn't get the package (see modules/users.nix).
-      # Only wire the hook where the binary actually exists, or `claude` on
-      # that host would hit "command not found" on every Bash call.
-      ++ pkgs.lib.optional (pkgs ? rtk) {
+      ++ pkgs.lib.optional hasRtk {
         matcher = "Bash";
         hooks = [
           {
@@ -121,4 +129,39 @@ in
 {
   environment.etc."claude-code/managed-settings.json".text =
     builtins.toJSON managedSettings;
+
+  users.users.bosko.packages = with pkgs; [
+    claude-code
+    mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via claude-hm/mcp.nix)
+    tailscale-mcp # MCP server backing the user-scope tailscale server (registered in ~/.claude.json via claude-hm/mcp.nix); package in pkgs/tailscale-mcp.nix, overlay in pkgs/default.nix
+  ]
+  # TEMPORARY (added 2026-07-24): rtk-0.43.0's checkPhase fails upstream —
+  # `cargo test` runs with -D warnings and the rtk crate has dead-code
+  # warnings that get promoted to hard errors, breaking the nixpkgs build
+  # outright. This skips rtk's own test suite so the package still builds;
+  # REMOVE this override once nixpkgs ships an rtk revision whose tests
+  # pass cleanly (i.e. `nh os boot --dry` builds rtk without doCheck=false).
+  ++ pkgs.lib.optional hasRtk (pkgs.rtk.overrideAttrs (_: { doCheck = false; })); # Claude Code token-optimizing Bash proxy (hook above)
+
+  # Tailscale OAuth client credentials for the tailscale-mcp Claude Code
+  # connector (bosko-only, wired in dotfiles/bosko/claude-hm/mcp.nix). An
+  # env-file-style secret like pinchflat-env (hosts/gaming/pinchflat.nix) —
+  # its decrypted content is two shell-sourceable KEY=VALUE lines, sourced
+  # by a wrapper at MCP-server-launch time so the raw values never sit in
+  # ~/.claude.json. owner=bosko so a user-level activation script can read
+  # it without root.
+  sops.secrets."tailscale-mcp-env" = {
+    sopsFile = ../secrets/common.yaml;
+    owner = "bosko";
+  };
+
+  # Discord webhook URL for the send-results Claude Code skill (bosko-only,
+  # wired in dotfiles/bosko/claude/skills/send-results). owner=bosko so the
+  # skill's script can read it without root. The secret value itself is
+  # added by the user directly (never by an agent) via add-secret's
+  # sops-secret.sh -- see send-results/SKILL.md's Setup section.
+  sops.secrets."discord-webhook-url" = {
+    sopsFile = ../secrets/common.yaml;
+    owner = "bosko";
+  };
 }

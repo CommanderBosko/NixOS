@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, hostsData, ... }:
 
 {
   environment.systemPackages = [ pkgs.cifs-utils ];
@@ -8,10 +8,10 @@
   # without this, mount.cifs fails with "could not resolve address for
   # gaming" and the automount unit hits start-limit-hit. Uses gaming's
   # Tailscale IP (not the 10.0.0.251 LAN IP) so the share still resolves
-  # over the tailnet when client and server aren't on the same LAN — matches
-  # .claude/hosts.json's tailscaleIp; update here too if that ever drifts.
+  # over the tailnet when client and server aren't on the same LAN. The IP
+  # comes from .claude/hosts.json.
   networking.extraHosts = ''
-    100.66.15.1 gaming
+    ${hostsData.hosts.gaming.tailscaleIp} gaming
   '';
 
   # Mounts gaming's "shared" Samba share at the same /srv/shared path used

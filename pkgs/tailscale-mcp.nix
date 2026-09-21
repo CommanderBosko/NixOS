@@ -1,8 +1,7 @@
 # @yawlabs/tailscale-mcp isn't in nixpkgs (checked via mcp-nixos search,
-# 2026-08-25) — this is a from-scratch package, unlike mcp-nixos which is
-# just referenced straight from nixpkgs. Chosen over ~6 other unofficial
-# Tailscale MCP servers for MIT licensing, 700+ unit tests, and the widest
-# read/write API coverage (devices, DNS, ACL/policy, routes, keys, users).
+# 2026-08-25), so this is a from-scratch package — MIT-licensed, with the
+# widest read/write Tailscale API coverage of the unofficial MCP servers
+# (devices, DNS, ACL/policy, routes, keys, users).
 #
 # The npm tree ships no runtime `dependencies` — esbuild bundles everything
 # into dist/index.js at build time — so the default buildNpmPackage install

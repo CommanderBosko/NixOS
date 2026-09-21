@@ -1,10 +1,11 @@
-{ ... }:
+{ hostsData, ... }:
 
 {
   # Networking shared by every desktop host (gaming, laptop, natalie-laptop).
-  # Host networking.nix files keep only what is genuinely host-specific: the
-  # WireGuard client address and any extra SSH AllowUsers entries.
-  # networking.hostName is set from the flake attribute name (see mkSystem).
+  # Host networking.nix files keep only what is genuinely host-specific
+  # (gaming's static LAN profile, extra SSH AllowUsers entries).
+  # networking.hostName is set from the flake attribute name (see mkSystem);
+  # the SSH server itself is configured in ssh.nix.
 
   # Configure networking
   networking = {
@@ -20,33 +21,20 @@
     # Requires pi-hole's own dns.listeningMode = "ALL" (set 2026-08-18; its
     # default "LOCAL" mode silently drops queries from Tailscale's
     # point-to-point /32 addressing). 1.1.1.1 stays as a fallback if
-    # Tailscale or pi-hole is unreachable.
+    # Tailscale or pi-hole is unreachable. The IP comes from .claude/hosts.json.
     nameservers = [
-      "100.92.242.60"
+      hostsData.hosts.pi-hole.tailscaleIp
       "1.1.1.1"
     ];
 
-    # Enable and open ports in the firewall
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [ 22 ];
-    };
+    firewall.enable = true;
   };
 
   services = {
     # Network clock sync
     chrony.enable = true;
 
-    # Enable and configure openssh
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
-        PrintMotd = false;
-        # List option — host files can append users (e.g. natty on natalie-laptop)
-        AllowUsers = [ "bosko" ];
-      };
-    };
+    # List option — host files can append users (e.g. natty on natalie-laptop)
+    openssh.settings.AllowUsers = [ "bosko" ];
   };
 }

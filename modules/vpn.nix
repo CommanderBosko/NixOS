@@ -1,16 +1,23 @@
-{ pkgs, config, ... }:
+{ pkgs, config, hostsData, ... }:
 
+let
+  hostName = config.networking.hostName;
+in
 {
-  # WireGuard client — shared peer/server config for gaming, laptop, natalie-laptop
-  # Each host that imports this must also set:
-  #   networking.wg-quick.interfaces.wg0.address = [ "<host-vpn-ip>/24" ];
-  # The private key is supplied by sops-nix from secrets/hosts/<host>.yaml,
-  # decrypted at activation to /run/secrets/wg-private-key.
+  # WireGuard client — shared peer/server config for gaming, laptop, natalie-laptop.
   #
-  # VPN subnet: 10.10.0.0/24
-  #   vpn-server:  10.10.0.1
-  #   gaming:      10.10.0.2
-  #   laptop:      10.10.0.3
+  # Not imported by any host right now: Oracle admin-disabled the vpn-server
+  # instance 2026-08-18, so the tunnel has no endpoint (Tailscale, modules/
+  # tailscale.nix, is the stopgap). Re-enable by uncommenting the vpn.nix line
+  # in flake.nix's desktopModules — nothing else needs editing here or in host
+  # files. `lib.moduleSmoke` in flake.nix keeps this module evaluating while
+  # it's out.
+  #
+  # Per-host bits are derived, not hand-set: the wg0 address is this host's
+  # vpnIp from .claude/hosts.json (VPN subnet 10.10.0.0/24, vpn-server is
+  # 10.10.0.1), and the private key comes from sops-nix's
+  # secrets/hosts/<host>.yaml, decrypted at activation to
+  # /run/secrets/wg-private-key.
 
   # The tunnel is full-tunnel but IPv4-only (no IPv6 address on wg0, and the
   # Oracle Cloud server does not route IPv6). IPv6 is disabled system-wide so
@@ -28,8 +35,27 @@
   sops.secrets."wg-private-key".sopsFile =
     ../secrets/hosts/${config.networking.hostName}.yaml;
 
+  # Bring the tunnel up/down by hand (systemd unit name uses a hyphen, which is
+  # how systemd renders the wg-quick@wg0 template; systemctl also avoids the
+  # wg-quick binary not being on PATH for non-root shells).
+  programs.zsh.shellAliases = {
+    vpn-off = "sudo systemctl stop wg-quick-wg0";
+    vpn-on = "sudo systemctl start wg-quick-wg0";
+  };
+
   networking.wg-quick.interfaces.wg0 = {
+    address = [ "${hostsData.hosts.${hostName}.vpnIp}/24" ];
     privateKeyFile = config.sops.secrets."wg-private-key".path;
+
+    # natalie-laptop stays manual (vpn-on/vpn-off): the full-tunnel kill-switch
+    # route (table 51820, suppress_prefixlength 0) captures all traffic —
+    # including chrony's own NTP retries — the instant wg-quick starts, even
+    # before the WireGuard handshake completes. If this laptop's WiFi is still
+    # associating at that moment, every packet vanishes into the
+    # not-yet-negotiated tunnel with no fallback, and nothing recovers until
+    # the tunnel is torn down by hand. gaming/laptop haven't shown this, so
+    # they keep the default autostart.
+    autostart = hostName != "natalie-laptop";
     dns = [ "1.1.1.1" "8.8.8.8" ];
 
     # wg-quick defaults to MTU 1420, but the underlying path to the Oracle
