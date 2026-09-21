@@ -30,6 +30,11 @@ Invocation inputs (gather any the user didn't already give in Step 1):
   list changes over time (already has entries beyond the original three) — always check
   the file live (`grep -o '^[a-zA-Z0-9_-]*:' secrets/common.yaml`) rather than trusting an
   inline enumeration here, same as the per-host guidance below.
+- **`secrets/desktop.yaml`** — secrets only the desktop hosts need (currently the bosko-owned
+  Claude tooling secrets), encrypted to **admin + gaming, laptop, natalie-laptop** but NOT
+  vpn-server. Declare these in a desktop-only module (`modules/claude-mcp.nix` is the
+  example) — declaring one in a `commonModules` file would make vpn-server try to decrypt a
+  file it can't read and fail activation.
 - **`secrets/hosts/<host>.yaml`** — per-host secrets, encrypted to **admin + that host
   only**. Every host holds `wg-private-key` (its WireGuard key); `gaming.yaml` additionally
   holds `pinchflat-env`. Don't assume "each holds exactly one key" — check the file live
@@ -56,8 +61,8 @@ Ask, in one message:
 **Do not ask the user to state the plaintext value in chat.** A value typed into a normal
 message persists in the session transcript indefinitely — exactly what this skill exists to
 avoid. The key name and scope are all that's needed here; the actual value is captured later
-(Step 3) via a scratchpad file the user writes with a `!`-prefixed command, which does not
-get saved to the transcript.
+(Step 3) into a scratchpad file the user writes from a **separate terminal** with a hidden
+prompt — never through a `!` command (see Step 3: `!` commands are echoed into the session).
 
 If the user is generating a **password hash**, the canonical way is
 `mkpasswd -m sha-512` (`nix shell nixpkgs#mkpasswd --command mkpasswd -m sha-512`).
@@ -79,21 +84,31 @@ If the user is generating a **password hash**, the canonical way is
 **The agent must never run `sops-secret.sh set|create|edit` itself.** All three modes touch
 the plaintext value (or, for `edit`, need a real interactive terminal the agent's Bash tool
 doesn't have) — always construct the exact command below and have the **user** run it
-themselves via a `!`-prefixed input, the same way an ephemeral API-key handoff works. `!`
-commands execute in the session but aren't written to the persisted transcript, so this is
-the one point in the flow where the plaintext value is allowed to exist at all.
+themselves.
 
-**First, have the user capture the value into a scratchpad file** (never type the value into
-a normal chat message):
+**A `!` command is NOT private.** Its text is echoed into the conversation — into the model's
+context and the local session log — so a value inside a `!` command (a heredoc body, a
+`<<< 'value'`, an inline argument) is exposed exactly like a chat message. Confirmed
+2026-09-21: a `!`-captured Tailscale OAuth secret appeared verbatim in the transcript and had
+to be regenerated. Never give the user a `!` command that contains the value. Only commands
+that pass a **file path** (the write step below) are safe to run via `!`.
+
+**First, have the user capture the value into a scratchpad file from a SEPARATE terminal**
+(a normal terminal window, not this session), using a hidden prompt so the value is neither
+echoed on screen nor saved to shell history. In zsh:
 
 ```
-! umask 077 && cat > <scratchpad>/secret_value <<< 'PASTE_VALUE_HERE'
+umask 077
+read -rs "V?Secret value: "; echo
+printf '%s\n' "$V" > <scratchpad>/secret_value; unset V
 ```
 
-(`<scratchpad>` is this session's scratchpad directory — see the system prompt's "Scratchpad
-Directory" note.)
+For a multi-line/KEY=VALUE secret, prompt for each part and `printf` them into the file the
+same way (no heredoc containing values). `<scratchpad>` is this session's scratchpad
+directory — see the system prompt's "Scratchpad Directory" note.
 
-**Then hand the user the matching write command, also via `!`:**
+**Then hand the user the matching write command — this one is safe via `!`, since it only
+references the file path:**
 
 Add or update a single key in an existing file:
 
@@ -209,6 +224,19 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
   being checked) to the transcript. Both are fixed as of v0.3.0 (2026-09-17, found while
   adding `jellyfin-api-key` to `secrets/hosts/gaming.yaml`). If a future edit reintroduces an
   inline-value code path or a full-plaintext print, that's a regression, not a simplification.
+- **Multi-line and special-character values need real encoding.** Before 2026-09-21,
+  `sops-secret.sh create` printf'd the value into a double-quoted YAML scalar (YAML folds a raw
+  newline into a space, so a two-line env-file secret was stored as one line) and `set` built
+  the JSON string by hand (breaks on newlines, `"` and `\`). Both now encode via `jq` and pass
+  the value by file (`--rawfile` / `sops set --value-file`), never argv. Found because
+  `verify-secret.sh --key ... --expect` reported MISMATCH for `tailscale-mcp-env`; always run
+  that masked round-trip check after a write.
+- **`!` commands are echoed into the transcript — never put a value in one.** The v0.3.0 flow
+  told the user to capture the value with `! cat > file <<< 'VALUE'`, on the belief that `!`
+  commands aren't persisted. They are: the command text (heredoc body included) lands in the
+  conversation. Found 2026-09-21 rotating `tailscale-mcp-env`, when the new OAuth client secret
+  showed up verbatim and had to be regenerated. Value capture now happens in a separate
+  terminal with a hidden `read -rs` prompt (Step 3); only file-path-only commands go via `!`.
 - **Never `git add` a plaintext secret.** Encrypt in place first; verify with the `ENC[`
   check above before staging.
 - A secret added to `common.yaml` is decryptable by **every** host. For least privilege,

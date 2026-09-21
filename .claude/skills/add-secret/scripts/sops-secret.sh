@@ -3,9 +3,12 @@
 # SOPS_AGE_KEY_FILE export + nix-shell wrapping so it's written once.
 #
 # SAFETY: set/create take the value as a FILE PATH, never as an inline
-# argument — this script must only ever be run by the USER via a `!`
-# command, never by the agent. The agent prepares the exact command text
-# (referencing a scratchpad value-file) and hands it to the user to run.
+# argument — this script must only ever be run by the USER, never by the
+# agent. The agent prepares the exact command text (referencing a scratchpad
+# value-file) and hands it to the user. Running it via `!` is fine because the
+# command carries only a file path — but the value-file itself must be written
+# from a separate terminal, never with a `!` command (that echoes the value
+# into the transcript).
 # See modules/sops.nix's comment and this skill's Gotchas for why.
 #
 # Usage:
@@ -38,9 +41,14 @@ case "$MODE" in
     [[ -z "$KEY" || -z "$VALUE_FILE" ]] && usage
     [[ -f "$FILE" ]] || { echo "ERROR: file not found: $FILE" >&2; exit 1; }
     [[ -f "$VALUE_FILE" ]] || { echo "ERROR: value file not found: $VALUE_FILE" >&2; exit 1; }
-    VALUE="$(cat "$VALUE_FILE")"
+    # sops wants a JSON-encoded value. jq encodes the raw file safely (newlines,
+    # quotes, backslashes all survive) and rtrimstr drops the single trailing
+    # newline a heredoc/printf adds; --value-file keeps the value out of argv.
+    JSON_FILE="$(umask 077; mktemp)"
+    trap 'rm -f "$JSON_FILE"' EXIT
+    nix shell nixpkgs#jq --command jq -Rs 'rtrimstr("\n")' < "$VALUE_FILE" > "$JSON_FILE" || exit 1
     nix shell nixpkgs#sops --command \
-      sops set "$FILE" "[\"$KEY\"]" "\"$VALUE\""
+      sops set --value-file "$FILE" "[\"$KEY\"]" "$JSON_FILE"
     ;;
   edit)
     [[ -f "$FILE" ]] || { echo "ERROR: file not found: $FILE" >&2; exit 1; }
@@ -51,12 +59,13 @@ case "$MODE" in
     [[ -z "$KEY" || -z "$VALUE_FILE" ]] && usage
     [[ -f "$FILE" ]] && { echo "ERROR: file already exists, use 'set' instead: $FILE" >&2; exit 1; }
     [[ -f "$VALUE_FILE" ]] || { echo "ERROR: value file not found: $VALUE_FILE" >&2; exit 1; }
-    VALUE="$(cat "$VALUE_FILE")"
-    nix shell nixpkgs#sops --command bash -c '
-      umask 077
-      printf "%s: \"%s\"\n" "$1" "$2" > "$3"
-      sops -e -i "$3"
-    ' _ "$KEY" "$VALUE" "$FILE"
+    # Build the file with jq (--rawfile + rtrimstr), NOT printf into a quoted YAML
+    # scalar: YAML folds a raw newline inside a double-quoted string into a space,
+    # which silently turned a two-line env-file secret into one line. Content is
+    # JSON, which the .yaml-typed sops parse accepts; sops re-emits it as YAML.
+    (umask 077; nix shell nixpkgs#jq --command \
+      jq -n --arg k "$KEY" --rawfile v "$VALUE_FILE" '{($k): ($v | rtrimstr("\n"))}' > "$FILE") || { rm -f "$FILE"; exit 1; }
+    nix shell nixpkgs#sops --command sops -e -i "$FILE" || { rm -f "$FILE"; exit 1; }
     ;;
   *)
     usage
