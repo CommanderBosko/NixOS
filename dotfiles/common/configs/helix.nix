@@ -45,12 +45,15 @@
     };
 
     # Languages and language servers. Each entry merges by `name` into helix's
-    # built-in language, so unset keys (scope, ...) are inherited; list values
-    # (file-types, language-servers) replace the built-in list outright, dropping
-    # every built-in entry not repeated here.
+    # built-in language, so unset keys (scope, file-types, ...) are inherited;
+    # list values (language-servers, file-types where set) replace the built-in
+    # list outright, dropping every built-in entry not repeated here.
     languages.language = [
       {
         name = "bash";
+        # Narrowed on purpose (unlike the other languages, which inherit
+        # helix's built-in file-types): the built-in bash list also claims
+        # .zsh, which the custom `zsh` language below owns.
         file-types = [
           "sh"
           "bash"
@@ -75,15 +78,6 @@
       }
       {
         name = "cpp";
-        file-types = [
-          "cpp"
-          "cc"
-          "cxx"
-          "h"
-          "hh"
-          "hpp"
-          "hxx"
-        ];
         auto-format = false;
         formatter = {
           command = "${pkgs.clang-tools}/bin/clang-format";
@@ -114,16 +108,11 @@
         # No formatter: terraform-ls has no `fmt` subcommand and terraform
         # itself isn't installed.
         name = "hcl";
-        file-types = [
-          "tf"
-          "hcl"
-        ];
         auto-format = false;
         language-servers = [ "terraform-ls" ];
       }
       {
         name = "html";
-        file-types = [ "html" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
@@ -136,17 +125,11 @@
       }
       {
         name = "java";
-        file-types = [ "java" ];
         auto-format = false;
         language-servers = [ "jdtls" ];
       }
       {
         name = "javascript";
-        file-types = [
-          "js"
-          "mjs"
-          "cjs"
-        ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
@@ -159,10 +142,6 @@
       }
       {
         name = "json";
-        file-types = [
-          "json"
-          "jsonc"
-        ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
@@ -175,7 +154,6 @@
       }
       {
         name = "lua";
-        file-types = [ "lua" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.stylua;
@@ -185,10 +163,6 @@
       }
       {
         name = "markdown";
-        file-types = [
-          "md"
-          "markdown"
-        ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;
@@ -210,7 +184,6 @@
       }
       {
         name = "python";
-        file-types = [ "py" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.ruff;
@@ -231,7 +204,6 @@
       }
       {
         name = "toml";
-        file-types = [ "toml" ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.taplo;
@@ -244,10 +216,6 @@
       }
       {
         name = "yaml";
-        file-types = [
-          "yaml"
-          "yml"
-        ];
         auto-format = false;
         formatter = {
           command = lib.getExe pkgs.prettier;

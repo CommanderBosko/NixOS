@@ -12,5 +12,9 @@
     ./claude-hm/plugins.nix
   ];
 
+  # Two Claude Code installs coexist on purpose: modules/claude-code.nix ships
+  # the nixpkgs build on every host as the declarative baseline, and where the
+  # native installer's auto-updating copy exists in ~/.local/bin it comes first
+  # in PATH and tracks upstream faster than nixpkgs does.
   home.sessionPath = [ "$HOME/.local/bin" ];
 }
