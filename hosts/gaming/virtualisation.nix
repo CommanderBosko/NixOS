@@ -32,13 +32,6 @@
     '';
   };
 
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-  };
-
-  users.users.bosko.extraGroups = [ "kvm" "libvirtd" ];
-
   environment.variables.LIBVIRT_DEFAULT_URI = "qemu:///system";
 
   environment.systemPackages = with pkgs; [
@@ -51,7 +44,6 @@
   ];
 
   security.polkit.enable = true;
-  programs.dconf.enable = true;
 
   # Fix hardcoded path in libvirt secret encryption service
   systemd.services.virt-secret-init-encryption = {

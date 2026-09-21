@@ -8,18 +8,6 @@
   services = {
     # Enable touchpad
     libinput.enable = true;
-
-    # Enable Qbittorrent (Web UI bound to localhost only — H-6)
-    qbittorrent = {
-      enable = true;
-      serverConfig = {
-        Preferences = {
-          WebUI = {
-            Address = "127.0.0.1";
-          };
-        };
-      };
-    };
   };
 
   # Hardware
@@ -33,9 +21,6 @@
         Experimental = true;
       };
     };
-
-    # Enable graphical interface
-    graphics.enable = true;
 
     # This machine's discrete GPU (PCI 10de:1c94, Pascal-era) predates the
     # GSP firmware the open kernel module requires — NVRM probe fails with

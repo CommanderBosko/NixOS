@@ -8,18 +8,6 @@
   services = {
     # Enable touchpad
     libinput.enable = true;
-
-    # Enable Qbittorrent (Web UI bound to localhost only — H-6)
-    qbittorrent = {
-      enable = true;
-      serverConfig = {
-        Preferences = {
-          WebUI = {
-            Address = "127.0.0.1";
-          };
-        };
-      };
-    };
   };
 
   # Hardware
@@ -37,9 +25,6 @@
         KernelExperimental = "6fbaf188-05e0-496a-9885-d6ddfdb4e03e";
       };
     };
-
-    # Enable graphical interface
-    graphics.enable = true;
   };
 
   # Qt apps default to Wayland on Niri (no X server running)

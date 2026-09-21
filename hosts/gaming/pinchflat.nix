@@ -63,7 +63,7 @@
   # firewall does its own strict reverse-path check independent of the
   # rp_filter sysctl (already loose) and drops that as spoofed, hanging
   # every connection in SYN-SENT forever. Same asymmetric-routing fix
-  # already applied on vpn-server (hosts/vpn-server/configuration.nix)
+  # already applied on vpn-server (hosts/vpn-server/wireguard.nix)
   # for the same reason. Commented out with the block above — nothing to
   # route asymmetrically without the wg0 tunnel.
   # networking.firewall.checkReversePath = "loose";
