@@ -16,10 +16,13 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   wasting a failed attempt before self-correcting. Always invoke it with the absolute path
   from the "Base directory for this skill" line shown when the skill launches (e.g.
   `~/.claude/skills/session-closer/scripts/rotate-session-summary.sh <repo-root>`), never a
-  bare `scripts/...` or project-root-relative path.
+  bare `scripts/...` or project-root-relative path. The same applies to
+  `scripts/rotate-project-state.sh` (STEP 3's rotation).
 - **`project-state.md` has grown too large for a single `Read`** (check live via `wc -l
-  /home/bosko/NixOS/project-state.md` — it only grows, and was already past 650 lines /
-  270KB as of 2026-07-30). Across several sessions, Step 3 first
+  /home/bosko/NixOS/project-state.md` — it only grew until STEP 3's
+  `scripts/rotate-project-state.sh` rotation existed, and was already past 650 lines /
+  270KB as of 2026-07-30; until that rotation has actually been run against a project's
+  file, assume it is still oversized). Across several sessions, Step 3 first
   tried a bare `Read project-state.md` (fails), then guessed a large offset/limit window
   (e.g. 236 or 267 lines) that *still* overflowed, before finally landing on a narrower
   range — wasting 2+ failed reads each time. Instead, `grep -n '^## '

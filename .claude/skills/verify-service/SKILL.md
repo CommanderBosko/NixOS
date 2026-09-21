@@ -58,5 +58,5 @@ If anything FAILED, suggest the next step (e.g. `journal` skill for the unit's l
 ## Notes
 
 - Read-only and safe — no confirmation needed to run.
-- This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No `bosko-claude.nix` symlink or rebuild is required (that only applies to the global, repo-managed skills under `dotfiles/bosko/claude/skills/`).
+- This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No Home Manager symlink or rebuild is required (that only applies to the global, repo-managed skills under `dotfiles/bosko/claude/skills/`, auto-linked by `claude-hm/files.nix`).
 - `scripts/verify-service.sh` holds the mechanical check battery; this file keeps only the PASS/FAIL interpretation, which needs context the script can't have (firewall scoping, expected-absent daemons, root-vs-non-root `ss` output).

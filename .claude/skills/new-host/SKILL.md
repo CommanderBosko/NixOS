@@ -92,8 +92,8 @@ Substitutions when filling a template:
 
 Per-type notes (preserve these — they encode real decisions):
 - **desktop `environment.nix`:** keep `environment.systemPackages` minimal (add real packages later); leave `services.flatpak.packages` an empty list. Do NOT add aarch64 emulation (`boot.binfmt.emulatedSystems`) unless the user asks — that's gaming-specific. Drop the `displayManager.autoLogin` block if the user does not want auto-login.
-- **desktop `networking.nix`:** do NOT add `wg-quick.interfaces.wg0.address` — that's added when the host joins the VPN. Leave a comment noting it can be added later.
-- **remote `configuration.nix`:** the `boot` override block is only for **aarch64** (where the zen kernel + GRUB are unavailable). For an `x86_64` remote host, omit that whole block.
+- **desktop `networking.nix`:** do NOT add `wg-quick.interfaces.wg0.address` — `modules/vpn.nix` derives it from the host's `vpnIp` in `.claude/hosts.json` once the host joins the VPN. Leave the template's comment saying so.
+- **remote `configuration.nix`:** the `boot.loader` block declares the bootloader (systemd-boot suits aarch64/EFI). `modules/bootloader.nix` is desktop-only, so a remote host inherits none — for an `x86_64` BIOS remote host swap in `boot.loader.grub` instead.
 
 The templates follow the repo's Nix conventions exactly (see "Key conventions to preserve" below); don't restyle them.
 
@@ -161,7 +161,7 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `with pkgs;` inside list expressions, never at the top level.
 - Comments use `#` with a space, written in sentence case.
 - `{ ... }:` when the module uses no named arguments. `{ pkgs, ... }:` when it references `pkgs.*`. `{ lib, pkgs, ... }:` when it also calls `lib.*`.
-- `lib.mkForce` is used on `boot.kernelPackages` and `boot.loader.grub.enable` in `configuration.nix` for remote hosts because `commonModules/bootloader.nix` sets those values and they must be overridden cleanly.
+- Bootloader and kernel choice (`modules/bootloader.nix`) are desktop-only, so remote hosts declare their own `boot.loader` in `configuration.nix` with no `lib.mkForce` overrides.
 - `security.nix` already handles AppArmor, audit, PAM wheel, ASLR, and kexec for all hosts — do not add any of those in host files.
 - `sops.nix` (in `commonModules`) supplies the shared login-password secrets to every host. A new host must be registered as a sops recipient (Step 8) or it cannot decrypt them. Do not add `sops.*` config to host files.
 - `audio.nix` already handles PipeWire for desktop hosts — do not add PipeWire config.

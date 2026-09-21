@@ -30,7 +30,7 @@ An empty cutoff (first-ever run) lists the full transcript history instead. Skim
 Find all skills and their shape. There are usually two locations:
 
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (auto-discovered; new sibling `scripts/`/`assets/` files just work).
-- **Global / repo-owned:** if this repo symlinks skills into `~/.claude` (e.g. via Home Manager `home.file`), the source is under `dotfiles/**/claude/skills/<name>/`. **These are symlinked file-by-file** — adding a `scripts/` or `assets/` file to one needs a new symlink entry **plus a rebuild** before it appears. Treat script/asset extraction for global skills as higher-cost (flag it, but don't assume it's free).
+- **Global / repo-owned:** if this repo symlinks skills into `~/.claude` (e.g. via Home Manager `home.file`), the source is under `dotfiles/**/claude/skills/<name>/`. **Each skill dir is auto-linked recursively** (`claude-hm/files.nix`) — adding a `scripts/` or `assets/` file to one needs no wiring, just a `git add` **plus a rebuild** before it appears. Treat script/asset extraction for global skills as slightly higher-cost than project-local (flag it, but don't assume it's free).
 
 The enumeration itself is mechanical (iterate both locations, print each skill's name, its
 `SKILL.md` line count, and any sibling files), so it's handled by the script. It lives in
@@ -76,7 +76,7 @@ Merge the agents' findings into a single report, ordered by leverage, not by ski
 
 ## Step 4 — Report, don't auto-apply
 
-Present the report, recommending an implementation order (bugs → shared config → big asset/script extractions → UX). Call out anything you'd **skip** as low-value or high-overhead (e.g. global-skill asset extraction needing symlink wiring; speculative frontmatter). Then offer to implement via the **AskUserQuestion tool** — options **Implement now** (proceed to the "fix it" section below) and **Not now** (stop; the report stands as the deliverable) — rather than a free-form prose invitation.
+Present the report, recommending an implementation order (bugs → shared config → big asset/script extractions → UX). Call out anything you'd **skip** as low-value or high-overhead (e.g. global-skill asset extraction that needs a rebuild to land; speculative frontmatter). Then offer to implement via the **AskUserQuestion tool** — options **Implement now** (proceed to the "fix it" section below) and **Not now** (stop; the report stands as the deliverable) — rather than a free-form prose invitation.
 
 ## If the user says "fix it" — implement in priority order
 
@@ -84,7 +84,7 @@ Present the report, recommending an implementation order (bugs → shared config
 - **Verify empirically as you go** — run the scripts you extract (read-only paths), `bash -n` every script, and prove drift fixes against the live system. Don't guess at a value you can test.
 - Re-derive drift-prone data **live** rather than re-hardcoding it (enumerate inputs/DE modules from the tree; resolve hosts from the shared config).
 - For NixOS repos: after touching anything the flake evaluates (or a symlinked global skill), run a dry-run (`nixos-dry-run`) to certify it still evaluates. Project-local `.claude/` changes don't affect the flake.
-- Adding a **new global skill** (or new sibling files for one) requires the Home Manager `home.file` symlink entry + a rebuild before it appears in `~/.claude`. If the skill's existing entry is the file-by-file form (only `SKILL.md`), giving it its first `scripts/`, `assets/`, or `references/` file requires converting that entry to the recursive directory form first — a file-by-file entry silently leaves the new sibling invisible even after a rebuild (see this skill's own `references/gotchas.md` for the 2026-09-16 incident).
+- Adding a **new global skill** (or new sibling files for one) needs no Nix wiring — `claude-hm/files.nix` auto-links every skill directory recursively — only a `git add` (the flake sees tracked files only) + a rebuild before it appears in `~/.claude`. (The old file-by-file-entry pitfall is gone; see this skill's own `references/gotchas.md` for the 2026-09-16 history.)
 
 ## Gotchas
 

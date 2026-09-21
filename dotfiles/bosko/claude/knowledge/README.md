@@ -6,8 +6,8 @@ Shared, version-controlled store for the `new-team-member`, `team-meeting`, and
 (`/home/bosko/NixOS/dotfiles/bosko/claude/knowledge/`), the profiles are
 available from any project, not just whichever one Claude happens to run in.
 
-These are plain working-tree files — **not** wired through `bosko-claude.nix`
-`home.file`, because those land read-only in `/nix/store` and the skills need to
+These are plain working-tree files — **not** linked by `claude-hm/files.nix`
+(`home.file`), because those land read-only in `/nix/store` and the skills need to
 write here.
 
 ## Layout

@@ -56,7 +56,7 @@ For each candidate on **Build it as proposed** (or after applying the user's twe
 
 ### 6. Confirm
 
-Report each skill built: its name, where it was written, the invocation phrases, and (for global/repo-managed skills) the reminder that it must be added to `bosko-claude.nix` and rebuilt before its `~/.claude` symlink appears. For each skill built, suggest running `/ship-skill` next to smoke-test it and carry it through to a commit (and, on confirmation, a push).
+Report each skill built: its name, where it was written, the invocation phrases, and (for global/repo-managed skills) the reminder that it must be `git add`ed (no Nix wiring — `claude-hm/files.nix` auto-links it) and rebuilt before its `~/.claude` symlink appears. For each skill built, suggest running `/ship-skill` next to smoke-test it and carry it through to a commit (and, on confirmation, a push).
 
 ## Gotchas
 

@@ -34,7 +34,7 @@ Separately, resolve **scope** — this is a genuine pick-one, not a free-form qu
 the **AskUserQuestion tool** rather than folding it into the numbered list above. Skip the question
 if the user already stated the scope in their request.
 
-- **Global** — available in every project. In this NixOS repo, global skills are **repo-managed**: the source lives in `dotfiles/bosko/claude/skills/` and is symlinked into `~/.claude/skills/` via `bosko-claude.nix` (Home Manager). See step 6 for the wiring this requires.
+- **Global** — available in every project. In this NixOS repo, global skills are **repo-managed**: the source lives in `dotfiles/bosko/claude/skills/` and is symlinked into `~/.claude/skills/` automatically by `claude-hm/files.nix` (Home Manager, discovered from the directory listing). See step 6 for what a new skill needs (no Nix wiring — just `git add` and a rebuild).
 - **Project-local** (`.claude/skills/` in the current working directory) — only this project.
 
 ### 2. Classify into exactly one bucket (single-responsibility gate)
@@ -67,7 +67,7 @@ If genuinely mixed, default to omitting `model:` — judgment work is the more e
 
 Look at each step gathered in Step 1. If a step is a fixed, judgment-free command sequence — a specific command/flag combo, a parse, a per-host loop, a lookup — that would otherwise get re-improvised in prose every run, plan to extract it into `scripts/<name>.sh` rather than inlining it. The SKILL.md prose then calls the script and keeps only the interpretation/judgment/branching logic (what the output means, what to do next).
 
-Before writing a new script, check whether an existing one already does this: project-local skills share common lookups via `.claude/lib/` (e.g. `resolve-host.sh`, `list-flake-inputs.sh`) — reuse or extend one of those instead of duplicating. Don't force a script onto a step that's already a single trivial one-liner, or one that inherently requires judgment about the specific case (those stay as prose).
+Before writing a new script, check whether an existing one already does this: project-local skills share common lookups via `.claude/lib/` (e.g. `resolve-host.sh`, `hosts.sh`, `show-pin-state.sh`) — reuse or extend one of those instead of duplicating. Don't force a script onto a step that's already a single trivial one-liner, or one that inherently requires judgment about the specific case (those stay as prose).
 
 Record which steps (if any) get a script, and its intended name and contract (arguments in, what it prints, exit code meaning) — it goes in the draft (see step 4) and the write (see step 6).
 
@@ -106,13 +106,13 @@ Present the full draft SKILL.md to the user with a brief explanation of any choi
 
 Determine the target path by scope:
 
-- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). If so, read `references/write-global-hm-managed.md` for the exact write + wiring steps before writing the file — in particular, if step 2b or 2c flagged **any** sibling file (a script or a reference), the `bosko-claude.nix` entry **must** be the recursive directory form, never the file-by-file (`SKILL.md`-only) form; a file-by-file entry silently leaves any sibling file invisible to `~/.claude` even after a rebuild (found for real 2026-09-16: `research`, `agent-suggestion`, and `improve-system` were wired file-by-file and had to be converted when they each gained a `references/` dir).
+- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). If so, read `references/write-global-hm-managed.md` for the exact write steps before writing the file — there is no Nix wiring to add (`claude-hm/files.nix` auto-links every skill directory recursively, so any `scripts/`/`references/` sibling file rides along); the skill only needs to be `git add`ed, since the flake sees tracked files only.
 - **Global, plain `~/.claude`** (no Home Manager managing it): write directly to `~/.claude/skills/<name>/SKILL.md`.
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to the current working directory). First check if `.claude/skills/` exists; create it if not (via `mkdir -p`). Auto-discovered immediately — no rebuild.
 
 Write the file. If step 2b identified any script extractions, also write `<target-dir>/scripts/<name>.sh`, `chmod +x` it, and run `bash -n` on it to confirm it's syntactically valid before moving on. If step 2c identified any reference extractions, also write `<target-dir>/references/<topic>.md` for each.
 
-Then run `ls -la <target-dir>/` (and `<target-dir>/scripts/`, `<target-dir>/references/` if applicable) to confirm everything exists. For the managed-global case, also confirm the `bosko-claude.nix` entry is in place and, per the note above, is the recursive form if any sibling file was written.
+Then run `ls -la <target-dir>/` (and `<target-dir>/scripts/`, `<target-dir>/references/` if applicable) to confirm everything exists. For the managed-global case, also `git add` the new skill directory so the flake sees it (no `bosko-claude.nix` entry is needed).
 
 ### 7. Update CLAUDE.md (project-local only)
 
@@ -126,7 +126,7 @@ Tell the user:
 - Any `references/<topic>.md` files written alongside it, and the one-line pointers left in their place
 - The exact phrase(s) that will invoke it
 - How it becomes available:
-  - **Managed-global** (repo `dotfiles/` + `bosko-claude.nix`): it appears in `~/.claude/skills/` only after `nh os boot /home/bosko/NixOS` **+ reboot**. The repo copy works in the meantime when invoked from the repo.
+  - **Managed-global** (repo `dotfiles/` + `claude-hm/files.nix`): it appears in `~/.claude/skills/` only once it's `git add`ed and `nh os boot /home/bosko/NixOS` has run **+ reboot**. The repo copy works in the meantime when invoked from the repo.
   - **Plain global** (`~/.claude`): restart or open a new session.
   - **Project-local:** available immediately in this project.
 - **This skill hasn't been smoke-tested.** `new-skill` only drafts and writes the file — it doesn't verify the skill actually works. Point the user at `ship-skill` (which chains draft → smoke-test → commit → push) for a tested result, or offer to test it inline now if the user wants to stay in `new-skill`.
@@ -141,4 +141,4 @@ Tell the user:
 
 ## References
 
-- `references/write-global-hm-managed.md` — the symlink/`home.file`/rebuild mechanics for writing a new global skill, or editing an existing one, in this Home-Manager-managed repo. Read it in step 6 when scope is Global here.
+- `references/write-global-hm-managed.md` — the auto-symlink/`git add`/rebuild mechanics for writing a new global skill, or editing an existing one, in this Home-Manager-managed repo. Read it in step 6 when scope is Global here.

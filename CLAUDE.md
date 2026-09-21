@@ -71,17 +71,17 @@ Conventional commits: `type(scope): short description` — lowercase after the c
 
 ## Architecture Overview
 
-Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared system modules live under `modules/` (including `desktop-environments/`, the swappable DE modules); shared Home Manager configs under `dotfiles/` (`common/` shared by both users, `bosko/` for bosko-only HM config including the Claude skill sources); host-specific files under `hosts/<hostname>/` (`hardware-configuration.nix`, `environment.nix`, `networking.nix`, plus any host-only modules like `amd.nix`/`nvidia.nix`/`gaming.nix`). Run `ls modules/ dotfiles/ hosts/` for the current contents rather than trusting a stale tree here.
+Single-flake NixOS config for four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`. Shared system modules live under `modules/` (including `desktop-environments/`, the swappable DE modules); shared Home Manager configs under `dotfiles/` (`common/` shared by both users, `bosko/` for bosko-only HM config including the Claude skill sources); host-specific files under `hosts/<hostname>/` (`hardware-configuration.nix`, `environment.nix`, `networking.nix`, plus any host-only services). Run `ls modules/ dotfiles/ hosts/` for the current contents rather than trusting a stale tree here.
 
 ### Module Composition
 
 `flake.nix`'s `mkSystem` helper (also exported as `lib.mkSystem`) builds each host from `{ name, system ? x86_64-linux, nixpkgs ? nixos-unstable, modules }`: it sets `networking.hostName` and injects the shared `specialArgs`, so each host entry in `flake.nix` holds only its unique module list. Module lists compose in layers:
 
-- **`commonModules`** — base for all hosts: bootloader, firmware, fonts, localisation, nix settings, shell, users, security, sops
-- **`desktopModules`** — `commonModules` + home-manager, nix-flatpak, audio, desktop-apps, desktop-networking, development, emulation, SDDM, vpn; used by gaming, laptop, and natalie-laptop
+- **`commonModules`** — what every host needs, including the headless vpn-server: bootloader, base system config, security hardening, secrets (sops)
+- **`desktopModules`** — `commonModules` plus what a desktop host needs: home-manager, flatpak, and the shared desktop apps and services; used by gaming, laptop, and natalie-laptop
 - Each host then adds its own desktop environment, hardware config, `environment.nix`/`networking.nix` (host-specific extras only), any host-only modules, and its `system.stateVersion` — **frozen at install time, never bump it on upgrades.**
 
-`nvidia.nix` is imported explicitly per desktop host (not via `desktopModules`) so the gaming host can drop it independently when the AMD card is installed; `amd.nix`/`gaming.nix` are gaming-only. The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no DE, no flatpaks).
+**`flake.nix` is the source of truth for the exact contents of both lists and for what each host adds — read it instead of copying module names into docs** (an enumerated copy of `desktopModules` here already drifted once, still listing a module that had been commented out). GPU-driver and other single-host modules are imported explicitly per host rather than via `desktopModules`, so one host (e.g. gaming when its AMD card is installed) can drop or swap one independently. The vpn-server uses only `commonModules` + disko on `aarch64-linux` (headless, no DE, no flatpaks).
 
 ### Key Patterns
 

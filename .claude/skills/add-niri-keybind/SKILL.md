@@ -19,10 +19,10 @@ Parse from the user's request:
 
 ## Step 1 — Check what's already bound
 
-Grep the file for the requested key combo and its Shift/Ctrl/Alt variants, e.g. for `Mod+G`:
+Grep the shared config and the per-host overlays for the requested key combo and its Shift/Ctrl/Alt variants, e.g. for `Mod+G`:
 
 ```bash
-grep -n "Mod+G\b\|Mod+Shift+G\|Mod+Ctrl+G\|Mod+Alt+G" /home/bosko/NixOS/dotfiles/common/configs/niri-config.kdl
+grep -n "Mod+G\b\|Mod+Shift+G\|Mod+Ctrl+G\|Mod+Alt+G" /home/bosko/NixOS/dotfiles/common/configs/niri-config.kdl /home/bosko/NixOS/hosts/*/niri-overlay.kdl
 ```
 
 Report what's found. If the user only asked "does Mod+X do anything" / "what's bound to Mod+X", stop here — this answers the question, no edit needed.

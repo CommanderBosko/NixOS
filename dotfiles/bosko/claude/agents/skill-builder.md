@@ -24,11 +24,12 @@ transcript-mining task would (grep first, never read a large file whole).
    requirements that weren't in the spec.
 3. **Follow `new-skill`'s own steps for everything else** — bucket classification, script/reference
    extraction, the correct write path for the given scope (including the Home-Manager-managed
-   global case's `bosko-claude.nix` wiring note), and its post-write `ls -la` verification.
+   global case's `git add` note — no Nix wiring is needed there), and its post-write `ls -la`
+   verification.
 4. **Report back**: the skill name, the exact path written, any `scripts/`/`references/` files
    written alongside it (and whether `bash -n` passed), the trigger phrases, and — for global
-   skills — the reminder that it needs a `bosko-claude.nix` entry (call out explicitly whether you
-   added one) plus a rebuild + reboot before it's live in `~/.claude`. If you stopped early on an
+   skills — the reminder that it must be `git add`ed (no Nix wiring needed; call out explicitly
+   whether you staged it) plus a rebuild + reboot before it's live in `~/.claude`. If you stopped early on an
    ambiguity, report exactly what's unresolved instead of a finished build.
 
 Stay inside the one spec you were given. If mining a grounding transcript surfaces an unrelated

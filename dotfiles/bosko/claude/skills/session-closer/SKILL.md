@@ -103,6 +103,26 @@ decisions, wrong status). Locate or create `project-state.md` at the repo root a
 - **Known Issues / Tech Debt** — problems found but not yet resolved.
 - **Next Steps** — clear, actionable items for next session.
 
+**Rotation — keep the file readable.** The **Current Project State** section gains one
+block per session (a bold headline plus its bullets) and nothing ever removed them, which
+is how `project-state.md` reached ~0.5MB. After updating it, rotate the old blocks out:
+
+```bash
+scripts/rotate-project-state.sh <repo-root>
+```
+
+Same shape as Step 4's rotation script: it keeps the **~5 most recent** blocks of the
+`## Current Project State` section (a block = a line starting with `**` up to the next
+one), moves the older ones into `project-state-archive.md` (most-recent-first, created on
+first use), and inserts a pointer line under the section heading. Only that section is
+touched — Goals, Decisions, Known Issues and Next Steps stay in place. Set `KEEP=<n>` to
+keep a different count and `DRY_RUN=1` to print what would move (line range + bytes)
+without changing anything. It is idempotent (a no-op at ≤5 blocks). Run it **after**
+editing the section, and use the absolute-path form (see Scripts below). If a fact in an
+about-to-be-archived block is still true and still matters, restate it in Goals / Known
+Issues / Decisions first — the archive is for history, not for priming a cold start.
+Stage `project-state-archive.md` in Step 6 if it rotated.
+
 ---
 
 ## STEP 4 — Update `session-summary.md`  (concise log + rotation)
@@ -139,8 +159,20 @@ Run it **after** prepending the new entry. Stage the archive file in Step 6 if i
 Refresh (or create) the project `README.md` so it matches the current codebase —
 professional, accurate (no aspirational features), well-structured. This is a real
 deliverable, especially for a public repo. Preserve existing sections that are still
-accurate — only update what changed; the **Recent Changes** section should cover the last
-1-3 sessions.
+accurate — only update what changed.
+
+Two sections are deliberately kept short, because a README that accretes a session log
+stops being read:
+
+- **Current Status** — ~5 lines: the overall state plus a pointer to `project-state.md` /
+  `session-summary.md` for the detail. Rewrite it in place each close; never append to it.
+- **Recent Changes** — only the **~3 most recent** session entries, newest first. After
+  prepending this session's entry, **rotate**: delete every entry beyond the third. There is
+  no archive file to move them to — the commit history and `session-summary-archive.md`
+  already retain them, so an older entry that still matters belongs in `project-state.md`,
+  not the README. (This is a manual trim, not a script: README entry shapes differ per
+  project. If the section has grown past ~3 entries since the last close, trim it to 3
+  now rather than leaving the backlog.)
 
 **No sensitive or secret information — the README is public.** Don't carry a redaction
 rubric here or scan the README in isolation: STEP 5B runs a full-session secret scan that
@@ -189,7 +221,8 @@ consent to push, per `git-push`'s Rules — this skill's own job description alr
 GitHub," unlike a bare "push" reaching `git-push` directly.)
 
 1. Stage the docs: `git add project-state.md README.md session-summary.md`
-   (plus `session-summary-archive.md` if you rotated, plus any files touched in Step 1).
+   (plus `session-summary-archive.md` and/or `project-state-archive.md` if you rotated,
+   plus any files touched in Step 1).
 2. Commit: `git commit -m "chore(session): end-of-day close [DATE] — [brief summary]"`
    End the commit message body with a `Co-Authored-By:` trailer using whatever model name the
    harness's own Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
@@ -250,8 +283,9 @@ Hit an unexpected script path 404, a stale transcript cutoff, an oversized `proj
 - `scripts/scan-session.sh git-changes <repo-root>` — STEP 1's baseline resolution + diff/status/stat scan.
 - `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction, scoped to every transcript since session-closer's own last run (falls back to just the latest on a first-ever run).
 - `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation (see the Gotchas entry on invoking it by absolute path).
+- `scripts/rotate-project-state.sh <repo-root>` — STEP 3's rotation of old `## Current Project State` blocks into `project-state-archive.md` (`KEEP=<n>` to change the count, `DRY_RUN=1` to preview). Same absolute-path rule as the other rotation script.
 
-All three are relative to the *skill's* directory, not the project cwd — this skill is symlinked into `~/.claude/skills/session-closer/`, not project-local, so a bare `scripts/...` path resolves against the wrong cwd. Always use the absolute path from the "Base directory for this skill" line shown when the skill launches.
+All four are relative to the *skill's* directory, not the project cwd — this skill is symlinked into `~/.claude/skills/session-closer/`, not project-local, so a bare `scripts/...` path resolves against the wrong cwd. Always use the absolute path from the "Base directory for this skill" line shown when the skill launches.
 
 ## Assets
 

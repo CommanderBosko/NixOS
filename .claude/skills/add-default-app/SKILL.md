@@ -6,7 +6,7 @@ model: haiku
 
 # Add Default App
 
-Add or change a declarative default-application association in `dotfiles/common/configs/home.nix`'s `xdg.mimeApps.defaultApplications`, so double-click / "Open" behavior for a given file type is reproducible across all three desktop hosts (gaming, laptop, natalie-laptop) instead of living as unmanaged live state in `~/.config/mimeapps.list`. (Bucket: Utility)
+Add or change a declarative default-application association in `dotfiles/common/configs/mimeapps.nix`'s `xdg.mimeApps.defaultApplications`, so double-click / "Open" behavior for a given file type is reproducible across all three desktop hosts (gaming, laptop, natalie-laptop) instead of living as unmanaged live state in `~/.config/mimeapps.list`. (Bucket: Utility)
 
 ## Arguments
 
@@ -33,13 +33,13 @@ echo test > /tmp/sample.<ext> && xdg-mime query filetype /tmp/sample.<ext>; rm /
 
 ## Step 2 — Draft the entries
 
-Add or update lines in `xdg.mimeApps.defaultApplications` in `dotfiles/common/configs/home.nix`, one per MIME type, using the exact `.desktop` filename from Step 1 (e.g. `"application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";`). Add a one-line comment above the block naming the app and noting the mimetypes came from its own `.desktop` file, matching the style of the existing sections in that file.
+In `dotfiles/common/configs/mimeapps.nix`, associations are grouped by handler: the `byApp` attrset maps a `.desktop` filename to the list of MIME types it opens (inverted into `type = handler` by `lib.genAttrs`). Add each MIME type to its app's list using the exact `.desktop` filename from Step 1 (e.g. `"application/pdf"` under `"org.pwmt.zathura-pdf-mupdf.desktop"`), or add a new `byApp."<app>.desktop"` list for a new handler with a one-line comment naming the app and noting the mimetypes came from its own `.desktop` file, matching the existing sections. Ordered multi-handler lists (browsers) stay explicit in the `browsers` attrset. The merge is a disjoint union, so listing a type under two handlers is an eval error — move it instead.
 
 If this MIME type is already mapped to a different app, show the user the existing line and confirm the change before editing — don't silently overwrite an existing association without saying so.
 
 ## Step 3 — Confirm before writing
 
-Show the user the exact new/changed line(s) and confirm via the **AskUserQuestion** tool (`Confirm` / `Cancel`) before editing `home.nix` — matching `add-niri-window-rule`'s and `add-package`'s confirm gate.
+Show the user the exact new/changed line(s) and confirm via the **AskUserQuestion** tool (`Confirm` / `Cancel`) before editing `mimeapps.nix` — matching `add-niri-window-rule`'s and `add-package`'s confirm gate.
 
 ## Step 4 — Verify
 
@@ -64,5 +64,5 @@ Report the verified result to the user. Remind them a rebuild (`rebuild` + reboo
 
 ## Gotchas
 
-- `xdg.mimeApps` in Home Manager does not force-overwrite `~/.config/mimeapps.list` or `~/.local/share/applications/mimeapps.list` by default. `dotfiles/common/configs/home.nix` already sets `xdg.configFile."mimeapps.list".force = true;` and `xdg.dataFile."applications/mimeapps.list".force = true;` (added 2026-07-17) — if that block is ever removed or this option is reintroduced fresh in a different file, a real pre-existing `mimeapps.list` on a live host will block activation with `Existing file ... would be clobbered` without it.
+- `xdg.mimeApps` in Home Manager does not force-overwrite `~/.config/mimeapps.list` or `~/.local/share/applications/mimeapps.list` by default. `dotfiles/common/configs/mimeapps.nix` already sets `xdg.configFile."mimeapps.list".force = true;` and `xdg.dataFile."applications/mimeapps.list".force = true;` (added 2026-07-17) — if that block is ever removed or this option is reintroduced fresh in a different file, a real pre-existing `mimeapps.list` on a live host will block activation with `Existing file ... would be clobbered` without it.
 - Some KDE apps' file-opening/"Open With" behavior depends on `ksycoca` (KDE's service database), which niri never keeps valid since it doesn't run `kded6` — a correct `mimeapps.list` entry can still silently fail to resolve for those apps even though `xdg-open`/`xdg-mime query default` report the correct default. This repo's current default-app stack (Kate, xarchiver, zathura, imv, Thunar, VLC) was deliberately chosen to avoid this class of app — verify a new candidate app doesn't reintroduce a KDE/`ksycoca` dependency before defaulting to it.

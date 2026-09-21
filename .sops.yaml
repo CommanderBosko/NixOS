@@ -5,8 +5,16 @@
 # - each host: age key derived from its SSH ed25519 host key, so the host can
 #   decrypt the secrets encrypted to it at activation time.
 #
-# common.yaml      -> all hosts (shared login password hashes)
-# hosts/<host>.yaml -> that host only (its WireGuard private key)
+# secrets/common.yaml       -> all hosts: login password hashes, plus
+#                              tailscale-mcp-env and discord-webhook-url (both
+#                              file-owned by bosko once decrypted)
+# secrets/hosts/<host>.yaml -> that host only: its WireGuard private key
+#                              (gaming.yaml also holds pinchflat-env and
+#                              jellyfin-api-key)
+#
+# Each secret's sopsFile is set where it is declared — grep for `sops.secrets`
+# to see the live wiring. (jellyfin-api-key is stored but not wired into any
+# NixOS module yet; it is decrypted on demand.)
 keys:
   - &admin          age1u87ds7mavxj6hpmwdzmf6had863h3pl5ezmkpx7wx99pgexf3qzqdsnl84
   - &gaming         age1zqugny5n026jh6q82m85dulc3wuwleysq76qecarf4dchcq4l9vs545sxx

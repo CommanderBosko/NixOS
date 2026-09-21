@@ -7,7 +7,7 @@ version: 0.2.0
 
 # New WireGuard Peer
 
-Interactively gather the information needed, then edit `hosts/vpn-server/configuration.nix` with the new peer block and give the user the client-side config. Follow all steps in order.
+Interactively gather the information needed, then edit `hosts/vpn-server/wireguard.nix` with the new peer block and give the user the client-side config. Follow all steps in order.
 
 ## Arguments
 
@@ -43,7 +43,7 @@ Run (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-
 ```
 
 This checks both sources of truth — `.claude/hosts.json`'s `vpnIp` entries (flake hosts) and every
-`10.10.0.x` address literally assigned in `hosts/vpn-server/configuration.nix` (covers ad-hoc peers
+`10.10.0.x` address literally assigned in `hosts/vpn-server/wireguard.nix` (covers ad-hoc peers
 — phones, non-NixOS devices — that have no `hosts.json` entry) — and prints the next unused address
 as `NEXT_IP=10.10.0.<n>` on its first line, `SERVER_PUBKEY=<key>` on its second, and
 `SERVER_ENDPOINT=<ip:port>` on its third (all reused in Step 4, read live from `modules/vpn.nix`
@@ -53,7 +53,7 @@ investigate rather than guessing a starting point.
 
 ## Step 3 — Show the server-side peer block
 
-Present the peer block to add to `hosts/vpn-server/configuration.nix`. It goes inside the `peers = [ ... ];` list under `networking.wg-quick.interfaces.wg0`:
+Present the peer block to add to `hosts/vpn-server/wireguard.nix`. It goes inside the `peers = [ ... ];` list under `networking.wg-quick.interfaces.wg0`:
 
 ```nix
 {
@@ -67,11 +67,7 @@ Present the peer block to add to `hosts/vpn-server/configuration.nix`. It goes i
 
 Use the `SERVER_PUBKEY` and `SERVER_ENDPOINT` values printed by `scripts/next-vpn-ip.sh` in Step 2 (both read live from `modules/vpn.nix` — don't hardcode a copy here; re-run the script if Step 2 happened long enough ago that either value might be stale).
 
-**If the new device is a NixOS host**, tell the user they can import `modules/vpn.nix` and then set the host-specific address in the host's own config:
-
-```nix
-networking.wg-quick.interfaces.wg0.address = [ "10.10.0.<n>/24" ];
-```
+**If the new device is a NixOS host**, tell the user to add a `vpnIp` entry for it (the address from Step 2) to `.claude/hosts.json` — `modules/vpn.nix` derives the host's `wg0` address from that entry, so no per-host address line is needed — and, if `modules/vpn.nix` is still commented out of `desktopModules` in `flake.nix` (as it is while vpn-server is down), to re-enable it there.
 
 They also need to wire their WireGuard private key through **sops-nix**, the same way every existing
 host does — `modules/vpn.nix` sets `privateKeyFile = config.sops.secrets."wg-private-key".path`,
@@ -86,7 +82,7 @@ Remind the user that `<their-private-key>` is the private key that stays on thei
 
 ## Step 5 — Edit the vpn-server config
 
-Make the edit to `hosts/vpn-server/configuration.nix`. Add the new peer block at the end of the `peers` list, following the same formatting as the existing entries (2-space indented, comment line above `publicKey`).
+Make the edit to `hosts/vpn-server/wireguard.nix`. Add the new peer block at the end of the `peers` list, following the same formatting as the existing entries (2-space indented, comment line above `publicKey`).
 
 Show the user a short diff-style summary of what was added before writing.
 
@@ -94,7 +90,7 @@ Show the user a short diff-style summary of what was added before writing.
 
 Tell the user the following steps are still needed to activate the peer:
 
-1. **Commit the change** — use `/git-commit` to stage and commit `hosts/vpn-server/configuration.nix`.
+1. **Commit the change** — use `/git-commit` to stage and commit `hosts/vpn-server/wireguard.nix`.
 2. **Deploy to vpn-server** — push the commit, then deploy with the `/remote-rebuild` skill (it resolves the target from `.claude/hosts.json` and uses vpn-server's correct `boot`+reboot flow). To do it by hand, resolve vpn-server's SSH target from `.claude/hosts.json` and rebuild from the repo flake.
 3. **Verify the peer connected** — run `/vpn-status` after the new device activates its tunnel to confirm the handshake shows up.
 

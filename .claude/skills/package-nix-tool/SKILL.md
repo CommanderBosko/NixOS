@@ -116,15 +116,15 @@ if not already clear:
 ## Step 6 — Wire it into Claude Code (conditional — Claude-ecosystem tools only)
 
 Skip this step entirely for a tool that isn't part of the Claude Code ecosystem. If it is an MCP
-server, mirror `tailscale-mcp`'s registration in `dotfiles/bosko/bosko-claude.nix`'s
-`home.activation.claudeMcpServers` block: add a `desired<Name>` attrset (`type = "stdio"`,
-`command`, `args`, `env`) to the `let`, and a `<name> = desired<Name>;` entry in `servers`. If the
+server, mirror `tailscale-mcp`'s registration in `dotfiles/bosko/claude-hm/mcp.nix`: add a
+`<name> = { type = "stdio"; command; args; env; };` entry to its `servers` attrset (reconciled into
+`~/.claude.json` by the `home.activation.claudeMcpServers` block below it). If the
 server needs credentials, route them through a sops secret the way `tailscale-mcp` does — a
 `bash -c 'set -a; source <secret path>; set +a; exec <bin>'` command — never place a raw
 credential in the `env` object (that would land in plaintext in `~/.claude.json`). If it's a
-skill or agent file instead of an MCP server, wire it the same way any global skill is wired (see
-this repo's `new-skill` skill, "Global, in a Home-Manager-managed repo" case) rather than an MCP
-entry.
+skill or agent file instead of an MCP server, it needs no Nix wiring — drop it under
+`dotfiles/bosko/claude/skills/` or `agents/` (see this repo's `new-skill` skill, "Global, in a
+Home-Manager-managed repo" case) and `git add` it; `claude-hm/files.nix` auto-links it.
 
 ## Step 7 — Add a secret, if the tool needs one
 
@@ -135,7 +135,7 @@ If Step 2 or Step 6 surfaced a required credential (API key, OAuth client, token
 
 ```bash
 git -C /home/bosko/NixOS add pkgs/<name>.nix modules/nix.nix
-# plus modules/users.nix / environment.nix / dotfiles/bosko/bosko-claude.nix / secrets/,
+# plus modules/users.nix / environment.nix / dotfiles/bosko/claude-hm/mcp.nix / secrets/,
 # whichever of those you actually touched
 ```
 

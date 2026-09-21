@@ -18,12 +18,11 @@
 set -uo pipefail
 
 REPO=/home/bosko/NixOS
-HOSTS_JSON="$REPO/.claude/hosts.json"
-VPN_SERVER_CONF="$REPO/hosts/vpn-server/configuration.nix"
+source "$REPO/.claude/lib/hosts.sh"
+VPN_SERVER_CONF="$REPO/hosts/vpn-server/wireguard.nix"
 VPN_MODULE="$REPO/modules/vpn.nix"
 
-FROM_HOSTS_JSON=$(jq -r '.hosts | to_entries[] | select(.value.vpnIp) | .value.vpnIp' "$HOSTS_JSON" \
-  | awk -F. '{print $4}' | sort -n | tail -1)
+FROM_HOSTS_JSON=$(hosts_vpn_ips | awk -F. '{print $4}' | sort -n | tail -1)
 
 FROM_SERVER_CONF=$(grep -oE '10\.10\.0\.[0-9]+' "$VPN_SERVER_CONF" \
   | awk -F. '{print $4}' | sort -n | tail -1)

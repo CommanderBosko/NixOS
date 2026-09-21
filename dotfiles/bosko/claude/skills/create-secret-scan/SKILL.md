@@ -36,7 +36,7 @@ doesn't replace the interview, it just skips re-asking what's already stated.
 - **Generated skills are project-local:** `<repo-root>/.claude/skills/secret-scan/`.
   Immediately runnable as `/secret-scan`, no rebuild, committed with the project.
 - **`/create-secret-scan` itself is global/repo-owned** (lives under
-  `dotfiles/bosko/claude/skills/create-secret-scan/`, symlinked via `bosko-claude.nix`).
+  `dotfiles/bosko/claude/skills/create-secret-scan/`, symlinked via `claude-hm/files.nix`).
   You are using that copy now; do not touch the read-only `~/.claude` symlink.
 - **The baseline high-signal pattern library is already baked into the template** —
   private-key blocks, AWS/GitHub/Slack tokens, unix password hashes. You don't need to

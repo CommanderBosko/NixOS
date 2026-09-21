@@ -22,7 +22,7 @@ Pre-fill Step 1's interview questions from whatever is already given, and confir
 ## Key facts (don't re-derive these)
 
 - **Generated loops are project-local:** `<repo-root>/.claude/skills/<loop-name>/SKILL.md`. Immediately runnable, no rebuild, committed with the project.
-- **`/create-loop` itself is global/repo-owned** (lives under `dotfiles/bosko/claude/skills/create-loop/`, symlinked via `bosko-claude.nix`). You are editing/using that copy now; do not touch the read-only `~/.claude` symlink.
+- **`/create-loop` itself is global/repo-owned** (lives under `dotfiles/bosko/claude/skills/create-loop/`, symlinked via `claude-hm/files.nix`). You are editing/using that copy now; do not touch the read-only `~/.claude` symlink.
 - **Per-run output dir:** `<repo-root>/.claude/loops/<loop-name>/` holds `output-<date>.md` and `memory-<date>.md` for every run.
 - **Retry cap default:** 3 attempts per step (configurable per loop).
 - **Loop Training Mode default:** ON.

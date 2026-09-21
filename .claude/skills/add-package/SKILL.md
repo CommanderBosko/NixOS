@@ -30,7 +30,7 @@ Ask the user the following questions. You may batch them into a single message. 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.
    - **User (bosko)** — goes in `users.users.bosko.packages` in `modules/users.nix`. Personal package for bosko only, applies on all hosts.
-   - **Home Manager (shared)** — goes in `home.packages` in `dotfiles/common/configs/home.nix`. Managed by HM; applies to both `bosko` and `natty` on all desktop hosts.
+   - **Home Manager (shared)** — goes in `home.packages` in `dotfiles/common/configs/home.nix` (that file currently has no `home.packages` block — add one). Managed by HM; applies to both `bosko` and `natty` on all desktop hosts.
 
    Note: `vpn-server` does not run Home Manager — only the **system** option applies to that host.
 
@@ -44,7 +44,7 @@ Based on the answers from Step 1, resolve the exact file path and the list to mo
 |---|---|
 | System packages — any host | the host's `envFile` in `.claude/hosts.json` → `environment.systemPackages` (desktops: `hosts/<host>/environment.nix`; vpn-server: `hosts/vpn-server/configuration.nix`) |
 | User packages — bosko | `modules/users.nix` → `users.users.bosko.packages` |
-| HM packages — shared | `dotfiles/common/configs/home.nix` → `home.packages` |
+| HM packages — shared | `dotfiles/common/configs/home.nix` → `home.packages` (block not present yet — create it) |
 
 Resolve the system-package file by reading `.hosts.<host>.envFile` from `.claude/hosts.json` (the
 source of truth) rather than assuming a path — that's what keeps this from drifting.

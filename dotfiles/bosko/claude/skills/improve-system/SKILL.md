@@ -18,8 +18,8 @@ Classify every proposed change before acting:
   - the five standing workflow rules added to `CLAUDE.md` by **claude-rules**
   - `permissions.allow` additions in `settings.json` from **fewer-permission-prompts**
 - **Structural (always confirm first via the AskUserQuestion tool):** anything that creates files, changes behaviour, deletes/rewrites content, or needs new wiring + a rebuild —
-  - a **new skill** proposed by skill-suggestion (new file + `bosko-claude.nix` symlink + rebuild)
-  - a **new custom agent** proposed by agent-suggestion (new `.claude/agents/*.md` file + `bosko-claude.nix` symlink + rebuild + an edited call-site skill)
+  - a **new skill** proposed by skill-suggestion (new file + `git add` + rebuild; the symlink is auto-generated)
+  - a **new custom agent** proposed by agent-suggestion (new `.claude/agents/*.md` file + `git add` + rebuild + an edited call-site skill)
   - skill-audit's "fix it" refactors (script/asset extraction, drift fixes, splits)
   - any `permissions.deny`/`ask` or hook change
 
@@ -33,7 +33,7 @@ These three mine the current session, so run them while it's fresh.
 2. **skill-suggestion** — invoke the `skill-suggestion` skill. It ranks and lists every candidate skill that clears its reuse bar (not just one) worth capturing from this session. Building a new skill is **structural** → present each candidate's proposal, then use the **AskUserQuestion** tool (multi-select if there's more than one) with options **Approve** (hand off to `new-skill`) and **Skip** (don't build it), per candidate. If the session has no reusable workflow, it stops cleanly.
 
    After `new-skill` writes the file, **smoke-test it** before folding it into the consolidated report: invoke the new skill once via the Skill tool against a safe, low-risk, or read-only scenario that exercises its documented steps end to end (mirrors `ship-skill`'s Step 3, without adopting its per-skill commit/push). Report pass/fail plainly, including anything that diverged from what the SKILL.md describes. If it fails, fix the skill file and re-test before Step 3's report — don't carry a known-broken skill into the consolidated commit. This is why `new-skill` is used here rather than `ship-skill`: `ship-skill` bundles its own commit and a push-confirmation pause per skill, which would fragment the single end-of-run commit this orchestrator already makes across all its findings, and interrupt the batch flow across the remaining steps.
-3. **agent-suggestion** — invoke the `agent-suggestion` skill. It proposes custom sub-agents (`.claude/agents/*.md`) worth extracting from recurring `Agent`-tool spawn patterns in this session and recent transcripts. Building a new agent is **structural** → for each candidate, use the **AskUserQuestion** tool with options **Approve** (let it build the agent + rewire the named call site) and **Skip**, per candidate. Unlike skill-suggestion, `agent-suggestion` builds inline itself (writes the agent file, adds the `bosko-claude.nix` entry, edits the call-site skill) rather than handing off to a separate builder skill — there's no per-candidate commit/push bundled in, so it stays compatible with this orchestrator's single end-of-run commit. If nothing in the window clears its fit heuristic, it stops cleanly — carry that forward as a clean pass.
+3. **agent-suggestion** — invoke the `agent-suggestion` skill. It proposes custom sub-agents (`.claude/agents/*.md`) worth extracting from recurring `Agent`-tool spawn patterns in this session and recent transcripts. Building a new agent is **structural** → for each candidate, use the **AskUserQuestion** tool with options **Approve** (let it build the agent + rewire the named call site) and **Skip**, per candidate. Unlike skill-suggestion, `agent-suggestion` builds inline itself (writes the agent file, `git add`s it, edits the call-site skill) rather than handing off to a separate builder skill — there's no per-candidate commit/push bundled in, so it stays compatible with this orchestrator's single end-of-run commit. If nothing in the window clears its fit heuristic, it stops cleanly — carry that forward as a clean pass.
 
    After it builds an agent, **smoke-test it** before folding it into the consolidated report: spawn it once via the `Agent` tool (`subagent_type: "<name>"`) against a safe, read-only scenario that exercises its documented job, and confirm the edited call-site skill still reads sensibly. Report pass/fail plainly. If it fails, fix the agent file (or revert the call-site edit) and re-test before Step 3's report — don't carry a known-broken agent into the consolidated commit.
 
@@ -57,7 +57,7 @@ Several of these skills edit **repo-managed global skills** under `dotfiles/bosk
 
 - Run the `nixos-dry-run` skill to prove the flake still evaluates.
 - Remind the user that repo-managed skill/agent edits only reach `~/.claude` after `nh os boot /home/bosko/NixOS` **and a reboot** (it only stages the change for next boot — there's no live `nh os switch` in the normal flow here). No new session is needed beyond that — the symlink resolves in the same running session as soon as it's updated, since skill/agent discovery reads from disk per-invocation.
-- A brand-new skill or agent also needs its `home.file` symlink entry added to `dotfiles/bosko/bosko-claude.nix` before the rebuild.
+- A brand-new skill or agent needs no Nix wiring (`claude-hm/files.nix` auto-links it from the directory listing), but it must be `git add`ed before the rebuild — the flake only sees tracked files.
 
 ## Step 5 — Report to Discord
 
@@ -79,6 +79,6 @@ Optional focus argument in the user's phrasing — e.g. "improve-system, skills 
 - **Don't reimplement the sub-skills.** This is an orchestrator; invoke each via the Skill tool. If you find yourself writing audit logic or drafting gotchas by hand, you've drifted out of bucket.
 - **Auto-apply means *additive only*.** A change that rewrites or deletes existing content is structural even if it "feels safe" — confirm it.
 - **Repo-managed skill edits don't take effect live.** They need a rebuild + new session; never report a hardened global skill as "active now."
-- **This skill is itself repo-managed.** It must be in `bosko-claude.nix`'s `home.file` list and rebuilt before its `~/.claude/skills/improve-system` symlink appears.
+- **This skill is itself repo-managed.** `claude-hm/files.nix` links it automatically, but it needs a rebuild before its `~/.claude/skills/improve-system` symlink reflects any edit.
 - **`send-results` publishes the report as a Claude Artifact, which leaves the local machine.** Same trade-off `send-results` itself documents — the consolidated report (skill names, file paths, proposed changes) becomes a shareable `https://` link, starting private but cacheable once shared. That's expected for this step, not a bug; don't route Step 5 through anything else to avoid it.
 - Run looks anomalous (skipped Discord report, invalid `settings.json` written, closed without Step 5)? Check `references/gotchas.md` for three known failure modes first.

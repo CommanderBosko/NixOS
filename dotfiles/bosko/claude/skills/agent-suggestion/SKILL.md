@@ -61,12 +61,12 @@ If nothing in the conversation or logs clears the bar, say so plainly and stop �
 For each candidate on **Build it as proposed** (or after applying the user's tweaks):
 
 1. Write `dotfiles/bosko/claude/agents/<name>.md` with proper frontmatter (`name`, `description`, `tools`, `model` if warranted, `color`) and a system-prompt body following the existing agents' conventions: resolve its own scope if none was handed to it, stay read-only unless the task genuinely requires otherwise, define a concrete report format, end with a one-line tally instruction, and add a `Gotchas` section only if seeded by a known failure mode (not speculative).
-2. Add its `.claude/agents/<name>.md` entry to `dotfiles/bosko/bosko-claude.nix`'s `home.file` block — mirror any existing agent entry's pattern exactly (`source = "${self}/dotfiles/bosko/claude/agents/<name>.md"; force = true;`). Don't cite a specific entry count in this instruction — it keeps drifting upward as agents are added (three at this skill's own creation, four as of 2026-09-04).
+2. `git add dotfiles/bosko/claude/agents/<name>.md` — no Nix wiring is needed: `claude-hm/files.nix` auto-links every `agents/*.md` into `~/.claude/agents/` from the directory listing, but the flake only sees git-tracked files, so an unstaged agent silently doesn't appear.
 3. Actually edit the call site(s) named in step 4 to spawn `subagent_type: "<name>"` instead of the old prose brief. This handoff is the real payoff — don't stop at just writing the agent file.
 
 ### 6. Confirm + certify
 
-Report what was built: the agent name, where it was written, and which call site(s) were switched over (skill + step). This is a repo-managed change (a new agent file, nix wiring, and at least one edited skill) — remind the user:
+Report what was built: the agent name, where it was written, and which call site(s) were switched over (skill + step). This is a repo-managed change (a new agent file and at least one edited skill; the agent link is auto-generated, no nix wiring) — remind the user:
 
 - Run the `nixos-dry-run` skill to confirm the flake still evaluates.
 - It only reaches `~/.claude` after `nh os boot /home/bosko/NixOS` **and a reboot** — the repo copy works in the meantime when invoked from within this repo. No new session is needed beyond that once rebuilt.

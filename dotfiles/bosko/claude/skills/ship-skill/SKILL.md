@@ -16,7 +16,7 @@ Otherwise, hand off to the `skill-suggestion` skill to mine the conversation (an
 
 ## Step 2 — Build it
 
-Hand off to the `new-skill` skill with the spec (goal, trigger phrases, scope, bucket, steps) pre-filled so the user isn't re-asked. This drafts and writes the SKILL.md and, for global/repo-managed scope, adds the `bosko-claude.nix` wiring.
+Hand off to the `new-skill` skill with the spec (goal, trigger phrases, scope, bucket, steps) pre-filled so the user isn't re-asked. This drafts and writes the SKILL.md (no Nix wiring is needed for global/repo-managed scope — `claude-hm/files.nix` auto-links every skill directory).
 
 ## Step 3 — Smoke-test it
 
@@ -24,7 +24,7 @@ Invoke the new skill once via the Skill tool against a safe, low-risk, or read-o
 
 ## Step 4 — Commit it
 
-Hand off to the `git-commit` skill to stage and commit the new skill file(s) plus any wiring changes (`bosko-claude.nix`, a `CLAUDE.md` skills-list mention if one exists).
+Hand off to the `git-commit` skill to stage and commit the new skill file(s) (staging matters: the flake only sees tracked files) plus a `CLAUDE.md` skills-list mention if one exists.
 
 ## Step 5 — Pause before pushing
 

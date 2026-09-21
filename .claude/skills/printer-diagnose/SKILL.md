@@ -67,7 +67,7 @@ Next step: run `sudo systemctl restart cups-browsed` on natalie-laptop, then re-
 ## Notes
 
 - Read-only and safe — no confirmation needed to run the check battery itself; only the proposed `systemctl restart` needs the user's own hands.
-- This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No `bosko-claude.nix` symlink or rebuild is required.
+- This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No Home Manager symlink or rebuild is required.
 - `scripts/printer-diagnose.sh` holds the mechanical check battery; this file keeps the interpretation, which needs context (which host, recent switch history, Flatpak relaunch state) the script can't have on its own.
 
 ## Scripts
