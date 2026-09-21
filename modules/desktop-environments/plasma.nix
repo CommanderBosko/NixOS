@@ -9,19 +9,9 @@
     xserver.enable = true;
   };
 
-  # Add common Plasma utilities and applications
-  environment.systemPackages = with pkgs; [
-    kdePackages.discover # Software center
-    kdePackages.dolphin # File manager
-    kdePackages.konsole # Terminal emulator
-    kdePackages.krohnkite # Tiling window manager script
-    kdePackages.print-manager # Print job manager
-    kdePackages.spectacle # Screenshot tool
+  # Everything else Plasma needs (dolphin, konsole, spectacle, discover,
+  # print-manager) is already installed by services.desktopManager.plasma6.
+  environment.systemPackages = [
+    pkgs.kdePackages.krohnkite # Tiling window manager script
   ];
-
-  # Additional Plasma specific configurations can go here
-  # For example, enabling KScreen for display management:
-  #   services.dbus.packages = [
-  #     kdePackages.kscreen
-  #   ];
 }

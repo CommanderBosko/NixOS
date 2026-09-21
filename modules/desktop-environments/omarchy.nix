@@ -8,7 +8,6 @@
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    package = pkgs.hyprland;
   };
 
   environment.systemPackages = with pkgs; [
@@ -19,7 +18,6 @@
     wl-clipboard # Wayland clipboard utilities
     wlr-randr # RandR utility for Wayland
     playerctl # MPRIS media control
-    xdg-desktop-portal-hyprland
   ];
 
   # Home Manager: Omarchy-style shell (Waybar status bar, Hyprlock screen
@@ -31,7 +29,7 @@
   # Scoped to theme + keybind philosophy only — this repo's existing app
   # choices (kitty, dolphin) are kept rather than swapping in Omarchy's own
   # picks (Ghostty, Nautilus). Known gap: dolphin has no Qt/KDE theming glue
-  # here (unlike niri.nix/hyprland.nix's qt6ct+kdeglobals setup, which is
+  # here (unlike modules/dms-shell.nix's qt6ct+kdeglobals setup, which is
   # coupled to DMS's matugen color generation and doesn't apply without DMS
   # running) — it will render in Qt's default light style. Omarchy's live
   # keybindings-cheatsheet script (bound to a key, piped through the

@@ -1,6 +1,8 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
+  # The Cinnamon module installs the desktop and its default apps itself
+  # (nemo, cinnamon-control-center, gnome-terminal, ...).
   services = {
     xserver = {
       # Enable X11 server (Cinnamon is X11-native)
@@ -10,12 +12,4 @@
       desktopManager.cinnamon.enable = true;
     };
   };
-
-  # Add common Cinnamon applications and utilities
-  environment.systemPackages = with pkgs; [
-    cinnamon-control-center
-    gnome-terminal # Often used in Cinnamon, or an alternative
-    nemo # File manager
-    # Add other desired Cinnamon applications here
-  ];
 }

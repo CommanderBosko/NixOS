@@ -9,21 +9,9 @@
     desktopManager.gnome.enable = true;
   };
 
-  # Add common GNOME applications and utilities
+  # GNOME's core apps (nautilus, system monitor, console) are installed by
+  # default; gnome-terminal isn't, so add it.
   environment.systemPackages = with pkgs; [
-    gnome-system-monitor
     gnome-terminal
-    nautilus
-    # Add other desired GNOME applications here
-    # For example: gnome-calculator, gnome-text-editor
   ];
-
-  # Optional: Exclude unwanted GNOME packages to minimize footprint
-  # environment.gnome.excludePackages = with pkgs; [
-  #   gnome-photos
-  #   gnome-tour
-  #   cheese
-  #   epiphany
-  #   geary
-  # ];
 }

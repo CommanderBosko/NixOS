@@ -1,6 +1,8 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
+  # The XFCE module installs the whole desktop itself (panel, session,
+  # settings, terminal, appfinder, xfwm4, and Thunar via programs.thunar).
   services.xserver = {
     # Enable X11 server (XFCE is X11-native primarily)
     enable = true;
@@ -8,23 +10,4 @@
     # Enable XFCE desktop environment
     desktopManager.xfce.enable = true;
   };
-
-  # Add common XFCE applications and utilities
-  environment.systemPackages = with pkgs; [
-    thunar # File manager
-    xfce4-appfinder # Application finder
-    xfce4-panel # Panel
-    xfce4-session # Session manager
-    xfce4-settings # Settings manager
-    xfce4-terminal # Terminal emulator
-    xfwm4 # Window manager
-    # Add other desired XFCE applications here
-    # For example: xfce.xfce4-taskmanager, xfce.ristretto
-  ];
-
-  # Optional: Configure Thunar plugins
-  # services.xserver.desktopManager.xfce.thunarPlugins = with pkgs.xfce; [
-  #   thunar-archive-plugin
-  #   thunar-media-tags-plugin
-  # ];
 }

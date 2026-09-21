@@ -13,206 +13,18 @@ let
       (import inputs.nixpkgs-xwayland-satellite-pin { inherit (prev.stdenv.hostPlatform) system; }).xwayland-satellite;
   };
 
-  # DMS/niri Home Manager wiring, shared by every user who can log into a niri
-  # session. Defined once and assigned to both bosko and natty below so natty
-  # isn't left with the bare shared home.nix and no DMS at all.
-  niriHomeConfig = { config, lib, pkgs, osConfig, ... }: {
-    imports = [ inputs.dms.homeModules.dank-material-shell ];
-    programs.dank-material-shell.enable = true;
-    programs.dank-material-shell.systemd.enable = true;
-
-    # DMS's systemd unit binds to graphical-session.target, which fires for
-    # ANY Wayland/X11 login — not niri specifically. natalie-laptop dual-booted
-    # into Plasma too for a while (Plasma dropped 2026-07-18, niri-only for
-    # now), which would've started DMS's shell fighting Plasma's own panel.
-    # Kept as a defensive gate in case a second session ever returns:
-    # XDG_CURRENT_DESKTOP is set per-session (confirmed live: "niri" under
-    # this compositor, imported into the systemd --user environment before
-    # graphical-session.target is reached) and Plasma sets a different value.
-    systemd.user.services.dms.Unit.ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
-
-    # Niri config (input, layout, binds, window rules). DMS-generated files under
-    # ~/.config/niri/dms/ (theme/output state driven by its own settings UI) are
-    # left unmanaged on purpose.
-    home.file.".config/niri/config.kdl" = {
-      source = "${self}/dotfiles/common/configs/niri-config.kdl";
-      force = true;
-    };
-
-    # Per-host overlay (named workspaces / window rules that differ per
-    # host), pulled in by the shared config.kdl via `include "niri-overlay.kdl"`.
-    # osConfig is the top-level NixOS config, injected automatically since
-    # this Home Manager config runs as a NixOS module.
-    home.file.".config/niri/niri-overlay.kdl" = {
-      source = "${self}/hosts/${osConfig.networking.hostName}/niri-overlay.kdl";
-      force = true;
-    };
-
-    # qt6ct only touches this file's mtime to trigger live theme reloads — it
-    # never creates it from scratch. Without it existing, DMS's matugen color
-    # file (~/.config/qt6ct/colors/matugen.conf, left unmanaged/regenerated
-    # per wallpaper change) is generated but never applied, so Qt apps like
-    # qBittorrent stay stuck on Qt's default light style.
-    home.file.".config/qt6ct/qt6ct.conf" = {
-      force = true;
-      text = ''
-        [Appearance]
-        color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/matugen.conf
-        custom_palette=true
-        icon_theme=
-        standard_dialogs=default
-        style=Fusion
-
-        [Interface]
-        buttonbox_layout=0
-        cursor_flash_time=1000
-        dialog_buttons_have_icons=1
-        double_click_interval=400
-        gui_effects=@Invalid()
-        keyboard_scheme=2
-        menus_have_icons=true
-        show_shortcuts_in_context_menus=true
-        stylesheets=@Invalid()
-        toolbutton_style=4
-        underline_shortcut=1
-        wheel_scroll_lines=3
-
-        [SettingsWindow]
-        geometry=@ByteArray()
-
-        [Troubleshooting]
-        force_raster_widgets=1
-        ignored_applications=@Invalid()
-      '';
-    };
-
-    # Full KDE Frameworks apps (kate, and KIO/KConfig apps generally) don't
-    # theme off QT_QPA_PLATFORMTHEME at all — they resolve their palette via
-    # KColorScheme reading kdeglobals, a completely separate path. Outside a
-    # real Plasma session there's no kded daemon keeping kdeglobals' "current
-    # scheme" pointer live, so they silently fall back to the hardcoded Breeze
-    # light default even though qt6ct is correctly themed (as proven by
-    # qBittorrent, a plain Qt app, picking up dark fine with identical env).
-    # `ColorScheme=*` tells KColorScheme to defer to the live Qt platform
-    # theme instead. Applied via kwriteconfig6 (not home.file) because
-    # kdeglobals is actively written back by KDE apps (recent files, window
-    # geometry, KFileDialog state) — force-managing the whole file as a
-    # read-only nix-store symlink would break that.
-    # Unconditional, on purpose: this repo's normal workflow is `rebuild`
-    # (`nh os boot`), which only activates at the *next* boot — before any
-    # session exists, so there is no XDG_CURRENT_DESKTOP to gate on (confirmed
-    # via journalctl: hm-activate runs at boot, not at login). Previously this
-    # was gated on XDG_CURRENT_DESKTOP=niri, which only ever fired if someone
-    # ran an interactive `nh os switch` from inside a live niri session —
-    # meaning it silently no-op'd for every boot-based rebuild. Safe to always
-    # run: even on a host that boots into Plasma next (natalie-laptop dual-booted
-    # both for a while; Plasma dropped 2026-07-18), Plasma's own session startup
-    # re-applies its LookAndFeelPackage's ColorScheme over this on login anyway
-    # (see the kded note above), so writing `*` here first doesn't stick around
-    # to break it — this stays correct if Plasma ever comes back.
-    home.activation.kdeColorScheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
-    '';
-
-    # Declarative GTK theme selection so Thunar and other GTK3/4 apps look
-    # the same on every niri host/user, via Home Manager's own `gtk` module
-    # instead of a manual `dconf write` + hand-edited settings.ini pair
-    # (2026-08-09 — the manual approach silently went stale 3 separate times
-    # in one session: dconf updated fine on rebuild, but gtk-3.0/gtk-4.0
-    # settings.ini never picked up the change on its own, needing a by-hand
-    # fix on every host, per-user, every time the theme changed. See
-    # sweet-theme-rollout memory for the full incident).
-    #
-    # `gtk.enable = true` makes HM generate gtk-3.0/gtk-4.0 settings.ini
-    # *and* the equivalent dconf keys from the same source options in one
-    # activation step (confirmed by reading home-manager's own
-    # modules/misc/gtk/gtk3.nix: its `config` block writes both
-    # `xdg.configFile."gtk-3.0/settings.ini"` and
-    # `dconf.settings."org/gnome/desktop/interface"` off the same `theme`/
-    # `iconTheme`/`cursorTheme`/`colorScheme` values) — so there's no
-    # propagation step left to go stale. DMS still manages its own
-    # matugen-driven runtime theme for the shell UI and Qt/KDE apps
-    # (qt6ct.conf/kdeglobals above) independently of this.
-    #
-    # Colloid-Teal-Dark + matching icon set replace Sweet-Dark/candy-icons
-    # (2026-08-09, see sweet-theme-rollout memory) — nixpkgs purged `sweet`
-    # for depending on gtk-engine-murrine (GTK2 EOL sweep); Colloid's
-    # nixpkgs build has no such dependency. The theme/iconTheme names below
-    # are the literal output folder names from dotfiles/common/configs/
-    # home.nix's colloid-gtk-theme/colloid-icon-theme overrides — confirmed
-    # via a real build, not guessed from the README; keep the `.override`
-    # args here in sync with home.nix's if either ever changes, since HM
-    # doesn't dedupe across differing override args. `colorScheme = "dark"`
-    # alone gets HM to derive `gtk-application-prefer-dark-theme = true` and
-    # dconf's `color-scheme = "prefer-dark"` automatically (see gtk/lib.nix's
-    # mkGtkSettings) — no separate flag needed. GTK4 doesn't officially
-    # support theme swapping (HM applies it via a CSS-import workaround that
-    # real GTK4 apps mostly ignore). home.stateVersion "25.11" here is below
-    # HM's 26.05 cutover, so `gtk.gtk4.theme` would inherit `gtk.theme` by
-    # default anyway (HM's own deprecation warning during eval confirms
-    # this) — set it explicitly instead of relying on that implicit
-    # version-gated default, so behavior doesn't silently change out from
-    # under this config on a future home-manager bump.
-    gtk = {
-      enable = true;
-      theme = {
-        name = "Colloid-Teal-Dark";
-        package = pkgs.colloid-gtk-theme.override {
-          themeVariants = [ "teal" ];
-          colorVariants = [ "dark" ];
-        };
-      };
-      gtk4.theme = config.gtk.theme;
-      iconTheme = {
-        name = "Colloid-Teal-Dark";
-        package = pkgs.colloid-icon-theme.override {
-          colorVariants = [ "teal" ];
-        };
-      };
-      colorScheme = "dark";
-    };
-
-    # Covers what the gtk module above doesn't: XWayland/Qt apps that resolve
-    # cursors via XCURSOR_THEME/XCURSOR_SIZE rather than GSettings, and a
-    # guaranteed ~/.icons/default symlink for anything reading that directly.
-    # kdePackages.breeze is the actual package providing breeze_cursors
-    # (confirmed via `nix build` — kdePackages.breeze-icons only has folder/
-    # mimetype icons, not the cursor theme). `gtk.enable` (namespaced under
-    # pointerCursor, not the top-level `gtk.enable` above) feeds this same
-    # package/name/size into `gtk.cursorTheme` automatically (confirmed via
-    # home-manager's modules/config/home-cursor.nix: `mkIf cfg.gtk.enable {
-    # gtk.cursorTheme = mkDefault { inherit package name; inherit
-    # (cfg.gtk) size; }; }`) — one declared cursor, not two copies to keep in
-    # sync.
-    home.pointerCursor = {
-      enable = true;
-      package = pkgs.kdePackages.breeze;
-      name = "breeze_cursors";
-      size = 24;
-      x11.enable = true;
-      gtk.enable = true;
-    };
-
-    # Screen locker (programs.swaylock NixOS module removed upstream; use HM)
-    programs.swaylock.enable = true;
-
-    # Idle management: lock screen after 10 minutes (services.swayidle NixOS module removed upstream; use HM)
-    services.swayidle = {
-      enable = true;
-      timeouts = [
-        { timeout = 600; command = "${pkgs.swaylock}/bin/swaylock -f"; }
-      ];
-    };
-
-    # Home Manager's swayidle module already gates on ConditionEnvironment=
-    # WAYLAND_DISPLAY, but Plasma 6 is Wayland too, so that alone doesn't
-    # exclude it. mkForce swaps in the stricter, niri-specific check instead
-    # of adding a second one — the type here is a single string, not a list,
-    # and XDG_CURRENT_DESKTOP=niri already implies WAYLAND_DISPLAY is set.
-    systemd.user.services.swayidle.Unit.ConditionEnvironment = lib.mkForce "XDG_CURRENT_DESKTOP=niri";
-  };
+  # Both bosko and natty have accounts on every niri host (gaming, laptop,
+  # natalie-laptop), so both get the same DMS/niri Home Manager config.
+  niriUsers = [ "bosko" "natty" ];
 in
 {
+  imports = [ "${self}/modules/dms-shell.nix" ];
+
+  dmsShell = {
+    users = niriUsers;
+    idleLockTimeout = 600;
+  };
+
   nixpkgs.overlays = [ xwaylandSatellitePinOverlay ];
 
   programs = {
@@ -223,28 +35,15 @@ in
     xwayland.enable = true;
   };
 
-  services = {
-    # Enable x11
-    xserver.enable = true;
+  # Enable x11
+  services.xserver.enable = true;
 
-    # Plasma auto-enables these as defaults; bare compositors like Niri
-    # don't, so DMS's System Check flags them as unavailable without this.
-    # upower is what actually feeds DMS's battery pill/top-bar widget and
-    # Settings page — without upowerd running, DMS has no battery data to
-    # show at all (laptop/natalie-laptop, 2026-08-16).
-    accounts-daemon.enable = true;
-    power-profiles-daemon.enable = true;
-    upower.enable = true;
-  };
-
-  # Enable Dank Material Shell via Home Manager for every user who can log
-  # into niri. Both bosko and natty have accounts on every niri host
-  # (gaming, laptop, natalie-laptop), so both get the same block.
-  home-manager.users.bosko = niriHomeConfig;
-  home-manager.users.natty = niriHomeConfig;
+  # niri-specific Home Manager config (niri config files, session gating, GTK
+  # and cursor theming), layered on dms-shell.nix's per-user DMS config.
+  home-manager.users = lib.genAttrs niriUsers (_: import "${self}/dotfiles/common/configs/niri-home.nix");
 
   # Sandboxed/flatpak apps (e.g. Deezer) can't read the dconf.settings GTK
-  # theme above directly — they ask the xdg-desktop-portal Settings interface
+  # theme directly — they ask the xdg-desktop-portal Settings interface
   # instead, which relays the same org/gnome/desktop/interface keys. niri had
   # no portal backend implementing that interface at all (2026-07-19), so
   # those apps got no color-scheme signal and fell back to their own default
@@ -260,8 +59,11 @@ in
   # itself implements the ScreenCast/Screenshot D-Bus interfaces and
   # xdg-desktop-portal-gnome is the piece that forwards portal requests into
   # niri's own implementation — it doesn't require actual GNOME Shell.
+  #
+  # programs.niri already adds xdg-desktop-portal-gnome; gtk is listed here
+  # because the routing below depends on it.
   xdg.portal = {
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk pkgs.xdg-desktop-portal-gnome ];
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.niri = lib.mkForce {
       default = [ "gtk" ];
       "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
@@ -269,34 +71,7 @@ in
     };
   };
 
-  # qt6ct-kde theme integration so Qt apps (e.g. qBittorrent, kate) follow
-  # DMS's matugen-generated dark/light theme instead of Qt's default light style
-  environment.sessionVariables.QT_QPA_PLATFORMTHEME = "qt6ct";
-
-  # Without this, apps built outside qt6ct's own closure (i.e. anything
-  # not sharing their exact Nix build inputs) can't discover libqt6ct.so at
-  # all: unwrapped Qt binaries only search the plugin dirs baked into their own
-  # RPATH at build time, which never include unrelated packages like qt6ct.
-  # This points every session app at the merged system profile's plugin dir
-  # (which does include qt6ct, since it's in environment.systemPackages below),
-  # so QT_QPA_PLATFORMTHEME=qt6ct above can actually be resolved.
-  environment.profileRelativeSessionVariables.QT_PLUGIN_PATH = [ "/lib/qt-6/plugins" ];
-
-  # Common Wayland utilities that are generally useful with any Wayland compositor
   environment.systemPackages = with pkgs; [
-    # Replaced by DMS:
-    # waybar # Customizable Wayland bar
-    # rofi # Application launcher
-    # swaylock # Screen locker
-    # mako # Notification daemon
-
-    fuzzel # Application launcher
-    grim # Screenshot utility
-    kdePackages.qt6ct # Qt theme engine so Qt apps follow DMS's matugen theme
-    playerctl # MPRIS media control, used by niri-config.kdl's XF86Audio media key binds
-    slurp # Region selection for grim
-    wl-clipboard # Wayland clipboard utilities
-    wlr-randr # RandR utility for Wayland
     xwayland-satellite # Niri (>= 25.08) spawns this itself for X11-only apps; must be in PATH — TEMPORARILY pinned to 0.8.1, see overlay above
   ];
 }
