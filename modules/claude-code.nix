@@ -19,9 +19,8 @@
 # (dotfiles/bosko/claude-hm/settings.nix) strips clean on every rebuild once this managed file
 # exists. Declaring it here is the only form that survives a rebuild.
 #
-# Also owns bosko's Claude tooling: the claude-code binary, the MCP servers
-# registered in ~/.claude.json (dotfiles/bosko/claude-hm/mcp.nix), rtk, and the
-# sops secrets those tools read.
+# Also owns bosko's claude-code binary and rtk on every host. The MCP servers
+# and their sops secrets are desktop-only — see claude-mcp.nix.
 { pkgs, ... }:
 
 let
@@ -132,8 +131,6 @@ in
 
   users.users.bosko.packages = with pkgs; [
     claude-code
-    mcp-nixos # MCP server backing the user-scope nixos server (registered in ~/.claude.json via claude-hm/mcp.nix)
-    tailscale-mcp # MCP server backing the user-scope tailscale server (registered in ~/.claude.json via claude-hm/mcp.nix); package in pkgs/tailscale-mcp.nix, overlay in pkgs/default.nix
   ]
   # TEMPORARY (added 2026-07-24): rtk-0.43.0's checkPhase fails upstream —
   # `cargo test` runs with -D warnings and the rtk crate has dead-code
@@ -142,26 +139,4 @@ in
   # REMOVE this override once nixpkgs ships an rtk revision whose tests
   # pass cleanly (i.e. `nh os boot --dry` builds rtk without doCheck=false).
   ++ pkgs.lib.optional hasRtk (pkgs.rtk.overrideAttrs (_: { doCheck = false; })); # Claude Code token-optimizing Bash proxy (hook above)
-
-  # Tailscale OAuth client credentials for the tailscale-mcp Claude Code
-  # connector (bosko-only, wired in dotfiles/bosko/claude-hm/mcp.nix). An
-  # env-file-style secret like pinchflat-env (hosts/gaming/pinchflat.nix) —
-  # its decrypted content is two shell-sourceable KEY=VALUE lines, sourced
-  # by a wrapper at MCP-server-launch time so the raw values never sit in
-  # ~/.claude.json. owner=bosko so a user-level activation script can read
-  # it without root.
-  sops.secrets."tailscale-mcp-env" = {
-    sopsFile = ../secrets/common.yaml;
-    owner = "bosko";
-  };
-
-  # Discord webhook URL for the send-results Claude Code skill (bosko-only,
-  # wired in dotfiles/bosko/claude/skills/send-results). owner=bosko so the
-  # skill's script can read it without root. The secret value itself is
-  # added by the user directly (never by an agent) via add-secret's
-  # sops-secret.sh -- see send-results/SKILL.md's Setup section.
-  sops.secrets."discord-webhook-url" = {
-    sopsFile = ../secrets/common.yaml;
-    owner = "bosko";
-  };
 }

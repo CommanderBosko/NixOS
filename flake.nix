@@ -83,6 +83,7 @@
       "${self}/modules/audio.nix"
       # GRUB + zen kernel (x86 desktops); vpn-server owns its own boot config
       "${self}/modules/bootloader.nix"
+      "${self}/modules/claude-mcp.nix"
       "${self}/modules/desktop-apps.nix"
       "${self}/modules/desktop-networking.nix"
       "${self}/modules/development.nix"

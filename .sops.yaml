@@ -5,7 +5,8 @@
 # - each host: age key derived from its SSH ed25519 host key, so the host can
 #   decrypt the secrets encrypted to it at activation time.
 #
-# secrets/common.yaml       -> all hosts: login password hashes, plus
+# secrets/common.yaml       -> all hosts: login password hashes
+# secrets/desktop.yaml      -> desktop hosts only (not vpn-server):
 #                              tailscale-mcp-env and discord-webhook-url (both
 #                              file-owned by bosko once decrypted)
 # secrets/hosts/<host>.yaml -> that host only: its WireGuard private key
@@ -31,6 +32,14 @@ creation_rules:
           - *laptop
           - *natalie-laptop
           - *vpn-server
+
+  - path_regex: secrets/desktop\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *gaming
+          - *laptop
+          - *natalie-laptop
 
   - path_regex: secrets/hosts/gaming\.yaml$
     key_groups:

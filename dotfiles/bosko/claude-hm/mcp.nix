@@ -19,12 +19,12 @@ let
     # mcp-nixos needs no auth — plain stdio command.
     nixos = {
       type = "stdio";
-      command = "mcp-nixos"; # package installed by modules/claude-code.nix
+      command = "mcp-nixos"; # package installed by modules/claude-mcp.nix
       args = [ ];
       env = { };
     };
-    # tailscale-mcp authenticates via an OAuth client (secrets/common.yaml,
-    # declared in modules/claude-code.nix) whose two KEY=VALUE lines must
+    # tailscale-mcp authenticates via an OAuth client (secrets/desktop.yaml,
+    # declared in modules/claude-mcp.nix) whose two KEY=VALUE lines must
     # never sit in ~/.claude.json in plaintext — command runs a wrapper that
     # sources them from the sops-decrypted file at launch time instead of
     # passing them through the `env` object.

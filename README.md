@@ -141,8 +141,8 @@ Secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix) and commi
 | Secret | File | Encrypted to |
 |--------|------|--------------|
 | `bosko` / `natty` login password hashes | `secrets/common.yaml` | admin + all hosts |
-| Tailscale OAuth client credentials for the tailscale-mcp Claude Code connector (`tailscale-mcp-env`; readable by `bosko` only) | `secrets/common.yaml` | admin + all hosts |
-| Discord webhook URL for the `send-results` Claude Code skill (`discord-webhook-url`; readable by `bosko` only) | `secrets/common.yaml` | admin + all hosts |
+| Tailscale OAuth client credentials for the tailscale-mcp Claude Code connector (`tailscale-mcp-env`; readable by `bosko` only) | `secrets/desktop.yaml` | admin + desktop hosts (not vpn-server) |
+| Discord webhook URL for the `send-results` Claude Code skill (`discord-webhook-url`; readable by `bosko` only) | `secrets/desktop.yaml` | admin + desktop hosts (not vpn-server) |
 | Each host's WireGuard private key (`wg-private-key`) | `secrets/hosts/<host>.yaml` | admin + that host only |
 | Pinchflat's `SECRET_KEY_BASE` (`pinchflat-env`) | `secrets/hosts/gaming.yaml` | admin + gaming only |
 | Jellyfin API key for Claude-driven Jellyfin automation (`jellyfin-api-key`; not wired into any NixOS module — decrypted on demand) | `secrets/hosts/gaming.yaml` | admin + gaming only |
