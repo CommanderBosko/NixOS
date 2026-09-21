@@ -71,7 +71,7 @@ Tell the caller whether the post succeeded, the artifact URL used, and if it fai
 
 Creating and configuring the Discord webhook is a one-time, human-only bootstrap step --
 see `references/setup.md` for the full procedure (create the webhook, add it as a sops
-secret, wire it into `modules/sops.nix`, rebuild, test).
+secret in `secrets/desktop.yaml`, wire it into `modules/claude-mcp.nix`, rebuild, test).
 
 ## Scripts
 
@@ -88,5 +88,7 @@ secret, wire it into `modules/sops.nix`, rebuild, test).
 - **Never accept a webhook URL as something to type into `sops-secret.sh` on the user's
   behalf from a value they pasted into chat** -- treat it exactly like any other credential
   hard-limit: hand off the exact commands (Setup above) and let the user run them in their
-  own terminal.
+  own terminal. That includes capturing the value: never as a `!` command in the session
+  (`!` echoes the command text, value included, into the transcript) — a separate terminal
+  with a hidden `read -rs` prompt only.
 - See `references/why-artifact-not-file-link.md` for the `file://`-links-don't-work incident and the leaves-the-machine trade-off, before touching how this skill links its output.

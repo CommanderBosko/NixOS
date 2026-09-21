@@ -122,15 +122,19 @@ Create a brand-new file:
 ! .claude/skills/add-secret/scripts/sops-secret.sh create /home/bosko/NixOS/secrets/hosts/<host>.yaml my-key <scratchpad>/secret_value
 ```
 
-Interactive edit/rotate (opens `$EDITOR`, needs a real terminal):
+Interactive edit/rotate (opens `$EDITOR`) — run this in a **normal terminal window, not
+via `!`**: it needs a real TTY, and the secret you type into the editor is then never
+anywhere near the session:
 
 ```
-! .claude/skills/add-secret/scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
+.claude/skills/add-secret/scripts/sops-secret.sh edit /home/bosko/NixOS/secrets/common.yaml
 ```
 
 `sops-secret.sh`'s `set`/`create` modes take the value as a **file path**, not an inline
-argument, specifically so the plaintext can never appear as literal text in a command the
-agent authors. Wait for the user to confirm the command ran before moving to Step 5.
+argument, so the write command itself never contains the plaintext — which is what makes it
+safe to run via `!`. That only holds if the value file was written from a separate terminal
+(see above); a `!` command that writes the value is itself echoed into the transcript. Wait
+for the user to confirm the command ran before moving to Step 5.
 
 ## Step 4 — Wire it into NixOS
 
