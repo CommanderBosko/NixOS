@@ -36,10 +36,11 @@ Invocation inputs (gather any the user didn't already give in Step 1):
   example) — declaring one in a `commonModules` file would make vpn-server try to decrypt a
   file it can't read and fail activation.
 - **`secrets/hosts/<host>.yaml`** — per-host secrets, encrypted to **admin + that host
-  only**. Every host holds `wg-private-key` (its WireGuard key); `gaming.yaml` additionally
-  holds `pinchflat-env`. Don't assume "each holds exactly one key" — check the file live
-  (`grep -o '^[a-zA-Z0-9_-]*:' secrets/hosts/<host>.yaml`) rather than trusting this list, it
-  will keep growing per-host over time.
+  only**. Every host holds at least `wg-private-key` (its WireGuard key). Don't assume "each
+  holds exactly one key" — per-host secrets live in `secrets/hosts/<host>.yaml` and the key
+  list grows over time, so check the file live
+  (`grep -o '^[a-zA-Z0-9_-]*:' secrets/hosts/<host>.yaml`) for the current list rather than
+  trusting a hardcoded enumeration here.
 - **Admin key**: `~/.config/sops/age/keys.txt` (NOT in repo). Required for all edits.
   Export it for every sops command: `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt`.
 - Tooling isn't installed system-wide — run sops via `nix shell nixpkgs#sops --command …`.
@@ -219,28 +220,18 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
 
 ## Gotchas
 
-- **The agent must never run `sops-secret.sh set|create|edit`, and must never ask the user to
-  type a plaintext value into a normal chat message.** `modules/sops.nix`'s own comment states
-  this convention explicitly ("the secret value itself is added by the user directly, never
-  by an agent"). The skill's original implementation (pre-v0.3.0) violated it in two places:
-  `sops-secret.sh set` took the value as an inline argument the agent would run directly, and
-  `verify-secret.sh` printed the *entire* decrypted file (every secret in it, not just the one
-  being checked) to the transcript. Both are fixed as of v0.3.0 (2026-09-17, found while
-  adding `jellyfin-api-key` to `secrets/hosts/gaming.yaml`). If a future edit reintroduces an
-  inline-value code path or a full-plaintext print, that's a regression, not a simplification.
-- **Multi-line and special-character values need real encoding.** Before 2026-09-21,
-  `sops-secret.sh create` printf'd the value into a double-quoted YAML scalar (YAML folds a raw
-  newline into a space, so a two-line env-file secret was stored as one line) and `set` built
-  the JSON string by hand (breaks on newlines, `"` and `\`). Both now encode via `jq` and pass
-  the value by file (`--rawfile` / `sops set --value-file`), never argv. Found because
-  `verify-secret.sh --key ... --expect` reported MISMATCH for `tailscale-mcp-env`; always run
-  that masked round-trip check after a write.
-- **`!` commands are echoed into the transcript — never put a value in one.** The v0.3.0 flow
-  told the user to capture the value with `! cat > file <<< 'VALUE'`, on the belief that `!`
-  commands aren't persisted. They are: the command text (heredoc body included) lands in the
-  conversation. Found 2026-09-21 rotating `tailscale-mcp-env`, when the new OAuth client secret
-  showed up verbatim and had to be regenerated. Value capture now happens in a separate
-  terminal with a hidden `read -rs` prompt (Step 3); only file-path-only commands go via `!`.
+See `references/incident-history.md` for full incident history behind the first three
+points below.
+
+- **The agent must never run `sops-secret.sh set|create|edit`, or ask the user to type a
+  plaintext value into a normal chat message** — the pre-v0.3.0 implementation violated both
+  (inline-argument value passing, and a verify script that printed the full decrypted file),
+  leaking secrets into the transcript.
+- **Multi-line and special-character values need real encoding, never hand-built strings** —
+  a hand-built double-quoted YAML scalar or hand-built JSON string (the pre-2026-09-21
+  behavior) silently corrupts newlines and quote/backslash characters.
+- **A `!` command is echoed into the transcript — never put a secret value in one**, heredoc
+  bodies included; only file-path-only commands are safe to run via `!`.
 - **Never `git add` a plaintext secret.** Encrypt in place first; verify with the `ENC[`
   check above before staging.
 - A secret added to `common.yaml` is decryptable by **every** host. For least privilege,

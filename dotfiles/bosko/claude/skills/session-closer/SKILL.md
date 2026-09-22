@@ -234,18 +234,9 @@ GitHub," unlike a bare "push" reaching `git-push` directly.)
 
 ## Output to the user
 
-```
-✅ SESSION CLOSED — [DATE]
-
-📋 Summary: [2-3 sentence overview]
-📁 Files Changed: [count]
-💾 Commits Pushed: [count]
-📝 Docs Updated: project-state.md, README.md, session-summary.md
-🚀 Pushed to: origin/main ([commit hash])
-
-🎯 Next Session Focus:
-  - [top 2-3 next steps]
-```
+Read the report template from `assets/close-report-template.md` (relative to this skill's
+directory) and fill its `[...]` placeholders from this session's actual work, then print the
+filled result to the user.
 
 ---
 
@@ -291,3 +282,4 @@ All four are relative to the *skill's* directory, not the project cwd — this s
 
 - `assets/session-summary-template.md` — the `## Session: [DATE] — [Brief Session Title]` entry template used in STEP 4. Read it, fill its `[...]` placeholders from this session's actual work, and prepend the result to `session-summary.md`.
 - `assets/readme-template.md` — the `README.md` section skeleton used in STEP 5. Read it and use it to fill/refresh the project's `README.md`, preserving existing accurate sections.
+- `assets/close-report-template.md` — the final "Output to the user" report shape used in STEP 6. Read it, fill its `[...]` placeholders from this session's actual work, and print the result.

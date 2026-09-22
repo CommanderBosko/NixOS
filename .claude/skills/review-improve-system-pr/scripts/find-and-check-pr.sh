@@ -7,7 +7,8 @@
 #
 # Guardrail (must hold for every changed file): path starts with
 # `.claude/skills/` or `dotfiles/bosko/claude/skills/`, AND is either named
-# `SKILL.md` or sits under a `scripts/` or `assets/` subdirectory.
+# `SKILL.md` or sits under a `scripts/`, `assets/`, or `references/`
+# subdirectory.
 #
 # Exit codes:
 #   0 — PR found, guardrail holds, safe to show diff and offer merge
@@ -46,7 +47,8 @@ while IFS= read -r f; do
   [ -z "$f" ] && continue
   if [[ "$f" == .claude/skills/*SKILL.md ]] || [[ "$f" == dotfiles/bosko/claude/skills/*SKILL.md ]] \
      || [[ "$f" == .claude/skills/*/scripts/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/scripts/* ]] \
-     || [[ "$f" == .claude/skills/*/assets/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/assets/* ]]; then
+     || [[ "$f" == .claude/skills/*/assets/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/assets/* ]] \
+     || [[ "$f" == .claude/skills/*/references/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/references/* ]]; then
     continue
   fi
   VIOLATIONS="${VIOLATIONS}${f}"$'\n'

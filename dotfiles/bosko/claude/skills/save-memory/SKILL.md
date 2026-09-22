@@ -56,7 +56,7 @@ Pick a short kebab-case `name` slug. The filename convention in this dir is `<ty
 
 Read `assets/memory-template.md` and write `<project-dir>/memory/<type>_<slug>.md` from it, substituting `<kebab-case-slug>`, the `description`, the `type`, and the body. Drop the trailing HTML-comment block (it only documents the index line for Step 4). For feedback, follow the fact with a **Why:** line; for project, follow with **Why:** and **How to apply:** lines.
 
-Fill the two metadata stamps so the file matches the shape the harness-written memories use (20/22 live files carry these — omitting them leaves the file inconsistent with the rest of the store):
+Fill the two metadata stamps so the file matches the shape harness-written memories use — omitting them leaves the file inconsistent with the rest of the store:
 - **`node_type`** — always the literal `memory`.
 - **`originSessionId`** — the current session's UUID. Derive it from the transcript path: it's the basename (minus `.jsonl`) of the most-recently-modified file in `<project-dir>` (the same directory resolved above) — e.g. `ls -t "$(~/.claude/skills/lib/find-transcript-dir.sh)"/*.jsonl | head -1`. If you genuinely can't resolve it, omit the line rather than writing a placeholder.
 

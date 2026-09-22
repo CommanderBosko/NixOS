@@ -146,4 +146,4 @@ echo "=== 7. Kernel journal — nvidia/xid/hung/oom/error/fault/reset, last hour
 journalctl -k --since "1 hour ago" 2>&1 | grep -i -E "nvidia|xid|hung|nmi|oom|error|fault|reset" | tail -60
 echo
 
-echo "=== Done: steps 1-5 and 7 complete. Run step 6 manually, then continue with SKILL.md steps 8-10 for crash-log locations. ==="
+echo "=== Done: steps 1-5 and 7 complete. Run step 6 manually, then continue with SKILL.md steps 4-6 for crash-log locations. ==="

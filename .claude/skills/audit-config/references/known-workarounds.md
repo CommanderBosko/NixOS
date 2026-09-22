@@ -4,7 +4,7 @@ Load this before flagging a security/hardening finding — cross-check every can
 
 This repo has deliberate, documented deviations. Flagging them as findings is noise.
 
-- **AppArmor PAM path workaround** (`modules/security.nix`): SDDM `include`
+- **AppArmor PAM path workaround** (`modules/sddm.nix`): SDDM `include`
   directives are not `.so` paths. The `lib.mkForce` clearing of `rules` for `sddm` /
   `sddm-autologin`, with `text` overrides using `pkgs.linux-pam`, is **intentional** — it works
   around a nixpkgs bug. Not a finding.

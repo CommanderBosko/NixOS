@@ -59,6 +59,8 @@ Based on host type:
   - `/home/bosko/NixOS/hosts/<hostname>/hardware-configuration.nix`
   - `/home/bosko/NixOS/hosts/<hostname>/configuration.nix`
 
+  If the new remote host also wants declarative disk partitioning (nixos-anywhere-style installs — the way vpn-server is set up), additionally create `/home/bosko/NixOS/hosts/<hostname>/disko.nix`, modeled on `hosts/vpn-server/disko.nix` (the real example — disk device, partition sizes, and labels are host-specific, so write real values rather than a generic template). Wiring it into the flake also needs `disko.nixosModules.disko` added to the host's module list — see Step 6's flake-entry template, which has this commented out by default.
+
 ## Step 3 — Generate the files from the asset templates
 
 Read the byte-exact templates from this skill's `assets/` directory and fill the placeholders — do **not** reproduce the Nix from memory. Pick the set matching the host type:
@@ -125,6 +127,7 @@ Fill placeholders:
 - Replace `<hostname>` (and the `# <Hostname — …>` comment) throughout.
 - **desktop:** replace `<de>` with the chosen DE module name; include/uncomment the GPU import lines per the user's Step 1 GPU answer — leave them commented if `none`, uncomment the relevant one(s) otherwise.
 - **remote:** the remote template is for `aarch64-linux`. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
+- **remote (disko):** if Step 2 created a `disko.nix` for this host, uncomment the `disko.nixosModules.disko` line and the `"${self}/hosts/<hostname>/disko.nix"` line in the template; otherwise leave both commented out (or drop them) when filling the entry.
 
 ## Step 7 — Remind the user about hardware-configuration.nix
 

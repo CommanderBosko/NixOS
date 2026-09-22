@@ -18,7 +18,14 @@
       "Bash(flatpak remote-info*)",
       "Bash(bash /home/bosko/NixOS/.claude/lib/classify-shared-file.sh*)",
       "Bash(git fetch*)",
-      "mcp__nixos__nix"
+      "Bash(/home/bosko/.claude/skills/session-closer/scripts/scan-session.sh*)",
+      "Bash(~/.claude/skills/lib/find-last-skill-invocation.sh*)",
+      "Bash(~/.claude/skills/lib/list-transcripts-since.sh*)",
+      "Bash(~/.claude/skills/lib/find-transcript-dir.sh*)",
+      "Bash(.claude/skills/secret-scan/scripts/secret-scan.sh*)",
+      "Bash(~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh*)",
+      "mcp__nixos__nix",
+      "mcp__nixos__nix_versions"
     ]
   },
   "hooks": {

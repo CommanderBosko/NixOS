@@ -33,7 +33,7 @@ Using the `$VPN_SSH` value resolved above:
 ssh -o ConnectTimeout=10 -o BatchMode=yes "$VPN_SSH" echo ok
 ```
 
-If it fails: "Check that the Oracle VM is running. If WireGuard is down on this machine, reach it via its public IP directly."
+If it fails: "Check the Oracle VM is running and its security-list/firewall allows your current IP."
 
 ## Step 2 — Deploy with `boot` + reboot (NOT `switch`)
 

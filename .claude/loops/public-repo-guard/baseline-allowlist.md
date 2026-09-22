@@ -12,7 +12,7 @@ Mode ON). Each entry: what it is, where, and why it's safe.
   finding = plaintext secret OUTSIDE the sops envelope. See [[project_sops_secrets]].
 - **fwupd "ESP not detected" warning on gaming** — intentional/unfixable via config (MBR
   type 0x0c, no LVFS, Secure Boot off). Not a security gap. See [[project_fwupd_esp]].
-- **AppArmor SDDM PAM `text` overrides (`security.nix`)** — `lib.mkForce` clearing the
+- **AppArmor SDDM PAM `text` overrides (`modules/sddm.nix`)** — `lib.mkForce` clearing the
   `rules` attrset for `sddm`/`sddm-autologin` is a deliberate nixpkgs-bug workaround that
   preserves identical PAM behaviour, not a weakening. See CLAUDE.md Security Module.
 - **`security.audit.rules` comment sentinel** — a non-empty rules list with only a comment
