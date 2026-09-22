@@ -22,7 +22,7 @@ Parse from the user's request:
 ### 1. Resolve the host
 
 - If no host is given, or the host is the machine you're running on, run all commands **directly** via Bash.
-- If a remote host is named, resolve its SSH target from the single source of truth, `/home/bosko/NixOS/.claude/hosts.json` (`jq -r '.hosts["<host>"].ssh' …` — the same data the `ssh-host` skill reads), and prefix each command with it. `vpn-server` is reachable over the WireGuard VPN.
+- If a remote host is named, resolve its SSH target via `bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>` (same resolver `ssh-host`/`journal`/`printer-diagnose` use — it reads `/home/bosko/NixOS/.claude/hosts.json` and handles aliases like `natalie`/`vpn`/`oracle`/`server`), and prefix each command with the resolved target. `vpn-server` is reached directly over its public IP, not over WireGuard (`modules/vpn.nix` is currently pulled from `desktopModules`).
 - Run the checks below in a **single combined command** where possible to keep it to one round-trip.
 
 ### 2. Run the check battery

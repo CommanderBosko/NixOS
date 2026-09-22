@@ -16,10 +16,11 @@ Gather from the user (or infer from context) before starting:
 - **Game process pattern** — an extended-regex fragment matching the game's process
   name(s) as they'd appear in `ps aux`, e.g. `"wardogs|war_dogs|war dogs"`. Case doesn't
   matter (the script greps case-insensitively).
-- **Game install directory** — needed for steps 8-10, e.g.
+- **Game install directory** — needed for steps 4-6, e.g.
   `/home/bosko/.local/share/Steam/steamapps/common/<Game>/<Game>`. If unknown, find it
   with `find /home/bosko/.local/share/Steam/steamapps/common -maxdepth 1` and match by name.
-- **Roughly when it hung/crashed** — used to scope the journal/coredump lookups in step 9.
+- **Roughly when it hung/crashed** — used to scope the Sentry-report and Proton/crashpad-chain
+  timestamp comparisons in steps 4-5.
 
 ## Steps
 

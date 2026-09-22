@@ -16,7 +16,7 @@ recently opened (resolved automatically in Step 1).
 
 ### 1. Find the PR and check the guardrail
 
-Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/` subdirectory.
+Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/`/`references/` subdirectory.
 
 Interpret the exit code:
 - **1 (no PR found)** — this is a normal, expected outcome most weeks. Report "nothing to review" and stop here.

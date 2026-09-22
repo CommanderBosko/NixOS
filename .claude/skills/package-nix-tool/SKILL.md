@@ -93,17 +93,18 @@ tail of output the script prints to stderr and fix the derivation before continu
 
 ## Step 5 — Wire it into the flake
 
-Add one line to the overlay in `modules/nix.nix` (it already has one entry, `tailscale-mcp` —
-follow that exact shape):
+Add one line to the overlay function in `pkgs/default.nix` (it already has one entry,
+`tailscale-mcp` — follow that exact shape):
 
 ```nix
-nixpkgs.overlays = [
-  (final: _prev: {
-    tailscale-mcp = final.callPackage "${self}/pkgs/tailscale-mcp.nix" { };
-    <name> = final.callPackage "${self}/pkgs/<name>.nix" { };
-  })
-];
+final: _prev: {
+  tailscale-mcp = final.callPackage ./tailscale-mcp.nix { };
+  <name> = final.callPackage ./<name>.nix { };
+}
 ```
+
+`modules/nix.nix` just imports this overlay (`nixpkgs.overlays = [ (import ../pkgs) ]; `) and
+doesn't need to change when adding a package.
 
 Then add the package to wherever it should actually be installed — ask via **AskUserQuestion**
 if not already clear:
@@ -134,7 +135,7 @@ If Step 2 or Step 6 surfaced a required credential (API key, OAuth client, token
 ## Step 8 — Stage and verify
 
 ```bash
-git -C /home/bosko/NixOS add pkgs/<name>.nix modules/nix.nix
+git -C /home/bosko/NixOS add pkgs/<name>.nix pkgs/default.nix
 # plus modules/users.nix / environment.nix / dotfiles/bosko/claude-hm/mcp.nix / secrets/,
 # whichever of those you actually touched
 ```

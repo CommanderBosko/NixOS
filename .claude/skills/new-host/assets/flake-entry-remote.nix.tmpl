@@ -1,13 +1,21 @@
 # <Hostname — human-readable description>
 # Note the difference from the server entry: the `system` and `nixpkgs`
-# overrides. Mirrors how vpn-server is defined. For an x86_64 remote host,
-# use the server entry instead (drop both overrides).
+# overrides. Mirrors how vpn-server is defined, including its disko wiring
+# below (commented out by default — disk layout is host-specific, so see
+# hosts/vpn-server/disko.nix for a real example to copy rather than reusing
+# its values verbatim). For an x86_64 remote host, use the server entry
+# instead (drop both overrides).
 <hostname> = mkSystem {
   name = "<hostname>";
   system = "aarch64-linux";
   nixpkgs = nixpkgs-stable;
   modules = commonModules ++ [
+    # Uncomment both lines below for declarative disk partitioning
+    # (nixos-anywhere-style installs) — also create hosts/<hostname>/disko.nix
+    # first (Step 2), modeled on hosts/vpn-server/disko.nix.
+    # disko.nixosModules.disko
     "${self}/hosts/<hostname>/hardware-configuration.nix"
+    # "${self}/hosts/<hostname>/disko.nix"
     "${self}/hosts/<hostname>/configuration.nix"
   ];
 };

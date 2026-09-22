@@ -2,14 +2,17 @@
 
 Load this when Step 1's reported cutoff looks suspiciously old, or a raw tool call in this skill's flow misbehaves.
 
-- **`find-last-skill-invocation.sh` misses slash-command invocations.** It only greps for
-  assistant-initiated `Skill` tool_use entries — when this skill is run the normal way, via a
-  user-typed `/agent-suggestion`, Claude Code injects the instructions as user-turn content
-  instead, so the detector never records it. `skill-suggestion` and `skill-audit` hit the
-  identical blind spot with their own equivalent Step 1. If the reported cutoff looks
-  suspiciously old given known recent activity, cross-check
-  `git log --oneline | grep -i 'agent-suggestion\|custom agent' | head -1` (or any other
-  agent-suggestion-specific commit marker) as a sanity check before trusting it.
+- **`find-last-skill-invocation.sh` used to miss slash-command invocations — fixed 2026-08-10.**
+  It once only grepped for assistant-initiated `Skill` tool_use entries, so a user-typed
+  `/agent-suggestion` (which Claude Code injects as user-turn content, not a tool_use) never
+  registered as an invocation. `skill-suggestion` and `skill-audit` hit the identical blind spot
+  with their own equivalent Step 1. Commit `910c986` ("fix(skills): detect slash-command
+  invocations, not just Skill tool_use", 2026-08-10) added a `slash_re`-style match for
+  `<command-name>/<skill-name></command-name>` turns alongside the existing `Skill` tool_use
+  check, so both now count — the shared lib script this skill calls is reliable again. If the
+  reported cutoff ever looks suspiciously old given known recent activity, a sanity check is
+  still cheap: `git log --oneline | grep -i 'agent-suggestion\|custom agent' | head -1` (or any
+  other agent-suggestion-specific commit marker).
 - **An invocation attempt that *errors out* (e.g. "Unknown skill" before a rebuild lands) still
   gets logged as a real `Skill` tool_use and counts toward `find-last-skill-invocation.sh`'s
   cutoff.** Hit for real 2026-08-18: a pre-rebuild smoke-test attempt failed outright, did zero

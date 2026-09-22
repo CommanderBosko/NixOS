@@ -60,16 +60,5 @@ Report each skill built: its name, where it was written, the invocation phrases,
 
 ## Gotchas
 
-- **`find-last-skill-invocation.sh` misses slash-command invocations.** It only greps for
-  assistant-initiated `Skill` tool_use entries — when this skill (or any other) is run the
-  normal way, via a user-typed `/skill-suggestion`, Claude Code injects the instructions as
-  user-turn content instead, so the detector never records it. `session-closer` hit this for
-  real (2026-08-02: reported a stale 2026-07-16 cutoff when two closes had actually happened
-  since), and this skill leans on the same detector as its **primary** reuse signal in Step 1
-  — a silently-wrong cutoff here directly corrupts the candidate ranking in Step 3. If the
-  reported cutoff looks suspiciously old given known recent activity, cross-check
-  `git log --oneline | grep 'chore(session):' | head -1` (or any other skill-specific commit
-  marker) as a sanity check before trusting it. **Fixed 2026-08-10:** the script now also
-  matches a `<command-name>/<skill-name></command-name>` slash-command turn (plain user-turn
-  string content), not just `Skill` tool_use — this gotcha's workaround should be needed less
-  going forward, but keep the cross-check habit since other gaps may still exist.
+Before trusting Step 1's reported cutoff, read `references/gotchas.md` for the
+`find-last-skill-invocation.sh` slash-command history and the right marker to cross-check it against.

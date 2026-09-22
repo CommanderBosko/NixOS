@@ -13,6 +13,18 @@ Force Nix to fully evaluate each host's build graph — not just confirm it's a 
 
 `nix flake check` only verifies each host's toplevel attribute resolves to a derivation — it does not force full evaluation. A host can pass `flake-check` and still fail every real `nh os boot`. This happened 2026-07-02 with a pnpm/vesktop insecure-package regression (see `flake-check`'s own Gotchas section and memory `project_pnpm_insecure_waiver.md`). This skill closes that gap.
 
+## Arguments
+
+Parse from the user's request (all optional — default is every host):
+
+- **Host name(s)** (optional) — one or more host names to scope the deep-eval to just those
+  hosts instead of the full fleet.
+- **`--list`** (optional) — print the available host names without evaluating anything.
+- **`--set <attr>`** (optional) — evaluate a different config attrset instead of the real
+  hosts (e.g. `lib.deSmoke`).
+
+These pass straight through to the script (Step 1).
+
 ## Step 1 — Deep-evaluate each host
 
 Run `/home/bosko/NixOS/.claude/skills/deep-eval-check/scripts/deep-eval-check.sh` (absolute path — a bare
