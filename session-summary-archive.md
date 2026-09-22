@@ -1,3 +1,29 @@
+## Session: 2026-09-15 (session 110) — absolutist-rules audit across both CLAUDE.md files and all 71 skills
+
+**Focus**: Audit every "never"/"always"/fixed-threshold rule in both CLAUDE.md files and every skill for judgment calls disguised as absolutes, then rewrite the ones that qualify and resolve any real contradictions found.
+
+### What changed (and why)
+- **5 parallel forks scanned all ~70 skill files**; both CLAUDE.md files were audited inline. One fork (batch 4) went out of scope — ignored its assigned 15-skill list and produced its own cross-skill synthesis table instead. Re-launched correctly; the incident directly motivated the CLAUDE.md fix below.
+- **17 files rewritten** from absolute phrasing into standards scaled to actual risk/ambiguity/reuse-payoff: skill-creation step count, interview-before-any-work, research-staleness cutoff, `agent-suggestion`'s recurrence bar, `new-skill`'s bucket-split test, `create-secret-scan`'s history-scan threshold, `refresh-manager-profile`'s always-incremental rule, `new-host`/`new-module`'s convention-deviation rule, `package-nix-tool`'s already-packaged stop, `fleet-rollout`'s fixed host order, `git-push`'s confirm-skip gate, `repo-creator`'s SSH-only remote. Real boundaries (secrets, force-push, sudo gates, destructive confirms) were left alone.
+- **3 verified contradictions resolved**: `interview`'s Rules vs. its own Gotchas (folded the exception into the Rule); `skill-upgrade` vs. `improve-system` (Gotchas-entry writes now auto-apply, matching how `improve-system` already classified that edit); `git-push` vs. `session-closer` (documented that invoking a skill whose own job description already commits to pushing counts as consent).
+- **Added a scope-discipline clause to CLAUDE.md's Parallelize rule** (a sub-agent must stay inside its assigned piece), synced to `claude-rules`' canonical block. Committed `48e856c` (17 files).
+- **xwayland-satellite 0.8.1 pin: closed the last open question** — no dropdown-bug recurrence since the 09-09 switch; pin stays until upstream #156 closes for real. No repo change.
+
+### Decisions
+- Rewrites were scoped by whether the absolute phrasing suppressed a real judgment call, not by keyword match — genuine technical facts and hard boundaries (rtk `find`'s limit, never-force-push-main, no-NOPASSWD hosts) were explicitly checked and left untouched even where the wording matched.
+- Each contradiction was resolved by picking one side explicit in both files rather than softening either rule into vague language.
+
+### Issues / surprises
+- The batch-4 fork's scope violation (re-reading files outside its assignment, producing unrequested synthesis) burned ~2.5x the tokens of its siblings and is exactly the failure mode the new CLAUDE.md clause now guards against.
+- Secret-scan: clean (working tree + full git history).
+
+### Next session
+- Rebuild (no reboot needed) any host to bring the rewrite live in `~/.claude` — rides along with the existing backlog.
+
+**Commits**: `48e856c` (1 commit)
+
+---
+
 ## Session: 2026-09-14 (session 109) — improve-system PR review + send-results root-cause + skill-suggestion/upgrade sweep
 
 **Focus**: Review and merge the weekly `improve-system` PR, find out why it skipped its Discord notification, and run a combined skill-suggestion/skill-upgrade pass across the full transcript history.

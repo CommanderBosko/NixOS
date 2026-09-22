@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-22 (session 115) — manager-run `/dream` + `/improve-system` (PR #26 merged), F1 governance resolution
+
+**Focus**: Two `manager`-agent-overseen runs (`/dream`, `/improve-system`) and resolving a real governance contradiction the dream mining surfaced about pre-delegated merge authority.
+
+### What changed (and why)
+- **`/dream`**: mined 37 transcripts, 9 memory updates + 2 new files auto-applied (no repo changes). Flagged one real contradiction (F1) instead of auto-resolving it — see Decisions.
+- **`/improve-system` → PR #26** (`8716fa2`): 16 verified skill-doc/script fixes across 13 skills + 7 new permission entries; closed the `review-improve-system-pr` `references/*` guardrail gap open since PR #25. CI went green, user merged.
+
+### Decisions
+- **F1 resolved by the user, not the agent**: pre-delegated merge authority ("merge if clean, flag if not") DOES satisfy a `manager` agent's ask-first gate going forward, even without `AskUserQuestion` reachable — PR #14 (2026-09-03) was the correct precedent; the 2026-09-22 classifier block was an overly-cautious outlier, not a new rule. Recorded in `project_review_improve_system_pr_skill.md`.
+- Left the dream overview snapshot's `Status: PENDING_REVIEW` line untouched — twice blocked by the auto-mode classifier's instruction-poisoning heuristic, and the real resolution already lives in memory, so not worth fighting past.
+
+### Issues / surprises
+- Editing the dream overview file's `Status:` line specifically trips the auto-mode classifier (the file embeds parser-instruction comments) — a false positive on a file the user owns, not a real risk. No workaround applied; left as-is.
+
+### Next session
+- gaming: rebuild+reboot to bring PR #26's global skill fixes (`agent-suggestion`/`save-memory`/`session-closer`/`skill-suggestion`) live in `~/.claude`.
+
+**Commits**: `8716fa2` (1 commit, PR #26 squash-merge)
+
+---
+
 ## Session: 2026-09-21 (session 114) — PR #25 merge, repo reorganization, secrets split + exposure incident
 
 **Focus**: One long day across three sessions: merge the weekly improve-system PR, reorganize misplaced/duplicated config the way the `printing.nix` move did, and split the Claude-tooling secrets into a desktop-only file — during which a `!`-command secret exposure surfaced and was contained.
@@ -110,32 +132,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **All 3 desktop hosts: rebuild+reboot** to bring all 4 commits' skill/agent/CLAUDE.md changes live in `~/.claude` — the new `skill-builder` agent specifically needs the reboot to be dispatchable.
 
 **Commits**: `7b8fd41..1f9ddc6` (4 commits)
-
----
-
-## Session: 2026-09-15 (session 110) — absolutist-rules audit across both CLAUDE.md files and all 71 skills
-
-**Focus**: Audit every "never"/"always"/fixed-threshold rule in both CLAUDE.md files and every skill for judgment calls disguised as absolutes, then rewrite the ones that qualify and resolve any real contradictions found.
-
-### What changed (and why)
-- **5 parallel forks scanned all ~70 skill files**; both CLAUDE.md files were audited inline. One fork (batch 4) went out of scope — ignored its assigned 15-skill list and produced its own cross-skill synthesis table instead. Re-launched correctly; the incident directly motivated the CLAUDE.md fix below.
-- **17 files rewritten** from absolute phrasing into standards scaled to actual risk/ambiguity/reuse-payoff: skill-creation step count, interview-before-any-work, research-staleness cutoff, `agent-suggestion`'s recurrence bar, `new-skill`'s bucket-split test, `create-secret-scan`'s history-scan threshold, `refresh-manager-profile`'s always-incremental rule, `new-host`/`new-module`'s convention-deviation rule, `package-nix-tool`'s already-packaged stop, `fleet-rollout`'s fixed host order, `git-push`'s confirm-skip gate, `repo-creator`'s SSH-only remote. Real boundaries (secrets, force-push, sudo gates, destructive confirms) were left alone.
-- **3 verified contradictions resolved**: `interview`'s Rules vs. its own Gotchas (folded the exception into the Rule); `skill-upgrade` vs. `improve-system` (Gotchas-entry writes now auto-apply, matching how `improve-system` already classified that edit); `git-push` vs. `session-closer` (documented that invoking a skill whose own job description already commits to pushing counts as consent).
-- **Added a scope-discipline clause to CLAUDE.md's Parallelize rule** (a sub-agent must stay inside its assigned piece), synced to `claude-rules`' canonical block. Committed `48e856c` (17 files).
-- **xwayland-satellite 0.8.1 pin: closed the last open question** — no dropdown-bug recurrence since the 09-09 switch; pin stays until upstream #156 closes for real. No repo change.
-
-### Decisions
-- Rewrites were scoped by whether the absolute phrasing suppressed a real judgment call, not by keyword match — genuine technical facts and hard boundaries (rtk `find`'s limit, never-force-push-main, no-NOPASSWD hosts) were explicitly checked and left untouched even where the wording matched.
-- Each contradiction was resolved by picking one side explicit in both files rather than softening either rule into vague language.
-
-### Issues / surprises
-- The batch-4 fork's scope violation (re-reading files outside its assignment, producing unrequested synthesis) burned ~2.5x the tokens of its siblings and is exactly the failure mode the new CLAUDE.md clause now guards against.
-- Secret-scan: clean (working tree + full git history).
-
-### Next session
-- Rebuild (no reboot needed) any host to bring the rewrite live in `~/.claude` — rides along with the existing backlog.
-
-**Commits**: `48e856c` (1 commit)
 
 ---
 
