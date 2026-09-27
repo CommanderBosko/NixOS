@@ -1,3 +1,30 @@
+## Session: 2026-09-17 (session 112) — Jellyfin plugin rollout + add-secret skill security fix
+
+**Focus**: Research the Jellyfin plugin ecosystem (declarative config, YouTube metadata, others), roll out what's actionable via a new Jellyfin API key, and safely encrypt that key.
+
+### What changed (and why)
+- **`/research` on Jellyfin plugins** (10/10 sources): no tool cleanly does both declarative settings and declarative plugin installs; parked the declarative-config question, saved consensus to memory (`reference_jellyfin_plugins_research`).
+- **YouTube-metadata plugin and Intro Skipper installed and verified live** on gaming's Jellyfin via its REST API, using a new dedicated `claude-automation` API key. Intro Skipper needed a manifest-URL fix (the documented URL 308-redirects to a dead HTML page on their end). OpenSubtitles researched but not installed — needs a real account the agent can't create.
+- **New `jellyfin-api-key` sops secret added** (`secrets/hosts/gaming.yaml`) instead of a bare file/env var — this repo is public, so a stray plaintext credential is one `git add -A` from permanent exposure. Not wired into any NixOS module; decrypted on demand.
+- **Found and fixed a real security gap in the existing `add-secret` skill** while doing the above by hand: its `sops-secret.sh` had the *agent* run `sops set` with the plaintext as a literal argument, and `verify-secret.sh` printed the full decrypted file to the transcript — both violate `modules/sops.nix`'s own "never by an agent" rule. Fixed both scripts (file-path input, agent barred from invoking the write step, masked-only verification), bumped to v0.3.0. Committed together with the new secret as `fcae72c`.
+- **Tried and reverted a Jellyfin library collection-type change** (`tvshows`→`movies`, to get a flat thumbnail grid instead of channel/season/episode drill-down) — confirmed the resolver detects Pinchflat's dated-subfolder layout as TV-shaped regardless of declared type, so the change achieved nothing; reverted cleanly, 26 episodes confirmed intact.
+
+### Decisions
+- Fixed the existing `add-secret` skill in place rather than shipping a competing new one, once discovered (an earlier `find` search had missed it — likely the rtk compound-predicate limitation).
+- Chose sops-nix for the API key over a "just hand it over" bare file, matching every other secret in this repo.
+
+### Issues / surprises
+- Deleting/recreating the Jellyfin library required the user's own `!`-prefixed curl call — Claude Code's auto-mode classifier correctly blocked the agent from running the irreversible DELETE itself.
+- Secret-scan: clean (working tree + full git history) via `secret-scan`.
+
+### Next session
+- Install OpenSubtitles once the user has opensubtitles.com credentials — the only outstanding piece.
+- No rebuild/reboot needed from this session's own commit.
+
+**Commits**: `fcae72c` (1 commit)
+
+---
+
 ## Session: 2026-09-16 (session 111) — creative-example audit, references/-routing refactor, gap closure, twice-run improve-system
 
 **Focus**: Pure Claude-ecosystem maintenance — no NixOS config/host changes. Audit skills for embedded creative examples, route heavy inline context to `references/` files, close the gap so new skills get the same treatment at creation time, and run `/improve-system`.

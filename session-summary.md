@@ -4,6 +4,28 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-09-27 (session 117) — `/dream` self-heals a real bug in its own wikilink resolver; weekly PR #28 merged
+
+**Focus**: Close out a multi-day gap of Claude-ecosystem-only activity (2026-09-24 through 2026-09-27) — a routine pin re-check, the weekly `improve-system` review/merge cycle, and several `/dream` memory-mining passes, one of which surfaced and fixed a real bug in its own tooling.
+
+### What changed (and why)
+- **`improve-system` weekly sweep merged as PR #28** (`ba03b80`, via `manager`) — single-file MTU comment-citation fix in `new-peer`'s client template. A second, independent request to run `/improve-system` and merge correctly detected the work was already done and fast-forwarded instead of duplicating it.
+- **`/dream` found and fixed a real bug in `find-memory-issues.sh`**: it resolved `[[wikilink]]`s only against a file's literal filename, but this account's memory corpus actually uses two conventions (farmer/screeps link via `name:` frontmatter, NixOS links via the filename stem) — the filename-only check false-positived on every farmer/screeps `name:`-slug link. Fixed to accept either, committed as `d466eb8`, confirmed live in the same session (no rebuild needed for a repo-managed skill symlink).
+- **xwayland-satellite pin re-checked (2026-09-24)**: still holds at 0.8.1 — upstream shipped v0.8.3 with a matching-symptom fix, but it wasn't filed against the tracked issue #156, so the tracking issue itself is still open. No change to the pin.
+
+### Decisions
+- Fixed `find-memory-issues.sh` to accept both wikilink conventions rather than force one project's corpus to conform to the other's — see project-state.md Recent Decisions.
+
+### Issues / surprises
+- The first fix attempt for the wikilink bug (frontmatter-only resolution) broke NixOS's own memory dir before the dual-convention fix was found — worth remembering that this corpus genuinely has two valid conventions, not one right answer.
+
+### Next session
+- No repo/host action pending from this session; the laptop/natalie-laptop rebuild backlog carries over unchanged from session 116.
+
+**Commits**: `d466eb8` (1 commit this session; `ba03b80` landed via a separate manager-agent PR merge)
+
+---
+
 ## Session: 2026-09-23 (session 116) — Static declarative Canon printer queue replaces `cups-browsed`; xwayland-satellite pin re-checked
 
 **Focus**: Diagnose and permanently fix a printer failure (jobs silently discarded, queue looked empty) reported live by the user, then a routine pin re-check and an informational model-choice question. This closes out a session that ran to completion before session-closer was invoked in a fresh conversation.
@@ -103,33 +125,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - README's Current Status/Recent Changes still need the dedicated trim pass flagged in session 112.
 
 **Commits**: `d994dd2..f978b9c` (1 commit)
-
----
-
-## Session: 2026-09-17 (session 112) — Jellyfin plugin rollout + add-secret skill security fix
-
-**Focus**: Research the Jellyfin plugin ecosystem (declarative config, YouTube metadata, others), roll out what's actionable via a new Jellyfin API key, and safely encrypt that key.
-
-### What changed (and why)
-- **`/research` on Jellyfin plugins** (10/10 sources): no tool cleanly does both declarative settings and declarative plugin installs; parked the declarative-config question, saved consensus to memory (`reference_jellyfin_plugins_research`).
-- **YouTube-metadata plugin and Intro Skipper installed and verified live** on gaming's Jellyfin via its REST API, using a new dedicated `claude-automation` API key. Intro Skipper needed a manifest-URL fix (the documented URL 308-redirects to a dead HTML page on their end). OpenSubtitles researched but not installed — needs a real account the agent can't create.
-- **New `jellyfin-api-key` sops secret added** (`secrets/hosts/gaming.yaml`) instead of a bare file/env var — this repo is public, so a stray plaintext credential is one `git add -A` from permanent exposure. Not wired into any NixOS module; decrypted on demand.
-- **Found and fixed a real security gap in the existing `add-secret` skill** while doing the above by hand: its `sops-secret.sh` had the *agent* run `sops set` with the plaintext as a literal argument, and `verify-secret.sh` printed the full decrypted file to the transcript — both violate `modules/sops.nix`'s own "never by an agent" rule. Fixed both scripts (file-path input, agent barred from invoking the write step, masked-only verification), bumped to v0.3.0. Committed together with the new secret as `fcae72c`.
-- **Tried and reverted a Jellyfin library collection-type change** (`tvshows`→`movies`, to get a flat thumbnail grid instead of channel/season/episode drill-down) — confirmed the resolver detects Pinchflat's dated-subfolder layout as TV-shaped regardless of declared type, so the change achieved nothing; reverted cleanly, 26 episodes confirmed intact.
-
-### Decisions
-- Fixed the existing `add-secret` skill in place rather than shipping a competing new one, once discovered (an earlier `find` search had missed it — likely the rtk compound-predicate limitation).
-- Chose sops-nix for the API key over a "just hand it over" bare file, matching every other secret in this repo.
-
-### Issues / surprises
-- Deleting/recreating the Jellyfin library required the user's own `!`-prefixed curl call — Claude Code's auto-mode classifier correctly blocked the agent from running the irreversible DELETE itself.
-- Secret-scan: clean (working tree + full git history) via `secret-scan`.
-
-### Next session
-- Install OpenSubtitles once the user has opensubtitles.com credentials — the only outstanding piece.
-- No rebuild/reboot needed from this session's own commit.
-
-**Commits**: `fcae72c` (1 commit)
 
 ---
 
