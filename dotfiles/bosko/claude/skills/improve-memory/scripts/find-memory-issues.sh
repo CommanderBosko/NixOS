@@ -16,6 +16,23 @@
 # Anything else (a wikilink with no plausible match at all) is printed as
 # informational only and must not be treated as auto-apply-tier cleanup.
 #
+# A [[slug]] link can resolve two different ways across this corpus, and
+# BOTH count as a real, working link (checked before any fuzzy matching):
+#   - against the target file's `name:` FRONTMATTER VALUE (the documented
+#     convention: "link to the other memory's name: slug") -- used by
+#     projects like farmer/screeps, where name: is often a shortened/
+#     hyphenated form that differs from the filename (bones_farming.md has
+#     `name: bones-farming`);
+#   - against the target file's own FILENAME STEM verbatim -- the pattern
+#     this repo's own NixOS memory dir actually uses in practice, where
+#     `[[project_printer_browsed_fix]]` links directly to
+#     project_printer_browsed_fix.md even though that file's `name:` is the
+#     hyphenated `project-printer-browsed-fix`.
+# Checking only one of these two (as an earlier version of this script did,
+# filename-only) produces false positives against whichever project uses the
+# other convention -- don't regress to a single-convention check. A file
+# with no `name:` line at all just has its filename stem as its only slug.
+#
 # Usage: find-memory-issues.sh <project-memory-dir>
 #
 # Prints one finding per line:
@@ -48,21 +65,41 @@ shopt -s nullglob
 existing_files=("$MEMORY_DIR"/*.md)
 shopt -u nullglob
 
+# Each existing file has up to two valid exact-match slugs: its filename
+# stem, and its `name:` frontmatter value (when present and different).
+existing_stems=()
+existing_names=()
+for existing in "${existing_files[@]}"; do
+  exbase="$(basename "$existing" .md)"
+  existing_stems+=("$exbase")
+  name_line="$(grep -m1 -E '^name:[[:space:]]*' "$existing" 2>/dev/null | sed -E 's/^name:[[:space:]]*//')"
+  existing_names+=("$name_line")
+done
+
 for f in "${existing_files[@]}"; do
   base="$(basename "$f")"
   [ "$base" = "MEMORY.md" ] && continue
   grep -oE '\[\[[A-Za-z0-9_-]+\]\]' "$f" 2>/dev/null | sed -E 's/^\[\[//; s/\]\]$//' | sort -u | \
   while IFS= read -r slug; do
-    target="$MEMORY_DIR/$slug.md"
-    if [ -f "$target" ]; then
+    resolved=""
+    for i in "${!existing_files[@]}"; do
+      if [ "$slug" = "${existing_stems[$i]}" ] || { [ -n "${existing_names[$i]}" ] && [ "$slug" = "${existing_names[$i]}" ]; }; then
+        resolved="yes"
+        break
+      fi
+    done
+    if [ -n "$resolved" ]; then
       continue
     fi
     norm_slug="$(normalize "$slug")"
     match=""
-    for existing in "${existing_files[@]}"; do
-      exbase="$(basename "$existing" .md)"
-      if [ "$(normalize "$exbase")" = "$norm_slug" ]; then
-        match="$exbase.md"
+    for i in "${!existing_files[@]}"; do
+      if [ "$(normalize "${existing_stems[$i]}")" = "$norm_slug" ]; then
+        match="${existing_stems[$i]}.md"
+        break
+      fi
+      if [ -n "${existing_names[$i]}" ] && [ "$(normalize "${existing_names[$i]}")" = "$norm_slug" ]; then
+        match="${existing_stems[$i]}.md"
         break
       fi
     done
