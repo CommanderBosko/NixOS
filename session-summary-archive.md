@@ -1,3 +1,30 @@
+## Session: 2026-09-20 (session 113) — flake bump, pi-hole list sync, pin re-check
+
+**Focus**: Routine maintenance across four short threads after the 09-17 close: a lock-only flake bump, repairing pi-hole's list-sync config, and two xwayland-satellite pin checks.
+
+### What changed (and why)
+- **`/flake-update-verify` bumped disko/dms/financeguru/home-manager/nixpkgs/sops-nix** (`f978b9c`); flake-check and per-host deep-eval passed on all 4 hosts. Committed lock-only and pushed, **not activated** — it stacks on the still-unapplied 2026-09-07 bump, so one `/fleet-rollout` covers both.
+- **pi-hole `pihole-updatelists` conf repaired** (on the pi-hole host, no repo change). The "alias" is really `/usr/local/sbin/pihole-updatelists` + a systemd timer. Its conf was missing HaGeZi TIF (live since 2026-08-25 via REST, never added to the conf), so I added it. It also still listed RPiList-Malware, which wasn't on the pi-hole; checked it's alive (updated 2026-09-14, ~596K domains) and re-added it at the user's request. Gravity 3.29M → 3.89M, **29 lists** now.
+- **xwayland-satellite pin re-checked twice** (`pinned-package-status-check`): #156 still open, no maintainer reply, 0.8.2 still the newest release → keep the 0.8.1 pin.
+- Answered "what is OpenPrinting?" (the CUPS/cups-browsed stack this repo already runs) — no change.
+
+### Decisions
+- Left the two deliberately-disabled lists (FadeMind add.Risk, Mandiant APT1) disabled — their comment no longer matches the tool's managed marker, so the timer can't re-enable them.
+- Lock-only bump left un-applied per `/flake-update-verify`'s scope; rollout is a separate, sudo-gated user action.
+
+### Issues / surprises
+- A first fetch of xwayland-satellite issue #156 reported 0 comments — the fetch missing them, not the issue; the GitHub API confirmed 23.
+- Close-out found three stale items in `project-state.md` (Current Goals, Known Issues, a Next Steps line) still saying the xwayland 0.8.1 pin was unapplied/untested, contradicting session 110's own confirmation that gaming gen 414 has it and the user confirmed the fix. Struck through and corrected.
+
+### Next session
+- All 3 desktop hosts: rebuild (`boot` recommended) for the 2026-09-20 bump + backlog via `/fleet-rollout`.
+- OpenSubtitles plugin still waits on the user's opensubtitles.com credentials.
+- README's Current Status/Recent Changes still need the dedicated trim pass flagged in session 112.
+
+**Commits**: `d994dd2..f978b9c` (1 commit)
+
+---
+
 ## Session: 2026-09-17 (session 112) — Jellyfin plugin rollout + add-secret skill security fix
 
 **Focus**: Research the Jellyfin plugin ecosystem (declarative config, YouTube metadata, others), roll out what's actionable via a new Jellyfin API key, and safely encrypt that key.
