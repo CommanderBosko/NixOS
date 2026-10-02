@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   # Flatpaks installed on every desktop host. Host environment.nix files add
@@ -32,10 +32,18 @@
   # every boot it races DNS coming up and fails once ("Could not resolve
   # hostname" for dl.flathub.org) before systemd's 60s on-failure restart
   # retries it successfully. Harmless (self-heals), but it trains you to
-  # ignore a real failed-unit signal at boot — wait on network-online.target
-  # instead so it only runs once network is actually usable.
+  # ignore a real failed-unit signal at boot. network-online.target alone
+  # isn't enough — it's reached before name resolution works on this host
+  # (2026-10-02) — so also poll for flathub's hostname to resolve (bounded to
+  # 60s; on timeout the unit runs anyway and the 60s restart still applies).
   systemd.services.flatpak-managed-install = {
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+    serviceConfig.ExecStartPre = pkgs.writeShellScript "wait-for-flathub-dns" ''
+      for _ in $(seq 60); do
+        ${pkgs.getent}/bin/getent hosts dl.flathub.org >/dev/null && exit 0
+        sleep 1
+      done
+    '';
   };
 }
