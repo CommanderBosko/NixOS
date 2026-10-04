@@ -1,18 +1,6 @@
 { pkgs, lib, inputs, self, ... }:
 
 let
-  # TEMPORARY: xwayland-satellite 0.8.2 broke Steam's dropdown menus under
-  # niri (Supreeeme/xwayland-satellite#156) — 0.8.2's own changelog admits
-  # "fixes for some popup regressions", implying 0.8.1 introduced ones it
-  # didn't fully undo. Pin just this package back to 0.8.1 via the dedicated
-  # nixpkgs-xwayland-satellite-pin input (flake.nix) rather than holding back
-  # nixpkgs itself. Remove this overlay + that input once upstream fixes the
-  # regression and a newer release is confirmed good.
-  xwaylandSatellitePinOverlay = final: prev: {
-    xwayland-satellite =
-      (import inputs.nixpkgs-xwayland-satellite-pin { inherit (prev.stdenv.hostPlatform) system; }).xwayland-satellite;
-  };
-
   # Both bosko and natty have accounts on every niri host (gaming, laptop,
   # natalie-laptop), so both get the same DMS/niri Home Manager config.
   niriUsers = [ "bosko" "natty" ];
@@ -24,8 +12,6 @@ in
     users = niriUsers;
     idleLockTimeout = 600;
   };
-
-  nixpkgs.overlays = [ xwaylandSatellitePinOverlay ];
 
   programs = {
     # Enable Niri
@@ -72,6 +58,6 @@ in
   };
 
   environment.systemPackages = with pkgs; [
-    xwayland-satellite # Niri (>= 25.08) spawns this itself for X11-only apps; must be in PATH — TEMPORARILY pinned to 0.8.1, see overlay above
+    xwayland-satellite # Niri (>= 25.08) spawns this itself for X11-only apps; must be in PATH
   ];
 }
