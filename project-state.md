@@ -1,10 +1,17 @@
 # NixOS Project State
 
-_Last updated: 2026-09-30 (session 119)_
+_Last updated: 2026-10-03 (session 120)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**xwayland-satellite pin lifted (nixpkgs now ships 0.8.3) via a full flake bump; pushed to `main`, NOT yet rebuilt or tested on any host (2026-10-03, session 120).**
+- **`pinned-package-status-check` found the lift condition met on the nixpkgs side:** unstable ships 0.8.3 (contains upstream PR #494, "steam dropdowns closing instantly"); #156 itself is still formally open (23 comments, no activity since 09-02). But this repo's *locked* nixpkgs was still 0.8.2, so removing the pin alone would have regressed — user chose a full `/flake-update-verify` bump over repointing the pin or waiting.
+- **Two commits:** `70bd875` bump (nixpkgs `e158d9e`→`c59305b`, home-manager `7b4c5ec`→`acd21c5`, dms `c455797`→`585827e`, dank-qml-common `660b044`→`13470a9`) and `7881fcb` removes the `nixpkgs-xwayland-satellite-pin` input + overlay (`flake.nix`, `niri.nix`). Verified together: `nix flake check` + 4-host deep-eval PASS, gaming resolves 0.8.3. Commit gate approved via AskUserQuestion. `public-repo-guard` not run (diff was lock hashes + removed comments/code).
+- **Rollback if Steam dropdowns regress on 0.8.3:** re-add the pin input at nixpkgs rev `a5cbcfe954791221bfffe2307f7d1a1bf61a871e` + the overlay (`git revert 7881fcb`).
+- Also in range, from an earlier unclosed session: `9233af3` flatpak-managed-install waits for DNS (bounded 60s poll) — not narrated here.
+- Registry (`project_pinned_packages.md`) updated 2026-10-03 to "lift condition met, test-lift pending"; move to PAST once the user confirms dropdowns work.
 
 **Planning-only session: Pi-hole + famdash Raspberry Pis → NixOS migration scoped and planned; no repo/host changes (2026-09-30, session 119).**
 - **Read-only inventories of both Pis + the FamDash repo** (3 parallel sub-agents): both are Pi 4B on aarch64 Raspberry Pi OS 12; pi-hole 1GB/Ethernet/10.0.0.19 (Pi-hole v6.4.3, unbound upstream, 29 adlists, 8 named clients, `pihole-updatelists`), famdash 4GB/Wi-Fi-only/10.0.0.21 (Express app, `db.json` 136 KB live state, no secrets, no auth). FamDash repo docs are stale (say armhf/12afada/10.0.0.20).
@@ -37,12 +44,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Unfixed finding, not acted on**: natalie-laptop's clock resets to November 2021 on cold boot until it syncs over the network — points at a dying CMOS/RTC battery (no config fix exists), and likely contributed to the original printer failures (a wrong clock can break mDNS-timed resolution). See Known Issues.
 - **`xwayland-satellite` re-checked via `pinned-package-status-check`** — still pinned `0.8.1`, upstream issue #156 still open (23 comments, last activity unchanged since 09-02), nixpkgs-unstable still tops out at `0.8.2`. No change since the last check; nothing to update in memory.
 - **Sonnet 5 vs Opus 5.5 guidance given (informational, no repo change)** — default to Sonnet 5 for this repo's routine engineering work (edits, config changes, bug fixes, boilerplate); reach for Opus 5.5 only for sustained multi-step reasoning under ambiguity (novel architecture/design calls, gnarly cross-cutting bugs, algorithmically dense work). A general heuristic, not project-specific state — not saved to memory.
-
-**Manager-run `/dream` and `/improve-system` passes; PR #26 merged closing the `review-improve-system-pr` `references/` guardrail gap; a real governance question about pre-delegated merge authority resolved by the user (2026-09-22, session 115).**
-- **`/dream` run via the `manager` agent**: mined 37 transcripts since the 09-13 cutoff, reconciled 9 memory-file updates + 2 new memory files (mechanical dedup/extend/fix, auto-applied per established precedent), no repo changes. Flagged one real governance question (F1) rather than auto-resolving it: memory held a contradiction between the PR #14 (2026-09-03) precedent — a `manager` agent treating task-level pre-delegated merge authority ("merge if clean, flag if not") as satisfying the ask-first gate even without `AskUserQuestion` reachable — and a newly-mined 2026-09-22 case where the auto-mode classifier blocked that same pre-delegation pattern, forcing a re-scope short of merging. Report published as a Claude Artifact and posted to Discord.
-- **User resolved F1 directly**: pre-delegated merge authority DOES satisfy the ask-first gate for a `manager` sub-agent going forward, even when `AskUserQuestion` isn't reachable — the PR #14 precedent was correct as handled; the 2026-09-22 classifier block is the outlier (an overly cautious day), not a stricter rule to adopt. Applied to `project_review_improve_system_pr_skill.md` directly (memory-only edit, no repo commit). The dream overview file's own `Status: PENDING_REVIEW` line was deliberately left stale rather than edited to match — twice blocked by the auto-mode classifier as "Instruction Poisoning" (the file embeds parser instructions that trip the heuristic on any edit to its `Status:` line), and since the real resolution already lives in the memory file, there was no actual need to fight the classifier over a point-in-time snapshot.
-- **`/improve-system` run via the `manager` agent, opened as PR #26** (`improve-system/weekly-2026-09-21`): 16 empirically-verified skill-doc/script fixes across 13 skills + 7 new read-only `.claude/settings.json` permission entries. Closed the `review-improve-system-pr` `references/*` boundary gap that had been flagged open since PR #25 — the guardrail script now treats `references/` dirs as in-boundary, same as `scripts/`/`assets/`. Not built: a "redact secrets from transcripts" skill the sweep flagged as a strong candidate, deliberately held back pending a dedicated `/interview` rather than a non-interactive build. Guardrail still correctly flagged `.claude/settings.json` and `baseline-allowlist.md` as outside its auto-fast-path boundary (by design — those carry more risk than a skill doc). User waited for CI green (`evaluate all hosts` passed; DE smoke-eval correctly skipped, no `.nix` touched), then merged squash as `8716fa2`.
-- **Live state**: gaming is still on gen 420 (built 2026-09-21 19:24, booted 21:52) — predates the PR #26 merge, so the global skill edits (`dotfiles/bosko/claude/skills/{agent-suggestion,save-memory,session-closer,skill-suggestion}`) are not yet live in `~/.claude`. Project-local edits from the same PR are already live.
 
 ## Current Goals
 
@@ -412,6 +413,10 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 120 next steps:**
+1. **User: rebuild gaming** (picks up the bump + 0.8.3 / no pin), restart niri or reboot, then open Steam File/Store/Library dropdowns. Report back; if fixed, move the xwayland-satellite registry row to PAST and update `project_steam_dropdown_menu_bug`. If regressed, `git revert 7881fcb`.
+2. This bump stacks onto the unapplied fleet-rollout backlog (laptop/natalie-laptop still owe rebuilds).
 
 **Session 119 next steps** (see Current Goals):
 1. **User: take the pi-hole Teleporter backup** (`sudo pihole-FTL --teleporter` on the Pi, scp to a non-repo path on gaming) and copy famdash's `db.json` + `db.json.bak`.

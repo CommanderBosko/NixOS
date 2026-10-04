@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. Gaming is current (gen 422, 2026-09-23); laptop and natalie-laptop have a rebuild backlog. `flake.lock` on `main` carries three stacked, unapplied input bumps (2026-09-07, 2026-09-20, 2026-09-27/28 — the last via PR #29) awaiting one `/fleet-rollout` pass.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. Gaming is current (gen 422, 2026-09-23); laptop and natalie-laptop have a rebuild backlog. `flake.lock` on `main` carries four stacked, unapplied input bumps (2026-09-07, 2026-09-20, 2026-09-27/28, 2026-10-03) awaiting one `/fleet-rollout` pass. The xwayland-satellite pin was lifted on 2026-10-03 (nixpkgs now ships 0.8.3) and awaits a Steam-dropdown test after the next gaming rebuild.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -197,11 +197,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-09-30 (session 119, latest)** — No NixOS config changes; planning only. Scoped moving the pi-hole and famdash Raspberry Pi 4s onto NixOS: inventoried both Pis and the FamDash repo, recorded the decisions and a stepwise plan (famdash first; Teleporter backup of the un-backed-up pi-hole comes before any work). Nothing built yet.
+**2026-10-03 (session 120, latest)** — Lifted the xwayland-satellite 0.8.1 pin: nixpkgs now ships 0.8.3 (includes upstream PR #494, the Steam-dropdown fix), but the locked nixpkgs was still 0.8.2, so a full `/flake-update-verify` bump (nixpkgs, home-manager, dms) went in first (`70bd875`), then the pin input + overlay were removed (`7881fcb`). `nix flake check` + 4-host deep-eval clean. Not yet rebuilt or tested on any host; revert `7881fcb` if Steam dropdowns regress.
+
+**2026-09-30 (session 119)** — No NixOS config changes; planning only. Scoped moving the pi-hole and famdash Raspberry Pi 4s onto NixOS: inventoried both Pis and the FamDash repo, recorded the decisions and a stepwise plan (famdash first; Teleporter backup of the un-backed-up pi-hole comes before any work). Nothing built yet.
 
 **2026-09-27/28 (session 118)** — No manual NixOS config edits; the `manager` agent ran `/flake-update-verify` non-interactively, bumping nixpkgs/home-manager/dms(+dank-qml-common)/sops-nix, verified clean (`nix flake check` + full 4-host deep-eval). Landed as branch+PR (#29) instead of a direct push, since the manager agent has no interactive commit-gate prompt as a background agent — same substitution as the 2026-09-07 precedent (PR #21). Both standing pins (xwayland-satellite 0.8.1, vpn-server's `rtk` guard) verified untouched. CI went green; merged as `3b61cf4`. Not applied to any host yet.
-
-**2026-09-27 (session 117)** — No NixOS config/host changes; Claude-ecosystem-only session. Weekly `improve-system` sweep merged as PR #28 (`ba03b80`, single-file MTU comment-citation fix); a second independent run correctly detected the work was already done and no-op'd instead of duplicating it. `/dream` mining found and fixed a real bug in its own `improve-memory` wikilink resolver (`find-memory-issues.sh` only matched a file's literal filename, missing the `name:`-frontmatter convention some projects use — fixed to accept either, `d466eb8`). `xwayland-satellite` pin re-checked (2026-09-24), still holds — upstream's v0.8.3 fix wasn't filed against the tracked issue, so it remains open.
 
 ## Roadmap
 

@@ -1,3 +1,25 @@
+## Session: 2026-09-22 (session 115) — manager-run `/dream` + `/improve-system` (PR #26 merged), F1 governance resolution
+
+**Focus**: Two `manager`-agent-overseen runs (`/dream`, `/improve-system`) and resolving a real governance contradiction the dream mining surfaced about pre-delegated merge authority.
+
+### What changed (and why)
+- **`/dream`**: mined 37 transcripts, 9 memory updates + 2 new files auto-applied (no repo changes). Flagged one real contradiction (F1) instead of auto-resolving it — see Decisions.
+- **`/improve-system` → PR #26** (`8716fa2`): 16 verified skill-doc/script fixes across 13 skills + 7 new permission entries; closed the `review-improve-system-pr` `references/*` guardrail gap open since PR #25. CI went green, user merged.
+
+### Decisions
+- **F1 resolved by the user, not the agent**: pre-delegated merge authority ("merge if clean, flag if not") DOES satisfy a `manager` agent's ask-first gate going forward, even without `AskUserQuestion` reachable — PR #14 (2026-09-03) was the correct precedent; the 2026-09-22 classifier block was an overly-cautious outlier, not a new rule. Recorded in `project_review_improve_system_pr_skill.md`.
+- Left the dream overview snapshot's `Status: PENDING_REVIEW` line untouched — twice blocked by the auto-mode classifier's instruction-poisoning heuristic, and the real resolution already lives in memory, so not worth fighting past.
+
+### Issues / surprises
+- Editing the dream overview file's `Status:` line specifically trips the auto-mode classifier (the file embeds parser-instruction comments) — a false positive on a file the user owns, not a real risk. No workaround applied; left as-is.
+
+### Next session
+- gaming: rebuild+reboot to bring PR #26's global skill fixes (`agent-suggestion`/`save-memory`/`session-closer`/`skill-suggestion`) live in `~/.claude`.
+
+**Commits**: `8716fa2` (1 commit, PR #26 squash-merge)
+
+---
+
 ## Session: 2026-09-21 (session 114) — PR #25 merge, repo reorganization, secrets split + exposure incident
 
 **Focus**: One long day across three sessions: merge the weekly improve-system PR, reorganize misplaced/duplicated config the way the `printing.nix` move did, and split the Claude-tooling secrets into a desktop-only file — during which a `!`-command secret exposure surfaced and was contained.
