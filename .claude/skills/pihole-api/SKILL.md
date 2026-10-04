@@ -69,7 +69,8 @@ Pi-hole v6's API is session-based: you POST the CLI password (readable only via 
 
 ## Gotchas
 
-- **A body-less call (GET/DELETE) used to print a stray `bash: line 4: $3: unbound variable`.** SSH flattens the remote command's argv into one string for the remote shell to re-split; an empty `BODY_B64` token vanishes in that re-split, so the remote heredoc's direct `"$3"` reference was genuinely unset. Fixed by using `"${3:-}"` there too (mirroring the already-safe top-level `BODY="${3:-}"`). Caught live via `ship-skill`'s smoke test (2026-08-25, a `GET /api/lists` call) — the call still returned correct data despite the error (no `set -e` in the script), but the noise is now gone.
+See `references/incidents.md` for a fixed historical bug (the body-less-call unbound-variable incident).
+
 - `type` (`block`/`allow`) belongs in the **query string**, not the JSON body, for every `/api/lists` call — see Step 2.
 - Gravity rebuilds go through the CLI (`sudo -n pihole -g` over SSH), not the REST API — there's no `/api/action/gravity`-style endpoint used in practice here.
 - List PUT/DELETE addresses must be URL-encoded as the path segment. If a call 404s, double-check the encoding rather than assuming the list doesn't exist — `GET /api/lists?type=block` first to confirm the exact stored `address` string.

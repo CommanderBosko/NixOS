@@ -42,7 +42,7 @@ hasn't been configured on this host yet.
 See dotfiles/bosko/claude/skills/send-results/SKILL.md's Setup section: a
 Discord webhook has to be created by a human (Discord server settings ->
 Integrations -> Webhooks), then its URL added as a sops-nix secret via the
-add-secret skill and wired into modules/sops.nix, then the host rebuilt.
+add-secret skill and wired into modules/claude-mcp.nix, then the host rebuilt.
 EOF
   exit 1
 fi
