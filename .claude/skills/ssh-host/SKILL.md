@@ -60,7 +60,7 @@ After the session ends (or if the connection is refused/timed out), report the e
 - All local hosts have `AllowUsers bosko` (natalie-laptop also allows `natty`).
 - All hosts have password auth disabled — key auth only.
 - vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
-- Local hosts use `~/.ssh/config` entries with static IPs (hostname resolution unreliable); the IPs are recorded per-host in `.claude/hosts.json` (`.hosts.<name>.ip`).
+- Hosts with a `tailscaleIp` (incl. pi-hole, famdash) get `~/.ssh/config` aliases dialling that stable Tailscale IP, generated from `.claude/hosts.json` by `dotfiles/common/configs/ssh.nix`; the LAN `.hosts.<name>.ip` is DHCP-drifting reference only.
 
 ## Scripts
 
