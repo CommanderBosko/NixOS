@@ -1,3 +1,25 @@
+## Session: 2026-09-23 (session 116) — Static declarative Canon printer queue replaces `cups-browsed`; xwayland-satellite pin re-checked
+
+**Focus**: Diagnose and permanently fix a printer failure (jobs silently discarded, queue looked empty) reported live by the user, then a routine pin re-check and an informational model-choice question. This closes out a session that ran to completion before session-closer was invoked in a fresh conversation.
+
+### What changed (and why)
+- **Root cause was two stacked bugs**: `cups-browsed`'s auto-created queue hadn't survived a reboot since 2026-09-21 (a `network-online.target` fixup unit restarted it before the printer was resolvable, with no retry), and re-adding the printer by hand picked Gutenprint's "Apollo P-2100" PPD instead of the TS9500's — the Canon silently dropped every job while CUPS reported each one "completed."
+- **Fixed by replacing `cups-browsed` outright** (`8085a0e`): `Canon_TS9500_series` is now a static `hardware.printers.ensurePrinters` entry with a checked-in driverless PPD and a `dnssd://` URI, set as default; `cups-browsed` and its fixup unit are disabled. This is the third fix attempt at the same underlying discovery-race symptom (session 71 partial fix, session 75 declined a timer mitigation) — replacing the mechanism instead of patching it again closes the failure class for good.
+- **`printer-diagnose` skill rewritten** (`1c8c36e`) for the new setup, plus a real `pipefail`/`timeout` bug fix that was causing false "no IPP entries" reports.
+
+### Decisions
+- Replace `cups-browsed` entirely rather than add a fourth patch to its discovery-timing race — see project-state.md Recent Decisions for the full reasoning.
+
+### Issues / surprises
+- natalie-laptop's clock resets to November 2021 on cold boot until it syncs over the network — a likely dying CMOS/RTC battery, not fixable via config, and a plausible contributor to the original printer failures. Not acted on.
+
+### Next session
+- laptop + natalie-laptop: `git pull` + `nh os switch` to bring the printer fix live (laptop can't print at all until then).
+
+**Commits**: `8085a0e..1c8c36e` (2 commits)
+
+---
+
 ## Session: 2026-09-22 (session 115) — manager-run `/dream` + `/improve-system` (PR #26 merged), F1 governance resolution
 
 **Focus**: Two `manager`-agent-overseen runs (`/dream`, `/improve-system`) and resolving a real governance contradiction the dream mining surfaced about pre-delegated merge authority.

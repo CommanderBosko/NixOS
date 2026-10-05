@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-04 (session 121) — /improve-system + /dream; skill-audit fixes committed
+
+**Focus**: Have the manager agent run `/improve-system` and `/dream`, review, commit, close.
+
+### What changed (and why)
+- The manager stopped before doing anything: its Training Mode needs the user's own plan approval and it won't accept a relayed one. After the user approved the plan via AskUserQuestion, the main session ran both skills itself.
+- skill-audit over 70 skills (5 reviewers) found ~15 verified bugs (e.g. `switch-de` failing on gaming, `remote-rebuild` restarting the pulled `wg-quick-wg0`, `rollback` ignoring its target); user chose bugs + lens refactors, 5 forks applied them, committed as `901ccd5`. Other improve-system passes were clean.
+- `/dream` mined 11 transcripts; pinned-packages and Pi-migration memories refreshed, 4 wikilinks fixed.
+
+### Decisions
+- Discord/Artifact publish skipped (part of the approved plan); report kept locally.
+- Treated relayed approvals as non-binding and re-asked the user rather than editing the manager's Training Mode toggle.
+
+### Issues / surprises
+- My cwd drifted into the skills dir after a `cd`, making `list-transcripts-since.sh` silently return nothing (it defaults to `$PWD`) — run lib scripts from the repo root.
+- `rtk` mangles bare `=====` echo arguments in Bash; avoid them.
+
+### Next session
+- Rebuild (`nh os boot`) + reboot so the skill fixes go live; rebuild gaming and test Steam dropdowns on 0.8.3 (then move the pin to PAST); laptop/natalie-laptop pull + rebuild backlog; pi-hole Teleporter export (step 0).
+
+**Commits**: `c45bb1e..901ccd5` (2 commits)
+
+---
+
 ## Session: 2026-10-03 (session 120) — xwayland-satellite pin lifted via full flake bump
 
 **Focus**: Check whether the xwayland-satellite pin can be lifted, and lift it if so.
@@ -91,28 +115,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - No repo/host action pending from this session; the laptop/natalie-laptop rebuild backlog carries over unchanged from session 116.
 
 **Commits**: `d466eb8` (1 commit this session; `ba03b80` landed via a separate manager-agent PR merge)
-
----
-
-## Session: 2026-09-23 (session 116) — Static declarative Canon printer queue replaces `cups-browsed`; xwayland-satellite pin re-checked
-
-**Focus**: Diagnose and permanently fix a printer failure (jobs silently discarded, queue looked empty) reported live by the user, then a routine pin re-check and an informational model-choice question. This closes out a session that ran to completion before session-closer was invoked in a fresh conversation.
-
-### What changed (and why)
-- **Root cause was two stacked bugs**: `cups-browsed`'s auto-created queue hadn't survived a reboot since 2026-09-21 (a `network-online.target` fixup unit restarted it before the printer was resolvable, with no retry), and re-adding the printer by hand picked Gutenprint's "Apollo P-2100" PPD instead of the TS9500's — the Canon silently dropped every job while CUPS reported each one "completed."
-- **Fixed by replacing `cups-browsed` outright** (`8085a0e`): `Canon_TS9500_series` is now a static `hardware.printers.ensurePrinters` entry with a checked-in driverless PPD and a `dnssd://` URI, set as default; `cups-browsed` and its fixup unit are disabled. This is the third fix attempt at the same underlying discovery-race symptom (session 71 partial fix, session 75 declined a timer mitigation) — replacing the mechanism instead of patching it again closes the failure class for good.
-- **`printer-diagnose` skill rewritten** (`1c8c36e`) for the new setup, plus a real `pipefail`/`timeout` bug fix that was causing false "no IPP entries" reports.
-
-### Decisions
-- Replace `cups-browsed` entirely rather than add a fourth patch to its discovery-timing race — see project-state.md Recent Decisions for the full reasoning.
-
-### Issues / surprises
-- natalie-laptop's clock resets to November 2021 on cold boot until it syncs over the network — a likely dying CMOS/RTC battery, not fixable via config, and a plausible contributor to the original printer failures. Not acted on.
-
-### Next session
-- laptop + natalie-laptop: `git pull` + `nh os switch` to bring the printer fix live (laptop can't print at all until then).
-
-**Commits**: `8085a0e..1c8c36e` (2 commits)
 
 ---
 
