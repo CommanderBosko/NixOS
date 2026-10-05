@@ -46,7 +46,7 @@ Every skill must fit cleanly into **one** of these four buckets. The best skills
 3. **Data Enrichment** — pulls **external** data in (e.g. look up a package, bump an input to its latest upstream revision).
 4. **Orchestration** — chains other skills into a multi-step playbook (e.g. update → verify → commit → push).
 
-State which bucket this skill lands in and confirm it with the user. Then apply the gate:
+State which bucket this skill lands in, then confirm via **AskUserQuestion** with the four buckets as options (proposed one first, marked Recommended). Then apply the gate:
 
 - **Stop and split it (or trim its scope) before drafting if it does two jobs that would each be useful on their own** — two independent jobs = two skills. Spanning 2+ buckets is usually the symptom of this, not the test itself.
 - **Exception:** an Orchestration skill that *coordinates* other skills is not straddling — chaining a Utility + a Verification step is exactly its job. The straddle test is whether the skill does two **independent** jobs that could each stand alone, not whether it calls more than one tool or touches more than one bucket.
@@ -81,7 +81,7 @@ Record which blocks (if any) get a reference file, its intended name, and the ex
 
 ### 3. Derive the skill name
 
-From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tests`, `deploy-staging`, `check-coverage`). Confirm with the user if it's not obvious.
+From the goal and trigger phrases, derive a short kebab-case name (e.g. `run-tests`, `deploy-staging`, `check-coverage`). If it's not obvious, confirm via **AskUserQuestion** (proposed name first as Recommended; "Other" for a custom name).
 
 ### 4. Draft the SKILL.md
 
@@ -100,7 +100,7 @@ Read the scaffold from `assets/skill-template.md` (relative to this skill's dire
 
 ### 5. Show the draft
 
-Present the full draft SKILL.md to the user with a brief explanation of any choices you made. Ask for any changes before writing.
+Present the full draft SKILL.md to the user with a brief explanation of any choices you made. Ask via **AskUserQuestion** with options **Write it** / **Needs changes** before writing.
 
 ### 6. Write the file
 
@@ -133,7 +133,7 @@ Tell the user:
 
 ## Gotchas
 
-- **The `nixos-dry-run` parenthetical in step 6 only works when the session's cwd is `~/NixOS`** — it's a project-local skill there, not global, so invoking it from another project fails with `Unknown skill: nixos-dry-run`. Prefer the direct `nh os boot /home/bosko/NixOS --dry` command listed first when working from outside `~/NixOS`.
+- **The `nixos-dry-run` suggestion (see `references/write-global-hm-managed.md`) only works when the session's cwd is `~/NixOS`** — it's a project-local skill there, not global, so invoking it from another project fails with `Unknown skill: nixos-dry-run`. Prefer the direct `nh os boot /home/bosko/NixOS --dry` command listed first when working from outside `~/NixOS`.
 
 ## Assets
 

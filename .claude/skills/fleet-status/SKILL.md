@@ -12,6 +12,10 @@ A one-shot, read-only health sweep of every host in this flake (`gaming`, `lapto
 call. Safe — all per-host probes are unprivileged; the only `sudo` is `wg show` on
 vpn-server, which is passwordless there.
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Instructions
 
 1. Run `.claude/skills/fleet-status/scripts/fleet-status.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). For each host it SSHes (using the `~/.ssh/config`

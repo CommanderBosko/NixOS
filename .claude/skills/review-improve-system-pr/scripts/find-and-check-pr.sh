@@ -45,10 +45,9 @@ FILES=$(gh pr view "$NUMBER" --repo "$REPO" --json files --jq '.files[].path')
 VIOLATIONS=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  if [[ "$f" == .claude/skills/*SKILL.md ]] || [[ "$f" == dotfiles/bosko/claude/skills/*SKILL.md ]] \
-     || [[ "$f" == .claude/skills/*/scripts/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/scripts/* ]] \
-     || [[ "$f" == .claude/skills/*/assets/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/assets/* ]] \
-     || [[ "$f" == .claude/skills/*/references/* ]] || [[ "$f" == dotfiles/bosko/claude/skills/*/references/* ]]; then
+  # Anchored regex, not globs: `*` in [[ == ]] crosses `/`, so the old patterns also
+  # matched `.claude/skills/x/NOTSKILL.md` and arbitrarily nested paths.
+  if [[ "$f" =~ ^(\.claude|dotfiles/bosko/claude)/skills/[^/]+/(SKILL\.md|(scripts|assets|references)/.+)$ ]]; then
     continue
   fi
   VIOLATIONS="${VIOLATIONS}${f}"$'\n'

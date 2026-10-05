@@ -31,16 +31,16 @@ Pre-fill Step 1's interview questions from whatever is already given, and confir
 
 ### 1. Interview for the loop's spec
 
-Ask these together as a numbered list. Pre-fill anything the user already gave and confirm rather than re-asking.
+Ask Goal, Loop name, Ordered steps, Overall done-rule, and Output artifact together as a numbered prose list (open-ended). Ask the three pick-one items (6–8: retry cap, Training Mode default, Model tier) in one **AskUserQuestion** call with the recommended option first. Pre-fill anything the user already gave and confirm rather than re-asking.
 
 1. **Goal** — one sentence: what does a successful run produce or change?
 2. **Loop name** — derive a short kebab-case name from the goal (e.g. `weekly-flake-audit`, `draft-release-notes`). Confirm.
 3. **Ordered steps** — the workflow as a numbered list. For each step capture: what it does, the exact command/tool/file involved, and **its own done-rule** (how *that step* is known to pass).
 4. **Overall done-rule** — the single condition that means the whole loop succeeded this run (this is the loop's verification bar).
 5. **Output artifact** — what the loop actually produces (a doc, code, a message, a report). This becomes `output-<date>.md`.
-6. **Retry cap** — attempts per failing step before the loop gives up (default **3**).
-7. **Training Mode default** — confirm **ON** unless the user overrides.
-8. **Model tier** — classify the loop's dominant per-run work: **grunt** (fixed commands, fetch/format/relay, deterministic pass/fail against fixed criteria) → pin `model: haiku` in the generated frontmatter; **judgment** (synthesis, deciding what to do next, drafting non-trivial content, evaluating tradeoffs) → leave `model:` unset so it inherits the session's top model. If mixed, default to leaving it unset.
+6. **Retry cap** — attempts per failing step before the loop gives up. AskUserQuestion options: **3 (Recommended)**, 1, 5.
+7. **Training Mode default** — AskUserQuestion options: **ON (Recommended)**, **OFF**.
+8. **Model tier** — AskUserQuestion options: **grunt** / **judgment** (propose the one you infer first, marked Recommended). Classify the loop's dominant per-run work: **grunt** (fixed commands, fetch/format/relay, deterministic pass/fail against fixed criteria) → pin `model: haiku` in the generated frontmatter; **judgment** (synthesis, deciding what to do next, drafting non-trivial content, evaluating tradeoffs) → leave `model:` unset so it inherits the session's top model. If mixed, default to leaving it unset.
 
 If the goal is fuzzy, push for concreteness before generating — a vague done-rule produces a loop that never knows when it's finished.
 

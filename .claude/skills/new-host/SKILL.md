@@ -129,6 +129,8 @@ Fill placeholders:
 - **remote:** the remote template is for `aarch64-linux`. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
 - **remote (disko):** if Step 2 created a `disko.nix` for this host, uncomment the `disko.nixosModules.disko` line and the `"${self}/hosts/<hostname>/disko.nix"` line in the template; otherwise leave both commented out (or drop them) when filling the entry.
 
+Also tell the user to register the host in `.claude/hosts.json` — it is the single source of truth that `modules/vpn.nix` (`hostsData.hosts.<name>.vpnIp`), fleet-status, fleet-rollout, journal, nix-repl, new-module, and ssh-host all enumerate from. Add the hostname to `.flakeHosts` and a `.hosts.<hostname>` entry (`ssh`, `ip`, `local`, `flakeHost: true`, `desktop`, `envFile`, `arch`; `vpnIp` only if it will join the VPN), then run `/home/bosko/NixOS/.claude/lib/check-hosts-json.sh` to confirm it agrees with the flake's real `nixosConfigurations`. Don't edit `hosts.json` automatically unless the user asks — same rule as `flake.nix`.
+
 ## Step 7 — Remind the user about hardware-configuration.nix
 
 After showing the flake entry, tell the user:

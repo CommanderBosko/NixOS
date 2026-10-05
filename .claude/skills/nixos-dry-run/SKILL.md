@@ -17,7 +17,7 @@ None — this skill takes no user-supplied arguments.
 
 ## Instructions
 
-1. Run `scripts/dry-run.sh` from the skill's directory (or use the full path).
+1. Run `/home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh` (the full path — a bare `scripts/...` path fails from the Bash tool's cwd).
 
 2. The script runs `nh os boot /home/bosko/NixOS --dry`. Parse its output and summarise:
    - Which packages would be added, removed, or updated (look for lines with `+`, `-`, or version changes)
@@ -44,7 +44,7 @@ None — this skill takes no user-supplied arguments.
 ## Script
 
 ```
-scripts/dry-run.sh
+/home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh
 ```
 
 ## Gotchas

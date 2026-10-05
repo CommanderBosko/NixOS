@@ -6,12 +6,7 @@ Then inside the repl, bind the host config for easy access:
 
   cfg = nixosConfigurations.<host>.config
 
-Example queries for <host>:
-  cfg.networking.hostName
-  cfg.environment.systemPackages
-  cfg.services.openssh.enable
-  cfg.home-manager.users.bosko.programs.helix.enable
-  builtins.attrNames cfg.systemd.services
+Example queries for <host> follow below (grouped by host applicability).
 
 ## All hosts
 - `cfg.networking.hostName` — confirm which host you're looking at

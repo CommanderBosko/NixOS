@@ -13,13 +13,13 @@ Open a nix repl pre-loaded with this repo's flake so the user can interactively 
 
 Parse from the user's request:
 
-- **`<host>`** (optional) — one of the four flake hosts `gaming`, `laptop`, `natalie-laptop`, `vpn-server` (the valid set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json`). Aliases `natalie` → `natalie-laptop`, `vpn`/`oracle`/`server` → `vpn-server` are accepted (same alias set as `resolve-host.sh`). If omitted, ask in Step 1.
+- **`<host>`** (optional) — one of the flake hosts; the valid set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (`jq -r '.flakeHosts[]'`). Short aliases are accepted via `/home/bosko/NixOS/.claude/lib/resolve-host.sh`'s alias table. If omitted, ask in Step 1.
 
 ## Step 1 — Resolve the target host
 
-If the user named a host (e.g. `/nix-repl gaming`), use it. Otherwise present the host pick via the **AskUserQuestion tool** with one option per flake host (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`) rather than asking in free-form prose. Skip the question if the user already named a host.
+If the user named a host (e.g. `/nix-repl gaming`), use it. Otherwise present the host pick via the **AskUserQuestion tool** with one option per entry of `.flakeHosts` (read live with `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json`) rather than asking in free-form prose. Skip the question if the user already named a host.
 
-Accept short aliases: `natalie` → `natalie-laptop`, `vpn`/`oracle`/`server` → `vpn-server` (matches `.claude/lib/resolve-host.sh`'s alias table). The valid host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` — these are the only keys under `nixosConfigurations`.
+Accept short aliases per `.claude/lib/resolve-host.sh`'s alias table. The valid host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` — these are the only keys under `nixosConfigurations`.
 
 ## Step 2 — Print the repl command
 

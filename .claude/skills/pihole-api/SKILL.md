@@ -34,25 +34,25 @@ Pi-hole v6's API is session-based: you POST the CLI password (readable only via 
 
    **List block lists (adlists):**
    ```bash
-   bash scripts/pihole-api.sh GET "/api/lists?type=block"
+   bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh GET "/api/lists?type=block"
    ```
    Response is `{"lists":[{...,"address":...,"comment":...,"enabled":...,"id":...}, ...]}` — read `.lists[]` for the current adlist set.
 
    **Add a block list:**
    ```bash
-   bash scripts/pihole-api.sh POST "/api/lists?type=block" '{"address":"<url>","comment":"<text>","groups":[0],"enabled":true}'
+   bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh POST "/api/lists?type=block" '{"address":"<url>","comment":"<text>","groups":[0],"enabled":true}'
    ```
    **Gotcha (hit live, don't repeat it):** `type` is a **query param** (`?type=block`), never a JSON body field — `{"type":"block",...}` in the body fails with `{"error":{"key":"bad_request","message":"Invalid request: Specify type parameter..."}}`.
 
    **Disable (or otherwise update) a list**, addressed by its URL-encoded address as the path segment:
    ```bash
-   bash scripts/pihole-api.sh PUT "/api/lists/<url-encoded-address>?type=block" '{"enabled":false}'
+   bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh PUT "/api/lists/<url-encoded-address>?type=block" '{"enabled":false}'
    ```
    URL-encode the address yourself (e.g. `https://example.com/list.txt` → `https%3A%2F%2Fexample.com%2Flist.txt`) before building the path.
 
    **Delete a list:**
    ```bash
-   bash scripts/pihole-api.sh DELETE "/api/lists/<url-encoded-address>?type=block"
+   bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh DELETE "/api/lists/<url-encoded-address>?type=block"
    ```
 
    **Trigger a gravity rebuild — do NOT route this through the API.** The real session that produced this skill never used a REST endpoint for it; gravity was rebuilt with a plain CLI command over the same SSH connection:

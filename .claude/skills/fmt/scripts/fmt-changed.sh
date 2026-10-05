@@ -7,7 +7,7 @@ REPO="/home/bosko/NixOS"
 
 mapfile -t files < <(
   {
-    git -C "$REPO" diff --name-only HEAD -- '*.nix'
+    git -C "$REPO" diff --name-only --diff-filter=d HEAD -- '*.nix'
     git -C "$REPO" ls-files --others --exclude-standard -- '*.nix'
   } | sort -u
 )

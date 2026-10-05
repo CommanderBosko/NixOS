@@ -10,14 +10,14 @@ Make an app always open maximized (equivalent to pressing Mod+F on it) by adding
 
 This is a sibling of `add-niri-window-rule`: that skill pins an app to a monitor/workspace (`open-on-workspace`/`open-on-output`); this skill only ever sets `open-maximized true`, reusing an app's existing window-rule block if one exists rather than creating a duplicate.
 
-Since 2026-07-17, all app-id `window-rule` blocks live in a per-host overlay file, not the shared `dotfiles/common/configs/niri-config.kdl`. Only `gaming`'s overlay currently has real window-rule content.
+Since 2026-07-17, all app-id `window-rule` blocks live in a per-host overlay file, not the shared `dotfiles/common/configs/niri-config.kdl`. Check the overlay files live (`wc -c hosts/*/niri-overlay.kdl`) to see which hosts actually have window-rule content.
 
 ## Arguments
 
 Parse from the user's request:
 
 - **App** (required) — the application to maximize, e.g. `Kitty`, `Vesktop`, `Zen Browser`.
-- **Host** (optional, default `gaming`) — which host's overlay to edit. Default to `gaming` since it's the only host with real window-rule content today; ask if ambiguous.
+- **Host** (optional, default `gaming`) — which host's overlay to edit. If the user didn't name one, present the pick via the **AskUserQuestion tool** with one option per desktop host (`"desktop": true` in `.claude/hosts.json`), `gaming` first as the default; skip the question if the user already supplied the host.
 
 ## Step 1 — Verify live, don't guess
 

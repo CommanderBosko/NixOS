@@ -17,6 +17,6 @@
 - **Only checks the local host — takes no host argument.** `nh os boot --dry` always builds
   *this machine's* config, even if you pass a different host name; the skill has no argument
   handling, so it's silently ignored rather than erroring. To verify a host you're not on
-  (e.g. `natalie-laptop`, `vpn-server`), use `deep-eval-check` (all 4 hosts) or
+  (e.g. `natalie-laptop`, `vpn-server`), use `deep-eval-check` (every `.flakeHosts` host) or
   `shared-module-check` (impact of a shared-file edit) instead — this tripped us up
   2026-07-18 trying to dry-run `natalie-laptop` from `gaming`.

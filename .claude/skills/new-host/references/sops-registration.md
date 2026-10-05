@@ -14,7 +14,7 @@ Once the machine has booted and `/etc/ssh/ssh_host_ed25519_key` exists:
    /home/bosko/NixOS/.claude/skills/new-host/scripts/derive-age-key.sh <hostname>
    ```
 
-2. **Add it to `.sops.yaml`** — a new anchor under `keys:` and add the alias to the `secrets/common.yaml` creation rule's `age:` list:
+2. **Add it to `.sops.yaml`** — a new anchor under `keys:` and add the alias to the `secrets/common.yaml` creation rule's `age:` list. **A desktop host must also be added to the `secrets/desktop\.yaml$` rule** (since the 2026-09-21 split, `modules/claude-mcp.nix` declares `tailscale-mcp-env` and `discord-webhook-url` from `secrets/desktop.yaml`, and it ships in `desktopModules` — a desktop host that isn't a recipient fails to decrypt them). Headless hosts (server/remote) go in `common.yaml` only:
 
    ```yaml
    keys:
@@ -26,15 +26,23 @@ Once the machine has booted and `/etc/ssh/ssh_host_ed25519_key` exists:
          - age:
              # ... existing ...
              - *<hostname>
+     - path_regex: secrets/desktop\.yaml$     # desktop hosts only
+       key_groups:
+         - age:
+             # ... existing ...
+             - *<hostname>
    ```
 
-3. **Re-encrypt** so the new recipient is included (admin key required):
+3. **Re-encrypt** so the new recipient is included (admin key required) — `desktop.yaml` too for a desktop host:
 
    ```bash
    SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
      nix shell nixpkgs#sops --command sops updatekeys /home/bosko/NixOS/secrets/common.yaml
+   # desktop hosts also:
+   SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt \
+     nix shell nixpkgs#sops --command sops updatekeys /home/bosko/NixOS/secrets/desktop.yaml
    ```
 
-4. `git add .sops.yaml secrets/common.yaml`, then rebuild the host. Password login now works.
+4. `git add .sops.yaml secrets/common.yaml` (plus `secrets/desktop.yaml` for a desktop host), then rebuild the host. Password login now works.
 
 If the host will also **join the VPN** (imports `vpn.nix`), it additionally needs its WireGuard private key encrypted in `secrets/hosts/<hostname>.yaml` (encrypted to admin + this host). Add a matching `creation_rule` in `.sops.yaml` and use the **`add-secret`** skill (or follow the `new-peer` flow) — `vpn.nix` reads `config.sops.secrets."wg-private-key".path`.

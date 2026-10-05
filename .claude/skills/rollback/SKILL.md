@@ -17,7 +17,7 @@ Roll the system back to the previous NixOS generation. This activates the previo
 ## Step 1 — List generations and resolve the target
 
 Run the read-only helper. It lists the last 5 generations, marks the current one, and prints the
-rollback target (current minus 1, or the number you pass):
+rollback target (current minus 1, or the number you pass; exits non-zero if that generation doesn't exist):
 
 ```bash
 /home/bosko/NixOS/.claude/skills/rollback/scripts/rollback.sh [target-generation]
@@ -47,6 +47,12 @@ Do not proceed until the user picks **Roll back to gen N**.
 sudo nixos-rebuild switch --rollback
 ```
 
+That only goes back **one** generation. If the resolved target is *not* current minus 1 (the user passed a specific generation), hand off the targeted form instead — `nixos-rebuild switch --rollback` would silently ignore the target:
+
+```bash
+sudo nh os rollback --to <N>
+```
+
 Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
 
 ## Step 4 — Report result
@@ -73,7 +79,7 @@ the user to run themselves, never executed by Claude directly.
 - No dry-run mode for this flow — rollback either happens or it doesn't. (`nh os rollback` does
   have a `--dry` flag, but this skill deliberately stays on the `nixos-rebuild`-direct flow that's
   been proven across 9+ past sessions — see Gotchas.)
-- Use `nixos-rebuild switch --rollback` — not `nixos-rebuild boot --rollback`.
+- Use `nixos-rebuild switch --rollback` (target = current−1) or `nh os rollback --to <N>` (explicit target) — not `nixos-rebuild boot --rollback`.
 - `switch --rollback` activates immediately; it does NOT require a reboot.
 - If the user wants to roll back further than one generation, they can run `/rollback` again after this one completes.
 - If rollback fails (e.g. no previous generation exists), report the error output and stop — do not attempt workarounds.

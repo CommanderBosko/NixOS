@@ -52,7 +52,7 @@ Ask these together as a numbered list. Where you can infer an answer from the re
 itself (see the detection hints), propose it and ask the user to confirm rather than
 asking blind.
 
-1. **Secret-management scheme** — how does this project handle secrets today? Common
+1. **Secret-management scheme** — ask via **AskUserQuestion** (put the scheme inferred from the detection hints first, marked Recommended; "Other" covers anything else). Options: sops/age, git-crypt/transcrypt/blackbox, gitignored `.env`, cloud/vault manager, none/not sure. How does this project handle secrets today? Common
    answers: no scheme / plain env vars, a gitignored `.env` file, an encrypted directory
    (sops, git-crypt, transcrypt, blackbox), a cloud/vault secrets manager (referenced by
    ID, not stored in-repo), or "not sure." Detection hints: grep for `sops:` / `ENC[` in
@@ -76,7 +76,7 @@ asking blind.
 5. **Extra project-specific patterns** — any secret formats beyond the generic baseline
    worth adding (Stripe keys, an internal API token format, a JWT signing key literal)?
    Optional — leave empty if the baseline covers it.
-6. **Full git-history scan** — scan every commit (catches secrets committed then
+6. **Full git-history scan** — ask via **AskUserQuestion** with options **Yes (Recommended)** / **No**. Scan every commit (catches secrets committed then
    removed)? Default **yes**; only say no when the repo's actual size makes it
    impractically slow — check with `git rev-list --count HEAD` (commit count) or
    `du -sh .git` (clone size) rather than eyeballing "large/old".

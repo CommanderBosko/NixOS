@@ -4,6 +4,11 @@
 # own block in flake.nix (never assumes; scopes strictly to that host so it
 # can't accidentally match another host's DE line).
 #
+# If the host's own block has no literal DE path but calls a shared module-list
+# helper (e.g. gaming -> gamingModules), the helper's definition is searched
+# instead and a "shared helper" note is printed to stderr — editing that line
+# changes EVERY host/variant built from the helper (gaming, gaming-amd, vpn).
+#
 # Exit codes:
 #   0  exactly one DE module found — printed on stdout
 #   1  no host block found, or no DE module found in that block
@@ -34,6 +39,22 @@ fi
 
 MATCHES=$(echo "$BLOCK" | grep -oE 'desktop-environments/[A-Za-z0-9_-]+\.nix' | sed -E 's#desktop-environments/##; s#\.nix$##' | sort -u)
 COUNT=$(printf '%s\n' "$MATCHES" | grep -c .)
+
+if [ "$COUNT" -eq 0 ]; then
+  HELPER=$(echo "$BLOCK" | grep -oE '\b[A-Za-z]+Modules\b' | head -1)
+  if [ -n "$HELPER" ]; then
+    HBLOCK=$(awk -v h="$HELPER" '
+      capturing == 0 && $0 ~ ("^[[:space:]]*" h "[[:space:]]*=") { capturing = 1; start = NR }
+      capturing == 1 { print NR ":" $0; if ($0 ~ /^[[:space:]]*\](.*)?;[[:space:]]*$/) exit }
+    ' "$FLAKE")
+    MATCHES=$(echo "$HBLOCK" | grep -oE 'desktop-environments/[A-Za-z0-9_-]+\.nix' | sed -E 's#desktop-environments/##; s#\.nix$##' | sort -u)
+    COUNT=$(printf '%s\n' "$MATCHES" | grep -c .)
+    if [ "$COUNT" -ge 1 ]; then
+      LINE=$(echo "$HBLOCK" | grep 'desktop-environments/' | head -1 | cut -d: -f1)
+      echo "current-de.sh: NOTE — '$HOST' takes its DE from the shared helper '$HELPER' (flake.nix:$LINE); editing it changes every host/variant built from that helper." >&2
+    fi
+  fi
+fi
 
 if [ "$COUNT" -eq 0 ]; then
   echo "current-de.sh: no desktop-environments module found in '$HOST' block (headless host?)" >&2

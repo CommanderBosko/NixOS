@@ -33,10 +33,19 @@ description: Deploy a config change across all four NixOS hosts one at a time �
 > the mandatory commit gate in `flake-update-verify` can't be skipped by OFF mode. Budget
 > for that pause even on unattended/`/loop`-scheduled runs.
 
+## Arguments
+
+All optional, parsed from the user's phrasing:
+
+- **Host subset** — roll out to only the named hosts (default: every host in `.flakeHosts`).
+- **Order** — a custom host order (default: see Host order below).
+- The change being rolled out is whatever is **committed** in `/home/bosko/NixOS` — there is no
+  change-description argument; Step 2 requires a clean tree.
+
 ## Goal
 
-Roll out the current committed config in `/home/bosko/NixOS` to all four hosts —
-`gaming`, `laptop`, `natalie-laptop`, `vpn-server` — one host at a time, gating each on a
+Roll out the current committed config in `/home/bosko/NixOS` to every flake host (`.flakeHosts`
+in `.claude/hosts.json`) one host at a time, gating each on a
 clean dry-run and a full post-switch health sweep, so a bad change is caught on one host
 before it reaches the next.
 
@@ -49,12 +58,7 @@ is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to desktops-first, server last:
-
-1. `gaming`
-2. `laptop`
-3. `natalie-laptop`
-4. `vpn-server`
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true`) first and headless hosts (`desktop: false`, e.g. `vpn-server`) last.
 
 If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `vpn-server` imports, or a desktop-environment/GPU change that's meaningless on the headless server — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
 
@@ -88,14 +92,16 @@ current host passes its health sweep.**
    `nh os boot /home/bosko/NixOS --dry` via the `nixos-dry-run` skill) once against the
    whole flake, then invoke the `deep-eval-check` skill to deep-evaluate every host's full
    build graph — a shallow `flake-check` pass alone is not sufficient guarantee before a
-   live rollout to all four hosts (`deep-eval-check`'s own SKILL.md names itself as a
+   live rollout to every flake host (`deep-eval-check`'s own SKILL.md names itself as a
    required pre-step here).
    - Done-rule: evaluation completes with no errors AND `deep-eval-check` reports PASS for
      every host.
 
 4. **Per host, in order — DRY-RUN GATE.** For the current host:
    - Local host: invoke `nixos-dry-run` (`nh os boot /home/bosko/NixOS --dry`).
-   - Remote host: `nixos-rebuild dry-activate --flake /home/bosko/NixOS#<host> --target-host <host>`.
+   - Remote host: `nixos-rebuild dry-activate --flake /home/bosko/NixOS#<host> --target-host <ssh-target>`,
+     where `<ssh-target>` is `$(source /home/bosko/NixOS/.claude/lib/hosts.sh && hosts_ssh <host>)`
+     (e.g. vpn-server's target is `bosko@<ip>`, not the bare host name).
    - Done-rule: dry-run evaluates clean and prints the would-be changes with no errors.
      If it errors, stop at this host — do NOT switch.
 
@@ -107,7 +113,7 @@ current host passes its health sweep.**
    - Local host: print `nh os switch /home/bosko/NixOS` and ask the user to run it
      themselves (suggest the `!` prefix). Wait for their confirmation it completed.
    - Remote desktop host (gaming/laptop/natalie-laptop): print
-     `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <host>` and
+     `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <ssh-target>` and
      hand it off the same way — the same missing-NOPASSWD problem applies over SSH.
    - `vpn-server` only: this is the one host with passwordless sudo, so Claude CAN run
      this step itself — but never with `switch` (it tears down the SSH session
@@ -131,8 +137,8 @@ current host passes its health sweep.**
      at this host, record it, and surface the `rollback` skill as the remediation (do not
      auto-rollback). Advance to the next host only on full green.
 
-7. **Repeat steps 4–6** for each remaining host in order until all four are green or one
-   blocks.
+7. **Repeat steps 4–6** for each remaining host in order until every host in scope is green
+   or one blocks.
 
 ## Verification plan
 

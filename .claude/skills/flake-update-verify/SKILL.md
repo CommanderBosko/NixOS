@@ -28,6 +28,10 @@ description: Update flake inputs, prove the result still evaluates, then commit 
 >
 > **Retry cap:** 3 attempts per failing step, then stop and report.
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Goal
 
 Bump all flake inputs in `/home/bosko/NixOS`, prove the updated `flake.lock` still

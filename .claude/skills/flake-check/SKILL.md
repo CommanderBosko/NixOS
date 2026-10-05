@@ -9,6 +9,10 @@ version: 0.1.0
 
 Validate the NixOS flake for evaluation errors before committing or rebuilding. This is a read-only operation that catches syntax errors, undefined variables, and broken derivations without touching the running system.
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Step 1 — Run the check
 
 ```bash

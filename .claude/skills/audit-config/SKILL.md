@@ -58,6 +58,8 @@ Walk the config looking for genuine security regressions. Focus areas, in rough 
 2. **Hardening regressions** — verify the security.nix guarantees are still in force across hosts:
    AppArmor enabled + `killUnconfinedConfinables`, audit daemon, PAM wheel enforcement for sudo,
    kexec disabled / kernel image protection, `kernel.randomize_va_space = 2` (full ASLR).
+   Run `/home/bosko/NixOS/.claude/skills/audit-config/scripts/audit-sweep.sh --hardening` to
+   collect every definition/override of those options, then judge them.
    Report anything silently disabled or overridden.
 3. **Network exposure** — `networking.firewall` disabled or wide-open `allowedTCP/UDPPorts`,
    services bound to `0.0.0.0` that needn't be, SSH `PermitRootLogin`/`PasswordAuthentication`
@@ -76,7 +78,8 @@ Look for real bugs, not style:
 - Duplicate or conflicting option definitions across composed modules.
 - Dead imports, references to files that don't exist, or modules added to git but not imported.
 - Per-host drift: a hardening or fix applied to one host but missed on the others that should have
-  it (compare the five hosts' `environment.nix` / `networking.nix`).
+  it (compare the flake hosts' — `.flakeHosts` in `.claude/hosts.json` — config files, using each
+  host's `envFile`; vpn-server's is `configuration.nix`, not `environment.nix`).
 - Typos in option paths that Nix won't catch until eval.
 
 To catch eval-level errors objectively, run the flake check. This is slow, so it's run
@@ -111,8 +114,9 @@ something this skill does automatically.
 
 ## Script
 
-`.claude/skills/audit-config/scripts/audit-sweep.sh [--flake-check]` — runs the deterministic
-secret-pattern grep over all `*.nix` files and emits raw hits for the model to triage. With
+`.claude/skills/audit-config/scripts/audit-sweep.sh [--hardening] [--flake-check]` — runs the
+deterministic secret-pattern grep over all `*.nix` files and emits raw hits for the model to
+triage. With `--hardening` it also greps the security.nix guarantees and their overrides; with
 `--flake-check` it also runs the slow `nix flake check`. The script does no triage and changes
 nothing — judgment (Steps 1–4) stays with the model.
 
@@ -123,7 +127,7 @@ nothing — judgment (Steps 1–4) stays with the model.
 - Working directory: `/home/bosko/NixOS`
 - Read-only by default — this skill audits and reports; it does not change the system.
 - Scope is the **whole flake**; for diffs use `/security-review` or `/code-review`.
-- Hosts: gaming, laptop, natalie-laptop, vpn-server (the four flake hosts). Shared system modules
+- Hosts: the flake hosts listed in `.flakeHosts` of `.claude/hosts.json`. Shared system modules
   under `modules/`; shared HM configs under `dotfiles/`; host-specific files under `hosts/<host>/`.
 - Always cross-check candidate findings against `CLAUDE.md` and the memory index before reporting,
   to avoid flagging this repo's documented intentional workarounds.

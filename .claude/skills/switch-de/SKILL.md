@@ -71,6 +71,7 @@ This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ...
   Current:  "${self}/modules/desktop-environments/<current>.nix"
   Proposed: "${self}/modules/desktop-environments/<target>.nix"
   ```
+- **Exit 0 with a `NOTE — ... shared helper` line on stderr** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which `gaming`, `gaming-amd` and `vpn` all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
 - **Exit 1** — no DE module found for that host (e.g. a headless host slipped through, or the host block wasn't found). Stop and explain what the script reported; ask the user to verify.
 - **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
 
@@ -93,7 +94,7 @@ Ask the user to confirm via the **AskUserQuestion tool**, with one option `Proce
 
 ## Step 6 — Edit flake.nix
 
-Using the Edit tool, replace **only** the DE import line for the target host. Do not touch any other part of `flake.nix`.
+Using the Edit tool, replace **only** the DE import line for the target host. Do not touch any other part of `flake.nix`. For a host whose DE comes from a shared helper (Step 3 note), the line to replace is the one inside the helper definition (e.g. `flake.nix:129` for gaming) — only after the user confirmed the multi-variant impact.
 
 The old string to match (replace `<current>` with the actual module name found in Step 3):
 
@@ -124,7 +125,7 @@ Then remind them of the next steps:
 
 ## Scripts
 
-- `scripts/current-de.sh <host>` — parses `flake.nix` scoped to the named host's block and prints its current DE module name. Exit 0 = found (stdout has the name), exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
+- `scripts/current-de.sh <host>` — parses `flake.nix` scoped to the named host's block and prints its current DE module name. Exit 0 = found (stdout has the name; a stderr NOTE means the DE line lives in a shared helper such as `gamingModules`), exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
 
 ## Key constraints
 

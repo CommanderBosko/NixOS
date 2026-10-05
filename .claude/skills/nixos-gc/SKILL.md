@@ -36,7 +36,7 @@ anything privileged happens.
 ### Step 4 — Hand off the actual deletion to the user
 
 `scripts/gc.sh` (the destructive script) calls `sudo nix-env --list-generations`, `sudo nix-env
---delete-generations`, and `sudo nix-store --gc`. There is no NOPASSWD rule for `sudo` on any host,
+--delete-generations`, and `sudo nix-store --gc`. There is no NOPASSWD rule for `sudo` on the local desktop hosts (only vpn-server has passwordless sudo, and this skill never targets it),
 so running `scripts/gc.sh` directly via the Bash tool will fail with "a password is required" —
 don't attempt it and then report the failure. Instead, tell the user the exact command
 (`scripts/gc.sh`, or its full path) and ask them to run it themselves (suggest the `!` prefix).

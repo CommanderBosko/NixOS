@@ -21,29 +21,9 @@ Invocation inputs (gather any the user didn't already give in Step 1):
 - **Operation** — new key, or edit/rotate an existing one. The plaintext value itself is
   never gathered as a chat input — see Step 1.
 
-## Repo layout (read this first)
+## Repo layout
 
-- **`.sops.yaml`** — recipient map. `keys:` lists age public keys (admin + one per host,
-  each derived from that host's SSH ed25519 host key). `creation_rules:` say which
-  recipients each file is encrypted to, matched by `path_regex`.
-- **`secrets/common.yaml`** — shared secrets, encrypted to **admin + all hosts**. The key
-  list changes over time (already has entries beyond the original three) — always check
-  the file live (`grep -o '^[a-zA-Z0-9_-]*:' secrets/common.yaml`) rather than trusting an
-  inline enumeration here, same as the per-host guidance below.
-- **`secrets/desktop.yaml`** — secrets only the desktop hosts need (currently the bosko-owned
-  Claude tooling secrets), encrypted to **admin + gaming, laptop, natalie-laptop** but NOT
-  vpn-server. Declare these in a desktop-only module (`modules/claude-mcp.nix` is the
-  example) — declaring one in a `commonModules` file would make vpn-server try to decrypt a
-  file it can't read and fail activation.
-- **`secrets/hosts/<host>.yaml`** — per-host secrets, encrypted to **admin + that host
-  only**. Every host holds at least `wg-private-key` (its WireGuard key). Don't assume "each
-  holds exactly one key" — per-host secrets live in `secrets/hosts/<host>.yaml` and the key
-  list grows over time, so check the file live
-  (`grep -o '^[a-zA-Z0-9_-]*:' secrets/hosts/<host>.yaml`) for the current list rather than
-  trusting a hardcoded enumeration here.
-- **Admin key**: `~/.config/sops/age/keys.txt` (NOT in repo). Required for all edits.
-  Export it for every sops command: `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt`.
-- Tooling isn't installed system-wide — run sops via `nix shell nixpkgs#sops --command …`.
+Where secrets live (`.sops.yaml` recipient map, `secrets/common.yaml`, `secrets/desktop.yaml`, `secrets/hosts/<host>.yaml`, the admin key, running sops via `nix shell`): read `references/repo-layout.md` first, and always check the secret files' key lists live rather than trusting an enumeration.
 
 ## Step 1 — Gather what's needed
 
@@ -139,23 +119,7 @@ for the user to confirm the command ran before moving to Step 5.
 
 ## Step 4 — Wire it into NixOS
 
-A secret in the file does nothing until it's declared and referenced. Remind the user (or
-do it if they ask):
-
-```nix
-# declare it (in sops.nix for shared, or the relevant host module for per-host)
-sops.secrets."new-key-name" = {
-  sopsFile = ../../../secrets/common.yaml;   # adjust relative path to the file
-  # neededForUsers = true;                    # only for user password hashes
-  # owner = "someservice"; mode = "0400";     # if a service must read it
-};
-
-# reference it by its runtime path
-services.foo.passwordFile = config.sops.secrets."new-key-name".path;
-```
-
-`config.sops.secrets."<name>".path` resolves to `/run/secrets/<name>`
-(or `/run/secrets-for-users/<name>` when `neededForUsers = true`).
+A secret in the file does nothing until it's declared (`sops.secrets."<name>"`) and referenced (`config.sops.secrets."<name>".path`). Remind the user (or do it if they ask); the declaration/reference template and the `neededForUsers` path note are in `references/nix-wiring.md`.
 
 ## Step 5 — Verify
 

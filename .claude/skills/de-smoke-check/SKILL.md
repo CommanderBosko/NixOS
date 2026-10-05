@@ -11,7 +11,7 @@ Force Nix to fully evaluate one named module under `modules/desktop-environments
 
 ## Why this exists
 
-Only 1 of the 12 modules under `modules/desktop-environments/` is actually imported by any host — `niri`, imported by all three desktop hosts (gaming, laptop, natalie-laptop). The other 11, including `plasma`, are edited only through `lib.deSmoke`, the laptop config with each DE module swapped in. `nh os boot --dry` on a real host only exercises whatever DE that host already has wired in; it silently verifies nothing about an unwired module you just touched. `nix flake check` is also insufficient here — like the four real hosts, it's a shallow check. This skill closes both gaps for the unwired case.
+Most modules under `modules/desktop-environments/` are not imported by any host — currently only `niri` is, by all the desktop hosts (check `flake.nix`). The rest, including `plasma`, are edited only through `lib.deSmoke`, the laptop config with each DE module swapped in. `nh os boot --dry` on a real host only exercises whatever DE that host already has wired in; it silently verifies nothing about an unwired module you just touched. `nix flake check` is also insufficient here — like the four real hosts, it's a shallow check. This skill closes both gaps for the unwired case.
 
 ## Arguments
 
@@ -53,6 +53,6 @@ This forces full evaluation of the laptop config with `<name>` swapped in as the
 
 - Working directory: `/home/bosko/NixOS`
 - Read-only, safe to run anytime — it only evaluates, never builds or activates.
-- `lib.deSmoke` always swaps the target DE into the **laptop** host's other modules (hardware-configuration, environment.nix, networking.nix, nvidia.nix) — a failure could in rare cases stem from a laptop-specific interaction rather than the DE module itself, but for the common case (a typo, an unknown option, a missing package) this is exactly equivalent to what CI's weekly `de-smoke` job runs.
+- `lib.deSmoke` always swaps the target DE into the **laptop** host's other modules (`laptopModules` in `flake.nix`: hardware-configuration, environment.nix, nvidia, qbittorrent and shared-folder-client) — a failure could in rare cases stem from a laptop-specific interaction rather than the DE module itself, but for the common case (a typo, an unknown option, a missing package) this is exactly equivalent to what CI's weekly `de-smoke` job runs.
 - This is the DE-module-specific counterpart to `deep-eval-check`, which deep-evaluates the four real hosts. Use `deep-eval-check` for hosts, `de-smoke-check` for unwired DE modules.
 - If the DE module is actually wired into a host, prefer `nixos-dry-run` / `deep-eval-check` on that host instead — `de-smoke-check` is specifically for the unwired case.

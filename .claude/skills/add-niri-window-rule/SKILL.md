@@ -10,7 +10,7 @@ Pin an app to a specific monitor via a niri window-rule (`open-on-workspace`/`op
 
 This is the sibling of `add-niri-keybind`: that skill handles binds plus any window-rule that rides along with a *new keybind*; this skill handles a standalone "always open X on monitor Y" request with no keybind involved.
 
-Since 2026-07-17, workspaces/window-rules live in a **per-host overlay** file (`hosts/<host>/niri-overlay.kdl`), pulled into the shared `dotfiles/common/configs/niri-config.kdl` via a native niri `include "niri-overlay.kdl"` directive — not in the shared file itself. This means a rule added here is automatically scoped to just the target host; there's no cross-host leakage to worry about the way there was before that split. Only `gaming`'s overlay currently has real content (its two-monitor Asus+Dell setup); `laptop`'s and `natalie-laptop`'s overlays are empty placeholders.
+Since 2026-07-17, workspaces/window-rules live in a **per-host overlay** file (`hosts/<host>/niri-overlay.kdl`), pulled into the shared `dotfiles/common/configs/niri-config.kdl` via a native niri `include "niri-overlay.kdl"` directive — not in the shared file itself. This means a rule added here is automatically scoped to just the target host; there's no cross-host leakage to worry about the way there was before that split. Check the overlay files live (`wc -c hosts/*/niri-overlay.kdl`) to see which hosts have real content — gaming's holds its two-monitor Asus+Dell setup.
 
 ## Arguments
 
@@ -18,7 +18,7 @@ Parse from the user's request:
 
 - **App** (required) — the application to pin, e.g. `Deezer`, `Discord`.
 - **Target monitor** (required) — which physical monitor/output the app should always open on, e.g. "Dell monitor", "Asus monitor".
-- **Host** (optional, default `gaming`) — which host's overlay to edit. Default to `gaming` since it's the only host with a real multi-monitor setup today; ask if ambiguous.
+- **Host** (optional, default `gaming`) — which host's overlay to edit. If the user didn't name one, present the pick via the **AskUserQuestion tool** with one option per desktop host (`"desktop": true` in `.claude/hosts.json`), `gaming` first as the default; skip the question if the user already supplied the host.
 
 ## Step 1 — Verify live, don't guess
 

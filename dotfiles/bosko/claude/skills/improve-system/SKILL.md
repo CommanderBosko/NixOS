@@ -63,7 +63,7 @@ Several of these skills edit **repo-managed global skills** under `dotfiles/bosk
 
 Always runs, even on a focus-argument partial pass and even when every step came back clean — a clean pass is a result worth reporting, not a reason to skip the notification.
 
-1. Write the Step 3 consolidated report (applied / awaiting-your-call / clean), plus Step 4's certify status if it ran, to `~/.claude/improve-system/report-<ts>.md` (`<ts>` = `date +%Y%m%d-%H%M%S`; create the directory if it doesn't exist). This is the same content already shown in chat — just captured to a file so `send-results` has something to publish.
+1. Write the Step 3 consolidated report (applied / awaiting-your-call / clean), plus Step 4's certify status if it ran, via `/home/bosko/.claude/skills/improve-system/scripts/write-report.sh` (pipe the report body to its stdin; it creates `~/.claude/improve-system/`, names the file `report-<ts>.md`, verifies it is non-empty, and prints the path to hand to `send-results`). This is the same content already shown in chat — just captured to a file so `send-results` has something to publish.
 2. Hand it off:
    ```
    Skill send-results: <report-file> "<one-line summary: N low-risk fixes applied, M structural items awaiting approval, rest clean>"
@@ -78,7 +78,11 @@ Optional focus argument in the user's phrasing — e.g. "improve-system, skills 
 
 - **Don't reimplement the sub-skills.** This is an orchestrator; invoke each via the Skill tool. If you find yourself writing audit logic or drafting gotchas by hand, you've drifted out of bucket.
 - **Auto-apply means *additive only*.** A change that rewrites or deletes existing content is structural even if it "feels safe" — confirm it.
-- **Repo-managed skill edits don't take effect live.** They need a rebuild + new session; never report a hardened global skill as "active now."
+- **Repo-managed skill edits don't take effect live.** They need a rebuild (+ reboot via `nh os boot`); never report a hardened global skill as "active now."
 - **This skill is itself repo-managed.** `claude-hm/files.nix` links it automatically, but it needs a rebuild before its `~/.claude/skills/improve-system` symlink reflects any edit.
 - **`send-results` publishes the report as a Claude Artifact, which leaves the local machine.** Same trade-off `send-results` itself documents — the consolidated report (skill names, file paths, proposed changes) becomes a shareable `https://` link, starting private but cacheable once shared. That's expected for this step, not a bug; don't route Step 5 through anything else to avoid it.
 - Run looks anomalous (skipped Discord report, invalid `settings.json` written, closed without Step 5)? Check `references/gotchas.md` for three known failure modes first.
+
+## Scripts
+
+- `/home/bosko/.claude/skills/improve-system/scripts/write-report.sh` — Step 5: stdin → `~/.claude/improve-system/report-<ts>.md`; prints the path; exits 1 on an empty report.

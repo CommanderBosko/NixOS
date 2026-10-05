@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # gc.sh — Garbage collect old Nix store paths and system generations.
 # HIGH RISK: permanently deletes generations older than the 3 most recent. Irreversible.
-# Only run after explicit YES confirmation from the user.
+# Only run after the user picks Proceed at SKILL.md's AskUserQuestion gate.
 set -euo pipefail
 
 echo "==> Current system profile generations"

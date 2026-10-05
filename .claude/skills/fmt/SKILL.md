@@ -33,7 +33,7 @@ If nothing changed, say the changed `.nix` files were already correctly formatte
 ## Script
 
 ```
-scripts/fmt-changed.sh
+/home/bosko/NixOS/.claude/skills/fmt/scripts/fmt-changed.sh
 ```
 
 ## Key facts

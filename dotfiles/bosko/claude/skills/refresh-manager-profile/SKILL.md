@@ -9,34 +9,23 @@ On-demand incremental refresh of the `manager` agent's profile (`dotfiles/bosko/
 
 ## Arguments
 
-Optional: a request for a full re-mine instead of the incremental since-last-run scan (e.g. "fully re-mine the manager profile", or "re-mine <project>" to scope it to one project). When given, Step 2 passes an empty cutoff for the affected project(s) instead of the discovered one. With no argument, every project runs its normal incremental scan.
+Optional: a request for a full re-mine instead of the incremental since-last-run scan (e.g. "fully re-mine the manager profile", or "re-mine <project>" to scope it to one project). When given, run the script with `full` (or `full <project-path>`) so it uses an empty cutoff for the affected project(s) instead of the discovered one. With no argument, every project runs its normal incremental scan.
 
 ## Steps
 
-### 1. Discover the scan universe
+### 1–2. Discover projects and per-project file lists
 
-The profile draws on every project this user has run Claude Code in, not a fixed list — new projects should be picked up automatically:
-
-```bash
-~/.claude/skills/lib/list-all-projects.sh
-```
-
-This reads the ground-truth `cwd` field out of each project's own transcripts rather than globbing directory names — a one-level glob under `~/projects/*/` would silently miss a real project that lives a level deeper (e.g. `~/projects/Codingame/Mad-Pod-Racing`, whose slugified transcript-dir name contains a literal hyphen that a glob-and-unslugify approach can't tell apart from a path separator). Each output line is `<real-project-path-or-UNKNOWN><TAB><transcript-dir>` — for each line, the real-project-path column is a candidate (skip any `UNKNOWN` row; there's no real project directory to mine memory-adjacent context from). Not every candidate will have transcript history worth mining (some are throwaway or predate Claude Code use there).
-
-### 2. Get a per-project cutoff and file list
-
-For each candidate project directory:
+Steps 1–2 are mechanical, so a script does them: it enumerates every project this user has run Claude Code in (via `list-all-projects.sh`, which reads each transcript's real `cwd` rather than un-slugifying directory names, skipping `UNKNOWN` rows), finds each project's cutoff, and lists transcripts newer than it.
 
 ```bash
-CUTOFF=$(~/.claude/skills/lib/find-last-skill-invocation.sh refresh-manager-profile "<project-dir>")
-~/.claude/skills/lib/list-transcripts-since.sh "$CUTOFF" "<project-dir>"
+~/.claude/skills/refresh-manager-profile/scripts/list-new-activity.sh [full [<project-path>]]
 ```
 
-A project with no transcript directory fails soft (empty output) — skip it. A project with an empty file list has nothing new since last refresh — skip it too; don't pad the run by re-mining it. Exception: if the user asked for a full re-mine, or the incremental-scan logic itself was just fixed, pass an empty cutoff for the affected project(s) instead of the discovered one — `list-transcripts-since.sh` treats that as "list the full history." Only projects with a non-empty new-file list proceed to step 3. If **every** project comes back empty (including on a first-ever run, where `find-transcript-dir.sh` may simply find nothing new since the initial full mining pass), report that plainly and stop — there's nothing to update.
+No argument = incremental scan of every project. `full` = empty cutoff for every project; `full <project-path>` = empty cutoff for that one project only (use for a user-requested full re-mine, or right after fixing the incremental-scan logic itself). Output is `PROJECT<TAB><path><TAB><cutoff>` followed by `FILE<TAB><name>` lines per project; projects with nothing new are omitted. Only projects that appear proceed to step 3. If the output is empty, report that plainly and stop — there's nothing to update. (Not every candidate has history worth mining; a project with no transcript dir is silently skipped.)
 
 ### 3. Fan out mining across projects with new activity
 
-For each project with new files, spawn one `transcript-scanner` agent, passing it the explicit file list from step 2 (not a project-dir for it to resolve itself — you already have the exact scope). Ask it the same rubric the initial profile build used:
+For each project with new files, spawn one `transcript-scanner` agent, passing it the explicit file list from steps 1–2 (not a project-dir for it to resolve itself — you already have the exact scope). Ask it the same rubric the initial profile build used:
 
 - Decision-making style (thorough vs. easier path, what tipped the balance)
 - Risk tolerance & caution triggers (what got waved through vs. what stopped for confirmation)
@@ -44,7 +33,7 @@ For each project with new files, spawn one `transcript-scanner` agent, passing i
 - Communication/reporting style
 - Technical philosophy (root-cause vs. patch, when it reaches for a sub-agent/skill)
 - Any explicit standing rule stated for how a delegate/agent should behave
-- For family/shared-stakes projects (`FamDash`, `natalie`, `home-improvement`): how the user handles decisions affecting others
+- For family/shared-stakes projects (the list lives in `agents/manager.md`'s "Shared-stakes carve-out" — don't re-list it here): how the user handles decisions affecting others
 
 Same rules as the original mining pass: distilled, paraphrased traits with brief evidence — never raw transcript dumps, never verbatim sensitive/financial/family content. These are genuinely independent (disjoint project scopes) — run them concurrently, one call, per the standing parallelization rule.
 
@@ -72,5 +61,5 @@ State plainly: which projects had new activity, how many new traits/corroboratio
 
 ## Gotchas
 
-- Don't re-derive `find-transcript-dir.sh`'s slug math by hand to enumerate "all projects with history" — it's a lossy one-way transform (literal hyphens in directory names like `home-lab`/`random-searches` are indistinguishable from path separators once slugified). Always discover candidates from the real filesystem (step 1) and let the script resolve each one forward, not the reverse.
-- A project that shows up in step 1 but has no `~/.claude/projects/<slug>/` directory at all (never opened in Claude Code, or opened only outside this flow) is not an error — skip it silently, don't report it as a gap.
+- Don't re-derive `find-transcript-dir.sh`'s slug math by hand to enumerate "all projects with history" — it's a lossy one-way transform (literal hyphens in directory names like `home-lab`/`random-searches` are indistinguishable from path separators once slugified). Always discover candidates from the real filesystem (the script) and let it resolve each one forward, not the reverse.
+- A project that shows up in the script output but has no `~/.claude/projects/<slug>/` directory at all (never opened in Claude Code, or opened only outside this flow) is not an error — skip it silently, don't report it as a gap.

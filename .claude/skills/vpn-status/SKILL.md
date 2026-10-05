@@ -35,6 +35,9 @@ None — it always targets `vpn-server`.
 
 2. If the script fails (SSH timeout or auth error), report the error clearly and suggest checking
    that the Oracle instance is running and the SSH key at `~/.ssh/id_ed25519` is correct.
+   **Known outage:** Oracle admin-disabled the vpn-server instance on 2026-08-18 (see the
+   `project_vpn_server_oracle_disabled` memory), so every run fails with an SSH timeout until it is
+   restored — that failure is expected, not a new fault.
 
 ## Script
 

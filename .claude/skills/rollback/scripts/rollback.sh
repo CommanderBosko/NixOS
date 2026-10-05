@@ -23,7 +23,7 @@ for g in "${GENS[@]}"; do
   ts="$(stat -c '%y' "$PROFILES/system-${g}-link" 2>/dev/null | cut -d. -f1)"
   mark=""; [[ "$g" == "$CURRENT" ]] && mark="  <- current"
   printf '  %-5s %s%s\n' "$g" "$ts" "$mark"
-done | tail -6
+done | tail -5
 
 TARGET="${1:-$((CURRENT - 1))}"
 echo
@@ -31,5 +31,6 @@ echo "current-generation: $CURRENT"
 echo "rollback-target:    $TARGET"
 
 if ! printf '%s\n' "${GENS[@]}" | grep -qx "$TARGET"; then
-  echo "WARNING: target generation $TARGET not found in the list above" >&2
+  echo "ERROR: target generation $TARGET does not exist" >&2
+  exit 1
 fi

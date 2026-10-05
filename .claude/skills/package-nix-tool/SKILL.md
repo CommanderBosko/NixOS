@@ -108,8 +108,9 @@ doesn't need to change when adding a package.
 
 Then add the package to wherever it should actually be installed — ask via **AskUserQuestion**
 if not already clear:
-- A specific user's packages (`modules/users.nix`, mirroring the `tailscale-mcp # MCP server
-  backing...` comment style — say what it's for and point back at its `pkgs/` file and overlay).
+- A specific user's packages (`modules/users.nix`), or a module that already installs related
+  tools (the `tailscale-mcp # MCP server backing...` line lives in `modules/claude-mcp.nix`) —
+  mirror that comment style: say what it's for and point back at its `pkgs/` file and overlay.
 - A specific host's `environment.systemPackages` (that host's `environment.nix`).
 - Shared Home Manager packages (`dotfiles/common/` or `dotfiles/bosko/`), if it's a per-user tool
   both `bosko` and `natty` should get.

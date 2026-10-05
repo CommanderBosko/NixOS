@@ -28,7 +28,7 @@ If no skill caused friction this session, say so plainly and stop.
 This prints the ISO-8601 timestamp of skill-upgrade's previous invocation for this project, or nothing if it's never run before. Then feed that cutoff into the misfire scan:
 
 ```bash
-scripts/find-skill-misfires.sh <repo-root> [max-files] [since-timestamp]
+~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh <repo-root> [max-files] [since-timestamp]
 ```
 
 from this skill's own base directory (the "Base directory for this skill" line shown when it launched — e.g. `~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh`). Pass the cutoff as the third argument and it scans every transcript touched since then instead of a fixed recent-N window; omit it (or leave it empty) to fall back to the most-recently-modified `max-files` transcripts (default 15) — that fallback only applies on skill-upgrade's first-ever run for this project. It prints every `is_error` tool result alongside the tool call and the `Skill` that was active at the time. Treat a recurring cross-session failure — the same skill, same tool, same error shape — as a stronger signal than a one-off slip this session.
@@ -65,9 +65,13 @@ Either way, this is a purely additive, reversible edit to a file you're already 
 
 After editing repo-managed skills, run the `nixos-dry-run` skill to confirm the config still
 evaluates. Report which skills were upgraded, the gotcha added to each, and the reminder that a
-rebuild + reboot (it only stages the change for next boot) is needed before the change reaches
+rebuild activation (`nh os switch`, or `nh os boot` + reboot, which only stages the change for next boot) is needed before the change reaches
 `~/.claude` — no new session required beyond that, since skill discovery reads from disk
 per-invocation.
+
+## Arguments
+
+None required. The misfire scan takes `<repo-root>`, an optional `[max-files]` (default 15; only used when there's no prior run), and an optional `[since-timestamp]` — the cutoff printed by `find-last-skill-invocation.sh`.
 
 ## Gotchas
 

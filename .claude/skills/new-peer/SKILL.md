@@ -67,7 +67,7 @@ Present the peer block to add to `hosts/vpn-server/wireguard.nix`. It goes insid
 
 Use the `SERVER_PUBKEY` and `SERVER_ENDPOINT` values printed by `scripts/next-vpn-ip.sh` in Step 2 (both read live from `modules/vpn.nix` — don't hardcode a copy here; re-run the script if Step 2 happened long enough ago that either value might be stale).
 
-**If the new device is a NixOS host**, tell the user to add a `vpnIp` entry for it (the address from Step 2) to `.claude/hosts.json` — `modules/vpn.nix` derives the host's `wg0` address from that entry, so no per-host address line is needed — and, if `modules/vpn.nix` is still commented out of `desktopModules` in `flake.nix` (as it is while vpn-server is down), to re-enable it there.
+**If the new device is a NixOS host**, tell the user to add a `vpnIp` entry for it (the address from Step 2) to `.claude/hosts.json` — `modules/vpn.nix` derives the host's `wg0` address from that entry, so no per-host address line is needed — and to add the host's WireGuard public key under `.vpn.peers` there too (`"<publicKey>": "<hostname>"`; fleet-status's `hosts_vpn_peer_name` reads it, so without this the host shows as a raw key in the handshake table) — and, if `modules/vpn.nix` is still commented out of `desktopModules` in `flake.nix` (as it is while vpn-server is down), to re-enable it there.
 
 They also need to wire their WireGuard private key through **sops-nix**, the same way every existing
 host does — `modules/vpn.nix` sets `privateKeyFile = config.sops.secrets."wg-private-key".path`,

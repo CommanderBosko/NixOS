@@ -20,10 +20,11 @@ The vpn-server SSH target and arch live in `/home/bosko/NixOS/.claude/hosts.json
 ```bash
 VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' /home/bosko/NixOS/.claude/hosts.json)"
 echo "$VPN_SSH"
-# bosko@150.136.232.63
 ```
 
 If the user names any host other than `vpn-server` (a desktop, or the old `server`), explain it is not a valid remote-rebuild target and stop.
+
+> **Pre-flight — known outage:** Oracle admin-disabled the vpn-server instance on 2026-08-18 (see the `project_vpn_server_oracle_disabled` memory), so Step 1 is expected to fail until the instance is restored. If it times out, check that memory before debugging firewall/security-list causes.
 
 ## Step 1 — Verify SSH connectivity
 
@@ -75,7 +76,7 @@ For whichever hosts actually need it, print the restart commands and ask the use
 /home/bosko/NixOS/.claude/skills/remote-rebuild/scripts/restore-tunnels.sh
 ```
 
-This is read-only — it iterates `.claude/hosts.json`'s `flakeHosts` (skipping `vpn-server` itself) and prints the exact command for each host, without running any of them. Wait for the user to confirm, then run `/vpn-status` to verify the handshakes returned.
+If `modules/vpn.nix` is commented out of `desktopModules` in `flake.nix` (true while vpn-server is Oracle-disabled), the script says "tunnel module currently pulled … nothing to restart" and exits 0 — there is no `wg-quick-wg0` unit to restart, so skip this step. Otherwise it is read-only — it iterates `.claude/hosts.json`'s `flakeHosts` (skipping `vpn-server` itself) and prints the exact command for each host, without running any of them. Wait for the user to confirm, then run `/vpn-status` to verify the handshakes returned.
 
 ## Step 4 — Report result
 

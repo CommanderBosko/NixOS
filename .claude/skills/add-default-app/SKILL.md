@@ -6,7 +6,7 @@ model: haiku
 
 # Add Default App
 
-Add or change a declarative default-application association in `dotfiles/common/configs/mimeapps.nix`'s `xdg.mimeApps.defaultApplications`, so double-click / "Open" behavior for a given file type is reproducible across all three desktop hosts (gaming, laptop, natalie-laptop) instead of living as unmanaged live state in `~/.config/mimeapps.list`. (Bucket: Utility)
+Add or change a declarative default-application association in `dotfiles/common/configs/mimeapps.nix`'s `xdg.mimeApps.defaultApplications`, so double-click / "Open" behavior for a given file type is reproducible across every desktop host (`"desktop": true` in `.claude/hosts.json`) instead of living as unmanaged live state in `~/.config/mimeapps.list`. (Bucket: Utility)
 
 ## Arguments
 
@@ -18,10 +18,10 @@ Parse from the user's request:
 ## Step 1 — Resolve the app's real .desktop file and MimeTypes — never guess
 
 ```bash
-nix build --no-link --print-out-paths "nixpkgs#<pkg>"
-find <store-path>/share/applications -iname "*.desktop"
-grep "^MimeType" <path-to-the-relevant-.desktop-file>
+/home/bosko/NixOS/.claude/skills/add-default-app/scripts/resolve-desktop.sh <pkg>
 ```
+
+It builds `nixpkgs#<pkg>` and prints each shipped `.desktop` file with its `MimeType=` line.
 
 Some packages ship multiple `.desktop` files (e.g. zathura ships a base launcher plus one per format backend like `org.pwmt.zathura-pdf-mupdf.desktop`) — pick the one that actually declares the `MimeType=` line for the file type in question, not the bare launcher entry.
 
@@ -46,7 +46,7 @@ Show the user the exact new/changed line(s) and confirm via the **AskUserQuestio
 Run, in order:
 
 1. `nix flake check /home/bosko/NixOS` (or the `flake-check` skill) — shallow eval gate.
-2. The `deep-eval-check` skill — forces full evaluation across all 4 hosts.
+2. The `deep-eval-check` skill — forces full evaluation across every flake host.
 3. Build and inspect the **actual generated file**, not just eval success (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd):
    ```bash
    .claude/skills/add-default-app/scripts/verify-mimeapps.sh <mimetype>
@@ -61,6 +61,8 @@ Report the verified result to the user. Remind them a rebuild (`rebuild` + reboo
 ## Scripts
 
 - `.claude/skills/add-default-app/scripts/verify-mimeapps.sh <mimetype>` — builds gaming's generated `mimeapps.list` and greps it for `<mimetype>`, printing the matching line (exit 0) or "not found" (exit 1). Used in Step 4.3.
+
+- `.claude/skills/add-default-app/scripts/resolve-desktop.sh <pkg>` — builds `nixpkgs#<pkg>` and prints every shipped `.desktop` file with its `MimeType=` line. Used in Step 1.
 
 ## Gotchas
 

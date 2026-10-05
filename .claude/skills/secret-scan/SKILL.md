@@ -40,6 +40,9 @@ None.
      committed then removed but still live in history). Prints `commit:path` hits.
    - **.gitignore coverage** — informational check for `*.key`, `*.pem`, `*.age`, `.env`.
 
+   Note: the GitHub-token and AWS-key patterns run on the working tree only; the history pass
+   covers the narrower "worst patterns" set (private keys, age keys, password hashes).
+
 2. Report the result. If **clean**, say so plainly. If there are findings, present each
    with its location and the right remediation:
    - **Plaintext secret in the working tree** → move it into sops (`add-secret` skill) and
