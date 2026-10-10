@@ -197,11 +197,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-04 (session 121, latest)** — Ran `/improve-system` and `/dream`. skill-audit swept all 70 skills and ~15 verified bugs were fixed in one commit (`901ccd5`): e.g. `switch-de` on gaming, `remote-rebuild`/`vpn-status` referencing the pulled WireGuard tunnel, `rollback` target handling, `new-host`'s missing `desktop.yaml` sops step; plus new helper scripts and Arguments/AskUserQuestion cleanups. `nixos-dry-run` passes; the global-skill edits go live after the next rebuild + reboot.
+**2026-10-09 (session 122, latest)** — Bumped flake inputs (nixpkgs, home-manager, dms, sops-nix); flake-check and deep-eval clean on all four hosts, committed but not yet activated.
+
+**2026-10-04 (session 121)** — Ran `/improve-system` and `/dream`. skill-audit swept all 70 skills and ~15 verified bugs were fixed in one commit (`901ccd5`): e.g. `switch-de` on gaming, `remote-rebuild`/`vpn-status` referencing the pulled WireGuard tunnel, `rollback` target handling, `new-host`'s missing `desktop.yaml` sops step; plus new helper scripts and Arguments/AskUserQuestion cleanups. `nixos-dry-run` passes; the global-skill edits go live after the next rebuild + reboot.
 
 **2026-10-03 (session 120)** — Lifted the xwayland-satellite 0.8.1 pin: nixpkgs now ships 0.8.3 (includes upstream PR #494, the Steam-dropdown fix), but the locked nixpkgs was still 0.8.2, so a full `/flake-update-verify` bump (nixpkgs, home-manager, dms) went in first (`70bd875`), then the pin input + overlay were removed (`7881fcb`). `nix flake check` + 4-host deep-eval clean. Not yet rebuilt or tested on any host; revert `7881fcb` if Steam dropdowns regress.
-
-**2026-09-30 (session 119)** — No NixOS config changes; planning only. Scoped moving the pi-hole and famdash Raspberry Pi 4s onto NixOS: inventoried both Pis and the FamDash repo, recorded the decisions and a stepwise plan (famdash first; Teleporter backup of the un-backed-up pi-hole comes before any work). Nothing built yet.
 
 ## Roadmap
 

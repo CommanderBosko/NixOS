@@ -1,10 +1,14 @@
 # NixOS Project State
 
-_Last updated: 2026-10-04 (session 121)_
+_Last updated: 2026-10-09 (session 122)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**Flake inputs bumped (`af45f39`), pushed, NOT activated on any host (2026-10-09, session 122).**
+- nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
+- Still owed: rebuild on each host (also carries 2026-10-04's global skill edits, which only reach `~/.claude` after `nh os boot` + reboot). Secret-scan clean (tree + 1820 commits).
 
 **`/improve-system` + `/dream` run: skill-audit fixes across 70 skills committed (`901ccd5`); memory refreshed; NOT yet rebuilt — global skill edits only reach `~/.claude` after `nh os boot` + reboot (2026-10-04, session 121).**
 - **The `manager` agent paused and never ran** — its Training Mode requires user approval of its plan and it refuses to treat a relayed approval as the user's. The main session ran both skills directly after the user approved the plan via AskUserQuestion. Discord/Artifact publishing was skipped per that approved plan (report saved locally to `~/.claude/improve-system/`).
@@ -33,15 +37,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Both standing pins verified untouched, as instructed:** `xwayland-satellite` (0.8.1, fixed-commit input) — byte-identical rev before/after `nix flake update`, unaffected by design; vpn-server's `rtk` `pkgs ? rtk`/`doCheck=false` guard — vpn-server evals off `nixpkgs-stable`, which this run didn't move, so its behavior is unchanged either way.
 - **`public-repo-guard`'s pre-push gate ran the established flake.lock-only-diff shortcut** (skip re-running the slow `nix flake check` since deep-eval had just run clean against this exact tree; still ran `secret-scan` and `audit-config`'s pattern sweep) — 0 genuine findings, same precedent as the 2026-09-07 and 2026-09-21 runs.
 - **Main session then reviewed CI (green, `MERGEABLE`/`CLEAN`) and merged PR #29** as a merge commit (`3b61cf4`), deleted the branch, fast-forwarded local `main`. Nothing applied to any host — see Current Goals.
-
-**Weekly `improve-system` PR #28 merged (a duplicate-work check correctly no-op'd a second manager run); `/dream` found and fixed a real bug in its own `improve-memory` wikilink resolution; xwayland-satellite pin re-checked, no change (2026-09-24 through 2026-09-27, session 117).**
-- **`improve-system` weekly sweep → PR #28 merged (`ba03b80`) by the `manager` agent** — single-file fix: `new-peer`'s `client.conf.tmpl` MTU=1380 comment corrected to cite `wireguard.nix` instead of `configuration.nix`. 7th live run of `review-improve-system-pr`; CI green, no `.nix` touched, live immediately (project-local skill asset).
-- **A second, independent request to have `manager` run `/improve-system` and merge produced a clean no-op**: before doing anything, it checked `gh pr list`/`git log`, found PR #28 already merged hours earlier by the first run, fast-forwarded local `main` to match, and took no further action rather than duplicating the sweep. Confirms the duplicate-work check (manager's Section 3) works as designed.
-- **`/dream` ran a full mining pass, then two more back-to-back passes that were genuine no-ops** (both re-scanned the same still-live self-referential transcript, found nothing new). The first pass mined 14 candidate items across NixOS + random-searches transcripts, auto-applied 8 (3 new NixOS memory files, 4 new random-searches memory files, 2 stale `screeps` wikilinks fixed), and flagged 2 items for review (F1, F2) rather than auto-resolving them.
-- **F1 — a real bug in `find-memory-issues.sh`, found and fixed (`d466eb8`)**: the script resolved a `[[wikilink]]` only against the target file's literal filename, but this memory corpus actually uses two different linking conventions across projects — farmer/screeps link via the `name:` frontmatter slug (often a shortened/hyphenated form that differs from the filename), while this repo's own NixOS memory dir links the filename stem directly. The filename-only check false-positived on every `name:`-slug link in farmer/screeps. Fixed to resolve against either convention; verified clean against every previously-flagged project, and confirmed live in the same session (the Home Manager skill symlink resolved to the fixed content without a rebuild — see memory `feedback_global_skill_live_without_new_session`).
-- **F2 — approved and applied**: created `project_model_choice_guidance.md` (Sonnet 5 default for engineering, Opus 5.5 reserved for hard reasoning) in NixOS memory, exactly as the overview proposed. Memory-only edit (that directory isn't a git repo), so no commit for this part.
-- **xwayland-satellite pin re-checked (2026-09-24)** via `pinned-package-status-check`: still pinned `0.8.1`, nixpkgs-unstable still `0.8.2`, issue #156 still open. Upstream released `v0.8.3` that same day containing PR #494 (merged 09-09) that textually matches this repo's exact "popup flashes open then closes immediately" symptom — but #494 was filed against different issues (#468/#278), so #156 itself wasn't auto-closed. Verdict: keep the pin, recheck once nixpkgs actually packages 0.8.3.
-- **No NixOS repo/host state changed this session** — every edit above lives in the Claude memory/skill layer (`~/.claude/projects/.../memory/`, `dotfiles/bosko/claude/skills/improve-memory/`) or was the single-file PR #28 fix; the laptop/natalie-laptop rebuild backlog is unchanged from session 116.
 
 ## Current Goals
 

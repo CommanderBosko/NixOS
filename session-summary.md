@@ -4,6 +4,26 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-09 (session 122) — flake input bump
+
+**Focus**: Close out a short session whose only change was a flake input bump.
+
+### What changed (and why)
+- `af45f39` bumped nixpkgs, home-manager, dms (+dank-qml-common) and sops-nix; flake-check and 4-host deep-eval were clean, so it was pushed without activation.
+
+### Decisions
+- No config activation; rebuild left to the user per host.
+
+### Issues / surprises
+- None. Secret-scan clean (tree + history).
+
+### Next session
+- Rebuild gaming/laptop/natalie-laptop to pick up the bump and pending global skill edits.
+
+**Commits**: `af45f39` (1 commit)
+
+---
+
 ## Session: 2026-10-04 (session 121) — /improve-system + /dream; skill-audit fixes committed
 
 **Focus**: Have the manager agent run `/improve-system` and `/dream`, review, commit, close.
@@ -93,28 +113,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - **All hosts: `/fleet-rollout`** to apply PR #29's bump — stacks onto the existing multi-bump (2026-09-07, 2026-09-20) + printer + skill rebuild backlog. No other action pending.
 
 **Commits**: `136ac0e`..`3b61cf4` (2 commits: bump + merge)
-
----
-
-## Session: 2026-09-27 (session 117) — `/dream` self-heals a real bug in its own wikilink resolver; weekly PR #28 merged
-
-**Focus**: Close out a multi-day gap of Claude-ecosystem-only activity (2026-09-24 through 2026-09-27) — a routine pin re-check, the weekly `improve-system` review/merge cycle, and several `/dream` memory-mining passes, one of which surfaced and fixed a real bug in its own tooling.
-
-### What changed (and why)
-- **`improve-system` weekly sweep merged as PR #28** (`ba03b80`, via `manager`) — single-file MTU comment-citation fix in `new-peer`'s client template. A second, independent request to run `/improve-system` and merge correctly detected the work was already done and fast-forwarded instead of duplicating it.
-- **`/dream` found and fixed a real bug in `find-memory-issues.sh`**: it resolved `[[wikilink]]`s only against a file's literal filename, but this account's memory corpus actually uses two conventions (farmer/screeps link via `name:` frontmatter, NixOS links via the filename stem) — the filename-only check false-positived on every farmer/screeps `name:`-slug link. Fixed to accept either, committed as `d466eb8`, confirmed live in the same session (no rebuild needed for a repo-managed skill symlink).
-- **xwayland-satellite pin re-checked (2026-09-24)**: still holds at 0.8.1 — upstream shipped v0.8.3 with a matching-symptom fix, but it wasn't filed against the tracked issue #156, so the tracking issue itself is still open. No change to the pin.
-
-### Decisions
-- Fixed `find-memory-issues.sh` to accept both wikilink conventions rather than force one project's corpus to conform to the other's — see project-state.md Recent Decisions.
-
-### Issues / surprises
-- The first fix attempt for the wikilink bug (frontmatter-only resolution) broke NixOS's own memory dir before the dual-convention fix was found — worth remembering that this corpus genuinely has two valid conventions, not one right answer.
-
-### Next session
-- No repo/host action pending from this session; the laptop/natalie-laptop rebuild backlog carries over unchanged from session 116.
-
-**Commits**: `d466eb8` (1 commit this session; `ba03b80` landed via a separate manager-agent PR merge)
 
 ---
 
