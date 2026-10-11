@@ -32,6 +32,9 @@
     tor-browser
   ];
 
+  # Lets bosko run `tailscale serve` without sudo (dev testing of Sidekick).
+  services.tailscale.extraSetFlags = [ "--operator=bosko" ];
+
   # Host-specific flatpaks, on top of the shared modules/desktop-apps.nix list
   services.flatpak.packages = [
     "com.albiononline.AlbionOnline" # Albion Online
