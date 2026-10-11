@@ -53,3 +53,9 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   404'd before self-correcting to the absolute `~/.claude/skills/session-closer/assets/...`
   path from the "Base directory for this skill" line. Same root cause, same fix — use the
   absolute base-dir path for every `assets/` file too, not only `scripts/`.
+- **`secret-scan/SKILL.md` exists on disk but the Skill tool says `Unknown skill: secret-scan`**
+  (observed 2026-10-10, Sidekick): the session was launched from the project's old path
+  (`~/projects/ADHD-Assistant`) and the directory was renamed mid-session, so the session's
+  project-skill list was loaded from a path that no longer exists. That is not the
+  "absent" branch of STEP 5B. Don't offer `/create-secret-scan`; `Read`
+  `<repo-root>/.claude/skills/secret-scan/SKILL.md` directly and follow its steps by hand.
