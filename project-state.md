@@ -1,10 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-10-10 (session 123)_
+_Last updated: 2026-10-10 (session 124)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**Cross-project `/improve-system` (run from the Sidekick repo) landed two NixOS commits: `slice-builder` agent + session-closer gotcha (`b2c4868`) and a zsh fix for Claude Code's shells (`ad7fec5`); pushed, staged on gaming as gen 430 (boot default), NOT yet rebooted into (2026-10-10, session 124).**
+- **`slice-builder`** (`dotfiles/bosko/claude/agents/slice-builder.md`): reusable fan-out unit for building one bounded slice of a milestone in parallel (file-boundary discipline, leave failing sibling tests alone, fixed report shape) — replaces ~1KB of boilerplate re-typed into every Sidekick M1 general-purpose spawn; Sidekick's `docs/plan.md` now tells M2 to use it. Only approximately tested (a general-purpose agent followed its prompt on a throwaway repo and stayed in bounds) because a new agent isn't dispatchable by name until a rebuild + new session.
+- **session-closer gotcha** (`references/gotchas.md`): when `secret-scan/SKILL.md` exists but the Skill tool says "Unknown skill", the session was launched from a since-renamed project path (ADHD-Assistant → Sidekick) — read the SKILL.md and follow it by hand.
+- **zsh fix** (`modules/shell.nix`, inside the existing `programs.zsh.shellInit` → `/etc/zshenv`): `unsetopt EQUALS NOMATCH` only when `CLAUDECODE` is set, so Claude's bash-style commands stop failing on `echo =====` ("===== not found", 6 transcripts) and unmatched globs like `--include=*.nix` ("no matches found", 11 transcripts); interactive zsh keeps its defaults. `setOptions` was rejected because it lands in `/etc/zshrc`, which Claude's non-interactive shell never reads. User asked only for the `=` fix; `NOMATCH` was added because it's the same class and more frequent (offer stands to drop it). Verified on the generated `/etc/zshenv` text with/without `CLAUDECODE=1` + dry-run exit 0. Confirmed still broken live in this close (gaming runs gen 429) — reboot onto gen 430 activates it.
+- **Correction:** the 2026-10-09 flake bump (`af45f39`, nixpkgs `e7439b6`) IS live on gaming — gen 428 booted 2026-10-10 15:04, gen 429 (operator flag) switched 21:58 — so everything older (incl. sessions 120–121's `7881fcb`/`901ccd5`) is live on gaming too. Still owed on laptop/natalie-laptop/vpn-server.
 
 **Sidekick (ADHD-Assistant) deploy, Phase A done: tailnet HTTPS certs on + `--operator=bosko` on gaming (`85ab0af`), pushed (2026-10-10, session 123).**
 - **Source of truth:** `~/projects/ADHD-Assistant/docs/deployment-nixos.md` (handoff doc; Phase B = flake input, `hosts/gaming/adhd-assistant.nix`, sops `adhd-assistant-env`, rollout — NOT started).
@@ -12,7 +18,7 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Operator:** `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` in `hosts/gaming/environment.nix`; dry-run clean (only new `tailscaled-set.service`), user switched, verified by `tailscale serve status` working without sudo. `tailscale debug prefs` does not print an operator field, so don't use it as the check. **Temporary:** remove once Phase B's root `adhd-assistant-serve` unit is deployed.
 - `tailscale serve status` showed "No serve config", so nothing else holds `:443`.
 
-**Flake inputs bumped (`af45f39`), pushed, NOT activated on any host (2026-10-09, session 122).**
+**Flake inputs bumped (`af45f39`), pushed; live on gaming since gen 428 (2026-10-10), NOT yet on laptop/natalie-laptop/vpn-server (2026-10-09, session 122).**
 - nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
 - Still owed: rebuild on each host (also carries 2026-10-04's global skill edits, which only reach `~/.claude` after `nh os boot` + reboot). Secret-scan clean (tree + 1820 commits).
 
@@ -29,12 +35,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Rollback if Steam dropdowns regress on 0.8.3:** re-add the pin input at nixpkgs rev `a5cbcfe954791221bfffe2307f7d1a1bf61a871e` + the overlay (`git revert 7881fcb`).
 - Also in range, from an earlier unclosed session: `9233af3` flatpak-managed-install waits for DNS (bounded 60s poll) — not narrated here.
 - Registry (`project_pinned_packages.md`) updated 2026-10-03 to "lift condition met, test-lift pending"; move to PAST once the user confirms dropdowns work.
-
-**Planning-only session: Pi-hole + famdash Raspberry Pis → NixOS migration scoped and planned; no repo/host changes (2026-09-30, session 119).**
-- **Read-only inventories of both Pis + the FamDash repo** (3 parallel sub-agents): both are Pi 4B on aarch64 Raspberry Pi OS 12; pi-hole 1GB/Ethernet/10.0.0.19 (Pi-hole v6.4.3, unbound upstream, 29 adlists, 8 named clients, `pihole-updatelists`), famdash 4GB/Wi-Fi-only/10.0.0.21 (Express app, `db.json` 136 KB live state, no secrets, no auth). FamDash repo docs are stale (say armhf/12afada/10.0.0.20).
-- **Decisions (user-confirmed via AskUserQuestion):** famdash headless + keeps Wi-Fi (PSK captured by user into sops); FamDash as SSH flake input (repo stays private); pi-hole lists declarative (replaces updatelists) + Teleporter import for clients; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP; famdash first.
-- **Full plan saved to memory** (`project_pi_nixos_migration_plan.md`). NOTHING built; **the pi-hole still has NO backup** — Teleporter export is step 0.
-- Found: `bosko` has passwordless sudo on pi-hole (contradicts the older memory note).
 
 ## Current Goals
 
@@ -112,6 +112,8 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - Explore adding fail2ban or rate-limiting on the WireGuard UDP port
 
 ## Recent Decisions
+
+- **Fixed the zsh `=`/glob footgun at the shell level, gated on `CLAUDECODE`, instead of adding another CLAUDE.md "remember to quote" note (2026-10-10, session 124)** — improve-system proposed a global CLAUDE.md note next to the `find` one; the fix makes the failure impossible rather than relying on recall. Scoped to `CLAUDECODE` so the user's interactive zsh keeps `EQUALS`/`NOMATCH`; put in `shellInit` (`/etc/zshenv`) because `setOptions` only reaches `/etc/zshrc`.
 
 - **`find-memory-issues.sh`'s wikilink check fixed to accept either linking convention rather than picking one (2026-09-27, session 117)** — the first fix attempt resolved `[[slug]]` only against each file's `name:` frontmatter (farmer/screeps' convention), which then broke NixOS's own memory dir, where wikilinks are written against the filename stem directly. Rather than force one project's corpus to conform to the other's convention, the script now checks both, since both are real, already-in-use patterns across this account's projects.
 - **Replaced `cups-browsed` outright rather than patching its discovery-timing race a third time (2026-09-23, session 116)** — the same "queue doesn't survive boot" symptom had already been partially fixed once (session 71's `network-online.target` fixup unit) and a further periodic-restart-timer mitigation was explicitly declined as overkill (session 75). Rather than add a fourth patch on the same brittle discovery model, replaced the whole mechanism with a static `hardware.printers.ensurePrinters` declaration plus a checked-in driverless PPD — no discovery race is possible for a queue that's declared at eval time instead of created at runtime by a service racing avahi.
@@ -404,6 +406,11 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 124 next steps:**
+1. **gaming: reboot onto gen 430** (already staged via `nh os boot`) — activates `slice-builder` and the zsh fix in new Claude sessions. Check: `echo =====` works in a fresh Claude session; `subagent_type: "slice-builder"` resolves.
+2. Launch Sidekick sessions from `~/projects/Sidekick`, not the old ADHD-Assistant path (project skills are invisible otherwise).
+3. Session 123's Phase B + earlier rebuild backlog unchanged.
 
 **Session 123 next steps:**
 1. **Sidekick Phase B** when ready: add `adhd-assistant` flake input + `hosts/gaming/adhd-assistant.nix` + `adhd-assistant-env` sops secret (VAPID keys need the app's `gen-vapid`, milestone M2) + CI deploy key. Then remove the temporary `--operator=bosko` line.

@@ -1,3 +1,25 @@
+## Session: 2026-09-30 (session 119) — Pi-hole + famdash → NixOS migration scoped (plan only)
+
+**Focus**: Decide whether and how to move the two Raspberry Pi 4s to NixOS, gather everything needed, and write the plan.
+
+### What changed (and why)
+- No repo changes. Three parallel read-only sub-agents inventoried the FamDash repo, the famdash Pi and the pi-hole Pi, so the plan rests on live state, not docs (the FamDash docs were stale on arch, revision and IP).
+- Plan saved to memory (`project_pi_nixos_migration_plan.md`).
+
+### Decisions
+- famdash first, headless, stays on Wi-Fi (PSK via sops, user-captured); FamDash as SSH flake input since the repo is private.
+- pi-hole: declarative lists replace `pihole-updatelists`, Teleporter import for client names/groups; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP (the DHCP lease has drifted before).
+
+### Issues / surprises
+- pi-hole has no backup anywhere (single SD card). `bosko` has passwordless sudo there, contradicting an older memory note. famdash's live `db.json` is 136 KB; the repo copy is an 11 KB dev copy.
+
+### Next session
+- User takes the Teleporter backup + `db.json` copy, then start the famdash host.
+
+**Commits**: none (planning session)
+
+---
+
 ## Session: 2026-09-27/28 (session 118) — Manager-run `/flake-update-verify` lands as PR #29, merged
 
 **Focus**: Have the `manager` agent run and land `/flake-update-verify`, then review CI and merge the result.

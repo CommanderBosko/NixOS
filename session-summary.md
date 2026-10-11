@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-10 (session 124) — slice-builder agent + zsh fix for Claude's shells
+
+**Focus**: Close out two NixOS commits made from a Sidekick-repo `/improve-system` session.
+
+### What changed (and why)
+- `b2c4868` adds the global `slice-builder` agent (reusable unit for building one milestone slice in parallel, replacing boilerplate re-typed into every Sidekick M1 spawn) and a session-closer gotcha for "Unknown skill" after a project rename.
+- `ad7fec5` unsets zsh `EQUALS` + `NOMATCH` in `/etc/zshenv` only when `CLAUDECODE` is set, so `echo =====` and unmatched globs stop breaking Claude's bash-style commands (6 + 11 transcripts hit them).
+
+### Decisions
+- Fixed the shell rather than adding a CLAUDE.md "quote your `=`" note; `shellInit` not `setOptions`, since the latter only reaches `/etc/zshrc`.
+- `NOMATCH` added beyond the ask (same class, more frequent); offer to drop it stands.
+
+### Issues / surprises
+- This close's own `echo ======` failed — gaming still runs gen 429; gen 430 (both commits) is staged as boot default.
+- Corrected project-state: the 10-09 flake bump is live on gaming (gen 428), not "on no host".
+- Secret-scan clean (tree + 1825 commits, all sops files encrypted).
+
+### Next session
+- Reboot gaming onto gen 430, then confirm `echo =====` works and `slice-builder` resolves in a fresh Claude session.
+
+**Commits**: `b2c4868..ad7fec5` (2 commits)
+
+---
+
 ## Session: 2026-10-10 (session 123) — Sidekick deploy Phase A
 
 **Focus**: Do Phase A of the ADHD-Assistant NixOS deployment handoff doc.
@@ -91,28 +115,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - User rebuilds gaming and tests Steam dropdowns; then move the pin row to PAST (or revert `7881fcb`).
 
 **Commits**: `9233af3..7881fcb` (3 commits; `9233af3` flatpak DNS wait is from an earlier session)
-
----
-
-## Session: 2026-09-30 (session 119) — Pi-hole + famdash → NixOS migration scoped (plan only)
-
-**Focus**: Decide whether and how to move the two Raspberry Pi 4s to NixOS, gather everything needed, and write the plan.
-
-### What changed (and why)
-- No repo changes. Three parallel read-only sub-agents inventoried the FamDash repo, the famdash Pi and the pi-hole Pi, so the plan rests on live state, not docs (the FamDash docs were stale on arch, revision and IP).
-- Plan saved to memory (`project_pi_nixos_migration_plan.md`).
-
-### Decisions
-- famdash first, headless, stays on Wi-Fi (PSK via sops, user-captured); FamDash as SSH flake input since the repo is private.
-- pi-hole: declarative lists replace `pihole-updatelists`, Teleporter import for client names/groups; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP (the DHCP lease has drifted before).
-
-### Issues / surprises
-- pi-hole has no backup anywhere (single SD card). `bosko` has passwordless sudo there, contradicting an older memory note. famdash's live `db.json` is 136 KB; the repo copy is an 11 KB dev copy.
-
-### Next session
-- User takes the Teleporter backup + `db.json` copy, then start the famdash host.
-
-**Commits**: none (planning session)
 
 ---
 

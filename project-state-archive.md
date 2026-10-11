@@ -2,6 +2,12 @@
 
 Older `Current Project State` blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Planning-only session: Pi-hole + famdash Raspberry Pis → NixOS migration scoped and planned; no repo/host changes (2026-09-30, session 119).**
+- **Read-only inventories of both Pis + the FamDash repo** (3 parallel sub-agents): both are Pi 4B on aarch64 Raspberry Pi OS 12; pi-hole 1GB/Ethernet/10.0.0.19 (Pi-hole v6.4.3, unbound upstream, 29 adlists, 8 named clients, `pihole-updatelists`), famdash 4GB/Wi-Fi-only/10.0.0.21 (Express app, `db.json` 136 KB live state, no secrets, no auth). FamDash repo docs are stale (say armhf/12afada/10.0.0.20).
+- **Decisions (user-confirmed via AskUserQuestion):** famdash headless + keeps Wi-Fi (PSK captured by user into sops); FamDash as SSH flake input (repo stays private); pi-hole lists declarative (replaces updatelists) + Teleporter import for clients; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP; famdash first.
+- **Full plan saved to memory** (`project_pi_nixos_migration_plan.md`). NOTHING built; **the pi-hole still has NO backup** — Teleporter export is step 0.
+- Found: `bosko` has passwordless sudo on pi-hole (contradicts the older memory note).
+
 **PR #29 merged — flake inputs bumped via manager-run `/flake-update-verify`, deep-eval clean on all 4 hosts; stacks unapplied onto the existing fleet-rollout backlog (2026-09-27/28, session 118).**
 - **User asked the `manager` agent to run and land `/flake-update-verify`.** It bumped `nixpkgs` (20b1ddd1→e158d9ed), `home-manager` (d2a22a36→7b4c5ec4), `dms` (df71c654→c4557974) + its transitive `dank-qml-common` (1d28494b→660b0447), and `sops-nix` (7214124c→5efb5a6f). Unchanged: `disko`, `financeguru`, `nix-flatpak`, `nix-colors`, `nixpkgs-stable`.
 - **Verification: `nix flake check` clean + full `toplevel.drvPath` deep-eval clean on all 4 hosts** (gaming/laptop/natalie-laptop/vpn-server) — no insecure-package gate hit.
