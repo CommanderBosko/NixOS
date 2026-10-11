@@ -2,6 +2,13 @@
 
 Older `Current Project State` blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**xwayland-satellite pin lifted (nixpkgs now ships 0.8.3) via a full flake bump; pushed to `main`, NOT yet rebuilt or tested on any host (2026-10-03, session 120).**
+- **`pinned-package-status-check` found the lift condition met on the nixpkgs side:** unstable ships 0.8.3 (contains upstream PR #494, "steam dropdowns closing instantly"); #156 itself is still formally open (23 comments, no activity since 09-02). But this repo's *locked* nixpkgs was still 0.8.2, so removing the pin alone would have regressed — user chose a full `/flake-update-verify` bump over repointing the pin or waiting.
+- **Two commits:** `70bd875` bump (nixpkgs `e158d9e`→`c59305b`, home-manager `7b4c5ec`→`acd21c5`, dms `c455797`→`585827e`, dank-qml-common `660b044`→`13470a9`) and `7881fcb` removes the `nixpkgs-xwayland-satellite-pin` input + overlay (`flake.nix`, `niri.nix`). Verified together: `nix flake check` + 4-host deep-eval PASS, gaming resolves 0.8.3. Commit gate approved via AskUserQuestion. `public-repo-guard` not run (diff was lock hashes + removed comments/code).
+- **Rollback if Steam dropdowns regress on 0.8.3:** re-add the pin input at nixpkgs rev `a5cbcfe954791221bfffe2307f7d1a1bf61a871e` + the overlay (`git revert 7881fcb`).
+- Also in range, from an earlier unclosed session: `9233af3` flatpak-managed-install waits for DNS (bounded 60s poll) — not narrated here.
+- Registry (`project_pinned_packages.md`) updated 2026-10-03 to "lift condition met, test-lift pending"; move to PAST once the user confirms dropdowns work.
+
 **Planning-only session: Pi-hole + famdash Raspberry Pis → NixOS migration scoped and planned; no repo/host changes (2026-09-30, session 119).**
 - **Read-only inventories of both Pis + the FamDash repo** (3 parallel sub-agents): both are Pi 4B on aarch64 Raspberry Pi OS 12; pi-hole 1GB/Ethernet/10.0.0.19 (Pi-hole v6.4.3, unbound upstream, 29 adlists, 8 named clients, `pihole-updatelists`), famdash 4GB/Wi-Fi-only/10.0.0.21 (Express app, `db.json` 136 KB live state, no secrets, no auth). FamDash repo docs are stale (say armhf/12afada/10.0.0.20).
 - **Decisions (user-confirmed via AskUserQuestion):** famdash headless + keeps Wi-Fi (PSK captured by user into sops); FamDash as SSH flake input (repo stays private); pi-hole lists declarative (replaces updatelists) + Teleporter import for clients; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP; famdash first.

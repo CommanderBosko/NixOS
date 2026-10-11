@@ -1,12 +1,17 @@
 # NixOS Project State
 
-_Last updated: 2026-10-10 (session 124)_
+_Last updated: 2026-10-11 (session 125)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 
-**Cross-project `/improve-system` (run from the Sidekick repo) landed two NixOS commits: `slice-builder` agent + session-closer gotcha (`b2c4868`) and a zsh fix for Claude Code's shells (`ad7fec5`); pushed, staged on gaming as gen 430 (boot default), NOT yet rebooted into (2026-10-10, session 124).**
+**Starship SSH-login WARN on natalie-laptop silenced (`8af18b1`) + flake inputs bumped (`1903228`); both pushed, NOT applied on any host yet. gaming is now booted onto gen 430 (2026-10-11), so session 124's zsh fix + `slice-builder` are live there (2026-10-11, session 125).**
+- **Starship cause** (`modules/starship.nix`, `commonModules`): not the August mount-timeout fix (already live on natalie-laptop). `~/Shared` → the `/srv/shared` CIFS automount idles out after 5 min, so the first prompt in `~` re-triggers the mount (~1s), far past starship's 30ms `scan_timeout` → WARN on every SSH login. Fix: `environment.variables.STARSHIP_LOG = "error"`. Verified via `shared-module-check` (4-host deep-eval). Takes effect on natalie-laptop (and laptop) only after a rebuild + new login shell.
+- **Flake bump** via `/flake-update-verify` (Training Mode OFF, commit gate approved): nixpkgs `e7439b6`→`6510408` (2026-10-10), home-manager `427c74a`→`c58f54c`, dms `938971e`→`002ab65` (dank-qml-common `9314fc4`→`0e6a516`), nix-flatpak `4408189`→`f1f045f` (first change since January), sops-nix `dcd241b`→`ee48786`. `flake-check` + 4-host deep-eval clean. Not switched/booted anywhere.
+- **gen 430 confirmed live on gaming:** `/run/booted-system` = gen 430 (built from `ad7fec5`, nixpkgs `e7439b6`); a Claude shell shows `noequals` and `echo =====` works; `slice-builder` now appears as a dispatchable agent type. gen 430 does NOT carry `8af18b1` or `1903228`.
+
+**Cross-project `/improve-system` (run from the Sidekick repo) landed two NixOS commits: `slice-builder` agent + session-closer gotcha (`b2c4868`) and a zsh fix for Claude Code's shells (`ad7fec5`); pushed; gaming booted onto gen 430 on 2026-10-11 — both now LIVE there (2026-10-10, session 124).**
 - **`slice-builder`** (`dotfiles/bosko/claude/agents/slice-builder.md`): reusable fan-out unit for building one bounded slice of a milestone in parallel (file-boundary discipline, leave failing sibling tests alone, fixed report shape) — replaces ~1KB of boilerplate re-typed into every Sidekick M1 general-purpose spawn; Sidekick's `docs/plan.md` now tells M2 to use it. Only approximately tested (a general-purpose agent followed its prompt on a throwaway repo and stayed in bounds) because a new agent isn't dispatchable by name until a rebuild + new session.
 - **session-closer gotcha** (`references/gotchas.md`): when `secret-scan/SKILL.md` exists but the Skill tool says "Unknown skill", the session was launched from a since-renamed project path (ADHD-Assistant → Sidekick) — read the SKILL.md and follow it by hand.
 - **zsh fix** (`modules/shell.nix`, inside the existing `programs.zsh.shellInit` → `/etc/zshenv`): `unsetopt EQUALS NOMATCH` only when `CLAUDECODE` is set, so Claude's bash-style commands stop failing on `echo =====` ("===== not found", 6 transcripts) and unmatched globs like `--include=*.nix` ("no matches found", 11 transcripts); interactive zsh keeps its defaults. `setOptions` was rejected because it lands in `/etc/zshrc`, which Claude's non-interactive shell never reads. User asked only for the `=` fix; `NOMATCH` was added because it's the same class and more frequent (offer stands to drop it). Verified on the generated `/etc/zshenv` text with/without `CLAUDECODE=1` + dry-run exit 0. Confirmed still broken live in this close (gaming runs gen 429) — reboot onto gen 430 activates it.
@@ -29,15 +34,9 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`/dream`:** mined 11 transcripts (NixOS + factorio blueprint-smith); updated `project_pinned_packages` (lift committed 7881fcb, live Steam test still pending) and `project_pi_nixos_migration_plan` (famdash LAN IP drifted .20→.21; declare persistent journald in the NixOS host); 4 wikilinks fixed; no flags outstanding.
 - Also in range: `c45bb1e` (famdash LAN ip in `hosts.json`, `ssh-host` Tailscale note) from an earlier unclosed session — not narrated here.
 
-**xwayland-satellite pin lifted (nixpkgs now ships 0.8.3) via a full flake bump; pushed to `main`, NOT yet rebuilt or tested on any host (2026-10-03, session 120).**
-- **`pinned-package-status-check` found the lift condition met on the nixpkgs side:** unstable ships 0.8.3 (contains upstream PR #494, "steam dropdowns closing instantly"); #156 itself is still formally open (23 comments, no activity since 09-02). But this repo's *locked* nixpkgs was still 0.8.2, so removing the pin alone would have regressed — user chose a full `/flake-update-verify` bump over repointing the pin or waiting.
-- **Two commits:** `70bd875` bump (nixpkgs `e158d9e`→`c59305b`, home-manager `7b4c5ec`→`acd21c5`, dms `c455797`→`585827e`, dank-qml-common `660b044`→`13470a9`) and `7881fcb` removes the `nixpkgs-xwayland-satellite-pin` input + overlay (`flake.nix`, `niri.nix`). Verified together: `nix flake check` + 4-host deep-eval PASS, gaming resolves 0.8.3. Commit gate approved via AskUserQuestion. `public-repo-guard` not run (diff was lock hashes + removed comments/code).
-- **Rollback if Steam dropdowns regress on 0.8.3:** re-add the pin input at nixpkgs rev `a5cbcfe954791221bfffe2307f7d1a1bf61a871e` + the overlay (`git revert 7881fcb`).
-- Also in range, from an earlier unclosed session: `9233af3` flatpak-managed-install waits for DNS (bounded 60s poll) — not narrated here.
-- Registry (`project_pinned_packages.md`) updated 2026-10-03 to "lift condition met, test-lift pending"; move to PAST once the user confirms dropdowns work.
-
 ## Current Goals
 
+- **All hosts: apply `8af18b1` (starship WARN fix) + `1903228` (2026-10-11 flake bump) via `/fleet-rollout`** (session 125) — stacks on the 2026-10-09 bump (`af45f39`, live only on gaming) and the older laptop/natalie-laptop backlog below. On natalie-laptop, confirm with a fresh `ssh bosko@natalie-laptop` after >5 min idle (no `[WARN] - (starship::context)` line). vpn-server only needs it for sops-nix (it pins `nixpkgs-stable`).
 - **Pi → NixOS migration (famdash first, then pi-hole)** (session 119) — plan in memory `project_pi_nixos_migration_plan.md`. **Step 0: take a pi-hole Teleporter export + copy famdash `db.json`/`.bak` to gaming (untracked) before any work.** Open: second SD card vs reflash for the pi-hole; verify pihole-ftl NixOS module coverage with a real `nix eval`.
 - **All 3 desktop hosts + vpn-server (sops-nix only): apply the 2026-09-27 flake bump (PR #29, `3b61cf4`) via `/fleet-rollout`** (session 118) — verified clean (flake-check + 4-host deep-eval). Desktop hosts pick up nixpkgs/home-manager/dms; vpn-server only needs it for the sops-nix bump since it pins `nixpkgs-stable` (unchanged). Stacks on top of the still-unapplied 2026-09-07 (PR #21) and 2026-09-20 (`f978b9c`) bumps below and the whole printer/skill rebuild backlog — one `/fleet-rollout` pass covers all of it.
 - **laptop + natalie-laptop: `git pull`, then `nh os switch` (no reboot needed) to bring the static Canon printer queue live** (session 116, `8085a0e`) — natalie-laptop can already print via the live-applied CUPS queue in the meantime; laptop cannot print at all until it pulls and switches. Folds into the same `/fleet-rollout` pass as every other pending laptop/natalie-laptop item below.
@@ -112,6 +111,8 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - Explore adding fail2ban or rate-limiting on the WireGuard UDP port
 
 ## Recent Decisions
+
+- **Silenced starship warnings (`STARSHIP_LOG=error`) instead of raising `scan_timeout` (2026-10-11, session 125)** — the timeout is caused by a one-off ~1s CIFS automount wake, not a slow directory; raising the timeout high enough to cover it would make prompts hang that long in genuinely huge directories everywhere. Errors still print.
 
 - **Fixed the zsh `=`/glob footgun at the shell level, gated on `CLAUDECODE`, instead of adding another CLAUDE.md "remember to quote" note (2026-10-10, session 124)** — improve-system proposed a global CLAUDE.md note next to the `find` one; the fix makes the failure impossible rather than relying on recall. Scoped to `CLAUDECODE` so the user's interactive zsh keeps `EQUALS`/`NOMATCH`; put in `shellInit` (`/etc/zshenv`) because `setOptions` only reaches `/etc/zshrc`.
 
@@ -406,6 +407,10 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 125 next steps:**
+1. **`/fleet-rollout`** to bring `8af18b1` + `1903228` (and the 10-09 bump on non-gaming hosts) live; on natalie-laptop, check the SSH login is WARN-free after the share idles out.
+2. Session 124's reboot item is DONE (gen 430 booted, zsh fix + `slice-builder` confirmed). Session 123's Sidekick Phase B is unchanged.
 
 **Session 124 next steps:**
 1. **gaming: reboot onto gen 430** (already staged via `nh os boot`) — activates `slice-builder` and the zsh fix in new Claude sessions. Check: `echo =====` works in a fresh Claude session; `subagent_type: "slice-builder"` resolves.

@@ -4,6 +4,29 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-11 (session 125) — starship SSH WARN fix + flake bump
+
+**Focus**: Kill the starship "Scanning current directory timed out" WARN on SSH logins to natalie-laptop, then bump flake inputs.
+
+### What changed (and why)
+- `8af18b1` sets `STARSHIP_LOG=error` in `modules/starship.nix`: `~/Shared` is a CIFS automount that idles out after 5 min, and the ~1s re-mount on the first prompt in `~` blows past starship's 30ms scan timeout.
+- `1903228` bumps nixpkgs, home-manager, dms, nix-flatpak and sops-nix via `/flake-update-verify` (flake-check + 4-host deep-eval clean).
+
+### Decisions
+- Hid warnings rather than raising `scan_timeout`, which would slow prompts in genuinely huge directories.
+
+### Issues / surprises
+- The August mount-timeout fix was already live on natalie-laptop, so the old memory's "stale generation" theory was wrong; memory corrected.
+- gaming is now booted onto gen 430: session 124's zsh fix and `slice-builder` are confirmed live.
+- Secret-scan clean (tree + 1828 commits, all sops files encrypted).
+
+### Next session
+- `/fleet-rollout` to apply both commits (nothing is switched yet); re-test the natalie-laptop SSH login after the share idles out.
+
+**Commits**: `8af18b1..1903228` (2 commits)
+
+---
+
 ## Session: 2026-10-10 (session 124) — slice-builder agent + zsh fix for Claude's shells
 
 **Focus**: Close out two NixOS commits made from a Sidekick-repo `/improve-system` session.
@@ -93,28 +116,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild (`nh os boot`) + reboot so the skill fixes go live; rebuild gaming and test Steam dropdowns on 0.8.3 (then move the pin to PAST); laptop/natalie-laptop pull + rebuild backlog; pi-hole Teleporter export (step 0).
 
 **Commits**: `c45bb1e..901ccd5` (2 commits)
-
----
-
-## Session: 2026-10-03 (session 120) — xwayland-satellite pin lifted via full flake bump
-
-**Focus**: Check whether the xwayland-satellite pin can be lifted, and lift it if so.
-
-### What changed (and why)
-- `pinned-package-status-check`: nixpkgs unstable ships 0.8.3 (has upstream fix PR #494), but #156 is still open and this repo's locked nixpkgs was still 0.8.2 — so lifting the pin alone would regress.
-- User chose a full `/flake-update-verify` bump. Committed as two commits: the lock bump (`70bd875`) and the pin removal (`7881fcb`), so the lift can be reverted independently.
-
-### Decisions
-- Bump + lift verified together (flake-check, 4-host deep-eval, gaming resolves 0.8.3), committed separately; pushed to `main` after the mandatory AskUserQuestion gate.
-- Skipped `public-repo-guard` (lock hashes + removed comments only) — noted, not a policy change.
-
-### Issues / surprises
-- The nixhub version history lags nixpkgs (showed 0.8.2 as newest); `mcp-nixos info` and a real `nix eval` of the flake were the reliable signals.
-
-### Next session
-- User rebuilds gaming and tests Steam dropdowns; then move the pin row to PAST (or revert `7881fcb`).
-
-**Commits**: `9233af3..7881fcb` (3 commits; `9233af3` flatpak DNS wait is from an earlier session)
 
 ---
 
