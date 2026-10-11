@@ -1,3 +1,27 @@
+## Session: 2026-10-04 (session 121) — /improve-system + /dream; skill-audit fixes committed
+
+**Focus**: Have the manager agent run `/improve-system` and `/dream`, review, commit, close.
+
+### What changed (and why)
+- The manager stopped before doing anything: its Training Mode needs the user's own plan approval and it won't accept a relayed one. After the user approved the plan via AskUserQuestion, the main session ran both skills itself.
+- skill-audit over 70 skills (5 reviewers) found ~15 verified bugs (e.g. `switch-de` failing on gaming, `remote-rebuild` restarting the pulled `wg-quick-wg0`, `rollback` ignoring its target); user chose bugs + lens refactors, 5 forks applied them, committed as `901ccd5`. Other improve-system passes were clean.
+- `/dream` mined 11 transcripts; pinned-packages and Pi-migration memories refreshed, 4 wikilinks fixed.
+
+### Decisions
+- Discord/Artifact publish skipped (part of the approved plan); report kept locally.
+- Treated relayed approvals as non-binding and re-asked the user rather than editing the manager's Training Mode toggle.
+
+### Issues / surprises
+- My cwd drifted into the skills dir after a `cd`, making `list-transcripts-since.sh` silently return nothing (it defaults to `$PWD`) — run lib scripts from the repo root.
+- `rtk` mangles bare `=====` echo arguments in Bash; avoid them.
+
+### Next session
+- Rebuild (`nh os boot`) + reboot so the skill fixes go live; rebuild gaming and test Steam dropdowns on 0.8.3 (then move the pin to PAST); laptop/natalie-laptop pull + rebuild backlog; pi-hole Teleporter export (step 0).
+
+**Commits**: `c45bb1e..901ccd5` (2 commits)
+
+---
+
 ## Session: 2026-10-03 (session 120) — xwayland-satellite pin lifted via full flake bump
 
 **Focus**: Check whether the xwayland-satellite pin can be lifted, and lift it if so.

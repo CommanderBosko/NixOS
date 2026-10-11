@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. Gaming runs gen 430 (2026-10-09 flake bump + zsh fix + `slice-builder` agent); the 2026-10-11 flake bump and starship fix are committed but not yet applied on any host, and laptop, natalie-laptop and vpn-server also carry an older backlog — one `/fleet-rollout` pass covers it all.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 431) and natalie-laptop (gen 96) run the 2026-10-11 flake bump and starship fix; laptop and vpn-server still owe a `/fleet-rollout` pass for that plus an older backlog.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -197,11 +197,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-11 (session 125, latest)** — Silenced starship's "scanning current directory timed out" warning on SSH logins (caused by the `~/Shared` CIFS automount waking up) via `STARSHIP_LOG=error` (`8af18b1`), and bumped flake inputs incl. nixpkgs, home-manager, dms, nix-flatpak and sops-nix (`1903228`); deep-eval clean on all four hosts, not yet applied.
+**2026-10-11 (session 126, latest)** — Reviewed and merged the weekly improve-system PR #33 (a stale file reference in `shared-module-check`, `7304ad5`) and removed an outdated note from `.claude/lib/hosts.sh` (`8aca584`); the 2026-10-11 bump is now live on gaming and natalie-laptop.
+
+**2026-10-11 (session 125)** — Silenced starship's "scanning current directory timed out" warning on SSH logins (caused by the `~/Shared` CIFS automount waking up) via `STARSHIP_LOG=error` (`8af18b1`), and bumped flake inputs incl. nixpkgs, home-manager, dms, nix-flatpak and sops-nix (`1903228`); deep-eval clean on all four hosts, not yet applied.
 
 **2026-10-10 (session 124)** — Added the `slice-builder` agent and a session-closer gotcha (`b2c4868`), and made Claude Code's zsh shells behave like bash for `=` words and unmatched globs by unsetting `EQUALS`/`NOMATCH` only when `CLAUDECODE` is set (`ad7fec5`); live on gaming (gen 430).
-
-**2026-10-10 (session 123)** — Started the Sidekick (ADHD-Assistant) deployment: tailnet HTTPS certificates enabled and a temporary `--operator=bosko` tailscale flag added on gaming (`85ab0af`); dry-run clean, Phase B (service module) not started.
 
 ## Roadmap
 

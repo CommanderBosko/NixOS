@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-11 (session 126) — PR #33 merge, hosts.sh comment, rollout to natalie-laptop
+
+**Focus**: Review the weekly improve-system PR, clean up its leftover, and check the dry-run warnings before rolling out the 10-11 bump.
+
+### What changed (and why)
+- The `manager` agent reviewed and squash-merged PR #33 (`7304ad5`): `shared-module-check` now cites only `modules/claude-code.nix` for the rtk guard, which moved there in the 09-21 reorg.
+- `8aca584` drops the stale "can migrate" sentence from `.claude/lib/hosts.sh`; all five host-touching scripts already use the shared helpers.
+- The user applied `1903228` (+ `8af18b1`) on gaming (gen 431) and natalie-laptop (gen 96, booted). Both checked live at close.
+
+### Decisions
+- The manager merged on "look over the weekly pr" without an explicit merge word, relying on the 09-22 pre-delegated merge authority and the PR #31 precedent. It said so in its report.
+- Left the sweep's other two leftovers alone (duplicated niri closing paragraph; restated NOPASSWD fact). Both are real but low-value, and a helper script would add moving parts.
+
+### Issues / surprises
+- natalie-laptop's rebuild printed initrd warnings about missing libcrypto/libssl/libbpf/libcrypt. These are optional systemd 261 deps and harmless: the host booted gen 96 with 0 failed units. Saved to memory so they don't get re-diagnosed.
+- natalie-laptop is now current through `1903228`, which clears its whole rebuild backlog. laptop was offline (SSH timeout).
+- Secret-scan clean (tree + 1832 commits, all sops files encrypted).
+
+### Next session
+- `/fleet-rollout` for laptop + vpn-server; confirm natalie-laptop's SSH login is WARN-free after the share idles; then revoke the old Tailscale OAuth client.
+
+**Commits**: `7304ad5..8aca584` (2 commits)
+
+---
+
 ## Session: 2026-10-11 (session 125) — starship SSH WARN fix + flake bump
 
 **Focus**: Kill the starship "Scanning current directory timed out" WARN on SSH logins to natalie-laptop, then bump flake inputs.
@@ -92,30 +117,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild gaming/laptop/natalie-laptop to pick up the bump and pending global skill edits.
 
 **Commits**: `af45f39` (1 commit)
-
----
-
-## Session: 2026-10-04 (session 121) — /improve-system + /dream; skill-audit fixes committed
-
-**Focus**: Have the manager agent run `/improve-system` and `/dream`, review, commit, close.
-
-### What changed (and why)
-- The manager stopped before doing anything: its Training Mode needs the user's own plan approval and it won't accept a relayed one. After the user approved the plan via AskUserQuestion, the main session ran both skills itself.
-- skill-audit over 70 skills (5 reviewers) found ~15 verified bugs (e.g. `switch-de` failing on gaming, `remote-rebuild` restarting the pulled `wg-quick-wg0`, `rollback` ignoring its target); user chose bugs + lens refactors, 5 forks applied them, committed as `901ccd5`. Other improve-system passes were clean.
-- `/dream` mined 11 transcripts; pinned-packages and Pi-migration memories refreshed, 4 wikilinks fixed.
-
-### Decisions
-- Discord/Artifact publish skipped (part of the approved plan); report kept locally.
-- Treated relayed approvals as non-binding and re-asked the user rather than editing the manager's Training Mode toggle.
-
-### Issues / surprises
-- My cwd drifted into the skills dir after a `cd`, making `list-transcripts-since.sh` silently return nothing (it defaults to `$PWD`) — run lib scripts from the repo root.
-- `rtk` mangles bare `=====` echo arguments in Bash; avoid them.
-
-### Next session
-- Rebuild (`nh os boot`) + reboot so the skill fixes go live; rebuild gaming and test Steam dropdowns on 0.8.3 (then move the pin to PAST); laptop/natalie-laptop pull + rebuild backlog; pi-hole Teleporter export (step 0).
-
-**Commits**: `c45bb1e..901ccd5` (2 commits)
 
 ---
 
