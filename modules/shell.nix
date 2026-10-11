@@ -93,6 +93,14 @@ in
         if [[ $- == *i* && -f ~/.cache/wal/sequences ]]; then
           (cat ~/.cache/wal/sequences &)
         fi
+
+        # Claude Code runs its Bash tool through zsh but writes bash-style commands. Two zsh
+        # defaults break those: EQUALS (`echo =====` fails with "===== not found") and NOMATCH
+        # (an unmatched glob like `grep --include=*.nix` aborts the command). Turn both off only
+        # in Claude Code's shells, which set CLAUDECODE=1; interactive zsh is unchanged.
+        if [[ -n $CLAUDECODE ]]; then
+          unsetopt EQUALS NOMATCH
+        fi
       '';
     };
 
