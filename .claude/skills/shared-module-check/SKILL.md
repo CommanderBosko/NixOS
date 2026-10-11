@@ -58,7 +58,7 @@ If the error is `undefined variable '<pkg>'` (or similarly, a missing attribute)
 pkgs.lib.optional (pkgs ? <attrName>) pkgs.<attrName>
 ```
 
-This self-heals once a future stable point-release backports the package — no manual re-edit needed. Reference precedent: `modules/users.nix` and `modules/claude-code.nix`'s `rtk` guard (fixed 2026-07-18) — cite this file pair as the concrete example when suggesting the fix. If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
+This self-heals once a future stable point-release backports the package — no manual re-edit needed. Reference precedent: `modules/claude-code.nix`'s `rtk` guard (originally fixed 2026-07-18 in `modules/users.nix`, relocated here by the 2026-09 module-colocation refactor) — cite this file as the concrete example when suggesting the fix. If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
 
 If the failure isn't an availability gap (a real syntax error, a genuinely broken option, an assertion failure), diagnose it normally — don't force the availability-gap explanation onto an unrelated bug.
 
