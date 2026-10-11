@@ -6,6 +6,14 @@
   # PATH, so install it too.
   environment.systemPackages = [ pkgs.starship ];
 
+  # Only show starship errors, not warnings. On shared-folder clients,
+  # ~/Shared points at the /srv/shared CIFS automount, which idles out after
+  # 5min — so the first prompt in ~ after that re-triggers the mount (~1s),
+  # blowing past starship's 30ms scan_timeout and printing a "Scanning
+  # current directory timed out" WARN on every SSH login. The share itself
+  # works fine; raising scan_timeout instead would slow prompts in huge dirs.
+  environment.variables.STARSHIP_LOG = "error";
+
   programs = {
     starship = {
       enable = true;
