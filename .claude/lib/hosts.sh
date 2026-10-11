@@ -23,9 +23,8 @@
 # Callers keep their own `set -uo pipefail`; nothing here changes shell options.
 # Requires jq.
 #
-# Used by resolve-host.sh and check-hosts-json.sh. Other host-touching skill
-# scripts (fleet-status, restore-tunnels, host-age-key, next-vpn-ip, vpn-status)
-# still carry their own inline jq lookups and can migrate to these helpers.
+# Used by resolve-host.sh, check-hosts-json.sh, and the host-touching skill
+# scripts (`grep -rl lib/hosts.sh .claude` for the current list).
 
 HOSTS_JSON="${HOSTS_JSON:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/hosts.json}"
 
