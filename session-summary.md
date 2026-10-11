@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-10 (session 123) — Sidekick deploy Phase A
+
+**Focus**: Do Phase A of the ADHD-Assistant NixOS deployment handoff doc.
+
+### What changed (and why)
+- `85ab0af` sets `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` on gaming so `tailscale serve` works without sudo during Sidekick dev testing. Dry-run clean, user switched.
+- Tailnet HTTPS certificates enabled by the user in the admin console.
+
+### Decisions
+- Operator flag lives in `hosts/gaming/environment.nix`, not the shared `modules/tailscale.nix`, so other desktops aren't widened. It is temporary (see project-state).
+- Did not retry the blocked API toggle another way; handed it to the user.
+
+### Issues / surprises
+- Auto-mode classifier denied `tailscale_update_tailnet_settings`; the admin console was the path.
+- `tailscale debug prefs` has no operator field; `tailscale serve status` without sudo is the real check.
+- Secret-scan clean (tree + history).
+
+### Next session
+- Phase B of `deployment-nixos.md`; remove the operator flag afterward.
+
+**Commits**: `85ab0af` (1 commit)
+
+---
+
 ## Session: 2026-10-09 (session 122) — flake input bump
 
 **Focus**: Close out a short session whose only change was a flake input bump.
@@ -89,30 +113,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - User takes the Teleporter backup + `db.json` copy, then start the famdash host.
 
 **Commits**: none (planning session)
-
----
-
-## Session: 2026-09-27/28 (session 118) — Manager-run `/flake-update-verify` lands as PR #29, merged
-
-**Focus**: Have the `manager` agent run and land `/flake-update-verify`, then review CI and merge the result.
-
-### What changed (and why)
-- **`manager` agent ran `/flake-update-verify` non-interactively**, bumping nixpkgs, home-manager, dms (+ transitive dank-qml-common), and sops-nix. `nix flake check` + full `toplevel.drvPath` deep-eval both passed clean on all 4 hosts.
-- **Landed as branch + PR (#29) instead of a direct push to `main`** — the manager agent has no `AskUserQuestion` as a background agent, so it substituted a human-reviewed PR for the skill's interactive commit gate, matching the 2026-09-07 precedent (PR #21). A documented, deliberate deviation, not a skipped check.
-- **Both standing pins double-checked and left alone**: xwayland-satellite (0.8.1, fixed-commit input, byte-identical before/after) and vpn-server's `rtk` guard (unaffected — vpn-server pins `nixpkgs-stable`, which didn't move).
-- **`public-repo-guard` ran its flake.lock-only-diff shortcut** (secret-scan + audit-config only) — 0 genuine findings.
-- **Main session reviewed CI (green) and merged PR #29** as a merge commit (`3b61cf4`), deleted the branch, fast-forwarded local `main`.
-
-### Decisions
-- Accepted the manager's branch+PR substitution for the interactive commit gate as equivalent-in-intent (a human still reviews before `main` changes) — consistent with the 2026-09-07 precedent, not a new exception.
-
-### Issues / surprises
-- None — the manager flagged no ambiguity; both pins were verified rather than assumed untouched.
-
-### Next session
-- **All hosts: `/fleet-rollout`** to apply PR #29's bump — stacks onto the existing multi-bump (2026-09-07, 2026-09-20) + printer + skill rebuild backlog. No other action pending.
-
-**Commits**: `136ac0e`..`3b61cf4` (2 commits: bump + merge)
 
 ---
 

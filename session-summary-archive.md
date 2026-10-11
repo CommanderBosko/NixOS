@@ -1,3 +1,27 @@
+## Session: 2026-09-27/28 (session 118) — Manager-run `/flake-update-verify` lands as PR #29, merged
+
+**Focus**: Have the `manager` agent run and land `/flake-update-verify`, then review CI and merge the result.
+
+### What changed (and why)
+- **`manager` agent ran `/flake-update-verify` non-interactively**, bumping nixpkgs, home-manager, dms (+ transitive dank-qml-common), and sops-nix. `nix flake check` + full `toplevel.drvPath` deep-eval both passed clean on all 4 hosts.
+- **Landed as branch + PR (#29) instead of a direct push to `main`** — the manager agent has no `AskUserQuestion` as a background agent, so it substituted a human-reviewed PR for the skill's interactive commit gate, matching the 2026-09-07 precedent (PR #21). A documented, deliberate deviation, not a skipped check.
+- **Both standing pins double-checked and left alone**: xwayland-satellite (0.8.1, fixed-commit input, byte-identical before/after) and vpn-server's `rtk` guard (unaffected — vpn-server pins `nixpkgs-stable`, which didn't move).
+- **`public-repo-guard` ran its flake.lock-only-diff shortcut** (secret-scan + audit-config only) — 0 genuine findings.
+- **Main session reviewed CI (green) and merged PR #29** as a merge commit (`3b61cf4`), deleted the branch, fast-forwarded local `main`.
+
+### Decisions
+- Accepted the manager's branch+PR substitution for the interactive commit gate as equivalent-in-intent (a human still reviews before `main` changes) — consistent with the 2026-09-07 precedent, not a new exception.
+
+### Issues / surprises
+- None — the manager flagged no ambiguity; both pins were verified rather than assumed untouched.
+
+### Next session
+- **All hosts: `/fleet-rollout`** to apply PR #29's bump — stacks onto the existing multi-bump (2026-09-07, 2026-09-20) + printer + skill rebuild backlog. No other action pending.
+
+**Commits**: `136ac0e`..`3b61cf4` (2 commits: bump + merge)
+
+---
+
 ## Session: 2026-09-27 (session 117) — `/dream` self-heals a real bug in its own wikilink resolver; weekly PR #28 merged
 
 **Focus**: Close out a multi-day gap of Claude-ecosystem-only activity (2026-09-24 through 2026-09-27) — a routine pin re-check, the weekly `improve-system` review/merge cycle, and several `/dream` memory-mining passes, one of which surfaced and fixed a real bug in its own tooling.

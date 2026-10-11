@@ -1,10 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-10-09 (session 122)_
+_Last updated: 2026-10-10 (session 123)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**Sidekick (ADHD-Assistant) deploy, Phase A done: tailnet HTTPS certs on + `--operator=bosko` on gaming (`85ab0af`), pushed (2026-10-10, session 123).**
+- **Source of truth:** `~/projects/ADHD-Assistant/docs/deployment-nixos.md` (handoff doc; Phase B = flake input, `hosts/gaming/adhd-assistant.nix`, sops `adhd-assistant-env`, rollout — NOT started).
+- **HTTPS certs:** the Tailscale API toggle was blocked by the auto-mode classifier, so the user enabled it in the admin console; `tailscale status --json | jq .CertDomains` now lists `gaming.tail6da34c.ts.net` (public side effect: that name is in Certificate Transparency logs).
+- **Operator:** `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` in `hosts/gaming/environment.nix`; dry-run clean (only new `tailscaled-set.service`), user switched, verified by `tailscale serve status` working without sudo. `tailscale debug prefs` does not print an operator field, so don't use it as the check. **Temporary:** remove once Phase B's root `adhd-assistant-serve` unit is deployed.
+- `tailscale serve status` showed "No serve config", so nothing else holds `:443`.
 
 **Flake inputs bumped (`af45f39`), pushed, NOT activated on any host (2026-10-09, session 122).**
 - nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
@@ -29,14 +35,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Decisions (user-confirmed via AskUserQuestion):** famdash headless + keeps Wi-Fi (PSK captured by user into sops); FamDash as SSH flake input (repo stays private); pi-hole lists declarative (replaces updatelists) + Teleporter import for clients; 1.1.1.1 as temporary DNS during cutover; new Tailscale nodes; Tailscale + static LAN IP; famdash first.
 - **Full plan saved to memory** (`project_pi_nixos_migration_plan.md`). NOTHING built; **the pi-hole still has NO backup** — Teleporter export is step 0.
 - Found: `bosko` has passwordless sudo on pi-hole (contradicts the older memory note).
-
-**PR #29 merged — flake inputs bumped via manager-run `/flake-update-verify`, deep-eval clean on all 4 hosts; stacks unapplied onto the existing fleet-rollout backlog (2026-09-27/28, session 118).**
-- **User asked the `manager` agent to run and land `/flake-update-verify`.** It bumped `nixpkgs` (20b1ddd1→e158d9ed), `home-manager` (d2a22a36→7b4c5ec4), `dms` (df71c654→c4557974) + its transitive `dank-qml-common` (1d28494b→660b0447), and `sops-nix` (7214124c→5efb5a6f). Unchanged: `disko`, `financeguru`, `nix-flatpak`, `nix-colors`, `nixpkgs-stable`.
-- **Verification: `nix flake check` clean + full `toplevel.drvPath` deep-eval clean on all 4 hosts** (gaming/laptop/natalie-laptop/vpn-server) — no insecure-package gate hit.
-- **Landed as branch + PR (#29), not a direct push to `main`** — same substitution as the 2026-09-07 precedent (PR #21): the manager agent has no `AskUserQuestion` as a background agent, so it satisfies the skill's "don't let this land unreviewed" commit gate via a human-reviewed PR instead. Recorded as a deliberate, documented deviation in that loop's own memory file, not a skipped check.
-- **Both standing pins verified untouched, as instructed:** `xwayland-satellite` (0.8.1, fixed-commit input) — byte-identical rev before/after `nix flake update`, unaffected by design; vpn-server's `rtk` `pkgs ? rtk`/`doCheck=false` guard — vpn-server evals off `nixpkgs-stable`, which this run didn't move, so its behavior is unchanged either way.
-- **`public-repo-guard`'s pre-push gate ran the established flake.lock-only-diff shortcut** (skip re-running the slow `nix flake check` since deep-eval had just run clean against this exact tree; still ran `secret-scan` and `audit-config`'s pattern sweep) — 0 genuine findings, same precedent as the 2026-09-07 and 2026-09-21 runs.
-- **Main session then reviewed CI (green, `MERGEABLE`/`CLEAN`) and merged PR #29** as a merge commit (`3b61cf4`), deleted the branch, fast-forwarded local `main`. Nothing applied to any host — see Current Goals.
 
 ## Current Goals
 
@@ -406,6 +404,10 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 123 next steps:**
+1. **Sidekick Phase B** when ready: add `adhd-assistant` flake input + `hosts/gaming/adhd-assistant.nix` + `adhd-assistant-env` sops secret (VAPID keys need the app's `gen-vapid`, milestone M2) + CI deploy key. Then remove the temporary `--operator=bosko` line.
+2. Rebuild backlog from earlier sessions is unchanged.
 
 **Session 120 next steps:**
 1. **User: rebuild gaming** (picks up the bump + 0.8.3 / no pin), restart niri or reboot, then open Steam File/Store/Library dropdowns. Report back; if fixed, move the xwayland-satellite registry row to PAST and update `project_steam_dropdown_menu_bug`. If regressed, `git revert 7881fcb`.
