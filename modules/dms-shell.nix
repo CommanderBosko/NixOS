@@ -79,13 +79,19 @@ in
         run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
       '';
 
-      # Screen locker and idle lock (programs.swaylock / services.swayidle
-      # NixOS modules were removed upstream; use Home Manager's).
+      # Idle lock goes through DMS's own lock screen, never swaylock: DMS
+      # follows any session lock it sees and tries to engage its own, which
+      # niri refuses while swaylock holds the lock. That retry loop churned
+      # GL lock surfaces until quickshell aborted on NVIDIA (2026-10-12).
+      # swaylock stays installed only as a manual fallback (e.g. from a TTY
+      # with WAYLAND_DISPLAY set, if DMS dies mid-lock). The swaylock and
+      # swayidle NixOS modules were removed upstream, so these are Home
+      # Manager's.
       programs.swaylock.enable = true;
       services.swayidle = {
         enable = true;
         timeouts = [
-          { timeout = cfg.idleLockTimeout; command = "${pkgs.swaylock}/bin/swaylock -f"; }
+          { timeout = cfg.idleLockTimeout; command = "${config.programs.dank-material-shell.package}/bin/dms ipc call lock lock"; }
         ];
       };
     });
