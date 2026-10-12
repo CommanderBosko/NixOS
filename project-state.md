@@ -1,10 +1,15 @@
 # NixOS Project State
 
-_Last updated: 2026-10-11 (session 126)_
+_Last updated: 2026-10-12 (session 127)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**Cross-project `/improve-system` (run from the blueprint-smith repo) landed `2d3ddb5`: new global `land-prs` skill + `brief-reviewer` agent, and `interview` Step 7 now spawns the agent; pushed, NOT yet live — gaming is still on gen 431 (built 2026-10-11), and `~/.claude/skills/land-prs` / `~/.claude/agents/brief-reviewer.md` don't exist yet (2026-10-12, session 127).**
+- **`land-prs`** (`dotfiles/bosko/claude/skills/land-prs/`, + `scripts/pr-chain.sh`): merge one PR or a stacked chain bottom-up, retarget each child to `main` as its parent lands, check `origin/main`'s tree matches the tip branch, `pull --ff-only`, delete merged branches locally. Built from 2 blueprint-smith sessions (PR #1; stacked #2→#3→#4, then #5). Only the read-only `gh` parts were smoke-tested; merge and branch deletion have never run.
+- **`brief-reviewer`** (`dotfiles/bosko/claude/agents/brief-reviewer.md`): the interview skill's second-AI brief check, previously re-typed as a 2–6k-char prose prompt each time. Approximately tested (a `general-purpose` agent following the file's text): correct report format, read-only, real findings; it ran ~420 words against a 300 cap, so the cap wording was tightened before commit.
+- The same sweep's blueprint-smith-side changes (`ingame-test` skill, `secret-scan` fixes, 2 permission entries) went to that repo's PR #6, not here. This close-out session itself made no code changes.
 
 **Weekly improve-system PR #33 reviewed + squash-merged by the `manager` agent (`7304ad5`), leftover `hosts.sh` comment fixed (`8aca584`); gaming (gen 431) AND natalie-laptop (gen 96) are now booted onto `1903228`, so session 125's starship fix + 10-11 flake bump are LIVE on both. laptop (offline) + vpn-server still owe the rollout (2026-10-11, session 126).**
 - **PR #33** (one line in `.claude/skills/shared-module-check/SKILL.md`): the `pkgs ? rtk` precedent now cites only `modules/claude-code.nix` (the guard moved there in `85fd55a`). Manager verified the claim against code + git history, guardrail script + CI "evaluate all hosts" passed. **It merged on "look over the weekly pr" with no explicit merge word**, relying on the 2026-09-22 pre-delegated merge authority and the PR #31 (10-04) precedent; it said so up front. Project-local skill, so no rebuild needed; laptop just needs a `git pull`.
@@ -29,12 +34,9 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Operator:** `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` in `hosts/gaming/environment.nix`; dry-run clean (only new `tailscaled-set.service`), user switched, verified by `tailscale serve status` working without sudo. `tailscale debug prefs` does not print an operator field, so don't use it as the check. **Temporary:** remove once Phase B's root `adhd-assistant-serve` unit is deployed.
 - `tailscale serve status` showed "No serve config", so nothing else holds `:443`.
 
-**Flake inputs bumped (`af45f39`), pushed; live on gaming since gen 428 (2026-10-10), NOT yet on laptop/natalie-laptop/vpn-server (2026-10-09, session 122).**
-- nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
-- Still owed: rebuild on each host (also carries 2026-10-04's global skill edits, which only reach `~/.claude` after `nh os boot` + reboot). Secret-scan clean (tree + 1820 commits).
-
 ## Current Goals
 
+- **gaming (and every desktop host): rebuild to bring `2d3ddb5` live** (session 127) — `land-prs` + `brief-reviewer` + the `interview` edit are global (`dotfiles/bosko/claude/`), so they reach `~/.claude` only after a rebuild; `brief-reviewer` is dispatchable by name only in a Claude session started after that. laptop/natalie-laptop pick it up in the same `/fleet-rollout` pass as everything else. First real `land-prs` run (blueprint-smith PR #6 is a candidate) is its end-to-end test.
 - **laptop + vpn-server: apply the remaining backlog via `/fleet-rollout`** (session 126) — **gaming (gen 431) and natalie-laptop (gen 96) are both booted onto `1903228` as of 2026-10-11**, so every older rebuild/pull item below that names natalie-laptop or gaming is DONE for those hosts and outstanding on **laptop only** (vpn-server only needs the sops-nix bumps; it pins `nixpkgs-stable`). Still to confirm on natalie-laptop: a fresh interactive `ssh bosko@natalie-laptop` after >5 min share idle shows no `[WARN] - (starship::context)` line. Once laptop is rebuilt, revoke the pre-rotation Tailscale OAuth client (session 114 item below).
 - **Pi → NixOS migration (famdash first, then pi-hole)** (session 119) — plan in memory `project_pi_nixos_migration_plan.md`. **Step 0: take a pi-hole Teleporter export + copy famdash `db.json`/`.bak` to gaming (untracked) before any work.** Open: second SD card vs reflash for the pi-hole; verify pihole-ftl NixOS module coverage with a real `nix eval`.
 - **All 3 desktop hosts + vpn-server (sops-nix only): apply the 2026-09-27 flake bump (PR #29, `3b61cf4`) via `/fleet-rollout`** (session 118) — verified clean (flake-check + 4-host deep-eval). Desktop hosts pick up nixpkgs/home-manager/dms; vpn-server only needs it for the sops-nix bump since it pins `nixpkgs-stable` (unchanged). Stacks on top of the still-unapplied 2026-09-07 (PR #21) and 2026-09-20 (`f978b9c`) bumps below and the whole printer/skill rebuild backlog — one `/fleet-rollout` pass covers all of it.
@@ -110,6 +112,8 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - Explore adding fail2ban or rate-limiting on the WireGuard UDP port
 
 ## Recent Decisions
+
+- **`land-prs` deletes remote branches as its own confirmed step, never chained (2026-10-12, session 127)** — in blueprint-smith, a bundled `git push --delete` chain after merging PRs #2–#4 was blocked by the auto-mode classifier and had to be redone without the deletes. Splitting it out with an explicit confirmation matches what the classifier will allow and keeps the irreversible part visible. `brief-reviewer` became a custom agent (not a longer prose prompt) for the same reason as `slice-builder`: the identical multi-KB brief was being re-typed on every spawn.
 
 - **Silenced starship warnings (`STARSHIP_LOG=error`) instead of raising `scan_timeout` (2026-10-11, session 125)** — the timeout is caused by a one-off ~1s CIFS automount wake, not a slow directory; raising the timeout high enough to cover it would make prompts hang that long in genuinely huge directories everywhere. Errors still print.
 
@@ -406,6 +410,11 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 127 next steps:**
+1. **Rebuild gaming** (`nh os switch` or `boot`+reboot) to bring `land-prs` + `brief-reviewer` live; check `ls ~/.claude/skills/land-prs ~/.claude/agents/brief-reviewer.md` and that `subagent_type: "brief-reviewer"` resolves in a new session.
+2. **`/fleet-rollout` for laptop** (when online) + vpn-server — unchanged from session 126; carries `2d3ddb5` too.
+3. On natalie-laptop, confirm the SSH login is WARN-free after the share idles 5+ min; then revoke the pre-rotation Tailscale OAuth client.
 
 **Session 126 next steps:**
 1. **`/fleet-rollout` for laptop** (when it's online) + vpn-server — the only hosts still behind; laptop also needs `git pull` for `7304ad5`/`8aca584` (no rebuild needed for those).

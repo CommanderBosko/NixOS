@@ -2,6 +2,10 @@
 
 Older `Current Project State` blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Flake inputs bumped (`af45f39`), pushed; live on gaming since gen 428 (2026-10-10), NOT yet on laptop/natalie-laptop/vpn-server (2026-10-09, session 122).**
+- nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
+- Still owed: rebuild on each host (also carries 2026-10-04's global skill edits, which only reach `~/.claude` after `nh os boot` + reboot). Secret-scan clean (tree + 1820 commits).
+
 **`/improve-system` + `/dream` run: skill-audit fixes across 70 skills committed (`901ccd5`); memory refreshed; NOT yet rebuilt — global skill edits only reach `~/.claude` after `nh os boot` + reboot (2026-10-04, session 121).**
 - **The `manager` agent paused and never ran** — its Training Mode requires user approval of its plan and it refuses to treat a relayed approval as the user's. The main session ran both skills directly after the user approved the plan via AskUserQuestion. Discord/Artifact publishing was skipped per that approved plan (report saved locally to `~/.claude/improve-system/`).
 - **skill-upgrade / skill-suggestion / agent-suggestion / claude-rules / fewer-permission-prompts: all clean** (35 transcripts since 2026-09-17 mined by 4 scanners, no candidates; all 5 CLAUDE.md rules present; only `mcp__nixos__*` in use and already allowed).
