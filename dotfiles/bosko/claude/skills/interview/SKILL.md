@@ -64,7 +64,7 @@ Then ask: *"Does this capture it? Anything to add, cut, or correct?"* Revise unt
 
 ### 7. Have a second AI check it
 
-Once the user has confirmed the brief, get a second opinion before handing off. Spawn a subagent (Claude) and give it the full brief plus the success criteria from step 1, asking it to critique the brief as an independent reviewer: Does it clear the bar? Is anything vague, internally contradictory, missing, or scoped wrong? What would a sharp engineer push back on?
+Once the user has confirmed the brief, get a second opinion before handing off. Spawn the `brief-reviewer` agent (`Agent` tool, `subagent_type: "brief-reviewer"`) and give it the full brief, the success criteria from step 1 as its bar, a two-line project context, and any files it may read to check the brief's claims (e.g. an existing brief this amends, the project's CLAUDE.md). Add any specific questions you want answered (e.g. "do milestones 2–4 have done criteria?"). It critiques as an independent reviewer: does it clear the bar, what is vague, internally contradictory, missing, or scoped wrong, and what would a sharp engineer push back on.
 
 Relay the reviewer's findings to the user plainly. Fold in any fixes you and the user agree with and re-confirm; note anything you're deliberately leaving as-is. The goal is a brief that survives an outside read, not just one the user nodded along to.
 
