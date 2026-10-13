@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 
 {
   imports = [ inputs.sops-nix.nixosModules.sops ];
@@ -7,6 +7,10 @@
   # extra key material has to be distributed — the host that owns the key can
   # decrypt the secrets encrypted to it.
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
+  # sops CLI for editing secrets/*.yaml directly, instead of going through
+  # `nix shell nixpkgs#sops` every time.
+  environment.systemPackages = [ pkgs.sops ];
 
   # Shared secrets (all hosts). Login password hashes must be present before
   # user accounts are created, hence neededForUsers (decrypted early to
