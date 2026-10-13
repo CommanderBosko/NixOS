@@ -2,6 +2,8 @@
 
 When a rule section is missing from a project's `CLAUDE.md`, insert the matching block below **verbatim**. Do not rewrite or "improve" the wording — these are the agreed canonical versions.
 
+Every `## ` heading in this file outside a code fence is a rule: `scripts/check-rules.sh` reads its roster from them. Don't add any other `## ` heading here.
+
 ## Scope First (Interview)
 
 ```markdown

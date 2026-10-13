@@ -146,23 +146,17 @@ apply them.
 - `assets/overview-template.md` — the Memory Improvement Overview skeleton, including the
   exact `Status:` marker contract `dream` depends on. Read and fill it in Step 5.
 
+## References
+
+- `references/classification.md` — why `WIKILINK_UNRESOLVED` findings are left alone and
+  how the near-miss-vs-unresolved method was checked (Step 2.2, Gotchas).
+
 ## Gotchas
 
-- **This skill is global/repo-managed** — always invoke its scripts by the absolute
-  `~/.claude/skills/improve-memory/scripts/...` path shown when the skill launches, never
-  a bare `scripts/...` (resolves against the wrong cwd — same recurring mistake documented
-  in `session-closer`'s and `save-memory`'s Gotchas).
-- **A `WIKILINK_UNRESOLVED` finding is not a bug.** `save-memory` deliberately allows
-  linking to a memory that doesn't exist yet, as a marker for "worth writing later." Only
-  `WIKILINK_NEAR_MISS` (a link that clearly matches an existing file under a different
-  hyphen/underscore spelling) is a real staleness fix — unresolved links are almost always
-  intentional forward-references or references to skill names, not memory slugs at all
-  (e.g. `[[bump-input]]`, `[[pin-input]]`), and should not be touched. The
-  near-miss-vs-unresolved classification method itself is confirmed sound against this
-  repo's own memory dir (checked repeatedly, most recently 2026-09-04, after `dream`'s
-  first full-history run had already normalized the near-misses found on 2026-09-03) —
-  don't expect any specific count to still be reproducible; re-run
-  `scripts/find-memory-issues.sh` live rather than trusting a cached number here.
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
+- **A `WIKILINK_UNRESOLVED` finding is not a bug** — only `WIKILINK_NEAR_MISS` is a real
+  staleness fix; never touch unresolved links. See `references/classification.md` for why
+  and for the 2026-09-04 check of the classification method.
 - **Don't blur the CLAUDE.md/contradiction/deletion line into auto-apply "for convenience"
   even when a fix looks obviously safe.** These are AI-generated edits to files the user
   relies on every session (or, for CLAUDE.md, files that change Claude's own behavior) —

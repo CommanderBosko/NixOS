@@ -2,7 +2,7 @@
 # Mechanical structural lint for a generated project-local secret-scan skill, matching
 # the contract in assets/secret-scan-template.md + assets/secret-scan-script-template.sh.
 # Judgment checks (are the interview answers actually accurate for this project, does a
-# real scan run resolve) stay in create-secret-scan's own Step 4 prose — this script only
+# real scan run resolve) stay in create-secret-scan's own Step 3 (item 2) prose — this script only
 # checks presence/shape, never meaning.
 #
 # Usage: lint-secret-scan.sh <path-to-skill-dir>   (the dir containing SKILL.md)

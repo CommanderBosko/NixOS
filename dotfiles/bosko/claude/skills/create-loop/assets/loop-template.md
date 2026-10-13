@@ -1,5 +1,4 @@
 <!-- BEGIN -->
-```
 ---
 name: <loop-name>
 description: <one-sentence goal>. Self-orchestrating loop. Use when the user says "/<loop-name>", "run <loop-name>", or "<natural trigger phrase>".
@@ -84,5 +83,4 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 
 Tell me: the mode, the result, which steps were skipped vs re-run, where the two files
 were written, and anything from "Remember next run" worth acting on.
-```
 <!-- END -->

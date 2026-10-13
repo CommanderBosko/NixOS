@@ -9,23 +9,23 @@ Find whatever status/progress docs this project keeps — the filenames vary per
 
 ## Arguments
 
-- **Status-doc hints** (optional) — filenames or patterns the user names directly (e.g. "check NOTES.md" or "look in docs/status"). When given, pass only those patterns to `find-status-docs.sh` in Step 2 instead of firing the full default list. If omitted, Step 1's convention check and Step 2's default pattern list are used instead.
+- **Status-doc hints** (optional) — filenames or patterns the user names directly (e.g. "check NOTES.md" or "look in docs/status"). When given, pass only those patterns to `find-status-docs.sh` in Step 2 instead of firing the full default list. If omitted, Step 1's convention check and the script's built-in default pattern list are used instead.
 
 ## Steps
 
 ### 1. Check for a documented convention first
 
-Before guessing filenames, check whether the project already names its own convention — grep `CLAUDE.md` and `README.md` (if present) for words like "project-state", "session-summary", "status", "progress", or "changelog". If one is named explicitly, search for that file specifically instead of the generic list in step 2.
+Before guessing filenames, check whether the project already names its own convention — grep `CLAUDE.md` and `README.md` (if present) for words like "project-state", "session-summary", "status", "progress", or "changelog". If one is named explicitly, search for that file specifically instead of the script's default list in step 2.
 
 ### 2. Locate the docs
 
 Search the project root and one level down for common status-doc filenames. The lookup itself is mechanical (one `-iname` pattern per `find` call — never combine patterns with `-o`, and never use `-not`/`-exec`, since some environments' `find` reject compound predicates outright and fail the whole lookup rather than just matching less), so it's handled by a script:
 
 ```bash
-bash <skill-base-dir>/scripts/find-status-docs.sh . project-state.md session-summary.md STATUS.md PROGRESS.md NOTES.md CHANGELOG.md
+bash <skill-base-dir>/scripts/find-status-docs.sh .
 ```
 
-Adapt the pattern list to what step 1 turned up, or to filenames the user names directly — pass only the patterns worth trying instead of firing the full default list blindly every time. The judgment is in choosing patterns; the lookup itself is not.
+With no patterns, the script searches its built-in default status-doc list (`DEFAULT_PATTERNS` at the top of the script; edit it there, not here). If step 1 turned up a convention, or the user named filenames directly, pass only those patterns after the `.` instead (e.g. `find-status-docs.sh . NOTES.md`), so the full default list isn't fired blindly every time. The judgment is in choosing patterns; the lookup itself is not.
 
 ### 3. Read what's found
 

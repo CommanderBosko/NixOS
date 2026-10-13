@@ -60,14 +60,13 @@ Create `.claude/skills/` and `.claude/loops/<loop-name>/` with `mkdir -p` if the
 
 Before handing off, prove the loop file is well-formed:
 
-1. **Structural lint (mechanical, scripted)** — run (absolute path — a bare `scripts/...`
-   path 404s, this is a global home-symlinked skill and the Bash tool's cwd is the project
-   root, not this skill's directory):
+1. **Structural lint (mechanical, scripted)** — run:
    ```bash
    /home/bosko/.claude/skills/create-loop/scripts/lint-loop.sh <repo-root>/.claude/skills/<loop-name>/SKILL.md
    ```
-   It checks presence/shape only (never meaning): valid `name:`/`description:` frontmatter,
-   `name:` matching the directory name (required for the slash command to resolve), the
+   It checks presence/shape only (never meaning): line 1 is the opening `---` (no stray
+   fence ahead of the frontmatter), valid `name:`/`description:` frontmatter, `name:`
+   matching the directory name (required for the slash command to resolve), the
    Training Mode block, retry cap, Goal/Overall-done-rule/Steps/Verification-plan/Report
    sections, at least one step `Done-rule:`, and the dual-file Output/Memory section. Fix
    anything it FAILs before continuing — don't hand-check these by eye.
@@ -108,10 +107,11 @@ The loop file content lives verbatim in `assets/loop-template.md` — it is the 
 - **`name:` must equal the directory name**, or `/<loop-name>` won't resolve.
 - **Done-rules must be machine-checkable.** If the user gives a vague one ("looks good"), push back and turn it into something with an exit code, a file check, or a text match — otherwise Training Mode's "skip if passing" can't work.
 - **ON-mode is interactive only.** Don't promise unattended pauses; tell the user to flip to OFF for `/loop`-scheduled or background runs.
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 
 ## Scripts
 
-- `/home/bosko/.claude/skills/create-loop/scripts/lint-loop.sh <path-to-SKILL.md>` — Step 4's mechanical structural checks (frontmatter, name/directory match, Training Mode block, retry cap, required sections, at least one done-rule, dual-file output section). Presence/shape only — the judgment calls (are the done-rules actually measurable, does a verification pass resolve) stay in Step 4's prose.
+- `lint-loop.sh <path-to-SKILL.md>` (Step 4 has the absolute path to run) — Step 4's mechanical structural checks (frontmatter opening on line 1, name/directory match, Training Mode block, retry cap, required sections, at least one done-rule, dual-file output section). Presence/shape only — the judgment calls (are the done-rules actually measurable, does a verification pass resolve) stay in Step 4's prose.
 
 ## Assets
 

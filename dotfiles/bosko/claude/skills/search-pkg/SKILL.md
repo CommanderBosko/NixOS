@@ -114,11 +114,4 @@ To install a package, use /add-package and provide the pkgs.<name> attribute sho
 
 ## Gotchas
 
-- **This skill is global/repo-managed** (source at
-  `dotfiles/bosko/claude/skills/search-pkg/` in the NixOS repo, symlinked to
-  `~/.claude/skills/search-pkg/` via Home Manager). Always invoke `scripts/search-pkg.sh`
-  by the absolute `<skill-base-dir>/scripts/search-pkg.sh` path shown when the skill
-  launches, never a bare `scripts/search-pkg.sh` — that resolves against whatever project
-  happens to be the cwd, not this skill's own directory (found by `skill-audit`,
-  2026-09-06 — the same recurring mistake documented in `session-closer`'s, `save-memory`'s,
-  and `session-analysis`'s Gotchas).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

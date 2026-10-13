@@ -24,8 +24,7 @@ Work in the current project's repository. Run all git commands against that repo
 ## STEP 1 — Scan for changes
 
 Run the git-scan subcommand (absolute path from the "Base directory for this skill" line
-shown when the skill launched — see the `scripts/rotate-session-summary.sh` gotcha below,
-the same rule applies here):
+shown when the skill launched — see `~/.claude/skills/lib/script-paths.md`):
 
 ```bash
 ~/.claude/skills/session-closer/scripts/scan-session.sh git-changes <repo-root>
@@ -253,10 +252,10 @@ Hit an unexpected script path 404, a stale transcript cutoff, an oversized `proj
 
 - `scripts/scan-session.sh git-changes <repo-root>` — STEP 1's baseline resolution + diff/status/stat scan.
 - `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction, scoped to every transcript since session-closer's own last run (falls back to just the latest on a first-ever run).
-- `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation (see the Gotchas entry on invoking it by absolute path).
-- `scripts/rotate-project-state.sh <repo-root>` — STEP 3's rotation of old `## Current Project State` blocks into `project-state-archive.md` (`KEEP=<n>` to change the count, `DRY_RUN=1` to preview). Same absolute-path rule as the other rotation script.
+- `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation.
+- `scripts/rotate-project-state.sh <repo-root>` — STEP 3's rotation of old `## Current Project State` blocks into `project-state-archive.md` (`KEEP=<n>` to change the count, `DRY_RUN=1` to preview).
 
-All four are relative to the *skill's* directory, not the project cwd — this skill is symlinked into `~/.claude/skills/session-closer/`, not project-local, so a bare `scripts/...` path resolves against the wrong cwd. Always use the absolute path from the "Base directory for this skill" line shown when the skill launches.
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 
 ## Assets
 

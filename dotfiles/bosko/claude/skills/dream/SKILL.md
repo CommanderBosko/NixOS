@@ -127,9 +127,7 @@ let it pass silently either.
 
 ## Gotchas
 
-- **This skill is global/repo-managed** — always invoke `dream-state.sh` by the absolute
-  `~/.claude/skills/dream/scripts/...` path shown when the skill launches, never a bare
-  `scripts/...` path.
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 - **Re-read the overview file's `Status:` line fresh every run, never trust the run log's
   cached `last_overview_status_seen` as current** — the whole point of the marker is that
   a human edits the file between runs, and the run log is only updated *after* dream acts

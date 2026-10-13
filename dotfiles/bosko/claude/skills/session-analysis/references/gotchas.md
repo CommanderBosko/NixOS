@@ -5,8 +5,8 @@
 - **A project's transcript count can be large** (observed: 87 for this repo, 95 for a
   long-running game project, out of full history with no since-cutoff). Don't hand a
   `transcript-scanner` agent an 80+ file batch — split into multiple ~10-15 file batches
-  per project rather than one oversized agent call; it's still one message spawning all of
-  them in parallel.
+  per project rather than one oversized agent call; they still spawn in parallel, in waves
+  of at most 20 per message (see `concurrency-cap-gotcha.md`).
 
 ## `UNKNOWN` real-path projects
 

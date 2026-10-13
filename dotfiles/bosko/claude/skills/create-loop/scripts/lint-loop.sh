@@ -29,6 +29,15 @@ check() {
   fi
 }
 
+# Line 1 must be the opening ---, or the frontmatter isn't parsed (e.g. a stray
+# ``` fence copied from the template ahead of it).
+if [ "$(head -n 1 "$FILE")" = "---" ]; then
+  echo "PASS: line 1 is the opening --- of the frontmatter"
+else
+  echo "FAIL: line 1 is not --- (frontmatter must open the file)"
+  FAILED=1
+fi
+
 # Frontmatter: name:/description: between the opening/closing --- lines.
 FRONTMATTER="$(sed -n '/^---$/,/^---$/p' "$FILE" | head -n -1 | tail -n +2)"
 if echo "$FRONTMATTER" | grep -q '^name:' && echo "$FRONTMATTER" | grep -q '^description:'; then

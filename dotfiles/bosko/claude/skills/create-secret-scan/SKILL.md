@@ -60,10 +60,8 @@ asking blind.
    `vault/` directory, check for `.git-crypt/` or `.sops.yaml`.
 2. **Encrypted/managed secret location** — if there's a dedicated directory or glob
    (e.g. `secrets/*.yaml`), what marks a file inside it as *properly* encrypted (e.g.
-   sops files contain `ENC[` and a `sops:` block; git-crypt files are binary-looking in
-   the working tree but that's enforced by git attributes, not grep — for git-crypt,
-   there is usually nothing meaningful to grep-check, so skip pass 2 for it)? If there's
-   no such scheme, say so — pass 2 becomes a no-op.
+   sops files contain `ENC[` and a `sops:` block)? For git-crypt, skip pass 2 — see
+   `references/git-crypt.md`. If there's no such scheme, say so — pass 2 becomes a no-op.
 3. **Paths to exclude from pattern matching** — besides the generated skill's own
    directory (always excluded, its docs contain example patterns), are there other
    paths that would false-positive: fixtures/test data with fake credentials, vendored
@@ -119,9 +117,7 @@ filled script to `<repo-root>/.claude/skills/secret-scan/scripts/secret-scan.sh`
 
 ### 3. Verify the generated skill (built-in verification plan)
 
-1. **Structural lint (mechanical, scripted)** — run (absolute path — a bare `scripts/...`
-   path 404s, this is a global home-symlinked skill and the Bash tool's cwd is the project
-   root, not this skill's directory):
+1. **Structural lint (mechanical, scripted)** — run:
    ```bash
    /home/bosko/.claude/skills/create-secret-scan/scripts/lint-secret-scan.sh <repo-root>/.claude/skills/secret-scan
    ```
@@ -166,12 +162,18 @@ Tell the user:
   rather than guessing sops just because that's what the reference example (this repo's
   own NixOS `secret-scan`) uses — that skill is one example of a tuned scan, not the
   default for every project.
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 
 ## Scripts
 
-- `/home/bosko/.claude/skills/create-secret-scan/scripts/lint-secret-scan.sh <path-to-skill-dir>` — Step 3's mechanical structural
-  checks (frontmatter, name/directory match, model pin, required sections, no leftover
-  placeholders, script present/executable/valid).
+- `lint-secret-scan.sh <path-to-skill-dir>` (Step 3 has the absolute path to run) — Step 3's
+  mechanical structural checks (frontmatter, name/directory match, model pin, required
+  sections, no leftover placeholders, script present/executable/valid).
+
+## References
+
+- `references/git-crypt.md` — why pass 2 is skipped for git-crypt. Read it in Step 1
+  (item 2) when the project's scheme is git-crypt.
 
 ## Assets
 

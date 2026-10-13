@@ -16,16 +16,16 @@ Distinct from the `journal` skill: `journal` tails recent log lines for one **al
 Run the collection script — it's a fixed sequence of read-only commands, no judgment involved:
 
 ```bash
-scripts/collect-boot-diagnostics.sh
+/home/bosko/.claude/skills/boot-error-triage/scripts/collect-boot-diagnostics.sh
 ```
 
-(Path is relative to this skill's own directory — see the "Base directory" line shown when the skill loads. Resolve the full absolute path rather than guessing a project-relative one; see the `git-commit` skill's Gotchas for why that assumption reliably breaks.)
+**Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 
-It prints, in order: `systemctl --failed`, boot timing (`systemd-analyze`), priority ≤3 (error+) and priority ≤2 (crit+) journal lines for the current boot, then hardware/firmware identity (`lscpu`, `/proc/cmdline`, `uname -r`, and the board/BIOS fields from `/sys/class/dmi/id/`).
+It prints, in order: `systemctl --failed`, boot timing (`systemd-analyze`), priority ≤3 (error+) and priority ≤2 (crit+) journal lines for the current boot, then hardware/firmware identity (`lscpu`, `/proc/cmdline`, `uname -r`, and the board/BIOS fields from `/sys/class/dmi/id/`). The journal sections already drop known-benign noise and end with a count of each dropped pattern; pass `--raw` to see every line.
 
 ### 2. Filter noise, isolate real candidates
 
-Boot logs carry known-benign noise — e.g. `dbus-broker-launch: Ignoring duplicate name` lines (multiple portal packages shipping the same D-Bus service name) or `gkr-pam: unable to locate daemon control file`. Filter these out mentally (or with `grep -v`) and separate what's left into: failed systemd units (real, urgent) vs. kernel/driver warnings (may be cosmetic).
+Known-benign noise (`dbus-broker-launch: Ignoring duplicate name`, `gkr-pam: unable to locate daemon control file`) is already filtered by the script's `NOISE_PATTERNS` list — add a line there when another pattern is confirmed benign, rather than filtering it by hand each run. Separate what's left into: failed systemd units (real, urgent) vs. kernel/driver warnings (may be cosmetic).
 
 ### 3. Check live subsystem state
 
@@ -49,4 +49,4 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates. Report the 
 
 ## Scripts
 
-- `scripts/collect-boot-diagnostics.sh` — runs the fixed diagnostic command sequence for step 1 (failed units, boot timing, priority-filtered journal, hardware/firmware identity). No arguments; always reads the local host's current boot.
+- `scripts/collect-boot-diagnostics.sh [--raw]` — runs the fixed diagnostic command sequence for step 1 (failed units, boot timing, priority-filtered journal, hardware/firmware identity). Always reads the local host's current boot. The journal sections drop lines matching `NOISE_PATTERNS` (top of the script) and print a per-pattern count; `--raw` turns that filter off.

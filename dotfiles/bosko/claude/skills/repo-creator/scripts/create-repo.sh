@@ -13,6 +13,9 @@
 #                                             file's contents, push -u origin main
 set -euo pipefail
 
+# GitHub account that owns every repo this skill creates.
+OWNER="CommanderBosko"
+
 MODE="${1:-}"
 
 case "$MODE" in
@@ -42,11 +45,11 @@ case "$MODE" in
         exit 1
         ;;
     esac
-    gh repo create "CommanderBosko/$REPO_NAME" --"$VISIBILITY" --source=. --remote=origin --push=false
+    gh repo create "$OWNER/$REPO_NAME" --"$VISIBILITY" --source=. --remote=origin --push=false
     REMOTE_URL="$(git remote get-url origin)"
     case "$REMOTE_URL" in
       https://*)
-        git remote set-url origin "git@github.com:CommanderBosko/$REPO_NAME.git"
+        git remote set-url origin "git@github.com:$OWNER/$REPO_NAME.git"
         ;;
     esac
     git remote -v

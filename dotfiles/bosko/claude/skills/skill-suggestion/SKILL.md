@@ -11,19 +11,13 @@ Mine the current conversation for a repeatable, multi-step workflow worth saving
 
 ### 1. Gather the review window (run this first, no exceptions)
 
-Before looking at anything else — even if the current session is short, empty, or was just `/clear`ed and feels like there's "nothing to scan" — run these two commands. Skipping straight to step 2 because the live conversation looks thin is the exact failure this step exists to prevent: the reuse signal you're after usually lives in *past* sessions, not the current one.
+Before looking at anything else — even if the current session is short, empty, or was just `/clear`ed and feels like there's "nothing to scan" — run this command. Skipping straight to step 2 because the live conversation looks thin is the exact failure this step exists to prevent: the reuse signal you're after usually lives in *past* sessions, not the current one.
 
 ```bash
-~/.claude/skills/lib/find-last-skill-invocation.sh skill-suggestion
+~/.claude/skills/lib/scope-since-last-run.sh skill-suggestion
 ```
 
-This prints the ISO-8601 timestamp of skill-suggestion's previous invocation for this project, or nothing if it's never run before. Then resolve which transcripts to mine:
-
-```bash
-~/.claude/skills/lib/list-transcripts-since.sh "<cutoff-from-above>"
-```
-
-Passing an empty string (first-ever run) lists the full transcript history instead. Do not proceed to step 2 until both commands have actually been run and you have the resulting file list in hand.
+It prints `cutoff: <ts>` (skill-suggestion's previous invocation for this project, found by `find-last-skill-invocation.sh`), then `transcript-dir: <path>`, then the transcripts to mine, newest first. `cutoff: none` means a first-ever run, and the list is the full transcript history. Do not proceed to step 2 until the command has actually been run and you have the resulting file list in hand.
 
 ### 2. Scan for candidates
 

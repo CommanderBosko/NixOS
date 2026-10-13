@@ -106,7 +106,7 @@ Present the full draft SKILL.md to the user with a brief explanation of any choi
 
 Determine the target path by scope:
 
-- **Global, in a Home-Manager-managed repo** (the common case here). Detect it: you're in the NixOS config repo if `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). If so, read `references/write-global-hm-managed.md` for the exact write steps before writing the file — there is no Nix wiring to add (`claude-hm/files.nix` auto-links every skill directory recursively, so any `scripts/`/`references/` sibling file rides along); the skill only needs to be `git add`ed, since the flake sees tracked files only.
+- **Global, in a Home-Manager-managed repo** (the common case here). Read `references/write-global-hm-managed.md` first — it has the check for whether you're in such a repo and the exact write steps. If you are, there is no Nix wiring to add (`claude-hm/files.nix` auto-links every skill directory recursively, so any `scripts/`/`references/` sibling file rides along); the skill only needs to be `git add`ed, since the flake sees tracked files only.
 - **Global, plain `~/.claude`** (no Home Manager managing it): write directly to `~/.claude/skills/<name>/SKILL.md`.
 - **Project-local:** `.claude/skills/<name>/SKILL.md` (relative to the current working directory). First check if `.claude/skills/` exists; create it if not (via `mkdir -p`). Auto-discovered immediately — no rebuild.
 
@@ -141,4 +141,4 @@ Tell the user:
 
 ## References
 
-- `references/write-global-hm-managed.md` — the auto-symlink/`git add`/rebuild mechanics for writing a new global skill, or editing an existing one, in this Home-Manager-managed repo. Read it in step 6 when scope is Global here.
+- `references/write-global-hm-managed.md` — the auto-symlink/`git add`/rebuild mechanics for writing a new global skill, or editing an existing one, in this Home-Manager-managed repo, plus the check for whether you're in such a repo. Read it in step 6 when scope is Global.

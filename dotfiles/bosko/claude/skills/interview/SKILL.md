@@ -60,7 +60,7 @@ Require an explicit confirm (or a correction) on **each** item. If the user corr
 When the picture is complete, write a concise **Project Brief**. Read the section skeleton from
 `assets/brief-template.md` (relative to this skill's directory) and fill it in from the interview.
 
-Then ask: *"Does this capture it? Anything to add, cut, or correct?"* Revise until the user confirms.
+Then ask via the **AskUserQuestion** tool — *"Does this brief capture it?"* — with options **Confirm** (the brief is right as written) and **Revise** (say what to add, cut, or correct, via "Other" or a follow-up reply). On Revise, apply the changes, show the updated brief, and ask again. Repeat until the user picks Confirm.
 
 ### 7. Have a second AI check it
 
@@ -80,12 +80,17 @@ Once confirmed, use the **AskUserQuestion** tool to ask what happens next, with 
 - Keep your own talking short; the user should be doing most of the talking.
 - Verify every key decision explicitly before treating the goal as settled — via step 5's full confirmation pass for a fuzzy/multi-part request, or via the answers to those same 1–3 blocking questions for a well-scoped fix. No important choice rides on an unstated assumption either way.
 - Set the success criteria up front (step 1) and have a second AI check the final brief (step 7) — don't hand off a brief that hasn't been measured against a clear bar and read by an independent reviewer.
-- Default to the **AskUserQuestion** tool for every question in this skill — waves (step 3), key-decision confirmations (step 5), and hand-off (step 8). Only fall back to plain-text prose when a question is genuinely open-ended with no sensible options to offer (e.g. step 2's opening prompt).
+- Default to the **AskUserQuestion** tool for every question in this skill — waves (step 3), key-decision confirmations (step 5), brief confirmation (step 6), and hand-off (step 8). Only fall back to plain-text prose when a question is genuinely open-ended with no sensible options to offer (e.g. step 2's opening prompt).
 
 ## Gotchas
 
-- **AskUserQuestion times out after 60s if the user is away** (observed 2026-07-02, and in one earlier session). A timeout is NOT an answer — never proceed as if defaults were accepted. On timeout, restate the same wave as plain numbered text with a recommended default per question so the user can answer asynchronously in one reply, and mark the interview as paused, not advanced.
-- **Case that established the well-scoped-fix exception in Rules above** (observed 2026-07-07): invoked for a Qt platform-plugin bug fix where the root cause was already found via git history — running Steps 3–8 in full would have meant writing a Project Brief and spawning a second-AI review subagent for what was really a 30-minute fix. A single concrete fix with a clear, already-implied success criterion (a specific error, a known repro, a bounded diagnosis) qualifies for the shortcut; reserve the full ceremony for genuinely fuzzy, multi-part, or open-ended-scope requests.
+- **AskUserQuestion times out after 60s if the user is away.** A timeout is NOT an answer — never proceed as if defaults were accepted. On timeout, restate the same wave as plain numbered text with a recommended default per question so the user can answer asynchronously in one reply, and mark the interview as paused, not advanced.
+- **The well-scoped-fix exception in Rules above:** a single concrete fix with a clear, already-implied success criterion (a specific error, a known repro, a bounded diagnosis) qualifies for the shortcut; reserve the full ceremony for genuinely fuzzy, multi-part, or open-ended-scope requests.
+- The incidents behind both rules are in `references/gotchas.md`.
+
+## References
+
+- `references/gotchas.md` — the 2026-07-02 timeout and 2026-07-07 Qt-fix cases behind the Gotchas above. Read it only if you need the background.
 
 ## Assets
 

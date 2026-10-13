@@ -10,13 +10,7 @@ These five sections are rules the user wants followed in **every** project. This
 
 ## The five rules (canonical, project-agnostic text)
 
-The exact, canonical Markdown for all five rules lives verbatim in `assets/rules.md`, one `## <Rule Name>` section per rule:
-
-- **Scope First (Interview)**
-- **Verification Plan**
-- **Parallelize with Sub-Agents**
-- **Use Existing Skills First**
-- **Ask via AskUserQuestion**
+The exact, canonical Markdown for all five rules lives verbatim in `assets/rules.md`, one `## <Rule Name>` section per rule. That file is also the roster: its `## ` headings are the rule names, and `scripts/check-rules.sh` reads them from there, so they aren't re-listed here.
 
 When adding a missing section, **read `assets/rules.md`, find the section whose `## <Rule Name>` header matches the rule you're adding, and insert the exact Markdown block beneath it verbatim.** Do **not** rewrite or "improve" the wording — these are the agreed canonical versions. (If the user's NixOS repo has richer, project-specific variants of these sections, leave those as-is; they already satisfy the rule.)
 
@@ -30,13 +24,13 @@ Find `CLAUDE.md` at the root of the current project (the working directory the s
 
 ### 2. Check which rules are present
 
-Run `scripts/check-rules.sh <path-to-CLAUDE.md>` — it greps for each of the five headings (`## Scope First`, `## Verification Plan`, `## Parallelize with Sub-Agents`, `## Use Existing Skills First`, `## Ask via AskUserQuestion`) and prints `present: <rule>` or `missing: <rule>` per rule. A section counts as present even if its body wording differs from the canonical text above (e.g. a project-specific variant) — the script only matches the heading line.
+Run `/home/bosko/.claude/skills/claude-rules/scripts/check-rules.sh <path-to-CLAUDE.md>` — it reads the rule headings from `assets/rules.md`, looks for a CLAUDE.md heading starting with each one (case-insensitive; a trailing `(...)` like `(Interview)` is ignored), and prints `present: <rule>` or `missing: <rule>` per rule. A section counts as present even if its body wording differs from the canonical text above (e.g. a project-specific variant) — the script only matches the heading line.
 
 The script only catches an exact (case-insensitive) heading match. If a rule comes back `missing` but you spot a heading nearby with different wording that might already cover it, that's a judgment call the script can't make: use the **AskUserQuestion** tool — present the ambiguous existing section (its heading and a short excerpt) alongside the rule it might satisfy, with options **Treat as covering it** (leave the section as-is, don't add the canonical block) and **Add the canonical section anyway** (append the canonical block too). Don't guess or duplicate silently.
 
 ### 3. Add the missing sections
 
-For each rule that is **missing**, append its canonical Markdown block (read it from the matching `## <Rule Name>` section of `assets/rules.md`). Preserve a blank line between sections. Prefer to keep the five rules grouped together near the top of the file, after any intro paragraph, in this order: Scope First → Verification Plan → Parallelize with Sub-Agents → Use Existing Skills First → Ask via AskUserQuestion. If some already exist mid-file, just append the missing ones near them rather than reordering the whole file.
+For each rule that is **missing**, append its canonical Markdown block (read it from the matching `## <Rule Name>` section of `assets/rules.md`). Preserve a blank line between sections. Prefer to keep the five rules grouped together near the top of the file, after any intro paragraph, in the order they appear in `assets/rules.md`. If some already exist mid-file, just append the missing ones near them rather than reordering the whole file.
 
 If all five are already present, report that and make no changes.
 
@@ -53,8 +47,8 @@ Tell the user exactly which sections were already present and which were added, 
 
 ## Assets
 
-- `assets/rules.md` — the five canonical rule blocks (Scope First, Verification Plan, Parallelize with Sub-Agents, Use Existing Skills First, Ask via AskUserQuestion), one per `## <Rule Name>` section. Insert each missing block verbatim from here; never edit the wording.
+- `assets/rules.md` — the five canonical rule blocks, one per `## <Rule Name>` section; those headings are also the roster `check-rules.sh` checks. Insert each missing block verbatim from here; never edit the wording.
 
 ## Scripts
 
-- `scripts/check-rules.sh <path-to-CLAUDE.md>` — read-only heading-presence check for all five rules (Step 2). Prints `present`/`missing` per rule; does not edit the file.
+- `scripts/check-rules.sh <path-to-CLAUDE.md>` — read-only heading-presence check for every rule heading in `assets/rules.md` (Step 2). Prints `present`/`missing` per rule; does not edit the file.

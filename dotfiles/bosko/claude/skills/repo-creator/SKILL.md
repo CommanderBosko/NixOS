@@ -5,14 +5,19 @@ description: Create and initialize a brand-new GitHub repo (public or private) u
 
 # Repo Creator
 
-Create, configure, and push a brand-new GitHub repository for `CommanderBosko` over SSH
+Create, configure, and push a brand-new GitHub repository for the owner account below over SSH
 — exactly once per project, at inception. Do it right the first time, leave a clean
 history, hand off a fully initialized repo.
 
 ## Identity & scope
 
-- GitHub account: `CommanderBosko`
-- Auth: SSH by default — remotes use `git@github.com:CommanderBosko/<repo-name>.git`; fall back to HTTPS only if SSH isn't set up for this account yet (see Constraints)
+- GitHub account (`<owner>` below): `CommanderBosko`. The steps below say `<owner>`;
+  `scripts/create-repo.sh` holds the same value in its `OWNER` variable.
+- Skill files: `<skill-base-dir>` below is the absolute path from the "Base directory for this
+  skill" line shown at launch (normally `~/.claude/skills/repo-creator/`, a Home Manager symlink
+  to `dotfiles/bosko/claude/skills/repo-creator/` in the NixOS repo). Scripts and assets are
+  `<skill-base-dir>/scripts/...` and `<skill-base-dir>/assets/...`.
+- Auth: SSH by default — remotes use `git@github.com:<owner>/<repo-name>.git`; fall back to HTTPS only if SSH isn't set up for this account yet (see Constraints)
 - Visibility: **public** or **private** — resolved per invocation, see Arguments
 - Default branch: `main`
 - This is a one-time setup. Once the first push succeeds, the job is done — no further
@@ -43,9 +48,7 @@ Use the **exact name of the current working directory** (e.g. `/home/bosko/pixel
 - Decide what to include/exclude.
 
 ### 3. Create or improve `README.md`
-If none exists, read `assets/readme-template.md` (repo-root-relative path
-`dotfiles/bosko/claude/skills/repo-creator/assets/readme-template.md` — resolve from the "Base
-directory for this skill" path shown at launch if invoked from `~/.claude`) and fill its
+If none exists, read `<skill-base-dir>/assets/readme-template.md` (see Identity & scope) and fill its
 placeholders from what Step 2 found: project name as H1, accurate description, tech
 stack/dependencies, setup/install steps, usage examples if applicable (omit that section if
 there's nothing runnable to show), and a License section (default MIT unless the project says
@@ -78,7 +81,7 @@ via AskUserQuestion if none was given.
 ```bash
 <skill-base-dir>/scripts/create-repo.sh create <repo-name> <visibility>
 ```
-Runs `gh repo create CommanderBosko/<repo-name> --<visibility> --source=. --remote=origin --push=false`,
+Runs `gh repo create <owner>/<repo-name> --<visibility> --source=. --remote=origin --push=false`,
 then normalizes the remote to SSH format if `gh` left it as HTTPS, and prints `git remote -v`.
 (This normalization step assumes SSH is actually set up — if the user has told you it isn't,
 skip that sub-step and leave the remote as HTTPS instead.)
@@ -90,11 +93,8 @@ Review what `git status` would stage. If anything sensitive or unnecessary would
 staged, update `.gitignore` first — staging itself happens as part of step 9's script call.
 
 ### 8. Craft the initial commit message
-Intelligent and specific — never a bare "Initial commit". Read `assets/commit-template.txt`
-and fill in its placeholders (repo-root-relative path is
-`dotfiles/bosko/claude/skills/repo-creator/assets/commit-template.txt` — this is a repo-managed
-global skill; resolve it from the "Base directory for this skill" path shown at launch if
-invoked from `~/.claude`).
+Intelligent and specific — never a bare "Initial commit". Read
+`<skill-base-dir>/assets/commit-template.txt` (see Identity & scope) and fill in its placeholders.
 
 End the message body with a `Co-Authored-By:` trailer using whatever model name the harness's own
 Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't hardcode a specific
@@ -109,7 +109,7 @@ Stages everything (`git add .`), commits with `-F <commit-msg-file>`, and pushes
 `-u origin main`. Never `--force`, never `--no-verify`.
 
 ### 10. Verify & report
-Confirm the push, output the URL `https://github.com/CommanderBosko/<repo-name>`, and
+Confirm the push, output the URL `https://github.com/<owner>/<repo-name>`, and
 summarize: repo name + URL, file count + key files, README status (created/enhanced/
 existing), `.gitignore` status, and the commit message used.
 
@@ -124,7 +124,7 @@ existing), `.gitignore` status, and the commit message used.
 
 ## Quality checklist (before pushing)
 
-- [ ] Remote URL is SSH (`git@github.com:CommanderBosko/...`)
+- [ ] Remote URL is SSH (`git@github.com:<owner>/...`)
 - [ ] Branch is `main`
 - [ ] `README.md` exists and is substantive
 - [ ] `.gitignore` exists and fits the stack
@@ -155,12 +155,4 @@ Don't save ephemeral per-repo details — `git log` is authoritative for those.
 
 ## Gotchas
 
-- **This skill is global/repo-managed** (source at
-  `dotfiles/bosko/claude/skills/repo-creator/` in the NixOS repo, symlinked to
-  `~/.claude/skills/repo-creator/` via Home Manager). Always invoke
-  `scripts/create-repo.sh` by the absolute `<skill-base-dir>/scripts/create-repo.sh` path
-  shown when the skill launches, never a bare `scripts/create-repo.sh` — this skill is
-  invoked from the *new* project's directory (Step 1 uses the cwd as the repo name), not
-  from the skill's own directory, so a bare relative path resolves against the wrong repo
-  and fails (found by `skill-audit`, 2026-09-06 — the same recurring mistake documented in
-  `session-closer`'s, `save-memory`'s, and `session-analysis`'s Gotchas).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

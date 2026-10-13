@@ -60,9 +60,4 @@ again to confirm.
 
 ## Gotchas
 
-- **"relative to this skill's directory" is not the shell's cwd.** This is a global,
-  home-symlinked skill, and the Bash tool's working directory during a run is the project
-  root, not this skill's directory. Resolve the full absolute path from this skill's "Base
-  directory" line (e.g. `/home/bosko/.claude/skills/git-commit/scripts/git-commit.sh`)
-  rather than guessing a project-relative `.claude/skills/git-commit/...` path — the guess
-  reliably 404s with exit 127 (observed 2026-07-27).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

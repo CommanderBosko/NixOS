@@ -17,7 +17,12 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 1. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh status` — prints the current branch,
    working-tree status, and the commits ahead of upstream (or all commits, if there's no upstream yet).
 
-2. If there are uncommitted changes, warn the user and ask if they want to commit first (suggest `/git-commit`).
+2. If there are uncommitted changes, warn the user and ask via the **AskUserQuestion** tool with
+   options **Commit first** / **Push anyway** / **Cancel**. Uncommitted changes are never pushed, so
+   **Push anyway** pushes only the existing commits.
+   - **Commit first**: run the `git-commit` skill, then re-run step 1 and continue.
+   - **Push anyway**: continue to step 3.
+   - **Cancel**: stop without pushing.
 
 3. Show which commits are ahead of the upstream (from step 1's output) before pushing.
 
@@ -33,7 +38,8 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 
 5. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` — determines whether the
    branch has an upstream, pushes accordingly (`git push -u origin <branch>` if not, `git push`
-   if so), and prints the branch name and remote URL.
+   if so), and prints the branch name and remote URL. If `origin/<branch>..HEAD` is empty it
+   pushes nothing, prints `nothing to push: ...`, and exits 0 — report that instead of step 6.
 
 6. Report: how many commits were pushed, the branch name, and the remote URL (from step 5's output).
 
@@ -41,15 +47,10 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 
 - NEVER force push (`--force` or `-f`) to `main` or `master` — warn the user if they request it
 - Only force push if the user explicitly requests it AND the branch is not main/master
-- Do not push if there are no commits ahead of origin (nothing to push)
+- Do not push if there are no commits ahead of origin (nothing to push) — `push.sh execute` enforces this too
 - If the push is rejected (non-fast-forward), explain why and suggest `git pull --rebase` rather than force pushing
 - Step 4's confirm-skip check is for a standalone push request reaching this skill directly. A skill whose own description/invocation already commits to pushing (e.g. `session-closer`'s end-of-session close, which is a "wrap up and push" ask by name) treats that invocation itself as the consent and doesn't re-ask here — that's intentional, not a gap in this skill's confirm logic.
 
 ## Gotchas
 
-- **"relative to this skill's directory" is not the shell's cwd.** This is a global,
-  home-symlinked skill, and the Bash tool's working directory during a run is the project
-  root, not this skill's directory. Resolve the full absolute path from this skill's "Base
-  directory" line (e.g. `/home/bosko/.claude/skills/git-push/scripts/push.sh`) rather than
-  guessing a project-relative `.claude/skills/git-push/...` path — the guess reliably 404s
-  with exit 127 (observed 2026-07-25).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

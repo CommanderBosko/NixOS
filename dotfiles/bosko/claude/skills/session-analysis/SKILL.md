@@ -25,25 +25,15 @@ Invocation shape: `<mode> [since-iso-timestamp]`.
   passes its run log's last-processed timestamp here so repeat runs aren't reprocessing
   the same ground; a first-ever run (or a direct manual invocation) should omit it.
 
-If `<mode>` is missing, ask what to scan rather than guessing.
+If `<mode>` is missing, don't guess: ask via the **AskUserQuestion** tool with options
+**dream** (mine every project for memory-worthy items) and **Cancel**. Add each newly built
+mode as another option.
 
 ## Why cross-project mining needs its own lib script
 
-`find-transcript-dir.sh` / `list-transcripts-since.sh` / `find-last-skill-invocation.sh`
-(in `~/.claude/skills/lib/`) all have a **single-project** contract: given one project
-directory, resolve to its one transcript dir. Other skills (`session-closer`,
-`skill-suggestion`, `skill-upgrade`, `skill-audit`, `save-memory`, `research`) depend on
-that contract staying exactly as-is. So mining all projects uses a **new** script,
-`list-all-projects.sh`, that enumerates every dir under `~/.claude/projects/*/` and prints
-each one's real project path (recovered from the `cwd` field inside a `.jsonl` transcript,
-not by un-slugifying the directory name -- see its header comment for why that's not safe)
-paired with its transcript dir. Because it prints the *real path*, callers can still feed
-that straight into `list-transcripts-since.sh` unchanged instead of forking its contract.
-
-A project dir with no `.jsonl` files left (transcripts pruned, only a `memory/` dir
-remains) prints `UNKNOWN` as its real path. Skip mining for it — there's nothing to mine —
-but don't drop it silently from the manifest; `improve-memory` still wants to know it
-exists for the memory-hygiene pass.
+Project enumeration uses `list-all-projects.sh`, not the single-project lib scripts, and an
+`UNKNOWN` real-path project is skipped for mining but kept in the manifest. See
+`references/why-cross-project.md` for why.
 
 ## Mode: `dream`
 
@@ -71,9 +61,12 @@ pattern," already used by `session-closer`/`skill-suggestion`/`skill-audit`.
 - **Batch size**: keep each agent's file list to roughly 10-15 transcripts. A project with
   more than that (check the manifest's count) gets split into multiple sequential batches
   of its own file list, each run as a separate agent — don't hand one agent 80+ files.
-- **Spawn every batch across every project in a single message** (the CLAUDE.md
-  parallelization rule) — projects are fully independent of each other, and batches within
-  one project are independent of each other too.
+- **Spawn batches in parallel waves of at most 20 agents per message, counted across all
+  projects combined** (the CLAUDE.md parallelization rule, capped by the harness's
+  20-concurrent-subagent limit — see `references/concurrency-cap-gotcha.md`). Projects are
+  fully independent of each other, and batches within one project are too, so any batch can
+  go in any wave. If the manifest needs more than 20, spawn a wave, let it complete, then
+  spawn the next.
 - **Brief each agent identically** except for its project path + file list: mine the given
   transcripts (full paths under the given transcript dir) for content worth remembering
   long-term, using the same judgment `save-memory`/`session-closer` already apply —
@@ -119,12 +112,6 @@ Reserved future-mode scaffolding — see `references/planned-modes.md` before ad
 
 ## Gotchas
 
-- **This skill is global/repo-managed** (source at
-  `dotfiles/bosko/claude/skills/session-analysis/` in the NixOS repo, symlinked to
-  `~/.claude/skills/session-analysis/` via Home Manager). Always invoke
-  `scripts/scan-projects.sh` by the absolute `~/.claude/skills/session-analysis/scripts/...`
-  path shown when the skill launches, never a bare `scripts/...` — that resolves against
-  whatever project happens to be the cwd, not this skill's own directory (the same
-  recurring mistake documented in `session-closer`'s and `save-memory`'s Gotchas).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 - Transcript batch sizing (large projects) and `UNKNOWN` real-path projects: see `references/gotchas.md`.
 - Fanning out `transcript-scanner` across multiple projects in one message? See `references/concurrency-cap-gotcha.md` for the 20-agent cap.

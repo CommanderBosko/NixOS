@@ -29,19 +29,19 @@ before writing any artifact HTML, no exceptions, per the Artifact tool's own rul
 
 ## Step 2 -- Wrap the content as a minimal HTML page
 
-Write a small `.html` file (Write tool) that presents the content readably. Keep it light --
-this is a notification attachment, not a designed deliverable:
-- A `<title>` naming the artifact (a short noun phrase derived from the filename, e.g.
-  `dream-test.txt` -> "Dream Test", `overview-20260904.md` -> "Memory Overview").
-- The file's content rendered legibly -- a `<pre>` block with `white-space: pre-wrap` and a
-  readable monospace/system font is entirely sufficient for a report/log/markdown file;
-  don't over-invest in layout for what's fundamentally a copy of a text file.
-- Follow the theme-aware and sizing rules from `artifact-design` (light/dark tokens, no
-  horizontal page scroll) even for this minimal case.
+Pick a `<title>` naming the artifact: a short noun phrase derived from the filename, e.g.
+`dream-test.txt` -> "Dream Test", `overview-20260904.md` -> "Memory Overview". Then:
 
-Use `~/.claude/dream/.artifact-staging/<basename-of-file-path>.html` as the scratch path
-(create the directory if it doesn't exist) so repeated calls don't collide with unrelated
-temp files.
+```bash
+~/.claude/skills/send-results/scripts/wrap-html.sh <file-path> "<title>"
+```
+
+It fills `assets/wrapper-template.html` with the title and the file's HTML-escaped content
+(a theme-aware `<pre>` with `white-space: pre-wrap`, per `artifact-design`'s light/dark and
+no-horizontal-scroll rules), writes it to
+`~/.claude/dream/.artifact-staging/<basename-of-file-path>.html` (creating the directory if
+needed), and prints that path. Don't hand-write the HTML; if the page needs to change, edit
+the template.
 
 ## Step 3 -- Publish it
 
@@ -75,16 +75,22 @@ secret in `secrets/desktop.yaml`, wire it into `modules/claude-mcp.nix`, rebuild
 
 ## Scripts
 
+- `scripts/wrap-html.sh <file-path> <title> [out-path]` -- builds the Step 2 HTML page from
+  `assets/wrapper-template.html` and prints its path. `out-path` defaults to the
+  `.artifact-staging` path above; the header comment lists what the template must keep.
 - `scripts/post-discord.sh <url> <summary...>` -- the actual webhook POST (Step 4). Handles
   missing-secret and failed-POST cases with clear stderr messages; truncates an oversized
   summary to stay under Discord's 2000-char content cap. Takes any URL -- it doesn't know or
   care that the caller built it via an Artifact publish.
 
+## Assets
+
+- `assets/wrapper-template.html` -- the Step 2 page skeleton (`{{TITLE}}` and `{{CONTENT}}`
+  placeholders). `wrap-html.sh` fills it; don't fill it by hand.
+
 ## Gotchas
 
-- **This skill is global/repo-managed** -- always invoke `post-discord.sh` by the absolute
-  `~/.claude/skills/send-results/scripts/...` path shown when the skill launches, never a
-  bare `scripts/...` path (resolves against the wrong cwd).
+- **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` -- see `~/.claude/skills/lib/script-paths.md`.
 - **Never accept a webhook URL as something to type into `sops-secret.sh` on the user's
   behalf from a value they pasted into chat** -- treat it exactly like any other credential
   hard-limit: hand off the exact commands (Setup above) and let the user run them in their

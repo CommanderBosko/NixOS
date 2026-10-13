@@ -2,7 +2,8 @@
 # Mechanical git-push helpers: state gathering, then the actual push.
 # Usage:
 #   push.sh status    — print working-tree status, branch, and commits ahead of upstream
-#   push.sh execute   — push (with -u if no upstream yet) and report the result
+#   push.sh execute   — push (with -u if no upstream yet) and report the result;
+#                       exits 0 without pushing if origin/<branch>..HEAD is empty
 set -euo pipefail
 
 MODE="${1:-status}"
@@ -23,6 +24,13 @@ case "$MODE" in
     ;;
   execute)
     BRANCH="$(git branch --show-current)"
+    if git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null; then
+      AHEAD="$(git rev-list --count "origin/$BRANCH..HEAD")"
+      if [ "$AHEAD" -eq 0 ]; then
+        echo "nothing to push: $BRANCH has no commits ahead of origin/$BRANCH"
+        exit 0
+      fi
+    fi
     if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
       git push
     else

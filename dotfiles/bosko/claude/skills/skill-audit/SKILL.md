@@ -5,25 +5,19 @@ description: Audit every skill in the project against a structured quality rubri
 
 # Skill Audit
 
-Sweep **every** skill in the project and evaluate each against a fixed quality rubric, then produce a single prioritized report: real bugs first, then the highest-leverage structural improvements. Like `audit-config`, this skill **audits and reports** — it does not auto-apply changes. If the user then says "fix it", implement in priority order (see the last section).
+Sweep **every** skill in the project and evaluate each against a fixed quality rubric, then produce a single prioritized report: real bugs first, then the highest-leverage structural improvements. Like `audit-config`, this skill **audits and reports** — it does not auto-apply changes. If the user then says "fix it", implement in priority order (see the "fix it" section below).
 
 (Bucket: Verification — its one output is a quality report on the skill library. It fans work out to sub-agents to read in parallel, but that is an implementation detail, not skill-chaining.)
 
 ## Step 0 — Check logs since the last audit
 
-**Always check what's happened since skill-audit itself last ran**, so the sweep can flag skills that are new or changed since the last pass, and any misfires logged in the meantime. Get the cutoff first:
+**Always check what's happened since skill-audit itself last ran**, so the sweep can flag skills that are new or changed since the last pass, and any misfires logged in the meantime. Get the cutoff and the in-scope transcripts in one call:
 
 ```bash
-~/.claude/skills/lib/find-last-skill-invocation.sh skill-audit
+~/.claude/skills/lib/scope-since-last-run.sh skill-audit
 ```
 
-This prints the ISO-8601 timestamp of skill-audit's previous invocation for this project, or nothing if it's never run before. Then resolve which transcripts are new since then:
-
-```bash
-~/.claude/skills/lib/list-transcripts-since.sh "<cutoff-from-above>"
-```
-
-An empty cutoff (first-ever run) lists the full transcript history instead. Skim the listed transcripts (never read them whole — `grep` for `Write`/`Edit` calls touching `SKILL.md` paths, and for `is_error` tool results with a `Skill` active) to note: skills created or materially edited since the last audit (give these closer scrutiny — they haven't been swept yet), and any recurring misfires logged since then (feed these into the correctness-bugs section of Step 3, don't leave them to `skill-upgrade` alone). This is a scoping aid, not a replacement for Steps 1–2's full sweep — every skill still gets audited every time.
+It prints `cutoff: <ts>` (skill-audit's previous invocation for this project, found by `find-last-skill-invocation.sh`), then `transcript-dir: <path>`, then the transcripts touched since then, newest first. `cutoff: none` means a first-ever run, and the list is the full transcript history. Skim the listed transcripts (never read them whole — `grep` for `Write`/`Edit` calls touching `SKILL.md` paths, and for `is_error` tool results with a `Skill` active) to note: skills created or materially edited since the last audit (give these closer scrutiny — they haven't been swept yet), and any recurring misfires logged since then (feed these into the correctness-bugs section of Step 3, don't leave them to `skill-upgrade` alone). This is a scoping aid, not a replacement for Steps 1–2's full sweep — every skill still gets audited every time.
 
 ## Step 1 — Enumerate every skill
 
@@ -80,11 +74,7 @@ Present the report, recommending an implementation order (bugs → shared config
 
 ## If the user says "fix it" — implement in priority order
 
-- Work highest-priority first; **commit at phase boundaries** so each lands cleanly.
-- **Verify empirically as you go** — run the scripts you extract (read-only paths), `bash -n` every script, and prove drift fixes against the live system. Don't guess at a value you can test.
-- Re-derive drift-prone data **live** rather than re-hardcoding it (enumerate inputs/DE modules from the tree; resolve hosts from the shared config).
-- For NixOS repos: after touching anything the flake evaluates (or a symlinked global skill), run a dry-run (`nixos-dry-run`) to certify it still evaluates. Project-local `.claude/` changes don't affect the flake.
-- Adding a **new global skill** (or new sibling files for one) needs no Nix wiring — `claude-hm/files.nix` auto-links every skill directory recursively — only a `git add` (the flake sees tracked files only) + a rebuild before it appears in `~/.claude`. (The old file-by-file-entry pitfall is gone; see this skill's own `references/gotchas.md` for the 2026-09-16 history.)
+Work highest-priority first, verifying empirically as you go; read `references/implement-fixes.md` for the full rules before making any change.
 
 ## Gotchas
 

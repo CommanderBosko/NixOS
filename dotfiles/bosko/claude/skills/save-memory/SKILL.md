@@ -92,9 +92,4 @@ Tell the user the filename written, its `type`, and the one-line index hook adde
 
 ## Gotchas
 
-- **Step 3's `Read assets/memory-template.md` is a relative path — resolve it against this
-  skill's own base directory.** save-memory is a global skill (source at
-  `dotfiles/bosko/claude/skills/save-memory/` in the NixOS repo, symlinked to
-  `~/.claude/skills/save-memory/` via Home Manager), so the asset resolves at
-  `~/.claude/skills/save-memory/assets/memory-template.md` — use the "Base directory for this
-  skill" path shown when the skill launches rather than guessing a project-local path.
+- **Asset paths:** resolve Step 3's `assets/memory-template.md` from this skill's Base directory line, never a bare `assets/...` — see `~/.claude/skills/lib/script-paths.md`.

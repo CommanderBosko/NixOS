@@ -22,10 +22,10 @@ If no skill caused friction this session, say so plainly and stop.
 **Always check the logs since the last time skill-upgrade itself ran** — not just this session. First get the cutoff:
 
 ```bash
-~/.claude/skills/lib/find-last-skill-invocation.sh skill-upgrade
+~/.claude/skills/lib/scope-since-last-run.sh skill-upgrade
 ```
 
-This prints the ISO-8601 timestamp of skill-upgrade's previous invocation for this project, or nothing if it's never run before. Then feed that cutoff into the misfire scan:
+Its first line is `cutoff: <ts>` (skill-upgrade's previous invocation for this project, found by `find-last-skill-invocation.sh`), or `cutoff: none` if it's never run before; the lines after it are the transcript dir and the transcripts in scope. Then feed that cutoff (empty for `none`) into the misfire scan:
 
 ```bash
 ~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh <repo-root> [max-files] [since-timestamp]
@@ -64,14 +64,15 @@ Either way, this is a purely additive, reversible edit to a file you're already 
 ### 5. Verify and report
 
 After editing repo-managed skills, run the `nixos-dry-run` skill to confirm the config still
-evaluates. Report which skills were upgraded, the gotcha added to each, and the reminder that a
+evaluates. That skill is project-local to `~/NixOS`, so from any other project it fails with
+`Unknown skill: nixos-dry-run`; there, run `nh os boot /home/bosko/NixOS --dry` directly instead. Report which skills were upgraded, the gotcha added to each, and the reminder that a
 rebuild activation (`nh os switch`, or `nh os boot` + reboot, which only stages the change for next boot) is needed before the change reaches
 `~/.claude` — no new session required beyond that, since skill discovery reads from disk
 per-invocation.
 
 ## Arguments
 
-None required. The misfire scan takes `<repo-root>`, an optional `[max-files]` (default 15; only used when there's no prior run), and an optional `[since-timestamp]` — the cutoff printed by `find-last-skill-invocation.sh`.
+None required. The misfire scan takes `<repo-root>`, an optional `[max-files]` (default 15; only used when there's no prior run), and an optional `[since-timestamp]` — the `cutoff:` value printed by `scope-since-last-run.sh`.
 
 ## Gotchas
 

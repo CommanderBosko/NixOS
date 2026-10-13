@@ -8,16 +8,10 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   manual grep and move on: ask the user (AskUserQuestion, see STEP 5B) whether to generate
   one now or skip with a manual pass just for this close-out, and record which path was
   taken in the session summary either way.
-- **`scripts/rotate-session-summary.sh` is relative to the *skill's* directory, not the
-  project cwd** — running it as `.claude/skills/session-closer/scripts/rotate-session-summary.sh
-  <repo-root>` (or the same path prefixed with the project root) fails with exit 127,
-  because this repo's session-closer isn't project-local — it's symlinked into
-  `~/.claude/skills/session-closer/`. This has recurred across multiple sessions, each time
-  wasting a failed attempt before self-correcting. Always invoke it with the absolute path
-  from the "Base directory for this skill" line shown when the skill launches (e.g.
-  `~/.claude/skills/session-closer/scripts/rotate-session-summary.sh <repo-root>`), never a
-  bare `scripts/...` or project-root-relative path. The same applies to
-  `scripts/rotate-project-state.sh` (STEP 3's rotation).
+- **Script and asset paths** (`rotate-session-summary.sh`, `rotate-project-state.sh`, the `assets/`
+  templates): use the absolute path from this skill's Base directory line, never a bare
+  `scripts/...` / `assets/...` or a project-root-relative `.claude/skills/session-closer/...`
+  path (exit 127 / 404; recurred across many sessions) — see `~/.claude/skills/lib/script-paths.md`.
 - **`project-state.md` has grown too large for a single `Read`** (check live via `wc -l
   /home/bosko/NixOS/project-state.md` — it only grew until STEP 3's
   `scripts/rotate-project-state.sh` rotation existed, and was already past 650 lines /
@@ -34,7 +28,16 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   averaging ~130-150 tokens/line, not the ~70/line a "150 lines fits" guess assumes. Use
   `limit=100` or less as the real safe default, and prefer reading exactly up to the next
   `## ` boundary from the `grep` output over guessing any fixed line count at all.
-- **The transcript cutoff detector misses slash-command invocations** (`find-last-skill-invocation.sh` only greps for assistant-initiated `Skill` tool_use entries) — when session-closer is run the normal way, via a user-typed `/session-closer`, Claude Code injects its instructions as user-turn content instead of an assistant `Skill` tool_use, so the detector never records it. On 2026-08-02 this made the cutoff report 2026-07-16 as the "last run" even though 2026-07-23 and 2026-07-26 both closed successfully (confirmed via `chore(session)` commits `e122a01`/`f7f0549`), pulling in 13 stale transcripts instead of the 7 actually in scope and nearly causing an old close to be re-narrated as current. **Always treat `git log --oneline | grep 'chore(session):' | head -1` — the same baseline STEP 1's git-changes script already computes — as the authoritative last-close marker for STEP 2's transcript scan too.** If the transcript tool's own reported cutoff predates that commit's date, only mine transcripts back to the commit's date, not the tool's cutoff. Don't tail-skim a multi-transcript dump either — transcripts concatenate newest-first, so a `tail` surfaces the *oldest* included transcript's content, not a summary of the newest.
+- **The transcript cutoff detector used to miss slash-command invocations — fixed 2026-08-10
+  (`910c986`).** `find-last-skill-invocation.sh` once only matched assistant `Skill` tool_use
+  entries, so a user-typed `/session-closer` never registered; on 2026-08-02 that made STEP 2
+  report a stale 2026-07-16 cutoff and pull in 13 transcripts instead of 7. It now also matches
+  `<command-name>/<skill-name></command-name>` turns. Keep one sanity check: if the reported
+  cutoff predates the latest `chore(session):` commit (`git log --oneline | grep
+  'chore(session):' | head -1`, the same baseline STEP 1 computes), only mine transcripts back to
+  that commit's date. Don't tail-skim a multi-transcript dump either — transcripts concatenate
+  newest-first, so a `tail` surfaces the *oldest* included transcript's content, not a summary
+  of the newest.
 - **`uptime -p` and `uptime -s` both fail** when confirming a real reboot vs. just a switch
   (observed 2026-08-03: `uptime: invalid option -- 'p'`, same for `-s`) — this system's
   `uptime` is the coreutils build, not procps-ng, so neither flag exists. Use `who -b`
@@ -47,12 +50,6 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   surrounding text entirely. `Read` the current `README.md` immediately before building the
   Edit's `old_string`; never reconstruct it from memory of what a prior session's entry
   probably looked like.
-- **The `scripts/...`-must-be-absolute rule (above) also applies to `assets/` reads, not
-  just scripts.** Hit for real: `Read`ing
-  `.claude/skills/session-closer/assets/session-summary-template.md` (project-root-relative)
-  404'd before self-correcting to the absolute `~/.claude/skills/session-closer/assets/...`
-  path from the "Base directory for this skill" line. Same root cause, same fix — use the
-  absolute base-dir path for every `assets/` file too, not only `scripts/`.
 - **`secret-scan/SKILL.md` exists on disk but the Skill tool says `Unknown skill: secret-scan`**
   (observed 2026-10-10, Sidekick): the session was launched from the project's old path
   (`~/projects/ADHD-Assistant`) and the directory was renamed mid-session, so the session's

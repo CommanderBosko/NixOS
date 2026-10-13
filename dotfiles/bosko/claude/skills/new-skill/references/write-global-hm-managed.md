@@ -1,6 +1,6 @@
 # Writing/editing a global skill in a Home-Manager-managed repo
 
-Load this when scope is **Global** and the repo is Home-Manager-managed — detect it: `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks).
+Load this in step 6 when scope is **Global**. First check the repo is Home-Manager-managed: `dotfiles/bosko/bosko-claude.nix` and `dotfiles/bosko/claude/skills/` both exist (equivalently, `~/.claude/skills/*/SKILL.md` resolve into `/nix/store` — they're read-only symlinks). If not, stop here and use step 6's plain-`~/.claude` target instead.
 
 ## The ownership model
 
