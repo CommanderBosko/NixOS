@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 438) runs everything through `36b49d4`; only the DMS idle-lock change (`13e4616`) still needs a rebuild there. natalie-laptop (gen 96) is on the 2026-10-11 bump without today's changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 439) runs every Nix change through `13e4616`; only the 2026-10-13 global-skill fixes (`79607cc`) still need a rebuild there. natalie-laptop (gen 96) is on the 2026-10-11 bump without today's changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -198,15 +198,15 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-12 (session 128, latest)** — Fixed a quickshell crash on gaming by making DMS the only screen locker (`fbb1038`), then replaced swayidle with DMS's own 10-minute idle lock (`13e4616`, not yet rebuilt). Also added a sandboxed self-hosted GitHub Actions runner on gaming for blueprint-smith's Factorio harness job (`3f3cf9e`), put the `sops` CLI on every host (`333e4b4`), and wired the boss Claude session: kitty remote control and a tab bar for bosko only, kitty windows that don't steal focus in niri, and guarded Claude Code hooks plus a status line (`0e3eaca`, `c7a8c2a`, `36b49d4`).
+**2026-10-13 (session 129, latest)** — Applied the full 2026-10-13 skill audit: 17 correctness bugs plus structural cleanups across ~70 project-local and global skill files (`27eb91f`, `79607cc`). Host aliases are now read from `.claude/hosts.json`, new shared helpers live under `dotfiles/bosko/claude/skills/lib/`, and long incident notes moved into `references/`. The global half goes live after a rebuild.
+
+**2026-10-12 (session 128)** — Fixed a quickshell crash on gaming by making DMS the only screen locker (`fbb1038`), then replaced swayidle with DMS's own 10-minute idle lock (`13e4616`, live on gaming since gen 439). Also added a sandboxed self-hosted GitHub Actions runner on gaming for blueprint-smith's Factorio harness job (`3f3cf9e`), put the `sops` CLI on every host (`333e4b4`), and wired the boss Claude session: kitty remote control and a tab bar for bosko only, kitty windows that don't steal focus in niri, and guarded Claude Code hooks plus a status line (`0e3eaca`, `c7a8c2a`, `36b49d4`).
 
 **2026-10-12 (session 127)** — Added a global `land-prs` skill (merge a PR or a stacked PR chain bottom-up, then clean up branches) and a `brief-reviewer` agent that the `interview` skill now spawns for its brief check (`2d3ddb5`), from an improve-system sweep of the blueprint-smith project; live on gaming since gen 438.
 
-**2026-10-11 (session 126)** — Reviewed and merged the weekly improve-system PR #33 (a stale file reference in `shared-module-check`, `7304ad5`) and removed an outdated note from `.claude/lib/hosts.sh` (`8aca584`); the 2026-10-11 bump is now live on gaming and natalie-laptop.
-
 ## Roadmap
 
-- Rebuild + reboot laptop and natalie-laptop (gaming is current as of 2026-09-23, gen 422, but also owes a small rebuild for PR #26's global skill fixes and the three stacked flake bumps through PR #29): activate managed Claude Code policy, FinanceGuru, package consolidation changes, the OnlyOffice font fix, the static Canon printer queue, and natalie-laptop's Plasma removal (niri-only now); remove hand-maintained `~/.ssh/config` on each host afterward
+- Roll the backlog out with `/fleet-rollout`: laptop (offline; owes everything since mid-September — managed Claude Code policy, FinanceGuru, package consolidation, the OnlyOffice font fix, the static Canon printer queue, and every flake bump since PR #29), natalie-laptop (gen 96, owes only the 2026-10-12/13 changes), and vpn-server (sops-nix bumps); remove the hand-maintained `~/.ssh/config` on each host afterward
 - Interface-scope Avahi mDNS: replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Harden vpn-server further (AppArmor profiles, fail2ban, rate-limiting on UDP 51820)

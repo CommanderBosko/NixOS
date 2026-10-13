@@ -1,3 +1,27 @@
+## Session: 2026-10-10 (session 124) — slice-builder agent + zsh fix for Claude's shells
+
+**Focus**: Close out two NixOS commits made from a Sidekick-repo `/improve-system` session.
+
+### What changed (and why)
+- `b2c4868` adds the global `slice-builder` agent (reusable unit for building one milestone slice in parallel, replacing boilerplate re-typed into every Sidekick M1 spawn) and a session-closer gotcha for "Unknown skill" after a project rename.
+- `ad7fec5` unsets zsh `EQUALS` + `NOMATCH` in `/etc/zshenv` only when `CLAUDECODE` is set, so `echo =====` and unmatched globs stop breaking Claude's bash-style commands (6 + 11 transcripts hit them).
+
+### Decisions
+- Fixed the shell rather than adding a CLAUDE.md "quote your `=`" note; `shellInit` not `setOptions`, since the latter only reaches `/etc/zshrc`.
+- `NOMATCH` added beyond the ask (same class, more frequent); offer to drop it stands.
+
+### Issues / surprises
+- This close's own `echo ======` failed — gaming still runs gen 429; gen 430 (both commits) is staged as boot default.
+- Corrected project-state: the 10-09 flake bump is live on gaming (gen 428), not "on no host".
+- Secret-scan clean (tree + 1825 commits, all sops files encrypted).
+
+### Next session
+- Reboot gaming onto gen 430, then confirm `echo =====` works and `slice-builder` resolves in a fresh Claude session.
+
+**Commits**: `b2c4868..ad7fec5` (2 commits)
+
+---
+
 ## Session: 2026-10-10 (session 123) — Sidekick deploy Phase A
 
 **Focus**: Do Phase A of the ADHD-Assistant NixOS deployment handoff doc.
