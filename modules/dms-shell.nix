@@ -17,7 +17,7 @@ in
     };
     idleLockTimeout = lib.mkOption {
       type = lib.types.ints.positive;
-      description = "Seconds of inactivity before swayidle locks the screen.";
+      description = "Seconds of inactivity before DMS locks the screen (seeded into its settings.json if unset).";
     };
   };
 
@@ -79,21 +79,37 @@ in
         run ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 --file kdeglobals --group UiSettings --key ColorScheme '*'
       '';
 
-      # Idle lock goes through DMS's own lock screen, never swaylock: DMS
+      # Idle lock is DMS's own (IdleService's ext-idle-notify monitor, with
+      # fade-to-lock), not swayidle. DMS ships that timer disabled (0), so
+      # seed the AC and battery lock timeouts into its settings.json. Only
+      # keys that aren't set get seeded, so a value picked in DMS Settings ->
+      # Power & Sleep (including "Never", stored as 0) wins. DMS watches the
+      # file and reloads it live. settings.json stays unmanaged (a
+      # programs.dank-material-shell.settings store symlink would make DMS's
+      # UI read-only). A missing file is skipped: DMS creates it on first
+      # launch with its configVersion, and the next activation seeds it.
+      home.activation.dmsIdleLockTimeout = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        settings="${config.xdg.configHome}/DankMaterialShell/settings.json"
+        if [[ -f "$settings" ]] \
+          && ! ${pkgs.jq}/bin/jq -e 'has("acLockTimeout") and has("batteryLockTimeout")' "$settings" >/dev/null 2>&1; then
+          if [[ -v DRY_RUN ]]; then
+            echo "Would seed DMS idle-lock timeout (${toString cfg.idleLockTimeout}s) into $settings"
+          elif ${pkgs.jq}/bin/jq --argjson t ${toString cfg.idleLockTimeout} \
+              '.acLockTimeout //= $t | .batteryLockTimeout //= $t' "$settings" > "$settings.hm-tmp"; then
+            run mv "$settings.hm-tmp" "$settings"
+          else
+            rm -f "$settings.hm-tmp"
+            warnEcho "Couldn't seed DMS idle-lock timeout: $settings isn't valid JSON"
+          fi
+        fi
+      '';
+
+      # Manual fallback locker only (e.g. from a TTY with WAYLAND_DISPLAY
+      # set, if DMS dies mid-lock). Never call it while DMS is running: DMS
       # follows any session lock it sees and tries to engage its own, which
       # niri refuses while swaylock holds the lock. That retry loop churned
       # GL lock surfaces until quickshell aborted on NVIDIA (2026-10-12).
-      # swaylock stays installed only as a manual fallback (e.g. from a TTY
-      # with WAYLAND_DISPLAY set, if DMS dies mid-lock). The swaylock and
-      # swayidle NixOS modules were removed upstream, so these are Home
-      # Manager's.
       programs.swaylock.enable = true;
-      services.swayidle = {
-        enable = true;
-        timeouts = [
-          { timeout = cfg.idleLockTimeout; command = "${config.programs.dank-material-shell.package}/bin/dms ipc call lock lock"; }
-        ];
-      };
     });
 
     services = {

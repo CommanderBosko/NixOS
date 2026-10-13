@@ -16,7 +16,7 @@
   # then customize via `dms/binds-user.lua` or DMS's own Settings UI.
   dmsShell = {
     users = [ "bosko" ];
-    idleLockTimeout = 300;
+    idleLockTimeout = 600;
   };
 
   programs = {

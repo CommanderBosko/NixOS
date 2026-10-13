@@ -1,8 +1,8 @@
 # Home Manager side of the niri desktop: niri config, session gating, GTK and
 # cursor theming. Imported by modules/desktop-environments/niri.nix for every
 # user who can log into a niri session, on top of modules/dms-shell.nix's Home
-# Manager config (DMS itself, qt6ct/kdeglobals theming, swaylock/swayidle).
-{ config, lib, pkgs, osConfig, self, ... }:
+# Manager config (DMS itself, qt6ct/kdeglobals theming, idle lock, swaylock).
+{ config, pkgs, osConfig, self, ... }:
 
 {
   # DMS's gtk.sh copies adw-gtk3 into ~/.local/share/themes and patches its
@@ -15,12 +15,6 @@
   # target is reached) so a second session, e.g. Plasma, never starts DMS
   # against its own panel.
   systemd.user.services.dms.Unit.ConditionEnvironment = "XDG_CURRENT_DESKTOP=niri";
-
-  # HM's swayidle unit already gates on ConditionEnvironment=WAYLAND_DISPLAY,
-  # but Plasma 6 is Wayland too. mkForce swaps in the stricter niri check
-  # instead of adding a second one (the option is a single string, not a list;
-  # XDG_CURRENT_DESKTOP=niri already implies WAYLAND_DISPLAY).
-  systemd.user.services.swayidle.Unit.ConditionEnvironment = lib.mkForce "XDG_CURRENT_DESKTOP=niri";
 
   # Niri config (input, layout, binds, window rules). DMS-generated files under
   # ~/.config/niri/dms/ (theme/output state driven by its own settings UI) are

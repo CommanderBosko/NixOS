@@ -223,9 +223,9 @@
         };
       };
 
-      # Idle management: lock after 5 minutes, matching this repo's convention
-      # on niri/hyprland (swayidle there; hypridle here since it's Omarchy's
-      # native choice and pairs directly with hyprlock above).
+      # Idle management: lock after 5 minutes via hypridle, Omarchy's native
+      # choice, which pairs directly with hyprlock above (niri/hyprland use
+      # DMS's own idle lock instead).
       services.hypridle = {
         enable = true;
         settings = {
