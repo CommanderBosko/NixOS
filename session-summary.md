@@ -4,6 +4,37 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-12 (session 128) — lock-crash fix, CI runner, boss-session wiring, DMS idle lock
+
+**Focus**: Close out the evening's 7 commits, made across 5 separate NixOS sessions (several relayed by the new boss session). This close-out session made no code changes itself.
+
+### What changed (and why)
+- **Quickshell crash (`fbb1038`):** swaylock and DMS's lock screen fought over the session lock. DMS's retries hit an NVIDIA GL failure and quickshell aborted. DMS is now the only locker.
+- **DMS idle lock (`13e4616`):** swayidle is gone. DMS's own idle timer is seeded to 10 min only when unset, and Hyprland's timeout went from 5 to 10 min to match.
+- **blueprint-smith runner (`3f3cf9e`):** a self-hosted GitHub Actions runner on gaming for the Factorio harness job, because factorio.com blocks GitHub-hosted runners. It runs sandboxed, and the PAT is in sops.
+- **`sops` on PATH (`333e4b4`)** on every host, so editing secrets no longer needs `nix shell`.
+- **Boss session (`0e3eaca`, `c7a8c2a`, `36b49d4`):**
+  - kitty windows no longer steal focus in niri.
+  - kitty remote control and a tab bar now come from a drop-in that only bosko gets.
+  - Claude Code gets a guarded `boss-hook` on 8 events, plus a status line.
+
+### Decisions
+- Runner jobs run as a DynamicUser with `/home` hidden, not as bosko. The repo is public and a fork PR can edit the workflow's fork guard.
+- swaylock stays installed only as a TTY recovery tool. Never run it while DMS is up.
+
+### Issues / surprises
+- `classify-shared-file.sh` calls `dms-shell.nix` LOCAL even though niri.nix and hyprland.nix import it, so the 4-host sweep was run by hand.
+- The `boss-hook` permission and question hooks run an unmanaged script, which must never auto-approve anything.
+- Secret-scan: see the close commit.
+
+### Next session
+- gaming: `rebuild-switch` for `13e4616`, then check that DMS shows a 10-min auto-lock and swayidle is gone.
+- `/fleet-rollout` for laptop, natalie-laptop and vpn-server.
+
+**Commits**: `fbb1038..13e4616` (7 commits); gaming is on gen 438 with all but `13e4616`
+
+---
+
 ## Session: 2026-10-12 (session 127) — close-out for the blueprint-smith improve-system commit
 
 **Focus**: Document `2d3ddb5`, which came from today's `/improve-system` sweep run in the blueprint-smith repo; this session made no code changes.
@@ -96,30 +127,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Reboot gaming onto gen 430, then confirm `echo =====` works and `slice-builder` resolves in a fresh Claude session.
 
 **Commits**: `b2c4868..ad7fec5` (2 commits)
-
----
-
-## Session: 2026-10-10 (session 123) — Sidekick deploy Phase A
-
-**Focus**: Do Phase A of the ADHD-Assistant NixOS deployment handoff doc.
-
-### What changed (and why)
-- `85ab0af` sets `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` on gaming so `tailscale serve` works without sudo during Sidekick dev testing. Dry-run clean, user switched.
-- Tailnet HTTPS certificates enabled by the user in the admin console.
-
-### Decisions
-- Operator flag lives in `hosts/gaming/environment.nix`, not the shared `modules/tailscale.nix`, so other desktops aren't widened. It is temporary (see project-state).
-- Did not retry the blocked API toggle another way; handed it to the user.
-
-### Issues / surprises
-- Auto-mode classifier denied `tailscale_update_tailnet_settings`; the admin console was the path.
-- `tailscale debug prefs` has no operator field; `tailscale serve status` without sudo is the real check.
-- Secret-scan clean (tree + history).
-
-### Next session
-- Phase B of `deployment-nixos.md`; remove the operator flag afterward.
-
-**Commits**: `85ab0af` (1 commit)
 
 ---
 

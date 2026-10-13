@@ -2,6 +2,12 @@
 
 Older `Current Project State` blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Sidekick (ADHD-Assistant) deploy, Phase A done: tailnet HTTPS certs on + `--operator=bosko` on gaming (`85ab0af`), pushed (2026-10-10, session 123).**
+- **Source of truth:** `~/projects/ADHD-Assistant/docs/deployment-nixos.md` (handoff doc; Phase B = flake input, `hosts/gaming/adhd-assistant.nix`, sops `adhd-assistant-env`, rollout — NOT started).
+- **HTTPS certs:** the Tailscale API toggle was blocked by the auto-mode classifier, so the user enabled it in the admin console; `tailscale status --json | jq .CertDomains` now lists `gaming.tail6da34c.ts.net` (public side effect: that name is in Certificate Transparency logs).
+- **Operator:** `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` in `hosts/gaming/environment.nix`; dry-run clean (only new `tailscaled-set.service`), user switched, verified by `tailscale serve status` working without sudo. `tailscale debug prefs` does not print an operator field, so don't use it as the check. **Temporary:** remove once Phase B's root `adhd-assistant-serve` unit is deployed.
+- `tailscale serve status` showed "No serve config", so nothing else holds `:443`.
+
 **Flake inputs bumped (`af45f39`), pushed; live on gaming since gen 428 (2026-10-10), NOT yet on laptop/natalie-laptop/vpn-server (2026-10-09, session 122).**
 - nixpkgs `c59305b`→`e7439b6`, home-manager `acd21c5`→`427c74a`, dms `585827e`→`938971e` (dank-qml-common `13470a9`→`9314fc4`), sops-nix `5efb5a6`→`dcd241b`. `flake-check` passed and deep-eval was clean on all 4 hosts before commit.
 - Still owed: rebuild on each host (also carries 2026-10-04's global skill edits, which only reach `~/.claude` after `nh os boot` + reboot). Secret-scan clean (tree + 1820 commits).

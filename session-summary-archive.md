@@ -1,3 +1,27 @@
+## Session: 2026-10-10 (session 123) — Sidekick deploy Phase A
+
+**Focus**: Do Phase A of the ADHD-Assistant NixOS deployment handoff doc.
+
+### What changed (and why)
+- `85ab0af` sets `services.tailscale.extraSetFlags = [ "--operator=bosko" ]` on gaming so `tailscale serve` works without sudo during Sidekick dev testing. Dry-run clean, user switched.
+- Tailnet HTTPS certificates enabled by the user in the admin console.
+
+### Decisions
+- Operator flag lives in `hosts/gaming/environment.nix`, not the shared `modules/tailscale.nix`, so other desktops aren't widened. It is temporary (see project-state).
+- Did not retry the blocked API toggle another way; handed it to the user.
+
+### Issues / surprises
+- Auto-mode classifier denied `tailscale_update_tailnet_settings`; the admin console was the path.
+- `tailscale debug prefs` has no operator field; `tailscale serve status` without sudo is the real check.
+- Secret-scan clean (tree + history).
+
+### Next session
+- Phase B of `deployment-nixos.md`; remove the operator flag afterward.
+
+**Commits**: `85ab0af` (1 commit)
+
+---
+
 ## Session: 2026-10-09 (session 122) — flake input bump
 
 **Focus**: Close out a short session whose only change was a flake input bump.
