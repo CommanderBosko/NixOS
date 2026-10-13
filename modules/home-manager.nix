@@ -21,6 +21,7 @@
         imports = [
           (import "${self}/dotfiles/common/configs/home.nix")
           (import "${self}/dotfiles/bosko/bosko-claude.nix")
+          (import "${self}/dotfiles/bosko/kitty.nix")
         ];
       };
 

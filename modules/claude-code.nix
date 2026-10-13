@@ -13,6 +13,9 @@
 #       - routes commands through rtk (installed below) to cut token usage;
 #         rtk itself defers to Claude's native deny/ask rules on match, so the
 #         two hooks don't fight each other
+#   - boss-session hooks (bossHook below) on session, prompt, stop,
+#     notification, permission, AskUserQuestion/ExitPlanMode, and post-tool
+#     events, exec'ing ~/projects/boss/bin/boss-hook when it exists
 #
 # Deliberately NOT set up via `rtk init -g`: that writes the hook straight into
 # ~/.claude/settings.json, which the trimClaudeSettings HM activation
@@ -38,6 +41,17 @@ let
   forkBombGuard = ''
     ${pkgs.jq}/bin/jq -c 'if (.tool_input.command // "") | test("([\\w:]+)\\s*\\(\\)\\s*\\{[^}]*\\|[^}]*&[^}]*\\}\\s*;\\s*\\1") then {hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:"fork bomb pattern blocked"}} else empty end' 2>/dev/null || true
   '';
+
+  # Boss-session hooks (~/projects/boss): a tiny guard that hands the hook JSON
+  # (stdin, kept by exec) to the boss's own script when it exists, so the boss
+  # can iterate on its logic without a rebuild. A no-op on hosts/users without
+  # the script; the script itself no-ops unless a live boss marker exists.
+  bossHook = {
+    type = "command";
+    command = ''f="$HOME/projects/boss/bin/boss-hook"; [ -x "$f" ] && exec "$f"; exit 0'';
+    timeout = 5;
+  };
+  bossEntry = { hooks = [ bossHook ]; };
 
   managedSettings = {
     permissions = {
@@ -121,7 +135,20 @@ let
             statusMessage = "Routing through rtk";
           }
         ];
-      };
+      }
+      ++ [
+        {
+          matcher = "AskUserQuestion|ExitPlanMode";
+          hooks = [ bossHook ];
+        }
+      ];
+      SessionStart = [ bossEntry ];
+      SessionEnd = [ bossEntry ];
+      UserPromptSubmit = [ bossEntry ];
+      Stop = [ bossEntry ];
+      Notification = [ bossEntry ];
+      PermissionRequest = [ bossEntry ];
+      PostToolUse = [ bossEntry ];
     };
   };
 in

@@ -123,4 +123,33 @@ in
       fi
     ''
   );
+
+  # Boss-session status line (~/projects/boss): a guard that execs the boss's
+  # own script when it exists, so the boss iterates on it without a rebuild.
+  # Set only when .statusLine is absent or already ours (its command points at
+  # boss-statusline) — never clobbers a different hand-set status line.
+  home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+    let
+      statusLine = {
+        type = "command";
+        command = ''f="$HOME/projects/boss/bin/boss-statusline"; [ -x "$f" ] && exec "$f"; exit 0'';
+        padding = 0;
+      };
+    in
+    ''
+      ${shell.jqEdit}
+      settings="$HOME/.claude/settings.json"
+      jq="${pkgs.jq}/bin/jq"
+      desired=${lib.escapeShellArg (builtins.toJSON statusLine)}
+      if [ -f "$settings" ]; then
+        if $jq -e --argjson d "$desired" \
+          '.statusLine != $d and (.statusLine == null
+            or ((.statusLine.command? // "") | contains("/projects/boss/bin/boss-statusline")))' \
+          "$settings" >/dev/null 2>&1; then
+          claude_jq_edit "$settings" --argjson d "$desired" '.statusLine = $d'
+          $VERBOSE_ECHO "Reconciled boss statusLine in $settings"
+        fi
+      fi
+    ''
+  );
 }
