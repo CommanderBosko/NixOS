@@ -133,6 +133,7 @@
       "${self}/hosts/gaming/jellyfin-server.nix"
       "${self}/hosts/gaming/pinchflat.nix"
       "${self}/hosts/gaming/samba-shared.nix"
+      "${self}/hosts/gaming/github-runner.nix"
     ] ++ extra;
   in
   {
