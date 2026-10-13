@@ -332,6 +332,12 @@ window-rule {
     open-floating true
 }
 
+// Open kitty windows without stealing focus (including Mod+Return terminals).
+window-rule {
+    match app-id=r#"^kitty$"#
+    open-focused false
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {
