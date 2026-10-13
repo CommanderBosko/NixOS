@@ -54,9 +54,9 @@ Then add a brief diagnosis below the raw output:
 
 - Working directory: `/home/bosko/NixOS`
 - This is a read-only, safe-to-run-anytime operation.
-- `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across every host listed live in `.claude/hosts.json`'s `.flakeHosts` (currently gaming, laptop, natalie-laptop, vpn-server; don't hardcode this count — check the file if it looks stale).
+- `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across every host listed in `.claude/hosts.json`'s `.flakeHosts` (read the file, don't hardcode the list).
 - This skill does NOT apply changes; it only validates.
 
 ## Gotchas
 
-- **`nix flake check` is a SHALLOW check for nixosConfigurations** (proven 2026-07-02): it verifies each host's toplevel is a derivation without forcing full evaluation, so a broken package deep in `environment.systemPackages` (e.g. one newly marked insecure) passes the check but fails every real rebuild. For a real eval gate, force each host: `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`. "Passed" here means "no shallow errors", not "the hosts build".
+- **`nix flake check` is a SHALLOW check for nixosConfigurations** — "passed" means "no shallow errors", not "the hosts build". For the real per-host eval gate, run the `deep-eval-check` skill (its `references/incidents.md` has the 2026-07-02 incident).

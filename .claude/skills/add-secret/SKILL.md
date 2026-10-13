@@ -69,10 +69,9 @@ themselves.
 
 **A `!` command is NOT private.** Its text is echoed into the conversation — into the model's
 context and the local session log — so a value inside a `!` command (a heredoc body, a
-`<<< 'value'`, an inline argument) is exposed exactly like a chat message. Confirmed
-2026-09-21: a `!`-captured Tailscale OAuth secret appeared verbatim in the transcript and had
-to be regenerated. Never give the user a `!` command that contains the value. Only commands
-that pass a **file path** (the write step below) are safe to run via `!`.
+`<<< 'value'`, an inline argument) is exposed exactly like a chat message (incident:
+`references/incident-history.md`). Never give the user a `!` command that contains the value.
+Only commands that pass a **file path** (the write step below) are safe to run via `!`.
 
 **First, have the user capture the value into a scratchpad file from a SEPARATE terminal**
 (a normal terminal window, not this session), using a hidden prompt so the value is neither
@@ -185,7 +184,7 @@ host. Do not commit on the user's behalf unless asked; the `git-commit`/`git-pus
 ## Gotchas
 
 See `references/incident-history.md` for full incident history behind the first three
-points below.
+points and the last one below.
 
 - **The agent must never run `sops-secret.sh set|create|edit`, or ask the user to type a
   plaintext value into a normal chat message** — the pre-v0.3.0 implementation violated both
@@ -204,7 +203,5 @@ points below.
   run `sops updatekeys <file>` to apply new recipients.
 - Editing on a machine without the admin key at `~/.config/sops/age/keys.txt` will fail to
   decrypt. That key is the recovery path — keep it backed up.
-- **`openssl` isn't on PATH either** (found generating a random `SECRET_KEY_BASE` for
-  Pinchflat, 2026-08-03: `openssl rand -hex 64` → `command not found`). For a random
-  token/hex value, use `nix shell nixpkgs#openssl --command openssl rand -hex <N>` — same
-  `nix shell nixpkgs#<pkg> --command` pattern as the `mkpasswd` guidance in Step 1.
+- **`openssl` isn't on PATH** — for a random token/hex value, use
+  `nix shell nixpkgs#openssl --command openssl rand -hex <N>` (same pattern as `mkpasswd` in Step 1).

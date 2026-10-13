@@ -100,25 +100,9 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
    (finding → intentional/genuine → allowlist ref or fix), and the final SAFE / BLOCKED
    verdict with the genuine-findings count.
 
-2. **Memory** → `.claude/loops/public-repo-guard/memory-<today>.md`, with this shape:
-   ```
-   # public-repo-guard run — <today>
-
-   - Mode: ON | OFF
-   - Result: SAFE (0 genuine) | BLOCKED (<n> genuine) | blocked at step <n>
-   - Steps skipped (already passed): <list>
-   - Steps re-run: <list, with attempt counts>
-
-   ## What worked
-   - …
-
-   ## What failed
-   - …
-
-   ## Remember next run
-   - … (carry-forward notes: allowlist entries added this run, recurring false positives,
-     a genuine finding still open)
-   ```
+2. **Memory** → `.claude/loops/public-repo-guard/memory-<today>.md`: read this skill's
+   `assets/memory-template.md` and fill its placeholders (mode, result, skipped/re-run
+   steps, what worked/failed, "Remember next run" carry-forward notes).
 
    At the START of every run, read the most recent `memory-*.md` in this dir (if any)
    and apply its "Remember next run" notes before doing anything else.

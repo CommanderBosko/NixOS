@@ -8,7 +8,8 @@ set -euo pipefail
 #   capture.sh <output.png>                          — screenshot current desktop state
 #   capture.sh <output.png> <app> [env=val ...]       — kill any running instance of
 #     <app>, relaunch it detached with the refreshed session env (plus any
-#     given VAR=value overrides), wait for it to render, then capture.
+#     given VAR=value overrides), wait for it to render, then capture. The app's
+#     stdout/stderr goes to <app>.log in the same directory as <output.png>.
 
 if [ "$#" -lt 1 ]; then
   echo "usage: capture.sh <output.png> [app] [env=val ...]" >&2
@@ -35,7 +36,7 @@ if [ -n "$app" ]; then
     kill "$existing_pid"
     sleep 1
   fi
-  nohup env "$@" "$app" > "/tmp/${app}.log" 2>&1 &
+  nohup env "$@" "$app" > "$(dirname -- "$out")/$(basename -- "$app").log" 2>&1 &
   disown
   sleep 2
 fi

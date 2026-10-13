@@ -20,9 +20,10 @@ Parse from the user's request:
 
 ## Steps
 
-1. **Resolve the output path.** Use the current session's scratchpad directory if one is set
-   (see the "Scratchpad Directory" section of the system prompt); otherwise fall back to `/tmp`.
-   Pick a short, descriptive filename, e.g. `<scratchpad>/dolphin_shot.png`.
+1. **Resolve the output path.** Use the current session's scratchpad directory (see the
+   "Scratchpad Directory" section of the system prompt), never `/tmp`. If no scratchpad is set,
+   ask the user where to save it via the **AskUserQuestion** tool; use `/tmp` only if they pick
+   it. Pick a short, descriptive filename, e.g. `<scratchpad>/dolphin_shot.png`.
 
 2. **Capture:**
    ```bash
@@ -33,6 +34,7 @@ Parse from the user's request:
    environment from before a `nixos-rebuild switch`, which reads as "the fix didn't work" when it
    actually did), kills any already-running instance of that app from a prior verification pass,
    relaunches it detached with the given env overrides, waits for it to render, then captures.
+   The app's stdout/stderr goes to `<app>.log` next to the screenshot.
 
 3. **View it.** `Read` the resulting PNG with the Read tool and visually inspect it against what
    the change was supposed to do (e.g. dark vs. light theme, correct layout, expected window

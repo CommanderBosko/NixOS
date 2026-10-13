@@ -1,0 +1,7 @@
+# printer-diagnose background
+
+Setup history and incident context behind the SKILL.md Background rules.
+
+- **Since 2026-09-23 the home Canon TS9500 is a static queue, not a cups-browsed one.** `modules/printing.nix` declares `Canon_TS9500_series` via `hardware.printers.ensurePrinters` with a checked-in driverless PPD (`modules/printing/canon-ts9500.ppd`, NickName `Canon Printer, driverless, …`) and `dnssd://` device URI, and sets `services.printing.browsed.enable = false`. `lpadmin` runs in `cups.service`'s postStart, so the queue exists as soon as CUPS is up — no network or boot race involved. There is no `cups-browsed.conf` and no `cups-browsed`/`cups-browsed-fixup` unit any more; their absence is expected, not a fault.
+- Why cups-browsed was dropped: its auto-created queue kept vanishing after reboots (it restarted before the printer was resolvable, gave up, never retried), so users "rediscovered" the printer in Print Settings — which auto-picked gutenprint's **"Apollo P-2100"** PPD. Jobs through that driver are silently discarded by the Canon while CUPS logs `Job completed` within seconds, so the queue always looks empty and nothing prints. Any Canon queue whose PPD NickName mentions Gutenprint/Apollo is this bug.
+- `.local` resolution can fail briefly after boot (`Unable to connect to <host>.local:631: Temporary failure in name resolution` in the cups journal, seen on natalie-laptop 2026-09-23 while its clock was still reset to 2021 before NTP sync). With the static queue a job just waits and retries instead of failing queue creation.

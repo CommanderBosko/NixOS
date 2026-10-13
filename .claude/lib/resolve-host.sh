@@ -2,9 +2,9 @@
 #
 # resolve-host.sh — Resolve a short host name to its SSH target.
 #
-# Normalizes known aliases, then looks up `.hosts["<name>"].ssh` in
-# /home/bosko/NixOS/.claude/hosts.json (via the shared hosts.sh helpers) —
-# never hardcode a copy of that map.
+# Normalizes aliases (each host's optional `.aliases` array), then looks up
+# `.hosts["<name>"].ssh` in /home/bosko/NixOS/.claude/hosts.json (via the
+# shared hosts.sh helpers) — never hardcode a copy of either map.
 #
 # On success: prints just the resolved SSH target (e.g. "bosko@gaming") to
 # stdout and exits 0.
@@ -19,7 +19,7 @@
 
 set -uo pipefail
 
-# Shared hosts.json lookups (HOSTS_JSON, hosts_table, hosts_ssh).
+# Shared hosts.json lookups (HOSTS_JSON, hosts_table, hosts_canonical, hosts_ssh).
 source "$(dirname "${BASH_SOURCE[0]}")/hosts.sh"
 
 NAME="${1:-}"
@@ -29,12 +29,9 @@ if [ -z "$NAME" ]; then
   exit 1
 fi
 
-case "$NAME" in
-  natalie) NAME="natalie-laptop" ;;
-  vpn|oracle|server) NAME="vpn-server" ;;
-esac
-
-TARGET="$(hosts_ssh "$NAME")"
+NAME="$(hosts_canonical "$NAME")"
+TARGET=""
+[ -n "$NAME" ] && TARGET="$(hosts_ssh "$NAME")"
 
 if [ -z "$TARGET" ]; then
   hosts_table

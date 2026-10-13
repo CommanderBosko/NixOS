@@ -12,8 +12,14 @@
 #   2. hosts.json keys under `.hosts` whose `flakeHost` is true
 #   3. `builtins.attrNames nixosConfigurations` (via deep-eval.sh --list)
 #
-# Prints each mismatch and exits 1 on any drift; exits 0 (with an OK line)
-# when all three agree. Eval-only, read-only. Run by .github/workflows/check.yml.
+# It also checks the optional per-host `.aliases` arrays that resolve-host.sh
+# reads: every alias must be a string, listed only once across all hosts, and
+# not equal to any host key (resolve-host.sh tries host keys first, so a
+# shadowing alias would never resolve).
+#
+# Prints each mismatch and exits 1 on any drift or bad alias; exits 0 (with an
+# OK line) when everything agrees. Eval-only, read-only. Run by
+# .github/workflows/check.yml.
 #
 # Usage:
 #   check-hosts-json.sh
@@ -50,8 +56,29 @@ compare() {
 compare "hosts.json .flakeHosts" "$listed"
 compare "hosts.json .hosts[].flakeHost == true" "$flagged"
 
+# One "<problem>: <host> <alias>" line per bad alias; empty when all are fine.
+if ! bad_aliases="$(hosts_jq -r '
+  (.hosts | keys) as $keys
+  | [.hosts | to_entries[] | .key as $h | (.value.aliases // []) as $al
+     | if ($al | type) == "array" then $al[] | {h: $h, a: .}
+       else {h: $h, a: $al, notArray: true} end] as $all
+  | $all[] | .h as $h | .a as $a
+  | if .notArray then "aliases is not an array: \($h) \($a | tojson)"
+    elif ($a | type) != "string" then "not a string: \($h) \($a | tojson)"
+    elif any($keys[]; . == $a) then "shadows a host key: \($h) \($a)"
+    elif ([$all[] | select(.a == $a)] | length) > 1 then "listed more than once: \($h) \($a)"
+    else empty end')"; then
+  echo "check-hosts-json.sh: could not read .hosts[].aliases" >&2
+  exit 2
+fi
+if [ -n "$bad_aliases" ]; then
+  rc=1
+  echo "BAD ALIAS in hosts.json .hosts[].aliases"
+  printf '%s\n' "$bad_aliases" | sed 's/^/    /'
+fi
+
 if [ "$rc" -eq 0 ]; then
-  echo "OK: hosts.json flake hosts match nixosConfigurations ($(printf '%s' "$expected" | tr '\n' ' ' | sed 's/ $//'))"
+  echo "OK: hosts.json flake hosts match nixosConfigurations ($(printf '%s' "$expected" | tr '\n' ' ' | sed 's/ $//')); aliases unique"
 fi
 
 exit "$rc"

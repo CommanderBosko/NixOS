@@ -27,3 +27,9 @@ operation — read only when investigating a regression that looks similar to on
   the conversation. Found while rotating `tailscale-mcp-env`, when the new OAuth client
   secret showed up verbatim and had to be regenerated. Value capture now happens in a separate
   terminal with a hidden `read -rs` prompt (Step 3); only file-path-only commands go via `!`.
+
+- **`openssl` not on PATH (Pinchflat `SECRET_KEY_BASE`, 2026-08-03).** Found generating a
+  random `SECRET_KEY_BASE` for Pinchflat: `openssl rand -hex 64` → `command not found`
+  (`openssl` isn't on PATH either — same as `sops`, see `repo-layout.md`). For a random
+  token/hex value, use `nix shell nixpkgs#openssl --command openssl rand -hex <N>` — same
+  `nix shell nixpkgs#<pkg> --command` pattern as the `mkpasswd` guidance in Step 1.

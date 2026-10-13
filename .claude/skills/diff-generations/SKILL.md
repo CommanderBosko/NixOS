@@ -15,7 +15,7 @@ Show what changed between the current active NixOS generation and the previous o
 .claude/skills/diff-generations/scripts/diff-generations.sh
 ```
 
-The script resolves the previous generation — the highest generation number strictly below the current one that still exists on disk — and runs `nix store diff-closures <previous> /run/current-system`. Read-only and safe. Exit codes:
+The script resolves the previous generation — the highest generation number strictly below the current one that still exists on disk — and runs `nix store diff-closures <previous> /run/current-system`, then adds the kernel/initrd reboot line Step 3 relays. Read-only and safe. Exit codes:
 - `0` — diff printed (parse it in Step 2).
 - `2` — no previous generation exists (e.g. the first build); tell the user there's nothing to compare and stop.
 - `1` — `/run/current-system` is missing or the current generation number couldn't be resolved; report the error and stop.
@@ -40,9 +40,11 @@ Updated (N):
 
 ## Step 3 — Note kernel/initrd changes
 
-If any changed package name contains `linux-`, `kernel`, or `initrd`, add:
+If the script's output ends with a `==> Kernel or initrd changed (...) — a reboot is required ...` line (it prints one when a changed package name contains `linux-`, `kernel`, or `initrd`), repeat it after the summary as a callout:
 
-> Kernel or initrd changed — a reboot is required to activate these changes.
+> Kernel or initrd changed (<names>) — a reboot is required to activate these changes.
+
+No such line means no reboot note.
 
 ---
 

@@ -25,13 +25,9 @@ description: Deploy a config change across all four NixOS hosts one at a time �
 > running systems, ON is strongly recommended. Only run OFF when you've already vetted the
 > change and accept unattended activation across the whole fleet.
 >
-> **Step 5 cannot run unattended for any host except `vpn-server`.** No NOPASSWD sudo rule
-> exists on the local host or on gaming/laptop/natalie-laptop, so Claude cannot supply a
-> sudo password — `nh os switch` / `nixos-rebuild switch --target-host` will just fail with
-> "a terminal is required to read the password" if attempted directly. Step 5 always stops
-> and hands the switch command to the user, **regardless of Training Mode**, the same way
-> the mandatory commit gate in `flake-update-verify` can't be skipped by OFF mode. Budget
-> for that pause even on unattended/`/loop`-scheduled runs.
+> **Step 5 always pauses for the user on every host except `vpn-server`, regardless of
+> Training Mode** — budget for that pause even on unattended/`/loop`-scheduled runs (why:
+> `references/vpn-server-switch.md`).
 
 ## Arguments
 
@@ -58,17 +54,15 @@ is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true`) first and headless hosts (`desktop: false`, e.g. `vpn-server`) last.
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true` — list them with `jq -r '.hosts|to_entries[]|select(.value.desktop)|.key' /home/bosko/NixOS/.claude/hosts.json`) first and headless hosts (`desktop: false`, e.g. `vpn-server`) last.
 
 If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `vpn-server` imports, or a desktop-environment/GPU change that's meaningless on the headless server — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
 
 The host this loop runs on is the **local** host — deploy it with `nh os switch`. All
 other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`,
 **except `vpn-server`**, which is deployed via the `remote-rebuild` skill's `boot` + reboot
-method instead (see Step 5 and Gotchas for why `switch` is never used there). None of the
-local/desktop switches can run unattended — only `vpn-server` has passwordless sudo, so
-Step 5 always hands the others off to the user. Resolve which is local with `hostname` at
-run start.
+method instead (Step 5). Only `vpn-server` can be deployed unattended; Step 5 hands every
+desktop host off to the user. Resolve which is local with `hostname` at run start.
 
 ## Steps
 
@@ -106,20 +100,18 @@ current host passes its health sweep.**
      If it errors, stop at this host — do NOT switch.
 
 5. **Per host — SWITCH (activate live).** Only after step 4 is green for this host.
-   **`sudo` has no NOPASSWD rule on the local host or on gaming/laptop/natalie-laptop —
-   do not run these directly via Bash, they will fail with "a terminal is required to
-   read the password."** Hand off instead, and this pause applies even in Training Mode
-   OFF:
+   **Never run a desktop host's switch via Bash** (`desktop: true` in `.claude/hosts.json`,
+   local host included) — none has a NOPASSWD sudo rule, so it fails with "a terminal is
+   required to read the password." Hand off instead; this pause applies even in Training
+   Mode OFF (background: `references/vpn-server-switch.md`):
    - Local host: print `nh os switch /home/bosko/NixOS` and ask the user to run it
      themselves (suggest the `!` prefix). Wait for their confirmation it completed.
-   - Remote desktop host (gaming/laptop/natalie-laptop): print
+   - Remote desktop host: print
      `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <ssh-target>` and
-     hand it off the same way — the same missing-NOPASSWD problem applies over SSH.
-   - `vpn-server` only: this is the one host with passwordless sudo, so Claude CAN run
-     this step itself — but never with `switch` (it tears down the SSH session
-     mid-activation, per the `remote-rebuild` skill's Gotchas). Invoke the
-     `remote-rebuild` skill instead, which deploys via `nixos-rebuild boot` + a clean
-     reboot.
+     hand it off the same way.
+   - `vpn-server` only: Claude CAN run this step itself (passwordless sudo), but never
+     with `switch` — invoke the `remote-rebuild` skill, which deploys via
+     `nixos-rebuild boot` + a clean reboot.
    - Done-rule: for handed-off hosts, the user confirms the command completed and
      reports the new generation; for `vpn-server`, `remote-rebuild` completes exit 0
      and reports the new generation activated.
@@ -157,27 +149,11 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 
 1. **Output** → `.claude/loops/fleet-rollout/output-<today>.md`
    The rollout report: a per-host table with dry-run result, switch result + generation
-   number, and health-sweep result; plus the overall done/blocked verdict.
+   number, and health-sweep result; plus the overall done/blocked verdict. Fill
+   `assets/output-template.md`.
 
-2. **Memory** → `.claude/loops/fleet-rollout/memory-<today>.md`, with this shape:
-   ```
-   # fleet-rollout run — <today>
-
-   - Mode: ON | OFF
-   - Result: done | blocked at host <name>, step <n>
-   - Steps skipped (already passed): <list>
-   - Steps re-run: <list, with attempt counts>
-
-   ## What worked
-   - …
-
-   ## What failed
-   - …
-
-   ## Remember next run
-   - … (carry-forward notes: a host that was already up-to-date, a flaky service to
-     expect, a generation number, whether a rollback was issued)
-   ```
+2. **Memory** → `.claude/loops/fleet-rollout/memory-<today>.md`, filled from
+   `assets/memory-template.md`.
 
    At the START of every run, read the most recent `memory-*.md` in this dir (if any)
    and apply its "Remember next run" notes before doing anything else.
@@ -190,15 +166,17 @@ exactly which host and step failed and whether a rollback is recommended.
 
 ## Gotchas
 
-- **`sudo` has no NOPASSWD rule on the local host or on gaming/laptop/natalie-laptop.**
-  Running `nh os switch` or `nixos-rebuild switch --target-host <host>` directly via the
-  Bash tool will fail with "a terminal is required to read the password" (same failure
-  mode documented in the `rollback` and `nixos-gc` skills). Step 5 hands these off to the
-  user instead of attempting them — don't "fix" that by trying to run them directly, and
-  don't treat a hand-off as the step being blocked; it's the expected path.
-- **`vpn-server` is the one host with passwordless sudo, but still can't use `switch`
-  over SSH.** `switch-to-configuration` restarts networking, which drops the SSH session
-  mid-activation and leaves firewall/NAT state inconsistent (symptom: `MASQUERADE`
-  present but FORWARD/conntrack at zero). Always deploy vpn-server via the
-  `remote-rebuild` skill's `boot` + reboot method, never
-  `nixos-rebuild switch --target-host vpn-server` directly.
+- **A Step 5 hand-off is the expected path, not a block** — no desktop host has NOPASSWD
+  sudo; don't "fix" it by running the switch directly via Bash.
+- **Never `nixos-rebuild switch --target-host vpn-server`** — always the `remote-rebuild`
+  skill's `boot` + reboot (`switch` drops SSH mid-activation and leaves NAT half-applied).
+
+Read `references/vpn-server-switch.md` for the full why behind both before working around
+either.
+
+## Files
+
+- `assets/output-template.md` — shape of `output-<today>.md` (End-of-run).
+- `assets/memory-template.md` — shape of `memory-<today>.md` (End-of-run).
+- `references/vpn-server-switch.md` — NOPASSWD hand-off and vpn-server `switch` background
+  (Step 5, Gotchas).

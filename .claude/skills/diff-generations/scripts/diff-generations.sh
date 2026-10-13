@@ -3,6 +3,13 @@
 # generation. Read-only. Resolves the previous generation robustly: the highest
 # generation number strictly below the current one that still exists on disk
 # (the old "system-1-link" shortcut was wrong — that's literally generation 1).
+#
+# After the diff, if any changed package name contains linux-, kernel, or
+# initrd, it prints a final "==> Kernel or initrd changed (...) — a reboot is
+# required ..." line for SKILL.md Step 3 to relay.
+#
+# Exit: 0 diff printed | 1 current generation unresolvable | 2 no previous
+# generation | otherwise nix store diff-closures' own exit code.
 set -uo pipefail
 
 CURRENT="/run/current-system"
@@ -35,4 +42,20 @@ echo "==> Diffing generation ${prev_n} -> ${cur_n}"
 echo "    $prev"
 echo "    $CURRENT"
 echo
-nix store diff-closures "$prev" "$CURRENT"
+diff_out="$(nix store diff-closures "$prev" "$CURRENT")"
+rc=$?
+[ -n "$diff_out" ] && printf '%s\n' "$diff_out"
+[ "$rc" -ne 0 ] && exit "$rc"
+
+# Each diff line is "<name>: <versions>, <size>"; strip colour codes, keep the
+# names, and flag the ones that need a reboot to take effect.
+reboot_names="$(printf '%s\n' "$diff_out" \
+  | sed 's/\x1b\[[0-9;]*m//g' \
+  | sed -n 's/^\([^:]*\): .*/\1/p' \
+  | grep -E 'linux-|kernel|initrd' \
+  | sort -u | paste -sd, - | sed 's/,/, /g')"
+if [ -n "$reboot_names" ]; then
+  echo
+  echo "==> Kernel or initrd changed ($reboot_names) — a reboot is required to activate these changes."
+fi
+exit 0

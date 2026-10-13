@@ -1,15 +1,14 @@
 ---
 name: fleet-status
-description: Triggers when the user says "fleet status", "host status", "check all hosts", "are all hosts healthy", "status of every machine", "health check", or "sweep the hosts". Runs a read-only health sweep across all four NixOS hosts and reports generation, failed units, reboot-pending, and VPN handshakes.
+description: Triggers when the user says "fleet status", "host status", "check all hosts", "are all hosts healthy", "status of every machine", "health check", or "sweep the hosts". Runs a read-only health sweep across every flakeHost in .claude/hosts.json and reports generation, failed units, reboot-pending, and VPN handshakes.
 model: haiku
 version: 0.1.0
 ---
 
 # Fleet Status
 
-A one-shot, read-only health sweep of every host in this flake (`gaming`, `laptop`,
-`natalie-laptop`, `vpn-server`). Answers "is everything healthy right now?" in a single
-call. Safe — all per-host probes are unprivileged; the only `sudo` is `wg show` on
+A one-shot, read-only health sweep of every flakeHost in `.claude/hosts.json`
+(`.flakeHosts`). Answers "is everything healthy right now?" in a single call. Safe — all per-host probes are unprivileged; the only `sudo` is `wg show` on
 vpn-server, which is passwordless there.
 
 ## Arguments
@@ -52,8 +51,9 @@ None — this skill takes no user-supplied arguments.
 ## Notes
 
 - Read-only and side-effect-free; safe to run anytime.
-- Host reachability depends on the LAN (desktops) and the internet (vpn-server). Desktops
-  are often powered off — `UNREACHABLE` is normal, not an error.
+- Host reachability depends on the LAN (`local: true` hosts in `.claude/hosts.json`) and the
+  internet (`local: false`, i.e. vpn-server). Desktops are often powered off —
+  `UNREACHABLE` is normal, not an error.
 - The WireGuard peer→host mapping is read from `.claude/hosts.json` `.vpn.peers` (a
   `publicKey → hostname` map). If a peer is added or rekeyed, update it there — not in the
   script, which consumes `hosts.json` as the source of truth.

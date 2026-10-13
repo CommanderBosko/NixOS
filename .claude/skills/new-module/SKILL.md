@@ -62,7 +62,7 @@ Choose the matching template under `assets/`, read it, and fill in the `<placeho
 
 ### Template A: Simple always-on module (no options, most common) — `assets/module-simple.nix.tmpl`
 
-Use this when the module is unconditionally active whenever imported. This is the default pattern for `audio.nix`, `gaming.nix`, `virtualisation.nix`, etc.
+Use this when the module is unconditionally active whenever imported. This is the default pattern for `audio.nix`, `gaming.nix`, etc.
 
 Function signature rules:
 - Include `config` only if the module references `config.*` internally (e.g. `config.networking.hostName`, `config.services.displayManager.sddm.enable`).
@@ -81,7 +81,7 @@ Use this only when the user explicitly asked for options. Mirrors the standard N
 
 ### Template C: Desktop environment module — `assets/module-de.nix.tmpl`
 
-Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`. The template's trailing comment shows the Home Manager variant. Read `references/adding-a-de.md` before Step 7's dry-run suggestion below — a DE module needs `de-smoke-check`, not a plain dry-run, since no host may import it yet.
+Use this for `desktop-environment` type modules. Mirrors `plasma.nix`, `niri.nix`, `cosmic.nix`. The template's trailing comment shows the Home Manager variant. Read `references/adding-a-de.md` before Step 7's verification suggestion below — a DE module needs `de-smoke-check`, not a plain dry-run, since no host may import it yet.
 
 Key characteristics:
 - Enables the compositor or DE via `services.desktopManager.<de>.enable` or `programs.<compositor>.enable`.
@@ -120,15 +120,18 @@ Identify the correct host block(s) in `/home/bosko/NixOS/flake.nix` and show the
 
 Note: modules that should apply to all desktop hosts belong in the `desktopModules` list. Modules that apply to all hosts belong in `commonModules`. Host-specific modules go in the host's own entry in the `nixosConfigurations` attrset.
 
-## Step 7 — Suggest a dry-run
+## Step 7 — Suggest a verification check
 
-After the import is added (or shown), remind the user to test with:
+Branch on the module type from Step 1:
 
-```
-nh os boot /home/bosko/NixOS --dry
-```
+- **`desktop-environment`** — suggest the `de-smoke-check` skill for `<name>`, not a plain dry-run. Most DE modules aren't imported by any host, and a dry-run only exercises the DE the target host already has wired in, so it verifies nothing about the new module (see `references/adding-a-de.md`). If the user also wired the module into a host's flake entry, a dry-run of that host is a fine extra check, not a substitute.
+- **`system`** — after the import is added (or shown), remind the user to test with:
 
-or the `nixos-dry-run` skill, before doing a full rebuild.
+  ```
+  nh os boot /home/bosko/NixOS --dry
+  ```
+
+  or the `nixos-dry-run` skill, before doing a full rebuild. That only evaluates the host it runs on, so if the import went into `commonModules`, `desktopModules`, or more than one host's list, also suggest the `shared-module-check` skill to cover the other hosts.
 
 ---
 
@@ -140,9 +143,7 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - Comments use `#` with a space, written in sentence case.
 - No trailing commas on single-item lists; use multi-line with trailing commas when there are multiple items.
 - `lib.mkForce` and `lib.mkDefault` are used sparingly and only when needed to resolve merge conflicts or set explicit precedence. Never add them just for clarity.
-- `security.nix` already handles AppArmor, audit, PAM wheel, ASLR, and kexec — do not re-add any of those in a new module.
-- `audio.nix` already handles PipeWire — do not add PipeWire config to other modules.
-- Never add `services.dbus` configuration in a new module without checking `security.nix` first.
+- Don't re-add what a shared module already owns (AppArmor/audit/PAM/ASLR/kexec and D-Bus in `security.nix`, PipeWire in `audio.nix`, sops-nix setup in `sops.nix`) — see `references/module-conventions.md`.
 
 ## Assets
 
@@ -153,3 +154,4 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 ## References
 
 - `references/adding-a-de.md` — why a DE module needs `de-smoke-check` instead of a plain dry-run to actually verify. Read it when Step 1's module type is `desktop-environment`.
+- `references/module-conventions.md` — what `security.nix`, `audio.nix`, and `sops.nix` already handle, so a new module doesn't re-add it. Shared with the `new-host` skill. Read it before writing the module in Step 3.

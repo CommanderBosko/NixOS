@@ -15,6 +15,7 @@ Parse from the user's request:
 - **`host`** (optional) — one of `.claude/hosts.json`'s `flakeHosts` (enumerate live, don't hardcode: `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json`). Default: the **local/current box** (no SSH).
 - **mount path** (optional) — a backing mount to check, e.g. `/mnt/media`.
 - **data dir** (optional) — a data/library/download dir to check ownership on, e.g. `/mnt/media/downloads`.
+- **port pattern** (optional) — the script's 4th positional arg, a `grep -E` pattern matched against `ss` output. Default: the unit name. Pass a known port (e.g. `8096`) when the process name doesn't appear verbatim in `ss` output. To skip mount/data dir, pass `''` in their positions; over SSH, put the whole command in one quoted string so those empty args survive the hop.
 - **absent mode** (optional) — if the user is confirming a service was *intentionally removed* (e.g. "confirm qbittorrent service is gone"), invert the service check so "not found / inactive" is a PASS.
 
 ## Steps
@@ -22,7 +23,7 @@ Parse from the user's request:
 ### 1. Resolve the host
 
 - If no host is given, or the host is the machine you're running on, run all commands **directly** via Bash.
-- If a remote host is named, resolve its SSH target via `bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>` (same resolver `ssh-host`/`journal`/`printer-diagnose` use — it reads `/home/bosko/NixOS/.claude/hosts.json` and handles aliases like `natalie`/`vpn`/`oracle`/`server`), and prefix each command with the resolved target. `vpn-server` is reached directly over its public IP, not over WireGuard (`modules/vpn.nix` is currently pulled from `desktopModules`).
+- If a remote host is named, resolve its SSH target via `bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>` (same resolver `ssh-host`/`journal`/`printer-diagnose` use — it reads `/home/bosko/NixOS/.claude/hosts.json` and handles each host's `.aliases` from that file), and prefix each command with the resolved target. `vpn-server` is reached directly over its public IP, not over WireGuard (`modules/vpn.nix` is currently pulled from `desktopModules`).
 - Run the checks below in a **single combined command** where possible to keep it to one round-trip.
 
 ### 2. Run the check battery
@@ -37,9 +38,9 @@ name doesn't appear verbatim in `ss` output.
 Interpret the raw output — the script does no PASS/FAIL judgment itself, that stays here:
 
 - **Service — Normal mode:** `active` → PASS. `inactive`/`failed`/`Unit ... could not be found` → FAIL (show the status tail). **Absent mode:** `Unit ... could not be found` (or inactive) → PASS; still running → FAIL.
-- **Ports:** report the listening ports found. A service binding `0.0.0.0` is **fine** when the firewall scopes access per-interface — e.g. Jellyfin binds `0.0.0.0:8096` but is only reachable on `enp4s0` (LAN) + `tailscale0` (`wg0` is also allowed but its module is currently pulled). Note this rather than flagging it. Some services have **no listening socket by design** (e.g. the qBittorrent *GUI app* has no Web UI daemon) — if so, say "no listening port expected", not a FAIL. Also note: `ss -tlnp`'s process-name column requires root to populate — a "no match" without root doesn't necessarily mean nothing is listening; check the raw `ss` output for the port number too before calling it a FAIL.
-- **Mount:** mounted → PASS; report source device, fstype, and `rw`/`ro`. Not mounted → FAIL. Example: `/mnt/media` should be `/dev/sda1 ext4 rw`.
-- **Data dir:** report `owner:group` and mode. Flag anything that looks wrong for the service to read/write. Reference layout from this repo: `/mnt/media`, `/mnt/media/Movies`, `/mnt/media/Shows`, `/mnt/media/downloads` are all expected to be `bosko:media`, mode `2775` (setgid) so the `jellyfin` user (in the `media` group) can read manually-dropped files.
+- **Ports:** report the listening ports found. A service binding `0.0.0.0` is **fine** when the firewall scopes access per-interface — note this rather than flagging it. Some services have **no listening socket by design** — if so, say "no listening port expected", not a FAIL. Per-service cases (Jellyfin's firewall scoping, the qBittorrent GUI app): `references/service-notes.md`. Also note: `ss -tlnp`'s process-name column requires root to populate — a "no match" without root doesn't necessarily mean nothing is listening; check the raw `ss` output for the port number too before calling it a FAIL.
+- **Mount:** mounted → PASS; report source device, fstype, and `rw`/`ro`. Not mounted → FAIL. Expected values for this repo's mounts: `references/service-notes.md`.
+- **Data dir:** report `owner:group` and mode. Flag anything that looks wrong for the service to read/write; compare against the reference layout in `references/service-notes.md`.
 
 ### 3. Summarize
 

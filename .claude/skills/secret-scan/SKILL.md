@@ -26,8 +26,8 @@ None.
   markers would be an accidental plaintext commit — that IS flagged).
 - **`.claude/skills/`** is excluded from pattern matching because skill docs (including this
   one) legitimately contain example secret strings.
-- **Intentional non-secrets are not flagged:** the WireGuard endpoint IP `150.136.232.63`
-  and all SSH/WireGuard *public* keys are public by nature.
+- **Intentional non-secrets are not flagged:** the WireGuard endpoint IP (`.vpn.endpoint`
+  in `.claude/hosts.json`) and all SSH/WireGuard *public* keys are public by nature.
 
 ## Instructions
 
@@ -49,11 +49,9 @@ None.
      replace the reference with `config.sops.secrets."…".path`.
    - **Unencrypted `secrets/*.yaml`** → encrypt it: `sops -e -i <file>` (it likely got
      committed before encryption).
-   - **Secret found in history** (but not the tree) → it was removed but persists in past
-     commits. Removing it now is **not** enough for a public repo — rewrite history with
-     `git filter-repo --replace-text` (replace the literal with a redaction marker), then
-     force-push, then realign other clones (`git fetch && git reset --hard origin/main`).
-     Consider rotating the leaked credential regardless.
+   - **Secret found in history** (but not the tree) → removing it now is **not** enough for a
+     public repo; follow `references/history-remediation.md` (rewrite history, force-push,
+     realign clones, rotate).
 
 3. The history pass scans every commit, so on a large repo it can take a little time — tell
    the user it's working if it pauses.
@@ -70,3 +68,7 @@ None.
 ```
 scripts/secret-scan.sh
 ```
+
+## References
+
+- `references/history-remediation.md` — rewrite/force-push/realign/rotate steps for a secret that only survives in history (Step 2).

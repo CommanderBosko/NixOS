@@ -59,34 +59,29 @@ Do not proceed until the target module file exists.
 Resolve the host's current DE module by running (relative to this skill's directory):
 
 ```bash
-scripts/current-de.sh <host>
+scripts/current-de.sh <host> <target>
 ```
 
-This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ... }` block (so it can't accidentally match another host's DE line), and prints the current module name.
+This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ... }` block (so it can't accidentally match another host's DE line), and prints labeled lines: `current:` (the module name), `line:` (the `flake.nix:<n>` line holding it — Step 6 edits this line), an optional `shared-helper:` line, and `sddm-note:` (Step 4's trigger).
 
-- **Exit 0** — exactly one DE module found; stdout is `<current>`. Present both lines clearly:
+- **Exit 0** — exactly one DE module found. Present both lines clearly:
   ```
   Host:     <host>
 
-  Current:  "${self}/modules/desktop-environments/<current>.nix"
+  Current:  "${self}/modules/desktop-environments/<current>.nix"   (<line>)
   Proposed: "${self}/modules/desktop-environments/<target>.nix"
   ```
-- **Exit 0 with a `NOTE — ... shared helper` line on stderr** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which `gaming`, `gaming-amd` and `vpn` all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
+- **Exit 0 with a `shared-helper:` line** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which `gaming`, `gaming-amd` and `vpn` all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
 - **Exit 1** — no DE module found for that host (e.g. a headless host slipped through, or the host block wasn't found). Stop and explain what the script reported; ask the user to verify.
-- **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
+- **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates with their `flake.nix` lines). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
 
 ## Step 4 — SDDM / displayManager warning (conditional)
 
-If the host's `environment.nix` sets `services.displayManager.defaultSession`, warn the user:
+Relay the `sddm-note:` line from Step 3. If it says `yes — <reasons>`, show the reasons and warn the user:
 
 > The target DE may need a different `services.displayManager.defaultSession` value in `hosts/<host>/environment.nix`. If the rebuild fails or SDDM loops, check and update that option to match the new DE's session name. You can also temporarily comment it out to let SDDM auto-detect.
 
-Always emit this note when switching:
-- **away from** `niri` or `hyprland` (Wayland-only compositors with no canonical session string)
-- **to** `niri` or `hyprland`
-- or when the old and new DEs belong to different display-server families (X11 ↔ Wayland)
-
-If neither DE crosses that boundary, you may omit the note.
+If it says `no`, omit the note. (The script says `yes` when the host sets `defaultSession`, when either DE is a bare Wayland compositor such as `niri` or `hyprland`, or when the display-server family changes or is unknown — see the header of `scripts/current-de.sh`.)
 
 ## Step 5 — Confirm before editing
 
@@ -94,7 +89,7 @@ Ask the user to confirm via the **AskUserQuestion tool**, with one option `Proce
 
 ## Step 6 — Edit flake.nix
 
-Using the Edit tool, replace **only** the DE import line for the target host. Do not touch any other part of `flake.nix`. For a host whose DE comes from a shared helper (Step 3 note), the line to replace is the one inside the helper definition (e.g. `flake.nix:129` for gaming) — only after the user confirmed the multi-variant impact.
+Using the Edit tool, replace **only** the DE import line for the target host — the `flake.nix:<n>` line Step 3's `line:` output named. Do not touch any other part of `flake.nix`. For a host whose DE comes from a shared helper (Step 3's `shared-helper:` line), that line is inside the helper definition — edit it only after the user confirmed the multi-variant impact.
 
 The old string to match (replace `<current>` with the actual module name found in Step 3):
 
@@ -125,7 +120,7 @@ Then remind them of the next steps:
 
 ## Scripts
 
-- `scripts/current-de.sh <host>` — parses `flake.nix` scoped to the named host's block and prints its current DE module name. Exit 0 = found (stdout has the name; a stderr NOTE means the DE line lives in a shared helper such as `gamingModules`), exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
+- `scripts/current-de.sh <host> [target-de]` — parses `flake.nix` scoped to the named host's block and prints `current:` (DE module name), `line:` (`flake.nix:<n>` to edit), `shared-helper:` (only when the line lives in a shared helper such as `gamingModules`), and `sddm-note:` (Step 4's trigger; `unknown` if no target was passed). Exit 0 = found, exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
 
 ## Key constraints
 

@@ -11,7 +11,7 @@ Force Nix to fully evaluate each host's build graph — not just confirm it's a 
 
 ## Why this exists
 
-`nix flake check` only verifies each host's toplevel attribute resolves to a derivation — it does not force full evaluation. A host can pass `flake-check` and still fail every real `nh os boot`. This happened 2026-07-02 with a pnpm/vesktop insecure-package regression (see `flake-check`'s own Gotchas section and memory `project_pnpm_insecure_waiver.md`). This skill closes that gap.
+`nix flake check` doesn't force full evaluation, so a host can pass `flake-check` and still fail every real `nh os boot` — this skill closes that gap (the 2026-07-02 incident: `references/incidents.md`).
 
 ## Arguments
 

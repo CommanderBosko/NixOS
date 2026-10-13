@@ -13,7 +13,7 @@ Given a package tracked in the pinned-packages registry as pinned/waived pending
 
 ## Steps
 
-1. **Read the registry.** Find this project's memory dir (`~/.claude/skills/lib/find-transcript-dir.sh`) and read `memory/project_pinned_packages.md`. If no package was given (see Arguments), present its `CURRENT` entries via AskUserQuestion here before continuing. Locate the requested package's `CURRENT` entry: the version pinned, the mechanism, and the tracked upstream issue/PR URL. If the entry links to a dedicated narrative memory (e.g. `[[project_steam_dropdown_menu_bug]]`), read that too for the full removal condition.
+1. **Read the registry.** Find this project's memory dir (`~/.claude/skills/lib/find-transcript-dir.sh /home/bosko/NixOS` — pass the repo path explicitly, since with no argument it resolves from the current working directory) and read `memory/project_pinned_packages.md` under it. If no package was given (see Arguments), present its `CURRENT` entries via AskUserQuestion here before continuing. Locate the requested package's `CURRENT` entry: the version pinned, the mechanism, and the tracked upstream issue/PR URL. If the entry links to a dedicated narrative memory (e.g. `[[project_steam_dropdown_menu_bug]]`), read that too for the full removal condition.
 
 2. **Check nixpkgs' current version.** Use the `nixos` MCP server (`nix_versions`, or `nix` with `action: info`) to get the package's current version in the channel this repo tracks, and compare it against the pinned version.
 

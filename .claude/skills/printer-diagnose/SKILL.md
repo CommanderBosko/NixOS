@@ -11,9 +11,7 @@ Run a read-only diagnostic sweep for "printer not detected / not showing up in p
 
 ## Background
 
-- **Since 2026-09-23 the home Canon TS9500 is a static queue, not a cups-browsed one.** `modules/printing.nix` declares `Canon_TS9500_series` via `hardware.printers.ensurePrinters` with a checked-in driverless PPD (`modules/printing/canon-ts9500.ppd`, NickName `Canon Printer, driverless, …`) and `dnssd://` device URI, and sets `services.printing.browsed.enable = false`. `lpadmin` runs in `cups.service`'s postStart, so the queue exists as soon as CUPS is up — no network or boot race involved. There is no `cups-browsed.conf` and no `cups-browsed`/`cups-browsed-fixup` unit any more; their absence is expected, not a fault.
-- Why cups-browsed was dropped: its auto-created queue kept vanishing after reboots (it restarted before the printer was resolvable, gave up, never retried), so users "rediscovered" the printer in Print Settings — which auto-picked gutenprint's **"Apollo P-2100"** PPD. Jobs through that driver are silently discarded by the Canon while CUPS logs `Job completed` within seconds, so the queue always looks empty and nothing prints. Any Canon queue whose PPD NickName mentions Gutenprint/Apollo is this bug.
-- `.local` resolution can fail briefly after boot (`Unable to connect to <host>.local:631: Temporary failure in name resolution` in the cups journal, seen on natalie-laptop 2026-09-23 while its clock was still reset to 2021 before NTP sync). With the static queue a job just waits and retries instead of failing queue creation.
+- The home Canon TS9500 is a static queue, `Canon_TS9500_series`, declared in `modules/printing.nix`; cups-browsed is disabled, so a missing `cups-browsed` unit or config is expected, not a fault. See `references/background.md` for the setup details, why cups-browsed was dropped (the Gutenprint "Apollo" silent-discard bug), and the post-boot `.local` resolution race.
 - A Flatpak app (e.g. Zen Browser) already running before a fix/switch won't see new printer state until relaunched — a stale-session-daemon issue, not a config bug. Check "was the app relaunched" before re-diagnosing a Flatpak/sandbox angle.
 - Different apps' print dialogs can legitimately disagree: native/Qt apps (Kate) do live DNS-SD discovery and can show printers with no permanent queue; OnlyOffice's bundled/sandboxed dialog only shows real CUPS destinations. Divergence between them isn't necessarily two separate bugs.
 
@@ -37,14 +35,14 @@ Run `scripts/printer-diagnose.sh [printer-name-pattern]` (relative to this skill
 
 ### 3. Interpret and diagnose
 
-The script does no verdict itself — apply this decision tree to its output:
+The script does no verdict itself — apply this decision tree to its output, one branch per layer of the Step 5 verdict:
 
 - **No IPP entry in avahi-browse *and* nothing from ippfind** → discovery layer is broken (printer off/asleep, Wi-Fi, firewall — not a NixOS config issue). With the static queue, jobs will sit in `lpstat -o` until the printer is reachable; say so and stop.
 - **No `Canon_TS9500_series` in `lpstat -p`** → the declarative queue didn't get created. Check `journalctl -u cups -b` for `lpadmin` errors from postStart, and whether this host has switched to a generation that includes the 2026-09-23 `modules/printing.nix` change (`nixos-rebuild list-generations`) before assuming a repo bug.
-- **A Canon queue whose driver line mentions Gutenprint / "Apollo"** (e.g. a `Canon-TS9500-series` re-added via Print Settings) → the silent-discard bug. Propose deleting that queue (Step 4). If it's the system default or the user's `~/.cups/lpoptions` default, that's why "nothing happens".
-- **Queue OK, but journal shows `Job completed` seconds after `Queued on` and nothing came out** → job went to the wrong queue/driver (see above) or the printer rejected it; query the printer directly: `ipptool -tv ipp://<printer-ip>/ipp/print get-printer-attributes.test | grep -E 'printer-state|queued-job-count'`.
 - **Queue OK, jobs stuck in `lpstat -o`** → delivery failure; the `Unable to connect` / `rror` lines in the journal excerpt name the cause (usually `.local` resolution or the printer being offline).
 - **Everything OK** → if the user's app still doesn't see it, suspect the stale-Flatpak-session pattern above.
+
+A Canon queue with a Gutenprint/"Apollo" driver, or `Job completed` seconds after `Queued on` with nothing printed, is the known silent-discard bug: follow `references/decision-tree-incidents.md`.
 
 ### 4. Propose the fix (never run it directly)
 

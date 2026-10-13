@@ -12,8 +12,8 @@ description: Update flake inputs, prove the result still evaluates, then commit 
 > **When OFF (default):**
 > - Run steps 1-5 **autonomously**, no pauses.
 > - Still run **every done-rule check** and still respect the **retry cap**.
-> - Use for unattended/`/loop`-scheduled runs — the only interactive moment left is the
->   step 6 commit gate.
+> - Use for unattended/`/loop`-scheduled runs — the only interactive moment on the success
+>   path is the step 6 commit gate (a dirty tree at step 2 also stops to ask).
 >
 > **When ON:**
 > - Pause at **every step 1-5** and wait for my explicit approval before continuing.
@@ -128,30 +128,12 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 
 1. **Output** → `.claude/loops/flake-update-verify/output-<today>.md`
    The change report: which inputs moved (old rev → new rev), the eval verdict, and the
-   final state (committed / nothing-to-do / reverted-with-offender).
+   final state (committed / nothing-to-do / reverted-with-offender). Fill
+   `assets/output-template.md`.
 
-2. **Memory** → `.claude/loops/flake-update-verify/memory-<today>.md`, with this shape:
-   ```
-   # flake-update-verify run — <today>
-
-   - Mode: ON | OFF
-   - Commit gate: approved | n/a (nothing to do / reverted)
-   - Result: done (committed) | done (nothing to do) | reverted | blocked at step <n>
-   - Steps skipped (already passed): <list>
-   - Steps re-run: <list, with attempt counts>
-
-   ## What worked
-   - …
-
-   ## What failed
-   - …
-
-   ## Remember next run
-   - … (carry-forward notes: an input that broke eval, a pin in effect, the commit sha)
-   ```
-
-   At the START of every run, read the most recent `memory-*.md` in this dir (if any)
-   and apply its "Remember next run" notes before doing anything else.
+2. **Memory** → `.claude/loops/flake-update-verify/memory-<today>.md`. Fill
+   `assets/memory-template.md` — its "Remember next run" notes are what step 1 reads next
+   run.
 
 ## Report
 

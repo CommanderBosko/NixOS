@@ -13,15 +13,12 @@ Example queries for <host> follow below (grouped by host applicability).
 - `cfg.system.stateVersion` — state version
 - `builtins.attrNames cfg.services` — list all enabled service namespaces
 - `cfg.environment.systemPackages` — list system packages
+- `cfg.hardware.nvidia` / `cfg.programs.steam` — GPU driver / Steam config (evaluates on every host; only meaningful where the host imports the GPU / gaming module)
 
-## Desktop hosts (gaming, laptop, natalie-laptop)
+## Desktop hosts
 - `cfg.services.displayManager.defaultSession` — active desktop session
 - `cfg.home-manager.users.bosko.programs` — bosko's HM programs
 - `builtins.attrNames cfg.services.flatpak` — flatpak status
 
-## gaming only
-- `cfg.hardware.nvidia` — NVIDIA driver config
-- `cfg.programs.steam` — Steam config
-
-## vpn-server only
-- `cfg.networking.wg-quick.interfaces.wg0` — WireGuard interface config
+## Headless hosts
+- `cfg.networking.wg-quick.interfaces.wg0` — WireGuard interface config (the VPN server's wg0)

@@ -69,8 +69,6 @@ Pi-hole v6's API is session-based: you POST the CLI password (readable only via 
 
 ## Gotchas
 
-See `references/incidents.md` for a fixed historical bug (the body-less-call unbound-variable incident).
-
 - `type` (`block`/`allow`) belongs in the **query string**, not the JSON body, for every `/api/lists` call — see Step 2.
 - Gravity rebuilds go through the CLI (`sudo -n pihole -g` over SSH), not the REST API — there's no `/api/action/gravity`-style endpoint used in practice here.
 - List PUT/DELETE addresses must be URL-encoded as the path segment. If a call 404s, double-check the encoding rather than assuming the list doesn't exist — `GET /api/lists?type=block` first to confirm the exact stored `address` string.

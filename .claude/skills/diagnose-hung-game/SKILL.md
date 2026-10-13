@@ -16,11 +16,22 @@ Gather from the user (or infer from context) before starting:
 - **Game process pattern** — an extended-regex fragment matching the game's process
   name(s) as they'd appear in `ps aux`, e.g. `"wardogs|war_dogs|war dogs"`. Case doesn't
   matter (the script greps case-insensitively).
-- **Game install directory** — needed for steps 4-6, e.g.
+- **PID** (optional) — the game's PID, passed as Step 1's second argument. Only needed when
+  the pattern matches more than one process (e.g. a launcher plus the game binary) and the
+  first match isn't the game; otherwise the script resolves it.
+- **Game install directory** — needed for steps 4 and 6, e.g.
   `/home/bosko/.local/share/Steam/steamapps/common/<Game>/<Game>`. If unknown, find it
   with `find /home/bosko/.local/share/Steam/steamapps/common -maxdepth 1` and match by name.
 - **Roughly when it hung/crashed** — used to scope the Sentry-report and Proton/crashpad-chain
   timestamp comparisons in steps 4-5.
+- **Game display name** (optional) — the title as it shows up in logs and file names (e.g.
+  `WarDogs`). Step 5 (`--proton-chain`) adds it to the journal grep, and Step 6 (`--ue-logs`)
+  adds it to the compatdata log-file filter. Both treat it as a case-insensitive
+  extended-regex fragment.
+- **Steam appid** — required for Step 6 (`--ue-logs`); it names the game's Proton prefix,
+  `steamapps/compatdata/<appid>`. If unknown, run
+  `grep -il "<Game>" /home/bosko/.local/share/Steam/steamapps/appmanifest_*.acf` — the appid
+  is the number in the matching `appmanifest_<appid>.acf` file name.
 
 ## Steps
 
@@ -43,7 +54,8 @@ Gather from the user (or infer from context) before starting:
      code); `oom`/`hung` hits point at the kernel OOM-killer or a hung-task watchdog firing.
 
 3. **Kernel dmesg (sudo-gated — hand off to the user, don't run via Bash).** Ask the user to
-   run the command the script printed in its step 6 and paste the output back:
+   run this `sudo dmesg -T` command and paste the output back (Step 1's battery also prints
+   it, under its "Kernel dmesg — requires sudo" header):
    ```bash
    sudo dmesg -T 2>&1 | tail -80
    ```
@@ -110,10 +122,6 @@ Gather from the user (or infer from context) before starting:
 - Game install paths and engine (Unreal vs. other) vary per title — don't assume the
   `Saved/Logs` layout from one game carries over to the next; verify live with `find` rather
   than guessing a path from memory.
-- **Step 2's `ps aux | grep` used to self-match** the wrapping shell's own invocation line
-  (which contains this script's path and the literal pattern argument) whenever no real game
-  process was running — silently resolving a bogus PID (the shell wrapper) instead of
-  reporting "no match." Fixed by also filtering out any line containing
-  `diagnose-hung-game.sh`; confirmed live during `ship-skill`'s smoke test (2026-08-25) that a
-  no-match pattern now correctly reports "No PID found" and a real match (`kitty`) still
-  resolves normally.
+- **The script's process lookup must keep filtering out lines containing
+  `diagnose-hung-game.sh`**, or a no-match pattern resolves a bogus PID (its own wrapping
+  shell). Check `references/gotchas.md` for the 2026-08-25 history before editing that lookup.

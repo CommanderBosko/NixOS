@@ -27,7 +27,7 @@ niri msg windows    # confirms the real App ID of a running instance of the targ
 
 If the app isn't currently running, fall back to its known app-id: check existing `window-rule` blocks in `hosts/<host>/niri-overlay.kdl` for the convention already used, or check the flatpak ID in `modules/desktop-apps.nix` / the host's `environment.nix` for flatpak apps.
 
-**Gotcha — one app-id can mean multiple windows:** X11 apps running under xwayland-satellite (e.g. Steam) can have several distinct windows sharing one app-id — Steam's main window, friends list, and chat windows are all app-id `steam`. One rule maximizes all of them together, which is usually fine. But games **launched from** Steam are separate X11 clients with their own distinct app-id/WM_CLASS each — there's no single wildcard rule that catches "any Steam game," and most games manage their own fullscreen state independently of the compositor anyway. Don't try to use this skill to blanket-cover per-game windows; if a specific game needs it, that's a one-off rule once you know that game's own app-id.
+**Gotcha — one app-id can mean multiple windows:** a rule maximizes every window sharing the app-id (e.g. all of Steam's windows), and games launched from Steam each have their own app-id — don't try to blanket-cover per-game windows. Details in `references/edge-cases.md`.
 
 ## Step 2 — Find or draft the window-rule block
 
@@ -56,7 +56,7 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 Since the rule is written into the target host's own overlay file, there's no cross-host leakage to worry about anymore. Still worth checking: is the target app installed on that host? Check `modules/gaming.nix` (gaming-only packages) vs the shared `modules/desktop-apps.nix` vs the host's own `environment.nix` — if it's not installed there, say so.
 
-**If the app doesn't seem to pick up the rule after rebuild**, check whether it has its own login autostart entry (an app-level "run at login" preference that writes a `.desktop` file to `~/.config/autostart/`, picked up by `systemd-xdg-autostart-generator`) and is single-instance. If so, the autostart-created window is created before this rule can act on it, and re-launching the app just raises that already-existing (unmaximized) window instead of creating a fresh one the rule can catch. Fixing that requires disabling the app's own autostart preference, not a window-rule change — flag it to the user rather than trying to fix it as part of this skill.
+**If the app doesn't seem to pick up the rule after rebuild**, check for a single-instance app with its own login autostart entry — flag it to the user (the fix is disabling the app's autostart preference, not a window-rule change); see `references/edge-cases.md`.
 
 ## Step 6 — Remind the user of next steps
 

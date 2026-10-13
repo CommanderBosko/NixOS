@@ -1,7 +1,8 @@
 # Shared Module Check — Incidents
 
-Background incidents motivating why this skill exists and why Step 2 uses
-`classify-shared-file.sh` instead of a plain array-membership check.
+Background incidents motivating why this skill exists, why Step 2 uses
+`classify-shared-file.sh` instead of a plain array-membership check, and where Step 5's
+`rtk` precedent came from.
 
 ## Why this skill exists
 
@@ -26,3 +27,11 @@ hosts — without ever appearing in `desktopModules`, so the old Step 2 test sil
 the 4-host sweep for the one DE module actually in production use. Fixed by routing Step 2
 through `classify-shared-file.sh`, which also checks for direct multi-host references, not
 just array membership.
+
+## `rtk` guard precedent (Step 5)
+
+The `pkgs ? <attrName>` guard Step 5 suggests has a concrete precedent:
+`modules/claude-code.nix`'s `rtk` guard — cite this file as the concrete example when
+suggesting the fix. It was originally fixed 2026-07-18 in `modules/users.nix` (the `rtk`
+reference that broke `vpn-server`'s evaluation, described above) and relocated to
+`modules/claude-code.nix` by the 2026-09 module-colocation refactor.

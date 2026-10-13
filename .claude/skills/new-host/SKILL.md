@@ -79,15 +79,12 @@ Substitutions when filling a template:
   of the real hostname into a file that's otherwise correct as a stub.
 - Replace `<current-nixos-release>` (in `environment.nix`/`configuration.nix`'s
   `system.stateVersion` line) with the state version gathered in Step 1 Q6 (default
-  `25.11`). This is a real, live-caught gap: Step 1 gathers the value but nothing wired
-  it into the substitution list before — following the template literally would write
-  `system.stateVersion = "<current-nixos-release>";` into the new host's config instead
-  of the real version.
+  `25.11`). Never leave the literal placeholder in the written file (background:
+  `references/history.md`).
 - **`server` type only:** replace `<pihole-ip>` (in `assets/server/networking.nix`'s
-  `nameservers` list) with pi-hole's current LAN IP, read live via
-  `jq -r '.hosts["pi-hole"].ip' .claude/hosts.json` — never hardcode it. hosts.json's own
-  notes flag this address as drift-prone (it already changed once, in an early-Aug 2026
-  outage), so re-read it at fill time rather than trusting a remembered value.
+  `nameservers` list) with pi-hole's current LAN IP, read live at fill time via
+  `jq -r '.hosts["pi-hole"].ip' .claude/hosts.json` — never hardcode it or reuse a
+  remembered value; it drifts (background: `references/history.md`).
 - `hardware-configuration.nix`'s **body** (everything except that one comment line) is
   always written **as-is** (it's a placeholder); the real file is generated on the target
   machine — see Step 7.
@@ -129,7 +126,7 @@ Fill placeholders:
 - **remote:** the remote template is for `aarch64-linux`. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
 - **remote (disko):** if Step 2 created a `disko.nix` for this host, uncomment the `disko.nixosModules.disko` line and the `"${self}/hosts/<hostname>/disko.nix"` line in the template; otherwise leave both commented out (or drop them) when filling the entry.
 
-Also tell the user to register the host in `.claude/hosts.json` — it is the single source of truth that `modules/vpn.nix` (`hostsData.hosts.<name>.vpnIp`), fleet-status, fleet-rollout, journal, nix-repl, new-module, and ssh-host all enumerate from. Add the hostname to `.flakeHosts` and a `.hosts.<hostname>` entry (`ssh`, `ip`, `local`, `flakeHost: true`, `desktop`, `envFile`, `arch`; `vpnIp` only if it will join the VPN), then run `/home/bosko/NixOS/.claude/lib/check-hosts-json.sh` to confirm it agrees with the flake's real `nixosConfigurations`. Don't edit `hosts.json` automatically unless the user asks — same rule as `flake.nix`.
+Also tell the user to register the host in `.claude/hosts.json` — it is the single source of truth that `modules/vpn.nix` (`hostsData.hosts.<name>.vpnIp`), fleet-status, fleet-rollout, journal, nix-repl, new-module, and ssh-host all enumerate from. Add the hostname to `.flakeHosts` and a `.hosts.<hostname>` entry (`ssh`, `ip`, `local`, `flakeHost: true`, `desktop`, `envFile`, `arch`; `vpnIp` only if it will join the VPN; optional `aliases` for short names `resolve-host.sh` should accept), then run `/home/bosko/NixOS/.claude/lib/check-hosts-json.sh` to confirm it agrees with the flake's real `nixosConfigurations`. Don't edit `hosts.json` automatically unless the user asks — same rule as `flake.nix`.
 
 ## Step 7 — Remind the user about hardware-configuration.nix
 
@@ -167,10 +164,8 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - Comments use `#` with a space, written in sentence case.
 - `{ ... }:` when the module uses no named arguments. `{ pkgs, ... }:` when it references `pkgs.*`. `{ lib, pkgs, ... }:` when it also calls `lib.*`.
 - Bootloader and kernel choice (`modules/bootloader.nix`) are desktop-only, so remote hosts declare their own `boot.loader` in `configuration.nix` with no `lib.mkForce` overrides.
-- `security.nix` already handles AppArmor, audit, PAM wheel, ASLR, and kexec for all hosts — do not add any of those in host files.
-- `sops.nix` (in `commonModules`) supplies the shared login-password secrets to every host. A new host must be registered as a sops recipient (Step 8) or it cannot decrypt them. Do not add `sops.*` config to host files.
-- `audio.nix` already handles PipeWire for desktop hosts — do not add PipeWire config.
-- Do NOT add `virtualisation.nix`, `gaming.nix`, or `vpn.nix` to the new host entry unless the user explicitly asks — those are optional host-specific modules.
+- Don't add config a shared module already owns to host files (AppArmor/audit/PAM/ASLR/kexec in `security.nix`, sops-nix setup and login secrets in `sops.nix`, PipeWire in `audio.nix`) — see `.claude/skills/new-module/references/module-conventions.md`.
+- Do NOT add `modules/gaming.nix` or `virtualisation.nix` to the new host entry unless the user explicitly asks. `gaming.nix` is optional and only gaming imports it; `virtualisation.nix` is host-specific (it lives in `hosts/gaming/`, not `modules/`). Don't add `modules/vpn.nix` per host either — it's the shared WireGuard client and belongs in `desktopModules` (commented out there while vpn-server is down; see the comment in `flake.nix`).
 
 ## Script
 

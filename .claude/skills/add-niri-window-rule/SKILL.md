@@ -31,15 +31,17 @@ If the app isn't currently running, fall back to its known app-id (e.g. a flatpa
 
 ## Step 2 — Find or choose a workspace slot
 
-Grep the target host's overlay file for existing named-workspace blocks pinned to an output:
+Run the slot helper with the host and the target output's connector name from Step 1:
 
 ```bash
-grep -n 'workspace ".*" {' -A1 /home/bosko/NixOS/hosts/<host>/niri-overlay.kdl
+/home/bosko/NixOS/.claude/skills/add-niri-window-rule/scripts/next-slot.sh <host> <connector> [prefix]
 ```
 
-- If a workspace already pinned to the target output has no window-rule occupant yet, it can be reused.
+It reads `hosts/<host>/niri-overlay.kdl` and prints each named workspace pinned to that output with the window-rule match(es) occupying it (or `(free)`), a `free-slots:` line, and a `next-new-slot:` name that follows the file's monitor-slot naming convention (`asus-1`, `asus-2`, `dell-1`, ... — highest number for that monitor's prefix + 1). Pass `[prefix]` only when the script prints `next-new-slot: ?` (the output has no slots yet, or its slots use more than one prefix); a sensible prefix is the monitor's make from `niri msg outputs`, lowercased. If the output shows `slots: none` but `all-outputs:` lists other connectors, double-check the connector name against Step 1.
+
+- If a slot on the target output is free, it can be reused.
 - If every existing slot on that output already has an app pinned to it via a `window-rule`, tell the user and ask (via **AskUserQuestion**) whether to add a new slot or reassign an existing one — don't silently double-book a slot.
-- If a new slot is needed, follow the file's existing monitor-slot naming convention (`asus-1`, `asus-2`, `asus-3`, `dell-1`, `dell-2`, `dell-3`, ...) — pick the next unused number for that monitor's prefix.
+- If a new slot is needed, use the script's `next-new-slot` name.
 
 ## Step 3 — Draft the new block(s)
 

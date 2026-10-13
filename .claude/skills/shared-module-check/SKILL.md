@@ -9,7 +9,7 @@ Catch cross-host breakage from editing a file shared across multiple NixOS hosts
 
 ## Why this exists
 
-Editing a file shared across hosts (`commonModules`/`desktopModules` in `flake.nix`, or `flake.nix` itself) can break a host you never touched directly and never ran a local check against — this skill makes the cross-host sweep the default next step after any shared-file edit, not an optional afterthought. See `references/incidents.md` for the concrete regressions that motivated it.
+Make the cross-host sweep the default next step after any shared-file edit, not an optional afterthought — see `references/incidents.md` for the regressions that motivated it.
 
 ## Arguments
 
@@ -42,7 +42,7 @@ It reads `flake.nix` live and prints `SHARED: <reason>` or `LOCAL` — never har
 bash /home/bosko/NixOS/.claude/skills/deep-eval-check/scripts/deep-eval-check.sh
 ```
 
-This deep-evaluates every host in `.flakeHosts` (`hosts.json`'s single source of truth — currently `gaming`, `laptop`, `natalie-laptop`, and `vpn-server`, but never hardcode that list yourself) full build graphs — not just a shallow "is it a derivation" check.
+This deep-evaluates the full build graph of every host in `.flakeHosts` — not just a shallow "is it a derivation" check.
 
 ### 4. Report per-host PASS/FAIL
 
@@ -58,7 +58,7 @@ If the error is `undefined variable '<pkg>'` (or similarly, a missing attribute)
 pkgs.lib.optional (pkgs ? <attrName>) pkgs.<attrName>
 ```
 
-This self-heals once a future stable point-release backports the package — no manual re-edit needed. Reference precedent: `modules/claude-code.nix`'s `rtk` guard (originally fixed 2026-07-18 in `modules/users.nix`, relocated here by the 2026-09 module-colocation refactor) — cite this file as the concrete example when suggesting the fix. If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
+This self-heals once a future stable point-release backports the package — no manual re-edit needed. Cite `modules/claude-code.nix`'s `rtk` guard as the precedent (history: `references/incidents.md`). If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
 
 If the failure isn't an availability gap (a real syntax error, a genuinely broken option, an assertion failure), diagnose it normally — don't force the availability-gap explanation onto an unrelated bug.
 

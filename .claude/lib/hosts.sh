@@ -13,6 +13,8 @@
 #
 #   hosts_jq <jq args...>       raw `jq <args> "$HOSTS_JSON"` escape hatch
 #   hosts_flake_names           flake hosts, one per line (.flakeHosts[])
+#   hosts_canonical <name>      host key for a host key or one of its
+#                               `.aliases`; empty output if unknown
 #   hosts_ssh <name>            SSH target for one host; empty output if unknown
 #   hosts_table                 key<TAB>ssh<TAB>ip<TAB>notes for every host
 #   hosts_flake_ssh_pairs       name<TAB>ssh for every host with flakeHost=true
@@ -34,6 +36,13 @@ hosts_jq() {
 
 hosts_flake_names() {
   hosts_jq -r '.flakeHosts[]'
+}
+
+hosts_canonical() {
+  hosts_jq -r --arg name "${1:-}" '
+    if .hosts[$name] then $name
+    else first(.hosts | to_entries[] | select(any((.value.aliases // [])[]; . == $name)) | .key) // empty
+    end'
 }
 
 hosts_ssh() {

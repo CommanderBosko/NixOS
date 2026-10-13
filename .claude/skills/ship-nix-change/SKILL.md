@@ -17,9 +17,13 @@ None — it operates on the current git diff/staged changes, not a user-supplied
 
 ## Steps
 
-### 1. Resolve changed files
+### 1. Resolve changed files and plan the checks
 
-Run `git -C /home/bosko/NixOS diff --name-only` for uncommitted changes, and also check already-staged changes (`git -C /home/bosko/NixOS diff --name-only --cached`). Combine both lists. If neither shows any changed file, say so plainly and stop — there is nothing to ship.
+```bash
+bash /home/bosko/NixOS/.claude/skills/ship-nix-change/scripts/plan-checks.sh
+```
+
+It combines the unstaged and staged file lists (`git diff --name-only` + `--cached`), classifies each file, and prints a `changed files` block and a `required checks` block (in run order). If it exits 1 (no changed files), say so plainly and stop — there is nothing to ship.
 
 ### 2. Always run the baseline local check
 
@@ -28,13 +32,13 @@ Invoke the `nixos-dry-run` skill. This is the mandatory first check regardless o
 - If it fails, **stop immediately** and show the full error output verbatim — do not proceed to step 3 or commit anything.
 - If it passes, continue to step 3.
 
-### 3. Classify the changed files and run any extra check they require
+### 3. Run any extra check the plan requires
 
-For each changed file from step 1, run `bash /home/bosko/NixOS/.claude/lib/classify-shared-file.sh <file>` — it reads `flake.nix` live and reports `SHARED: <reason>` or `LOCAL`. Don't re-derive this classification by hand (a hand-rolled check against just `commonModules`/`desktopModules` misses a module wired directly into 2+ hosts' own per-host lists, e.g. a DE module — this is exactly what the shared script now catches instead).
+Invoke each check step 1's `required checks` block lists after `nixos-dry-run`. The script classifies every file through `.claude/lib/classify-shared-file.sh` (reads `flake.nix` live) — don't re-derive this by hand (a hand-rolled check against just `commonModules`/`desktopModules` misses a module wired directly into 2+ hosts' own per-host lists, e.g. a DE module). What it lists:
 
-- **If any file classifies `SHARED`** → invoke the `shared-module-check` skill. It re-resolves the changed-file impact itself (via the same classifier) and runs the full 4-host deep-eval sweep.
-- **Else if any changed file lives under `modules/desktop-environments/` and classifies `LOCAL` because no host currently imports it** → invoke the `de-smoke-check` skill for that module instead.
-- **Else** (only genuinely host-local files changed, e.g. `hosts/<host>/*`) → no extra check needed; the step 2 dry-run already covers it.
+- **`shared-module-check`** — any file classified `SHARED`. That skill re-resolves the changed-file impact itself (via the same classifier) and runs the full 4-host deep-eval sweep.
+- **`de-smoke-check <name>`** — otherwise, one per changed `modules/desktop-environments/` module that no host currently imports.
+- **Nothing extra** — only genuinely host-local files changed (e.g. `hosts/<host>/*`); the step 2 dry-run already covers it.
 
 If step 3 invokes a check and it fails, **stop immediately** and report the failure verbatim (per that skill's own reporting convention, including per-host PASS/FAIL where applicable) — do not commit anything.
 
@@ -53,4 +57,5 @@ If anything stopped the chain early (step 2 or step 3 failure), make clear no co
 
 ## Scripts
 
-- `.claude/lib/classify-shared-file.sh <file>` — read-only classifier (step 3), shared with `shared-module-check` so the classification logic lives in exactly one place.
+- `scripts/plan-checks.sh [RANGE]` — read-only; prints the changed files with their classification and the required checks (steps 1 and 3). Exits 1 when nothing changed. `RANGE` (e.g. `HEAD~3..HEAD`) plans for already-committed changes instead of the working tree + index.
+- `.claude/lib/classify-shared-file.sh <file>` — read-only classifier called by `plan-checks.sh`, shared with `shared-module-check` so the classification logic lives in exactly one place.

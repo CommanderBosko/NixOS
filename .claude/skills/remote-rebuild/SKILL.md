@@ -15,16 +15,19 @@ None — the target is fixed. This skill always deploys to `vpn-server`; there i
 
 ## Target — from the single source of truth
 
-The vpn-server SSH target and arch live in `/home/bosko/NixOS/.claude/hosts.json` — resolve it **once** into a variable, then reuse that variable for every command below. Don't hardcode the literal IP a second time anywhere in this flow:
+The vpn-server SSH target, arch, and deploy mode live in `/home/bosko/NixOS/.claude/hosts.json` — resolve them **once** into variables, then reuse those variables for every command below. Don't hardcode the literal IP or the deploy mode a second time anywhere in this flow:
 
 ```bash
 VPN_SSH="$(jq -r '.hosts["vpn-server"].ssh' /home/bosko/NixOS/.claude/hosts.json)"
-echo "$VPN_SSH"
+VPN_REBUILD="$(jq -r '.hosts["vpn-server"].rebuild' /home/bosko/NixOS/.claude/hosts.json)"
+echo "$VPN_SSH $VPN_REBUILD"
 ```
+
+`$VPN_REBUILD` is the `nixos-rebuild` subcommand to deploy with (currently `boot`). Step 2 is written for `boot` + reboot; if it prints anything else (including `null`), stop and ask via **AskUserQuestion** rather than improvising — never `switch` (see Gotchas).
 
 If the user names any host other than `vpn-server` (a desktop, or the old `server`), explain it is not a valid remote-rebuild target and stop.
 
-> **Pre-flight — known outage:** Oracle admin-disabled the vpn-server instance on 2026-08-18 (see the `project_vpn_server_oracle_disabled` memory), so Step 1 is expected to fail until the instance is restored. If it times out, check that memory before debugging firewall/security-list causes.
+> **Pre-flight — known outage:** if Step 1 times out, check the `project_vpn_server_oracle_disabled` memory (2026-08-18 Oracle outage) before debugging firewall/security-list causes.
 
 ## Step 1 — Verify SSH connectivity
 
@@ -36,14 +39,14 @@ ssh -o ConnectTimeout=10 -o BatchMode=yes "$VPN_SSH" echo ok
 
 If it fails: "Check the Oracle VM is running and its security-list/firewall allows your current IP."
 
-## Step 2 — Deploy with `boot` + reboot (NOT `switch`)
+## Step 2 — Deploy with `$VPN_REBUILD` (`boot`) + reboot (NOT `switch`)
 
-**vpn-server must be deployed with `nixos-rebuild boot` followed by a reboot, not `switch`** — see Gotchas for why `switch` tears down the SSH session mid-activation. vpn-server is aarch64 while the local machine is x86_64 with no emulation, so `--build-host` is required (the ARM host builds its own closure).
+**vpn-server must be deployed with `nixos-rebuild "$VPN_REBUILD"` (hosts.json's `rebuild`, i.e. `boot`) followed by a reboot, not `switch`** — see Gotchas for why `switch` tears down the SSH session mid-activation. vpn-server is aarch64 while the local machine is x86_64 with no emulation, so `--build-host` is required (the ARM host builds its own closure).
 
-Show the command before running it (substituting the resolved `$VPN_SSH` value):
+Show the command before running it (substituting the resolved `$VPN_SSH` and `$VPN_REBUILD` values):
 
 ```
-nixos-rebuild boot \
+nixos-rebuild "$VPN_REBUILD" \
   --target-host "$VPN_SSH" \
   --build-host "$VPN_SSH" \
   --sudo \
@@ -55,7 +58,7 @@ This deploys and then reboots the sole public-facing remote host — the reboot 
 Run it (long — 5–15 min; stream output so the user sees progress):
 
 ```bash
-nixos-rebuild boot --target-host "$VPN_SSH" --build-host "$VPN_SSH" --sudo --flake /home/bosko/NixOS#vpn-server
+nixos-rebuild "$VPN_REBUILD" --target-host "$VPN_SSH" --build-host "$VPN_SSH" --sudo --flake /home/bosko/NixOS#vpn-server
 ```
 
 Then reboot the host to activate the staged generation cleanly:
@@ -82,13 +85,7 @@ If `modules/vpn.nix` is commented out of `desktopModules` in `flake.nix` (true w
 
 On success, confirm: which host was updated, the new generation number if visible, any services restarted.
 
-On failure, show the full error output. Common causes:
-- SSH connectivity lost mid-build: retry after checking the connection.
-- `nix copy` fails: store-path transfer interrupted; retry.
-- Evaluation error: fix the Nix config and re-run.
-- `unrecognized arguments: --elevate=sudo` (or `--elevate sudo`): this nixos-rebuild-ng version can't parse `--elevate` alongside `--target-host`/`--build-host` — use `--sudo` instead (see Gotchas).
-- `--sudo` rejected at the remote end: verify bosko is in the wheel group and `security.sudo.wheelNeedsPassword = false` on the host.
-- `platform mismatch ... Required system: 'aarch64-linux'`: the `--build-host` flag is missing — it's included in the command above.
+On failure, show the full error output, then match it against the common-causes list in `references/gotchas.md` (Deploy failures) before retrying.
 
 ---
 
@@ -97,10 +94,10 @@ On failure, show the full error output. Common causes:
 - The flake is always at `/home/bosko/NixOS`; the only remote target is `vpn-server` (read its SSH target from `.claude/hosts.json`).
 - vpn-server: log in as `bosko` (root login is disabled; bosko has passwordless sudo for non-interactive deploys).
 - Never attempt to remote-rebuild a desktop host — those use `nh os boot` locally.
-- `boot` + reboot is the deploy method for vpn-server, not `switch` (see Gotchas).
+- `boot` + reboot is the deploy method for vpn-server, not `switch` (hosts.json's `.hosts["vpn-server"].rebuild`; see Gotchas).
 
 ---
 
 ## Gotchas
 
-If the deploy fails, or you need to justify why `boot`+reboot beats `switch` here, read `references/gotchas.md` for the three root-caused failure modes before improvising a fix.
+If the deploy fails, or you need to justify why `boot`+reboot beats `switch` here, read `references/gotchas.md` for the root-caused failure modes and the common deploy-failure causes before improvising a fix.
