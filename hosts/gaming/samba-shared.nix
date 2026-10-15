@@ -27,6 +27,14 @@
         browseable = "yes";
         "read only" = "no";
         "guest ok" = "yes";
+        # Clients mount anonymously (sec=none), and that session only gets
+        # group perms, not "other". Files moved into /srv/shared on gaming
+        # keep their original group (setgid only applies to newly created
+        # files), so a moved-in bosko:users 644 file was unreadable from
+        # natalie-laptop. Running every SMB op as bosko (who owns anything
+        # dropped in here) means group/mode no longer gate network access.
+        # Uploads from clients land as bosko:shared instead of nobody:shared.
+        "force user" = "bosko";
         "force group" = "shared";
         "create mask" = "0660";
         "directory mask" = "0770";
