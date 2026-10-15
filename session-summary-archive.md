@@ -1,3 +1,26 @@
+## Session: 2026-10-11 (session 125) — starship SSH WARN fix + flake bump
+
+**Focus**: Kill the starship "Scanning current directory timed out" WARN on SSH logins to natalie-laptop, then bump flake inputs.
+
+### What changed (and why)
+- `8af18b1` sets `STARSHIP_LOG=error` in `modules/starship.nix`: `~/Shared` is a CIFS automount that idles out after 5 min, and the ~1s re-mount on the first prompt in `~` blows past starship's 30ms scan timeout.
+- `1903228` bumps nixpkgs, home-manager, dms, nix-flatpak and sops-nix via `/flake-update-verify` (flake-check + 4-host deep-eval clean).
+
+### Decisions
+- Hid warnings rather than raising `scan_timeout`, which would slow prompts in genuinely huge directories.
+
+### Issues / surprises
+- The August mount-timeout fix was already live on natalie-laptop, so the old memory's "stale generation" theory was wrong; memory corrected.
+- gaming is now booted onto gen 430: session 124's zsh fix and `slice-builder` are confirmed live.
+- Secret-scan clean (tree + 1828 commits, all sops files encrypted).
+
+### Next session
+- `/fleet-rollout` to apply both commits (nothing is switched yet); re-test the natalie-laptop SSH login after the share idles out.
+
+**Commits**: `8af18b1..1903228` (2 commits)
+
+---
+
 ## Session: 2026-10-10 (session 124) — slice-builder agent + zsh fix for Claude's shells
 
 **Focus**: Close out two NixOS commits made from a Sidekick-repo `/improve-system` session.

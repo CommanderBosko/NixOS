@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 439) runs every Nix change through `13e4616`; only the 2026-10-13 global-skill fixes (`79607cc`) still need a rebuild there. natalie-laptop (gen 96) is on the 2026-10-11 bump without today's changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 441) runs every change through `5756d62`. natalie-laptop (gen 96) is on the 2026-10-11 bump without today's changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -35,7 +35,7 @@ The current picture — what is live vs. pending a rebuild, open issues, next st
 - Security hardening module (`security.nix`) active in `commonModules`: AppArmor MAC enforcement (`reloadIfChanged = false` works around a nixpkgs packaging bug in `apparmor-parser-5.0.0` that otherwise fails every activation needing an AppArmor reload — enforcement itself is unaffected), auditd (rules-loader service disabled due to nixpkgs/auditctl blank-line bug), kernel image protection, full ASLR, PAM wheel enforcement, SDDM PAM workaround, dbus-broker active on all hosts (explicit plain assignment overrides `nix-flatpak`'s bundled older nixpkgs)
 - `~/.local/bin` in bosko's `home.sessionPath` (via `bosko-claude.nix`) so the native claude-code binary at `~/.local/bin/claude` is in PATH after rebuild
 - **Declarative Canon TS9500 printer queue** (`modules/printing.nix`, part of `desktopModules`): `Canon_TS9500_series` declared via `hardware.printers.ensurePrinters` with a checked-in driverless PPD (`modules/printing/canon-ts9500.ppd`) and a `dnssd://` URI, set as the default; `cups-browsed` is disabled entirely rather than relied on for runtime discovery, closing a recurring "queue doesn't survive reboot" race for good
-- Shared network folder for `bosko`/`natty` (`hosts/gaming/samba-shared.nix`, `modules/shared-folder-client.nix`): gaming serves `/srv/shared` via Samba (guest access, `openFirewall = true`); laptop and natalie-laptop CIFS-mount the same path, auto-mounting at boot (`nofail`, so a client boot never blocks on gaming being offline); both users' `~/Shared` symlinks to it on every host
+- Shared network folder for `bosko`/`natty` (`hosts/gaming/samba-shared.nix`, `modules/shared-folder-client.nix`): gaming serves `/srv/shared` via Samba (guest access, all network access runs as `bosko` so files moved in on gaming stay readable regardless of their group/mode, `openFirewall = true`); laptop and natalie-laptop CIFS-mount the same path, auto-mounting at boot (`nofail`, so a client boot never blocks on gaming being offline); both users' `~/Shared` symlinks to it on every host
 
 ## Getting Started
 
@@ -198,11 +198,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-13 (session 129, latest)** — Applied the full 2026-10-13 skill audit: 17 correctness bugs plus structural cleanups across ~70 project-local and global skill files (`27eb91f`, `79607cc`). Host aliases are now read from `.claude/hosts.json`, new shared helpers live under `dotfiles/bosko/claude/skills/lib/`, and long incident notes moved into `references/`. The global half goes live after a rebuild.
+**2026-10-15 (session 130, latest)** — Fixed Natty getting "permission denied" on `~/Shared`: files moved into `/srv/shared` on gaming kept their old group, and the clients' anonymous mount only gets group permissions. The Samba share now runs as `bosko` (`5756d62`, live on gaming; clients need no rebuild).
+
+**2026-10-13 (session 129)** — Applied the full 2026-10-13 skill audit: 17 correctness bugs plus structural cleanups across ~70 project-local and global skill files (`27eb91f`, `79607cc`). Host aliases are now read from `.claude/hosts.json`, new shared helpers live under `dotfiles/bosko/claude/skills/lib/`, and long incident notes moved into `references/`. The global half went live on gaming with gen 441 (2026-10-15).
 
 **2026-10-12 (session 128)** — Fixed a quickshell crash on gaming by making DMS the only screen locker (`fbb1038`), then replaced swayidle with DMS's own 10-minute idle lock (`13e4616`, live on gaming since gen 439). Also added a sandboxed self-hosted GitHub Actions runner on gaming for blueprint-smith's Factorio harness job (`3f3cf9e`), put the `sops` CLI on every host (`333e4b4`), and wired the boss Claude session: kitty remote control and a tab bar for bosko only, kitty windows that don't steal focus in niri, and guarded Claude Code hooks plus a status line (`0e3eaca`, `c7a8c2a`, `36b49d4`).
-
-**2026-10-12 (session 127)** — Added a global `land-prs` skill (merge a PR or a stacked PR chain bottom-up, then clean up branches) and a `brief-reviewer` agent that the `interview` skill now spawns for its brief check (`2d3ddb5`), from an improve-system sweep of the blueprint-smith project; live on gaming since gen 438.
 
 ## Roadmap
 

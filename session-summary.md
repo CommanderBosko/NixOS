@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-15 (session 130) — Natty's ~/Shared "permission denied" fixed
+
+**Focus**: Natty couldn't open or move files in `~/Shared` on natalie-laptop.
+
+### What changed (and why)
+- **Cause:** the two `.jpg`s moved into `/srv/shared` on gaming that morning kept group `users` (setgid only applies to new files, not moved ones). The clients mount the share anonymously (`sec=none`), which only gets group perms. So `users`-group files were unreadable and `644` `shared`-group files were read-only.
+- **Fix:** existing files regrouped to `shared` + `g+rw` by hand; `"force user" = "bosko"` added to the Samba share (`5756d62`) so group/mode no longer matter for network access. Live on gaming, verified from natalie-laptop with a fresh `bosko:users 644` test file.
+
+### Decisions
+- `force user` over a `systemd.path` chgrp watcher (top-level-only trigger) or per-user Samba logins (bigger change, doesn't fix this bug alone). Natty's ownership was never at stake: her uploads were already `nobody`-owned.
+
+### Issues / surprises
+- `smbclient -N` on gaming read the "broken" files fine. It logs in as guest, not anonymous like the kernel mount, so it isn't a fair test of what clients see.
+- The same switch (gen 441) brought `79607cc`'s global-skill fixes live on gaming.
+- Secret-scan: clean (tree + 1847 commits of history; all 6 sops files encrypted).
+
+### Next session
+- Have Natty confirm she can move the `.jpg`s off the share.
+- `/fleet-rollout` for laptop + natalie-laptop + vpn-server (carry-over).
+
+**Commits**: `5756d62` (1 commit)
+
+---
+
 ## Session: 2026-10-13 (session 129) — skill-audit fixes applied across 70+ skill files
 
 **Focus**: Apply every finding from the 2026-10-13 `/improve-system` skill audit (17 correctness bugs + structural fixes), which the user approved in full via the boss session.
@@ -107,29 +131,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `/fleet-rollout` for laptop + vpn-server; confirm natalie-laptop's SSH login is WARN-free after the share idles; then revoke the old Tailscale OAuth client.
 
 **Commits**: `7304ad5..8aca584` (2 commits)
-
----
-
-## Session: 2026-10-11 (session 125) — starship SSH WARN fix + flake bump
-
-**Focus**: Kill the starship "Scanning current directory timed out" WARN on SSH logins to natalie-laptop, then bump flake inputs.
-
-### What changed (and why)
-- `8af18b1` sets `STARSHIP_LOG=error` in `modules/starship.nix`: `~/Shared` is a CIFS automount that idles out after 5 min, and the ~1s re-mount on the first prompt in `~` blows past starship's 30ms scan timeout.
-- `1903228` bumps nixpkgs, home-manager, dms, nix-flatpak and sops-nix via `/flake-update-verify` (flake-check + 4-host deep-eval clean).
-
-### Decisions
-- Hid warnings rather than raising `scan_timeout`, which would slow prompts in genuinely huge directories.
-
-### Issues / surprises
-- The August mount-timeout fix was already live on natalie-laptop, so the old memory's "stale generation" theory was wrong; memory corrected.
-- gaming is now booted onto gen 430: session 124's zsh fix and `slice-builder` are confirmed live.
-- Secret-scan clean (tree + 1828 commits, all sops files encrypted).
-
-### Next session
-- `/fleet-rollout` to apply both commits (nothing is switched yet); re-test the natalie-laptop SSH login after the share idles out.
-
-**Commits**: `8af18b1..1903228` (2 commits)
 
 ---
 
