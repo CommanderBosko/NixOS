@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-17 (session 131) — Mod+G no-focus + Hermes Agent attempt-2 plan
+
+**Focus**: Two conversations: stop Mod+G's apps from yanking the monitors, and re-check whether Hermes Agent can run locally on the RTX 3070.
+
+### What changed (and why)
+- **Mod+G (`c8062a6`):** `open-focused false` on the Steam, Lutris, Vesktop, Deezer and qBittorrent window rules in gaming's niri overlay, so the startup launch no longer jumps either monitor to each new window. `niri validate` and the dry-run were both clean. It's live on gaming (gen 442), but nobody has watched it work yet.
+- **Hermes research + plan (`18d3b61`):** the 64K-context minimum hasn't changed, but Qwen3.5-9B's small KV cache makes it look like it fits in 8 GB (tight). The plan uses llama.cpp, started on demand. It's in `docs/plans/hermes-agent-local-llm.md` and nothing is built yet.
+
+### Decisions
+- llama.cpp over Ollama for attempt 2 (recommended, not yet confirmed). It sets context on the server side, and it can load a text-only GGUF smaller than Ollama's vision-bundled `qwen3.5:9b`.
+- The no-focus rule also applies when those five apps are opened by hand. The user accepted this.
+
+### Issues / surprises
+- May's Hermes attempt was partly sabotaged by Ollama: its `/v1` endpoint ignores per-request `num_ctx`, so models loaded at a 4096 context whatever the config said.
+- May's VRAM budget never counted the desktop's own ~1.5 GB.
+- Secret-scan: clean (tree + 1850 commits of history; all 6 sops files encrypted).
+
+### Next session
+- Press Mod+G on gaming and confirm nothing jumps.
+- "start the Hermes plan" when ready. The six decisions come first.
+
+**Commits**: `c8062a6..18d3b61` (2 commits)
+
+---
+
 ## Session: 2026-10-15 (session 130) — Natty's ~/Shared "permission denied" fixed
 
 **Focus**: Natty couldn't open or move files in `~/Shared` on natalie-laptop.
@@ -106,31 +131,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - Rebuild gaming and confirm both are present; `/fleet-rollout` for laptop + vpn-server; natalie-laptop SSH WARN check; then revoke the old Tailscale OAuth client.
 
 **Commits**: `2d3ddb5` (1 commit)
-
----
-
-## Session: 2026-10-11 (session 126) — PR #33 merge, hosts.sh comment, rollout to natalie-laptop
-
-**Focus**: Review the weekly improve-system PR, clean up its leftover, and check the dry-run warnings before rolling out the 10-11 bump.
-
-### What changed (and why)
-- The `manager` agent reviewed and squash-merged PR #33 (`7304ad5`): `shared-module-check` now cites only `modules/claude-code.nix` for the rtk guard, which moved there in the 09-21 reorg.
-- `8aca584` drops the stale "can migrate" sentence from `.claude/lib/hosts.sh`; all five host-touching scripts already use the shared helpers.
-- The user applied `1903228` (+ `8af18b1`) on gaming (gen 431) and natalie-laptop (gen 96, booted). Both checked live at close.
-
-### Decisions
-- The manager merged on "look over the weekly pr" without an explicit merge word, relying on the 09-22 pre-delegated merge authority and the PR #31 precedent. It said so in its report.
-- Left the sweep's other two leftovers alone (duplicated niri closing paragraph; restated NOPASSWD fact). Both are real but low-value, and a helper script would add moving parts.
-
-### Issues / surprises
-- natalie-laptop's rebuild printed initrd warnings about missing libcrypto/libssl/libbpf/libcrypt. These are optional systemd 261 deps and harmless: the host booted gen 96 with 0 failed units. Saved to memory so they don't get re-diagnosed.
-- natalie-laptop is now current through `1903228`, which clears its whole rebuild backlog. laptop was offline (SSH timeout).
-- Secret-scan clean (tree + 1832 commits, all sops files encrypted).
-
-### Next session
-- `/fleet-rollout` for laptop + vpn-server; confirm natalie-laptop's SSH login is WARN-free after the share idles; then revoke the old Tailscale OAuth client.
-
-**Commits**: `7304ad5..8aca584` (2 commits)
 
 ---
 

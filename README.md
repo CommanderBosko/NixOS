@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 441) runs every change through `5756d62`. natalie-laptop (gen 96) is on the 2026-10-11 bump without today's changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. gaming (gen 442) runs every change through `c8062a6`. natalie-laptop (gen 96) is on the 2026-10-11 bump without the 10-12/13 changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -93,6 +93,7 @@ hosts/<hostname>/            # hardware-configuration.nix, environment.nix, netw
 secrets/                     # sops-nix encrypted secrets (see Secrets); recipient map in .sops.yaml
 .claude/                     # Project-local Claude Code setup: skills/, lib/ (shared scripts), hooks/, hosts.json
 .github/workflows/           # CI: flake check + deep evaluation of every host
+docs/plans/                  # Written plans for work not yet started (e.g. hermes-agent-local-llm.md)
 ```
 
 Module, skill, and agent rosters change often — read `flake.nix` or run `ls modules/ .claude/skills/ dotfiles/bosko/claude/skills/ dotfiles/bosko/claude/agents/` rather than trusting a copy here.
@@ -198,11 +199,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-15 (session 130, latest)** — Fixed Natty getting "permission denied" on `~/Shared`: files moved into `/srv/shared` on gaming kept their old group, and the clients' anonymous mount only gets group permissions. The Samba share now runs as `bosko` (`5756d62`, live on gaming; clients need no rebuild).
+**2026-10-17 (session 131, latest)** — The apps Mod+G launches on gaming now open without taking focus, so the startup launch no longer jumps either monitor (`c8062a6`, live). Also re-researched running Hermes Agent locally: Qwen3.5-9B now looks like it can fit Hermes' 64K-context minimum on the 8 GB RTX 3070, so an attempt-2 plan (llama.cpp, started on demand) is written up in `docs/plans/hermes-agent-local-llm.md` (`18d3b61`). Nothing is built yet.
+
+**2026-10-15 (session 130)** — Fixed Natty getting "permission denied" on `~/Shared`: files moved into `/srv/shared` on gaming kept their old group, and the clients' anonymous mount only gets group permissions. The Samba share now runs as `bosko` (`5756d62`, live on gaming; clients need no rebuild).
 
 **2026-10-13 (session 129)** — Applied the full 2026-10-13 skill audit: 17 correctness bugs plus structural cleanups across ~70 project-local and global skill files (`27eb91f`, `79607cc`). Host aliases are now read from `.claude/hosts.json`, new shared helpers live under `dotfiles/bosko/claude/skills/lib/`, and long incident notes moved into `references/`. The global half went live on gaming with gen 441 (2026-10-15).
-
-**2026-10-12 (session 128)** — Fixed a quickshell crash on gaming by making DMS the only screen locker (`fbb1038`), then replaced swayidle with DMS's own 10-minute idle lock (`13e4616`, live on gaming since gen 439). Also added a sandboxed self-hosted GitHub Actions runner on gaming for blueprint-smith's Factorio harness job (`3f3cf9e`), put the `sops` CLI on every host (`333e4b4`), and wired the boss Claude session: kitty remote control and a tab bar for bosko only, kitty windows that don't steal focus in niri, and guarded Claude Code hooks plus a status line (`0e3eaca`, `c7a8c2a`, `36b49d4`).
 
 ## Roadmap
 
