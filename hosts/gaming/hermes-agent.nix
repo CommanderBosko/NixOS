@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 
 # llama.cpp (CUDA) + Hermes Agent for gaming, on-demand.
 #
@@ -74,6 +74,47 @@ in
         api_mode = "chat_completions";
         context_length = 65536;
       };
+
+      # Same MCP servers as Claude Code (dotfiles/bosko/claude-hm/mcp.nix).
+      mcpServers = {
+        nixos.command = "${pkgs.mcp-nixos}/bin/mcp-nixos";
+        tailscale = {
+          command = "${pkgs.bash}/bin/bash";
+          args = [
+            "-c"
+            "set -a; source ${config.sops.secrets."tailscale-mcp-env".path}; set +a; exec ${pkgs.tailscale-mcp}/bin/tailscale-mcp"
+          ];
+          # Read-only tools only: all 94 schemas take ~19K tokens of the 64K
+          # context. These globs match exactly the 39 readOnlyHint tools.
+          tools.include = [
+            "tailscale_get_*"
+            "tailscale_list_*"
+            "tailscale_validate_*"
+            "tailscale_status"
+            "tailscale_preview_acl"
+          ];
+        };
+      };
+      # Untrusted: any write-capable call still asks for approval first.
+      settings.mcp_servers.tailscale.trust = "untrusted";
+
+      # Same plugins as Claude Code (dotfiles/bosko/claude-hm/plugins.nix),
+      # from flake inputs so `nix flake update` bumps them. Plugins are opt-in.
+      # Each is wrapped in a named derivation: the module symlinks plugins as
+      # nix-managed-<name>, and a bare input source is just "source".
+      extraPlugins = [
+        # Hermes manifest lives in .hermes-plugin/; extraPlugins wants it at
+        # the root, a "flattened" layout the plugin's loader supports.
+        (pkgs.runCommand "superpowers" { } ''
+          mkdir $out
+          cp -r ${inputs.superpowers}/{.hermes-plugin/.,skills} $out/
+        '')
+        (pkgs.runCommand "ponytail" { } "ln -s ${inputs.ponytail} $out")
+      ];
+      settings.plugins.enabled = [
+        "superpowers"
+        "ponytail"
+      ];
     };
   };
 }

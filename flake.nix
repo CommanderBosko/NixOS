@@ -46,6 +46,17 @@
     # Hermes Agent — AI agent framework by Nous Research (gaming only).
     # No `follows`: upstream pins its own nixpkgs.
     hermes-agent.url = "github:NousResearch/hermes-agent";
+
+    # Hermes copies of the Claude Code plugins (hosts/gaming/hermes-agent.nix).
+    # Track the default branch so `nix flake update` bumps them.
+    superpowers = {
+      url = "github:obra/superpowers";
+      flake = false;
+    };
+    ponytail = {
+      url = "github:DietrichGebert/ponytail";
+      flake = false;
+    };
   };
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
