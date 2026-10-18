@@ -1,3 +1,26 @@
+## Session: 2026-10-12 (session 127) — close-out for the blueprint-smith improve-system commit
+
+**Focus**: Document `2d3ddb5`, which came from today's `/improve-system` sweep run in the blueprint-smith repo; this session made no code changes.
+
+### What changed (and why)
+- `2d3ddb5` adds a global `land-prs` skill (merge a PR or stacked chain bottom-up, retarget children, verify the tree, fast-forward `main`, clean up branches), drawn from 2 blueprint-smith sessions that did this by hand.
+- It also adds a `brief-reviewer` agent and switches `interview` Step 7 to spawn it, replacing a 2–6k-char prose prompt that was re-typed each time.
+
+### Decisions
+- `land-prs` deletes remote branches in a separate, confirmed step: the auto-mode classifier blocked a chained `git push --delete` after PRs #2–#4.
+
+### Issues / surprises
+- Not live yet: gaming is still on gen 431 (10-11), so neither the skill nor the agent exists in `~/.claude`.
+- `land-prs`'s merge and delete paths are untested (only the read-only `gh` parts were smoke-tested).
+- Secret-scan clean (see the close commit).
+
+### Next session
+- Rebuild gaming and confirm both are present; `/fleet-rollout` for laptop + vpn-server; natalie-laptop SSH WARN check; then revoke the old Tailscale OAuth client.
+
+**Commits**: `2d3ddb5` (1 commit)
+
+---
+
 ## Session: 2026-10-11 (session 126) — PR #33 merge, hosts.sh comment, rollout to natalie-laptop
 
 **Focus**: Review the weekly improve-system PR, clean up its leftover, and check the dry-run warnings before rolling out the 10-11 bump.
