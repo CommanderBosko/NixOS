@@ -27,6 +27,7 @@ Ask the user the following free-form questions — you can ask them all at once 
 1. **What should this skill do?** (One sentence goal — what problem does it solve?)
 2. **What would you say to invoke it?** (Give 3–5 example phrases — e.g. "run tests", "check for errors", "deploy to staging")
 3. **What are the steps?** (Describe the workflow in plain English — tools to run, files to read, decisions to make, output to show)
+4. **Does it take any user-supplied inputs?** (e.g. a slug, file path, host name, package name, person) — if yes, note them; they'll become a `## Arguments` section in the draft (see step 4).
 
 If the user already gave some of this information in their request, don't re-ask for it — pre-fill it and confirm.
 
@@ -92,6 +93,7 @@ Read the scaffold from `assets/skill-template.md` (relative to this skill's dire
 - If step 2a classified this as **grunt**, add a `model: haiku` line directly after `description:` in the frontmatter (matching the convention used by other grunt-work skills in this repo). If **judgment**, omit the field entirely — don't write `model: sonnet` or similar, since that would pin it and stop it from tracking the session's top model over time.
 - For every chunk step 2b flagged, write the deterministic logic into `scripts/<name>.sh` (a real file, written in step 6) and have the corresponding SKILL.md step call it and interpret its output — don't inline the bash/jq/loop in prose. If the skill ends up with one or more scripts, add a `## Scripts` section near the end of the file (mirror `add-secret/SKILL.md`'s format: one bullet per script, its path, its arguments, and which step calls it).
 - For every block step 2c flagged, write the narrow/heavy content into `references/<topic>.md` (a real file, written in step 6) and leave the recorded one-line pointer inline in its place — don't inline the full block in prose. If the skill ends up with one or more reference files, add a `## References` section near the end of the file (mirror this skill's own `## References` section: one bullet per file, what it holds, and when to load it).
+- If step 1's question 4 identified any user-supplied invocation inputs (slug, path, host, package, person), add a `## Arguments` section documenting them in prose (mirror `verify-service`/`land-prs`'s format) — never add an `arguments:` YAML frontmatter key, that's a slash-command feature, not a SKILL.md one.
 - Trigger phrases in `description` must match natural speech — include the obvious variants ("run tests", "test", "execute tests")
 - Steps must be actionable with Claude Code's tools (Bash, Read, Edit, Write, WebSearch, etc.)
 - Include what to output/report to the user at the end
