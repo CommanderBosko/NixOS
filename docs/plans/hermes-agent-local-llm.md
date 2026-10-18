@@ -1,7 +1,15 @@
 # Plan: Hermes Agent on gaming with a local Qwen3.5-9B (attempt 2)
 
-Status: **PLANNED, not started**. Written 2026-10-15. The research behind it is the memory
+Status: **IMPLEMENTED 2026-10-18** (`1b37b3d`); the `hermes` CLI starts and runs against the local
+server. Verification checks 3–4 and 6–8 below (VRAM fit, tool calls, long context, coexistence
+with gaming) have not been recorded yet. Written 2026-10-15. The research behind it is the memory
 `reference_hermes_agent_8gb_research.md`.
+
+**Deviation from step 2:** Hermes runs through the upstream **Home Manager** module as bosko
+(`~/.hermes`), not the NixOS module with `addToSystemPackages` and the `hermes` group. The current
+CLI refuses to attach to a gateway whose `HERMES_HOME` is owned by another uid
+(`Gateway inaccessible: unsafe_control_path`), so the shared `/var/lib/hermes` setup can't work.
+It's CLI-only: no gateway service, since `hermes` spawns its own gateway on demand.
 
 ## Goal
 
