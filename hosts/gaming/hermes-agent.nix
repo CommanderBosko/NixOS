@@ -98,6 +98,14 @@ in
       # Untrusted: any write-capable call still asks for approval first.
       settings.mcp_servers.tailscale.trust = "untrusted";
 
+      # No Nous Portal hosted connectors (Notion, Slack, ...): none are used,
+      # and the 9B model mistook their "connected: false" for broken MCP.
+      settings.tools.connectors.enabled = false;
+      # No anonymous Nous Portal identity either: Hermes minted one on its own
+      # and routed web_search through Nous's gateway with it. Web search falls
+      # back to the keyless public endpoints (Exa, Parallel, ...) instead.
+      settings.nous.guest = false;
+
       # Same plugins as Claude Code (dotfiles/bosko/claude-hm/plugins.nix),
       # from flake inputs so `nix flake update` bumps them. Plugins are opt-in.
       # Each is wrapped in a named derivation: the module symlinks plugins as
