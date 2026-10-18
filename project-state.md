@@ -1,10 +1,12 @@
 # NixOS Project State
 
-_Last updated: 2026-10-18 (session 132)_
+_Last updated: 2026-10-18 (session 133)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**Flake inputs bumped 2026-10-18 (`23bda63`), verified but NOT applied on any host.** dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix; flake-check + 4-host deep-eval clean. Needs `/fleet-rollout`; re-check `hermes` on gaming afterward (hermes-agent moved).
 
 **Hermes Agent attempt 2 is LIVE on gaming: llama.cpp (CUDA) serving Qwen3.5-9B IQ4_XS at 64K, on demand, with the Hermes CLI running as bosko via the upstream Home Manager module (`1b37b3d` + docs `d4b6ffb`). User confirmed `hermes` works; gen 445 (2026-10-18, session 132, three conversations).**
 - **Built per the plan** (`hosts/gaming/hermes-agent.nix`): `services.llama-cpp` + `llama-cpp-cuda`, hash-pinned unsloth GGUF via `fetchurl`, `ctx-size 65536`, `parallel 1`, q8_0 K/V, flash-attn, `--jinja`, `reasoning-budget 0` (thinking off). `wantedBy` cleared; `llm-on` / `llm-off` / `llm-status` aliases in gaming's `environment.nix`. hermes-agent input has no `follows` (own nixpkgs, ~2.8 GiB of duplicate deps accepted). Closure grew ~10 GiB (model 4.8 GiB).
@@ -29,14 +31,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Verification:** `bash -n` on all 21 changed/new scripts; new scripts run on safe local inputs, except the merge/push/repo-create paths (`land-prs`, `git-push`, `repo-creator`) — syntax-checked only, never run live; `resolve-host.sh` output identical for every host and alias; `check-hosts-json.sh` passes; every cited `references/`/`assets/` path exists; `nixos-dry-run` clean. 4-host deep-eval skipped (no Nix code reads `aliases`).
 - **Live state checked at close (gaming):** current system = gen 439 (switched 2026-10-12 23:46), booted = 21:23 gen. No `swayidle` process; DMS `settings.json` has `acLockTimeout`/`batteryLockTimeout` = 600 → `13e4616` is live. `~/.claude/skills/lib/scope-since-last-run.sh` and `land-prs/scripts/merge-step.sh` don't exist yet → `79607cc` needs a rebuild.
 - Six out-of-audit problems found along the way were recorded, not fixed — see Known Issues. This close-out session made no code changes.
-
-**Seven commits from 5 NixOS sessions on 2026-10-12 evening, all pushed: quickshell lock-crash fix, blueprint-smith self-hosted runner, `sops` CLI everywhere, boss-session wiring (kitty remote control + tab bar, niri no-focus kitty, Claude hooks + status line), and DMS's native idle lock replacing swayidle. gaming rebooted 21:23 and switched to gen 438 at 22:18 — everything except `13e4616` is LIVE there; `13e4616` is built nowhere yet (2026-10-12, session 128).**
-- **`fbb1038` quickshell crash:** swayidle's `swaylock` and DMS's own lock fought over ext-session-lock; niri refused DMS, DMS kept recreating GL lock surfaces, and on NVIDIA one of those hit `GspRmAlloc failed` → Qt fatal → quickshell abort (18:14). DMS is now the sole locker (idle + Super+Alt+L run `dms ipc call lock lock`); `swaylock` stays installed only as a TTY recovery fallback — never run it while DMS is up. Live since the 21:23 reboot; 0 "refused session lock" in the DMS journal since.
-- **`3f3cf9e` blueprint-smith runner** (`hosts/gaming/github-runner.nix`): factorio.com won't serve the 2.0.77 headless server to GitHub-hosted runners, so the `harness` job runs on gaming. Deliberately diverged from the requesting session's spec: the nixpkgs module sets `HOME` to the work dir (so `~/.cache/...` never resolves) → server path passed via `BPS_FACTORIO_SERVER`; the repo is public and a fork PR can edit `ci.yml`'s fork guard → jobs run as a DynamicUser with `/home` on an empty tmpfs except the read-only server dir, not as `bosko`. PAT in sops key `github-runner-blueprint-smith`. Live: unit active since 21:13:50, registered with labels `self-hosted, Linux, X64, factorio`, picked up a PR #10 job immediately.
-- **`333e4b4` sops CLI:** `pkgs.sops` added in `modules/sops.nix` (first draft put it in `security.nix`; moved next to the sops-nix config). `add-secret`'s scripts still use `nix shell nixpkgs#sops` — still works, left alone. Live on gaming.
-- **`0e3eaca` niri:** kitty windows open without stealing focus (shared niri config → all 3 niri hosts; Mod+Return terminals too). Live-tested on gaming (focus stayed on the game).
-- **`c7a8c2a` → `36b49d4` boss session:** kitty remote control (`socket-only`, `/run/user/1000/kitty-<pid>`) first landed in the shared `kitty.conf`, then moved into a bosko-only drop-in (`dotfiles/bosko/kitty-boss.conf` → `~/.config/kitty/kitty.d/boss.conf` via `globinclude`, plus an always-on top powerline tab bar) so natty gets none of it. `modules/claude-code.nix` adds a guard hook on 8 events that execs `~/projects/boss/bin/boss-hook` only if it exists; `claude-hm/settings.nix` sets the status line only when absent or already the boss's. Live on gaming — this close-out was itself relayed by the boss.
-- **`13e4616` DMS idle lock:** swayidle removed; DMS's own idle timer (ships disabled; 5s fade, mouse cancels) is enabled by an activation step that writes `acLockTimeout`/`batteryLockTimeout = 600` into DMS's unmanaged `settings.json` only when unset (a user's own value, incl. "Never" = 0, survives). Hyprland's timeout 5 → 10 min. jq seeding tested on a copy of the real file + 4-host deep-eval clean. ~~**Not live:** gaming still runs `swayidle.service` and both keys read `null`.~~ **LIVE on gaming since gen 439 (switched 2026-10-12 23:46, after this close) — confirmed session 129.**
 
 ## Current Goals
 

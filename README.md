@@ -199,11 +199,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-18 (session 132, latest)** — Hermes Agent now runs locally on gaming: llama.cpp serves Qwen3.5-9B at Hermes' 64K-context minimum within the RTX 3070's 8 GB (measured 7.2 GiB with the desktop up), started on demand with `llm-on` / `llm-off`. Hermes itself moved from the NixOS module to the upstream Home Manager module, running as bosko, because the current CLI refuses a shared home directory owned by another user (`1b37b3d`, `d4b6ffb`).
+**2026-10-18 (session 133, latest)** — Flake inputs bumped (dms, home-manager, nixpkgs, sops-nix, hermes-agent); flake-check and 4-host deep-eval clean; not yet applied to any host.
+
+**2026-10-18 (session 132)** — Hermes Agent now runs locally on gaming: llama.cpp serves Qwen3.5-9B at Hermes' 64K-context minimum within the RTX 3070's 8 GB (measured 7.2 GiB with the desktop up), started on demand with `llm-on` / `llm-off`. Hermes itself moved from the NixOS module to the upstream Home Manager module, running as bosko, because the current CLI refuses a shared home directory owned by another user (`1b37b3d`, `d4b6ffb`).
 
 **2026-10-17 (session 131)** — The apps Mod+G launches on gaming now open without taking focus, so the startup launch no longer jumps either monitor (`c8062a6`, live). Also re-researched running Hermes Agent locally: Qwen3.5-9B now looks like it can fit Hermes' 64K-context minimum on the 8 GB RTX 3070, so an attempt-2 plan (llama.cpp, started on demand) is written up in `docs/plans/hermes-agent-local-llm.md` (`18d3b61`). Nothing is built yet.
-
-**2026-10-15 (session 130)** — Fixed Natty getting "permission denied" on `~/Shared`: files moved into `/srv/shared` on gaming kept their old group, and the clients' anonymous mount only gets group permissions. The Samba share now runs as `bosko` (`5756d62`, live on gaming; clients need no rebuild).
 
 ## Roadmap
 
