@@ -3,7 +3,7 @@
 #   files.nix    — ~/.claude symlinks (skills, agents, CLAUDE.md, manager-profile)
 #   settings.nix — ~/.claude/settings.json reconciliation (trim, allow list, Auto Mode, status line)
 #   mcp.nix      — user-scope MCP servers in ~/.claude.json
-#   plugins.nix  — LSP plugins (pyright-lsp, nixd)
+#   plugins.nix  — plugins (pyright-lsp, nixd, superpowers, ponytail)
 {
   imports = [
     ./claude-hm/files.nix

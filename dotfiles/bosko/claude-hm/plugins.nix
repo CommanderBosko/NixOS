@@ -1,8 +1,8 @@
-# Declaratively install Claude Code LSP plugins. The plugin system keeps its
+# Declaratively install Claude Code plugins. The plugin system keeps its
 # state in mutable JSON files plus marketplace clones, none of which can be
 # managed with home.file, so these activation scripts reconcile them after every
 # rebuild — idempotent, additive only.
-{ pkgs, lib, ... }:
+{ pkgs, lib, config, ... }:
 
 let
   shell = import ./shell.nix { inherit pkgs; };
@@ -144,4 +144,62 @@ in
       fi
     fi
   '';
+
+  # General-purpose plugins with nothing to patch, so unlike the LSP entries
+  # above they go through Claude Code's own CLI, which owns the cache layout and
+  # install records. Each install runs only while the plugin is missing from
+  # installed_plugins.json: an interactive disable sticks, an uninstall comes
+  # back on the next rebuild. The CLI clones over the network, which boot-time
+  # activation may not have yet, so every step is non-fatal and the next
+  # activation retries.
+  home.activation.claudeMarketplacePlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+    let
+      # plugin@marketplace -> GitHub source to add the marketplace from if unknown.
+      plugins = {
+        "superpowers@claude-plugins-official" = "anthropics/claude-plugins-official";
+        "ponytail@ponytail" = "DietrichGebert/ponytail";
+      };
+    in
+    ''
+      plugin_dir="$HOME/.claude/plugins"
+      known="$plugin_dir/known_marketplaces.json"
+      installed="$plugin_dir/installed_plugins.json"
+      jq="${pkgs.jq}/bin/jq"
+
+      # Same precedence as PATH: the native installer's copy, else the nixpkgs one.
+      claude=""
+      for c in "$HOME/.local/bin/claude" "/etc/profiles/per-user/${config.home.username}/bin/claude"; do
+        if [ -x "$c" ]; then claude="$c"; break; fi
+      done
+
+      claude_cli() {
+        PATH="${pkgs.git}/bin:$PATH" "$claude" "$@" </dev/null >/dev/null 2>&1
+      }
+
+      claude_install_plugin() {
+        local id="$1" source="$2" marketplace="''${1#*@}"
+        if [ -z "$claude" ] || \
+            $jq -e --arg id "$id" '.plugins[$id]' "$installed" >/dev/null 2>&1; then
+          return 0
+        fi
+        if ! $jq -e --arg m "$marketplace" '.[$m]' "$known" >/dev/null 2>&1; then
+          if ! claude_cli plugin marketplace add "$source"; then
+            $VERBOSE_ECHO "$marketplace marketplace add failed (no network?); skipping $id"
+            return 0
+          fi
+        fi
+        if claude_cli plugin install "$id" --scope user; then
+          $VERBOSE_ECHO "Installed $id"
+        else
+          $VERBOSE_ECHO "$id install failed (no network?); skipping"
+        fi
+      }
+
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (
+          id: source: "claude_install_plugin ${lib.escapeShellArg id} ${lib.escapeShellArg source}"
+        ) plugins
+      )}
+    ''
+  );
 }
