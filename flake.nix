@@ -43,6 +43,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Hermes Agent — AI agent framework by Nous Research (gaming only).
+    # No `follows`: upstream pins its own nixpkgs.
+    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
@@ -134,6 +137,7 @@
       "${self}/hosts/gaming/pinchflat.nix"
       "${self}/hosts/gaming/samba-shared.nix"
       "${self}/hosts/gaming/github-runner.nix"
+      "${self}/hosts/gaming/hermes-agent.nix"
     ] ++ extra;
   in
   {
