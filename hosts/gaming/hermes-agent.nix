@@ -139,6 +139,10 @@ in
         "superpowers"
         "ponytail"
       ];
+
+      # How to use the user's Proton mail (hosts/gaming/proton-mail.nix).
+      # Rewritten on every rebuild, so Hermes can't drift it.
+      hermesHomeFiles."skills/email/proton-mail/SKILL.md" = ./hermes-proton-mail-skill.md;
     };
   };
 }
