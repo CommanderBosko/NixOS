@@ -20,3 +20,10 @@ Mode ON). Each entry: what it is, where, and why it's safe.
   [[feedback_audit_rules_empty]].
 - **Repo is intentionally public** — flipped public 2026-06-15 after history purge; the
   guard exists *because* it's public. Public-ness itself is not a finding.
+- **vpn-server `security.auditd.enable = lib.mkForce false`
+  (`hosts/vpn-server/configuration.nix`)** — the Oracle Cloud ARM kernel doesn't support
+  the audit subsystem, so auditd would fail on every boot. Accepted 2026-10-19.
+- **vpn-server `security.sudo.wheelNeedsPassword = false`
+  (`hosts/vpn-server/configuration.nix`)** — remote deploys SSH in as bosko and run sudo
+  non-interactively; a password prompt would stall the batch session. The only NOPASSWD
+  host, and SSH there is key-only. See [[feedback_sudo_gated_skill_steps]]. Accepted 2026-10-19.
