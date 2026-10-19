@@ -47,7 +47,9 @@ the template.
 
 Call the Artifact tool: `action: "publish"`, `file_path` = the HTML file from Step 2,
 `title` = the short name from Step 2, `description` = the `<summary...>` argument verbatim,
-`favicon` = `"📄"`. Note the resulting URL.
+`icon` = `"file"` (a plain generic word, not an emoji — `favicon` is deprecated on the current
+Artifact tool and `icon` must be a short generic word, never a brand name or emoji). Note the
+resulting URL.
 
 ## Step 4 -- Post to Discord
 

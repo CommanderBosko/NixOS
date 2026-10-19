@@ -37,12 +37,15 @@ Stage and commit all current changes with a well-crafted commit message.
 /home/bosko/.claude/skills/git-commit/scripts/git-commit.sh commit <file1> <file2> <<'EOF'
 <message here>
 
-Co-Authored-By: <current model> <noreply@anthropic.com>
+<trailer line(s) here>
 EOF
 ```
 
-Use whatever model name the harness's own Bash-tool commit-message instructions specify (e.g.
-"Claude Sonnet 5") — don't hardcode a specific model name here, it will drift the next time the
+Append whatever commit-message attribution trailer line(s) the harness's own current-session
+instructions specify — not just a single `Co-Authored-By: <model> <noreply@anthropic.com>` line.
+Some sessions require more than one trailer line (e.g. an additional `Claude-Session: <url>`
+line); copy the harness's instructions for this session verbatim rather than assuming a fixed
+one-line shape. Likewise don't hardcode a specific model name — it will drift the next time the
 underlying model changes.
 
 The script stages exactly the files you name, commits with that message, then prints `git status`
