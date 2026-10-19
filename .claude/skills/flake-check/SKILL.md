@@ -45,7 +45,7 @@ Then add a brief diagnosis below the raw output:
 
 ## Step 3 — Suggest next steps
 
-- If the check **passed**: safe to proceed with `nh os boot /home/bosko/NixOS --dry` or commit.
+- If the check **passed**: run `deep-eval-check`, then the `nixos-dry-run` skill, before committing.
 - If the check **failed**: fix the reported error, then re-run `flake-check` before rebuilding.
 
 ---
@@ -54,7 +54,7 @@ Then add a brief diagnosis below the raw output:
 
 - Working directory: `/home/bosko/NixOS`
 - This is a read-only, safe-to-run-anytime operation.
-- `nix flake check` evaluates all `nixosConfigurations` outputs — this catches errors across every host listed in `.claude/hosts.json`'s `.flakeHosts` (read the file, don't hardcode the list).
+- `nix flake check` evaluates all `nixosConfigurations` outputs — this shallowly checks every host listed in `.claude/hosts.json`'s `.flakeHosts` (read the file, don't hardcode the list).
 - This skill does NOT apply changes; it only validates.
 
 ## Gotchas

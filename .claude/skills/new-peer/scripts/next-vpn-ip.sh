@@ -18,7 +18,9 @@
 #   SERVER_ENDPOINT=<ip:port>
 set -uo pipefail
 
-REPO=/home/bosko/NixOS
+# Relative to this script (as in render-client-conf.sh), so it also works from a git worktree.
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 source "$REPO/.claude/lib/hosts.sh"
 VPN_SERVER_CONF="$REPO/hosts/vpn-server/wireguard.nix"
 VPN_MODULE="$REPO/modules/vpn.nix"

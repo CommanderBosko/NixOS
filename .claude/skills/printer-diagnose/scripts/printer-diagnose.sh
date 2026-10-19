@@ -2,8 +2,8 @@
 # Mechanical check battery for "printer not showing up / nothing prints" diagnosis.
 # Usage: printer-diagnose.sh [printer-name-pattern]
 # printer-name-pattern narrows the avahi grep (defaults to a bare IPP scan).
-# Runs locally — for a remote host, the skill prefixes this whole invocation
-# with the resolved SSH command itself; this script has no host logic.
+# Runs locally — for a remote host, the skill pipes this script over SSH
+# (`ssh "$T" bash -s -- <pattern> < <this script>`); this script has no host logic.
 set -uo pipefail
 
 PATTERN="${1:-}"

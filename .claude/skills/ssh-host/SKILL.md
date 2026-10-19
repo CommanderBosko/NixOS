@@ -65,7 +65,7 @@ For a one-shot command, report its output and exit status (or the error if the c
 
 ## Key facts
 
-- All local hosts have `AllowUsers bosko` (natalie-laptop also allows `natty`).
+- The desktop flake hosts (gaming, laptop, natalie-laptop) have `AllowUsers bosko` from `modules/desktop-networking.nix` (natalie-laptop also allows `natty`). pi-hole and famdash are local but not flake hosts — their SSH users come from `hosts.json` (famdash is `natty@`).
 - All hosts have password auth disabled — key auth only.
 - vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
 - Hosts with a `tailscaleIp` (incl. pi-hole, famdash) get `~/.ssh/config` aliases dialling that stable Tailscale IP, generated from `.claude/hosts.json` by `dotfiles/common/configs/ssh.nix`; the LAN `.hosts.<name>.ip` is DHCP-drifting reference only.

@@ -34,7 +34,7 @@ Invocation shape: `<topic>` or `<topic> <n>`.
 
 3. **Search.** Run `WebSearch` on the topic. Collect up to `n` distinct, relevant result URLs from the results. If the search returns fewer than `n` usable results, proceed with what's available and note the shortfall in the final report — don't pad with irrelevant links.
 
-4. **Spawn review agents in parallel.** In a single message, call the `Agent` tool `n` times (one per URL), each with `subagent_type: "source-reviewer"` (fresh agent — no shared context needed; the agent definition already knows how to fetch, extract, and report — see `dotfiles/bosko/claude/agents/source-reviewer.md`). Brief each one with just: the research topic/question, and the single URL it's responsible for.
+4. **Spawn review agents in parallel.** In a single message, call the `Agent` tool `n` times (one per URL), each with `subagent_type: "source-reviewer"` (fresh agent — no shared context needed; the agent definition already knows how to fetch, extract, and report — see `~/.claude/agents/source-reviewer.md`). Spawn at most 20 per message and run a larger `n` in waves: the harness caps concurrent sub-agents at 20 (see `~/.claude/skills/session-analysis/references/concurrency-cap-gotcha.md`). Brief each one with just: the research topic/question, and the single URL it's responsible for.
 
 5. **Collect results.** Wait for all sub-agents to report back. Tally how many of the `n` sources were actually usable vs. inaccessible.
 

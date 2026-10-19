@@ -8,7 +8,7 @@ The global Claude Code skills are **owned by this repo**, not by `~/.claude`. So
 
 - **Always edit the repo copy** under `dotfiles/bosko/claude/skills/`. The `~/.claude/skills/` path is a read-only `/nix/store` symlink — editing it directly is impossible, and the change wouldn't survive a rebuild anyway.
 - A new skill needs **no Nix wiring** — there is no entry to add. It only needs to be `git add`ed (flake evaluation sees tracked files only; an untracked skill silently doesn't appear) and the config rebuilt before its symlink appears.
-- Edits to an existing skill's `SKILL.md` (or a new file under its `scripts/`/`assets/`/`references/`) only take effect in `~/.claude` after a rebuild (`nh os boot /home/bosko/NixOS`); the live session keeps using the old store path until then.
+- Edits to an existing skill's `SKILL.md` (or a new file under its `scripts/`/`assets/`/`references/`) only take effect in `~/.claude` after a rebuild (`nh os boot /home/bosko/NixOS`) and a reboot; the live session keeps using the old store path until then.
 
 ## Writing a brand-new global skill
 
@@ -16,4 +16,4 @@ When managed, **do NOT write to `~/.claude/skills/`** — that path is read-only
 
 1. Write the SKILL.md (and, if it needs one, `scripts/<name>.sh` and/or `references/<topic>.md`) to `dotfiles/bosko/claude/skills/<name>/`.
 2. `git add dotfiles/bosko/claude/skills/<name>/` — flake evaluation only sees tracked files, so the new file(s) must be staged before a dry-run/rebuild. No `bosko-claude.nix`/`files.nix` edit is needed; every skill directory is a recursive dir link, so there is no single-file vs. recursive distinction to choose between.
-3. Optionally run `nh os boot /home/bosko/NixOS --dry` (or the `nixos-dry-run` skill) to confirm the config still evaluates. The `~/.claude/skills/<name>/` symlink appears only **after** a real rebuild (`nh os boot /home/bosko/NixOS`).
+3. Optionally run `nh os boot /home/bosko/NixOS --dry` (or the `nixos-dry-run` skill) to confirm the config still evaluates. The `~/.claude/skills/<name>/` symlink appears only **after** a real rebuild (`nh os boot /home/bosko/NixOS`) and a reboot.

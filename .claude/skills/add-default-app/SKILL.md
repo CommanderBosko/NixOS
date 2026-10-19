@@ -56,7 +56,7 @@ Run, in order:
 
 ## Step 5 — Report and remind
 
-Report the verified result to the user. Remind them a rebuild (`rebuild` + reboot, or a live `nh os switch` if they want to test immediately) is needed to activate it, and offer to run the `git-commit` skill.
+Report the verified result to the user. Remind them a rebuild (`rebuild-boot` + reboot, or a live `nh os switch` if they want to test immediately) is needed to activate it, and offer to run the `git-commit` skill.
 
 ## Scripts
 

@@ -56,10 +56,10 @@ Do not proceed until the target module file exists.
 
 ## Step 3 — Show current and proposed state
 
-Resolve the host's current DE module by running (relative to this skill's directory):
+Resolve the host's current DE module by running:
 
 ```bash
-scripts/current-de.sh <host> <target>
+bash /home/bosko/NixOS/.claude/skills/switch-de/scripts/current-de.sh <host> <target>
 ```
 
 This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ... }` block (so it can't accidentally match another host's DE line), and prints labeled lines: `current:` (the module name), `line:` (the `flake.nix:<n>` line holding it — Step 6 edits this line), an optional `shared-helper:` line, and `sddm-note:` (Step 4's trigger).
@@ -71,7 +71,7 @@ This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ...
   Current:  "${self}/modules/desktop-environments/<current>.nix"   (<line>)
   Proposed: "${self}/modules/desktop-environments/<target>.nix"
   ```
-- **Exit 0 with a `shared-helper:` line** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which `gaming`, `gaming-amd` and `vpn` all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
+- **Exit 0 with a `shared-helper:` line** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which the `gaming` host and the `lib.moduleSmoke.{amd,vpn}` smoke-eval targets (not hosts) all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
 - **Exit 1** — no DE module found for that host (e.g. a headless host slipped through, or the host block wasn't found). Stop and explain what the script reported; ask the user to verify.
 - **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates with their `flake.nix` lines). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
 
@@ -81,7 +81,7 @@ Relay the `sddm-note:` line from Step 3. If it says `yes — <reasons>`, show th
 
 > The target DE may need a different `services.displayManager.defaultSession` value in `hosts/<host>/environment.nix`. If the rebuild fails or SDDM loops, check and update that option to match the new DE's session name. You can also temporarily comment it out to let SDDM auto-detect.
 
-If it says `no`, omit the note. (The script says `yes` when the host sets `defaultSession`, when either DE is a bare Wayland compositor such as `niri` or `hyprland`, or when the display-server family changes or is unknown — see the header of `scripts/current-de.sh`.)
+If it says `no`, omit the note. (The script says `yes` when the host sets `defaultSession`, when either DE is a bare Wayland compositor such as `niri` or `hyprland`, or when the display-server family changes or is unknown — see the header of `/home/bosko/NixOS/.claude/skills/switch-de/scripts/current-de.sh`.)
 
 ## Step 5 — Confirm before editing
 
@@ -112,7 +112,7 @@ After the edit succeeds, show the user the updated line in context (the two line
 Then remind them of the next steps:
 
 > 1. Preview the change: `/nixos-dry-run`
-> 2. If the dry-run looks good, run `rebuild` in your terminal to apply (requires TTY/sudo), then reboot to activate the new DE
+> 2. If the dry-run looks good, run `rebuild-boot` in your terminal (requires TTY/sudo), then reboot to activate the new DE
 > 3. After rebooting, run `/wayland-screenshot` to confirm the new DE actually came up looking right
 > 4. Commit the change: `/git-commit`
 
@@ -120,7 +120,7 @@ Then remind them of the next steps:
 
 ## Scripts
 
-- `scripts/current-de.sh <host> [target-de]` — parses `flake.nix` scoped to the named host's block and prints `current:` (DE module name), `line:` (`flake.nix:<n>` to edit), `shared-helper:` (only when the line lives in a shared helper such as `gamingModules`), and `sddm-note:` (Step 4's trigger; `unknown` if no target was passed). Exit 0 = found, exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
+- `bash /home/bosko/NixOS/.claude/skills/switch-de/scripts/current-de.sh <host> [target-de]` — parses `flake.nix` scoped to the named host's block and prints `current:` (DE module name), `line:` (`flake.nix:<n>` to edit), `shared-helper:` (only when the line lives in a shared helper such as `gamingModules`), and `sddm-note:` (Step 4's trigger; `unknown` if no target was passed). Exit 0 = found, exit 1 = not found, exit 2 = ambiguous (multiple DE lines in that host's block — see Step 3).
 
 ## Key constraints
 

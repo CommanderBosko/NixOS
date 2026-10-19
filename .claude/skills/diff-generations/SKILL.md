@@ -15,10 +15,10 @@ Show what changed between the current active NixOS generation and the previous o
 .claude/skills/diff-generations/scripts/diff-generations.sh
 ```
 
-The script resolves the previous generation — the highest generation number strictly below the current one that still exists on disk — and runs `nix store diff-closures <previous> /run/current-system`, then adds the kernel/initrd reboot line Step 3 relays. Read-only and safe. Exit codes:
+The script resolves the previous generation — the highest generation number strictly below the current one that still exists on disk — and runs `nix store diff-closures <previous> <current>` on the two `system-<N>-link` profile links, then adds the kernel/initrd reboot line Step 3 relays. Read-only and safe. Exit codes:
 - `0` — diff printed (parse it in Step 2).
 - `2` — no previous generation exists (e.g. the first build); tell the user there's nothing to compare and stop.
-- `1` — `/run/current-system` is missing or the current generation number couldn't be resolved; report the error and stop.
+- `1` — the current generation number couldn't be resolved from `/nix/var/nix/profiles/system`; report the error and stop.
 
 ## Step 2 — Present the output
 
@@ -57,4 +57,4 @@ No such line means no reboot note.
 ## Key facts
 
 - Working directory: `/home/bosko/NixOS`. Read-only — safe to run any time.
-- "Current" generation is `/run/current-system`; the script picks the previous generation automatically (current number − 1, skipping any that were garbage-collected in between). The old "`system-1-link` = previous" shortcut was wrong — that link is literally generation 1.
+- "Current" generation is the newest profile generation (`/nix/var/nix/profiles/system`), which after `nh os boot` is the staged one, not yet running; the script picks the previous generation automatically (current number − 1, skipping any that were garbage-collected in between). The old "`system-1-link` = previous" shortcut was wrong — that link is literally generation 1.

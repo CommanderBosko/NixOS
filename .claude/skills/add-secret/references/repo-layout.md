@@ -20,4 +20,6 @@
   trusting a hardcoded enumeration here.
 - **Admin key**: `~/.config/sops/age/keys.txt` (NOT in repo). Required for all edits.
   Export it for every sops command: `export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt`.
-- Tooling isn't installed system-wide — run sops via `nix shell nixpkgs#sops --command …`.
+- `sops` is installed on every host (`modules/sops.nix` adds `pkgs.sops` to
+  `environment.systemPackages`), so call it directly; `nix shell nixpkgs#sops --command …`
+  still works but isn't required.

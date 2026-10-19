@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # fleet-status.sh — read-only health sweep across all NixOS hosts.
 # For each host: current generation, NixOS version, failed units, uptime,
-# and whether a reboot is pending (booted vs current system differ).
+# whether a generation is staged (profile vs current system differ), and whether
+# a reboot is pending (booted vs current system kernel/initrd differ).
 # Then WireGuard handshake freshness, read from vpn-server (passwordless sudo).
 # Safe: read-only. No sudo on the desktops (all probes are unprivileged).
 #
@@ -22,6 +23,8 @@ SELF="$(hostname)"
 # Unprivileged probe run on each host; emits one pipe-delimited line.
 # "staged=YES" means the latest built generation isn't the running one — a rebuild was
 # staged (e.g. via `nh os boot`) but not yet activated/rebooted.
+# "reboot=YES" means the running system was switched to a different kernel or initrd than
+# the one it booted with — only a reboot activates it.
 probe() {
   cat <<'REMOTE'
 gen=$(readlink /nix/var/nix/profiles/system 2>/dev/null | sed 's/.*system-//;s/-link//')
@@ -34,7 +37,11 @@ if [ "$(readlink -f /run/current-system 2>/dev/null)" = "$(readlink -f /nix/var/
 else
   staged=YES
 fi
-echo "gen=${gen:-?}|ver=${ver:-?}|failed=${failed:-none}|up=${up}|staged=${staged}"
+reboot=no
+for f in kernel initrd; do
+  [ "$(readlink -f /run/booted-system/$f 2>/dev/null)" = "$(readlink -f /run/current-system/$f 2>/dev/null)" ] || reboot=YES
+done
+echo "gen=${gen:-?}|ver=${ver:-?}|failed=${failed:-none}|up=${up}|staged=${staged}|reboot=${reboot}"
 REMOTE
 }
 

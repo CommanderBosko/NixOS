@@ -10,7 +10,7 @@
 #             prior version of this script built a file:// link directly,
 #             but Discord never renders that scheme as clickable, on any
 #             device -- confirmed 2026-09-04, not fixable via payload
-#             formatting, see the SKILL.md Gotchas entry before reverting).
+#             formatting, see references/why-artifact-not-file-link.md before reverting).
 #   summary   everything after the first argument, joined with spaces.
 #             Free text; gets truncated with a note if it would blow past
 #             Discord's message length cap.

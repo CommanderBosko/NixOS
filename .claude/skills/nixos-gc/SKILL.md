@@ -28,7 +28,7 @@ Wait for the response. If the user picks anything other than **Proceed**, abort 
 
 ### Step 3 — Preview what would be deleted (unprivileged, safe to run automatically)
 
-Run `scripts/gc-preview.sh` and show the user its output. It reads generation info directly from
+Run `/home/bosko/NixOS/.claude/skills/nixos-gc/scripts/gc-preview.sh` and show the user its output. It reads generation info directly from
 `/nix/var/nix/profiles/system-*-link` symlinks — no sudo required — so it's safe to run without
 hand-off, and gives an accurate preview of exactly which generations would be removed before
 anything privileged happens.
@@ -39,11 +39,11 @@ anything privileged happens.
 --delete-generations`, and `sudo nix-store --gc`. There is no NOPASSWD rule for `sudo` on the local desktop hosts (only vpn-server has passwordless sudo, and this skill never targets it),
 so running `scripts/gc.sh` directly via the Bash tool will fail with "a password is required" —
 don't attempt it and then report the failure. Instead, tell the user the exact command
-(`scripts/gc.sh`, or its full path) and ask them to run it themselves (suggest the `!` prefix).
+(`/home/bosko/NixOS/.claude/skills/nixos-gc/scripts/gc.sh`) and ask them to run it themselves (suggest the `!` prefix).
 
 ### Step 5 — Report results
 
-Once the user confirms it ran, re-run `scripts/gc-preview.sh` to confirm the old generations are
+Once the user confirms it ran, re-run `/home/bosko/NixOS/.claude/skills/nixos-gc/scripts/gc-preview.sh` to confirm the old generations are
 actually gone (its output will show only the 3 kept generations remaining). Ask the user for the
 disk-space-freed line from their own terminal output, since Claude never sees it directly.
 
@@ -54,6 +54,6 @@ disk-space-freed line from their own terminal output, since Claude never sees it
 ## Scripts
 
 ```
-scripts/gc-preview.sh   # unprivileged — safe to run automatically, preview only
-scripts/gc.sh           # privileged (sudo) — hand off to the user, never run directly
+/home/bosko/NixOS/.claude/skills/nixos-gc/scripts/gc-preview.sh   # unprivileged — safe to run automatically, preview only
+/home/bosko/NixOS/.claude/skills/nixos-gc/scripts/gc.sh           # privileged (sudo) — hand off to the user, never run directly
 ```

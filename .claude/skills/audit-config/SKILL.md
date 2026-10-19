@@ -56,7 +56,7 @@ Walk the config looking for genuine security regressions. Focus areas, in rough 
    Distinguish *option references* (e.g. `passwordFile = ...`, `.path`) from *literal embedded
    secrets*. Only literal embedded secrets are findings.
 2. **Hardening regressions** — verify the security.nix guarantees are still in force across hosts:
-   AppArmor enabled + `killUnconfinedConfinables`, audit daemon, PAM wheel enforcement for sudo,
+   AppArmor enabled (`killUnconfinedConfinables` intentionally false), audit daemon, PAM wheel enforcement for sudo,
    kexec disabled / kernel image protection, `kernel.randomize_va_space = 2` (full ASLR).
    Run `/home/bosko/NixOS/.claude/skills/audit-config/scripts/audit-sweep.sh --hardening` to
    collect every definition/override of those options, then judge them.

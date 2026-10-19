@@ -27,11 +27,11 @@ Parse from the user's request:
 ### 1. Resolve the host
 
 - If no host is given, or it's the machine you're running on, run the check battery **directly** via Bash.
-- If a remote host is named, resolve its SSH target from `/home/bosko/NixOS/.claude/hosts.json` via `bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>` (same resolver `ssh-host`/`journal` use), and prefix the script invocation with it.
+- If a remote host is named, resolve its SSH target from `/home/bosko/NixOS/.claude/hosts.json` via `bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>` (same resolver `ssh-host`/`journal` use) — call it `$T` — and feed the script to it over SSH in Step 2.
 
 ### 2. Run the check battery
 
-Run `scripts/printer-diagnose.sh [printer-name-pattern]` (relative to this skill's directory), prefixed with the resolved SSH command from Step 1 if remote. It checks, in order: avahi mDNS discovery (5s window), `ippfind`, `lpstat` permanent queues + device URIs, each queue's PPD NickName (the driver), `lpstat -e` discovered-but-unqueued printers, pending/completed jobs, the user's `~/.cups/lpoptions` default, `cups`/`avahi-daemon` state, and this boot's cups journal filtered to job/queue/error lines.
+Locally, run `/home/bosko/NixOS/.claude/skills/printer-diagnose/scripts/printer-diagnose.sh [printer-name-pattern]`. For a remote host, pipe the local script in, since that path doesn't exist on the remote: `ssh "$T" bash -s -- "<pattern>" < /home/bosko/NixOS/.claude/skills/printer-diagnose/scripts/printer-diagnose.sh`. It checks, in order: avahi mDNS discovery (5s window), `ippfind`, `lpstat` permanent queues + device URIs, each queue's PPD NickName (the driver), `lpstat -e` discovered-but-unqueued printers, pending/completed jobs, the user's `~/.cups/lpoptions` default, `cups`/`avahi-daemon` state, and this boot's cups journal filtered to job/queue/error lines.
 
 ### 3. Interpret and diagnose
 
@@ -73,4 +73,4 @@ Next step: run `sudo lpadmin -x Canon-TS9500-series` on gaming, then re-check lp
 
 ## Scripts
 
-- `scripts/printer-diagnose.sh [printer-name-pattern]` — runs the discovery/queue/driver/job/journal check battery (Step 2). Runs locally; the skill prefixes the whole invocation with the resolved SSH command for a remote host.
+- `scripts/printer-diagnose.sh [printer-name-pattern]` — runs the discovery/queue/driver/job/journal check battery (Step 2). Runs locally; for a remote host the skill pipes it over SSH (`ssh "$T" bash -s -- ... < <script>`, Step 2).

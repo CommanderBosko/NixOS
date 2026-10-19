@@ -49,7 +49,7 @@ Use those confirmed values in `match app-id=r#"^...$"#` and `open-on-output "...
 
 ## Step 4 — Flag cross-host caveats
 
-`niri-config.kdl` (binds) is shared across every niri host (the `"desktop": true` hosts in `.claude/hosts.json`). If the bind's command targets an app that isn't installed on all niri hosts, say so before finishing — check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` (shared across all desktop hosts) to tell which case applies. Example: a bind launching Steam/Lutris (gaming-only) will silently no-op on laptop and natalie-laptop.
+`niri-config.kdl` (binds) is shared across every niri host (the `"desktop": true` hosts in `.claude/hosts.json`). If the bind's command targets an app that isn't installed on all niri hosts, say so before finishing — check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` / `modules/flatpak.nix` (packages / flatpaks shared across all desktop hosts) vs each host's `environment.nix` (host-only extras) to tell which case applies. Example: a bind launching Steam/Lutris (gaming-only) will silently no-op on laptop and natalie-laptop.
 
 ## Step 5 — Verify
 
@@ -59,7 +59,7 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 If Step 3 added a window-rule (the bind opens an app pinned to a specific output/workspace), remind the user that overlay file only takes effect after a reboot — there's no live `nh os switch` in the normal flow here:
 
-> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 1. Rebuild (`rebuild-boot`) and reboot to activate the rule.
 > 2. After rebooting, run `/wayland-screenshot <app>` to confirm it opens on the intended output/workspace.
 > 3. Commit the change: `/git-commit`
 

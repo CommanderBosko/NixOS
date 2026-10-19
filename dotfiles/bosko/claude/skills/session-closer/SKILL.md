@@ -198,11 +198,18 @@ GitHub," unlike a bare "push" reaching `git-push` directly.)
 1. Stage the docs: `git add project-state.md README.md session-summary.md`
    (plus `session-summary-archive.md` and/or `project-state-archive.md` if you rotated,
    plus any files touched in Step 1).
-2. Commit: `git commit -m "chore(session): end-of-day close [DATE] — [brief summary]"`
+2. Commit with `git commit -F -` and a heredoc, never `-m` (it has no body to hold the trailer):
+   ```bash
+   git commit -F - <<'EOF'
+   chore(session): end-of-day close [DATE] — [brief summary]
+
+   Co-Authored-By: [model name] <noreply@anthropic.com>
+   EOF
+   ```
    End the commit message body with a `Co-Authored-By:` trailer using whatever model name the
    harness's own Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
    hardcode a specific model name here, it will drift the next time the underlying model changes.
-3. Push: `git push origin main` (never `--force`, never `--no-verify`).
+3. Push: `git push origin HEAD` (never `--force`, never `--no-verify`).
 4. Confirm the push succeeded and report the final commit hash.
 
 ---

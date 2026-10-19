@@ -12,13 +12,7 @@
 # generation | otherwise nix store diff-closures' own exit code.
 set -uo pipefail
 
-CURRENT="/run/current-system"
 PROFILES="/nix/var/nix/profiles"
-
-if [ ! -e "$CURRENT" ]; then
-  echo "ERROR: $CURRENT is missing or unreadable." >&2
-  exit 1
-fi
 
 cur_n=$(readlink "$PROFILES/system" 2>/dev/null | sed -n 's/^system-\([0-9]*\)-link$/\1/p')
 if [ -z "${cur_n:-}" ]; then
@@ -37,12 +31,15 @@ if [ -z "$prev_n" ]; then
   exit 2
 fi
 
+# Diff profile links, not /run/current-system: after `nh os boot` the newest
+# generation is staged but not running, and N-1 -> N must mean exactly that.
 prev="$PROFILES/system-${prev_n}-link"
+cur="$PROFILES/system-${cur_n}-link"
 echo "==> Diffing generation ${prev_n} -> ${cur_n}"
 echo "    $prev"
-echo "    $CURRENT"
+echo "    $cur"
 echo
-diff_out="$(nix store diff-closures "$prev" "$CURRENT")"
+diff_out="$(nix store diff-closures "$prev" "$cur")"
 rc=$?
 [ -n "$diff_out" ] && printf '%s\n' "$diff_out"
 [ "$rc" -ne 0 ] && exit "$rc"

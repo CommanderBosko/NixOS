@@ -1,6 +1,6 @@
 ---
 name: pinned-package-status-check
-description: Check whether a package tracked in the pinned-packages registry as held back pending an upstream fix has landed yet, and report whether the pin can be lifted. Use when the user says "check if the xwayland-satellite pin can be lifted", "has X been fixed upstream yet", "check pinned package status", "is the xwayland-satellite bug fixed yet", or "can we unpin X".
+description: Check whether a package tracked in the pinned-packages registry as held back pending an upstream fix has landed yet, and report whether the pin can be lifted. Use when the user says "check if the rtk pin can be lifted", "has X been fixed upstream yet", "check pinned package status", "is the rtk bug fixed yet", or "can we unpin X".
 ---
 
 # Pinned Package Status Check
@@ -9,7 +9,7 @@ Given a package tracked in the pinned-packages registry as pinned/waived pending
 
 ## Arguments
 
-- **package** (optional) — the specific pinned package to check (e.g. "xwayland-satellite"). If not given, present every `CURRENT` entry from the registry via the **AskUserQuestion** tool (one option per package, plus a "Check all" option) rather than asking in free prose — or check all of them directly if the user already asked generically ("check the pins").
+- **package** (optional) — the specific pinned package to check (e.g. "rtk"). If not given, present every `CURRENT` entry from the registry via the **AskUserQuestion** tool (one option per package, plus a "Check all" option) rather than asking in free prose — or check all of them directly if the user already asked generically ("check the pins").
 
 ## Steps
 
@@ -17,7 +17,7 @@ Given a package tracked in the pinned-packages registry as pinned/waived pending
 
 2. **Check nixpkgs' current version.** Use the `nixos` MCP server (`nix_versions`, or `nix` with `action: info`) to get the package's current version in the channel this repo tracks, and compare it against the pinned version.
 
-3. **Check the upstream issue/PR.** `WebFetch` the tracked URL from Step 1 — read its open/closed status and skim the latest comments for a fix landing, a maintainer confirmation, or a newer release called out as good.
+3. **Check the upstream issue/PR.** For a GitHub URL from Step 1, run `gh issue view <url> --json state,comments` (issue) or `gh pr view <url> --json state,mergedAt,comments` (PR) — not `WebFetch`, which undercounts comments/state on GitHub's JS-rendered pages; `WebFetch` only a non-GitHub tracker. Read its open/closed status and skim the latest comments for a fix landing, a maintainer confirmation, or a newer release called out as good.
 
 4. **Report a verdict:**
    - **Fix landed** (issue closed, or a newer release is confirmed good) — recommend lifting the pin, and offer to hand off to `bump-input`/`pin-input` to actually do it.

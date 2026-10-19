@@ -1,6 +1,6 @@
 ---
 name: skill-suggestion
-description: Analyze the current conversation, identify the most useful repeatable workflow, and build a skill for it. Use when the user says "skill-suggestion", "suggest a skill", "build me a useful skill", "what skill would help here", or "make a skill from this conversation".
+description: Analyze the current conversation, identify every repeatable workflow worth saving (ranked most useful first), and build a skill for each one approved. Use when the user says "skill-suggestion", "suggest a skill", "build me a useful skill", "what skill would help here", or "make a skill from this conversation".
 ---
 
 # Skill Suggestion

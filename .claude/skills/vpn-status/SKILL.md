@@ -15,7 +15,7 @@ None — it always targets `vpn-server`.
 
 ## Instructions
 
-1. Run `scripts/vpn-status.sh`. It SSHes to the server, runs `sudo wg show wg0 dump`, and does the
+1. Run `bash /home/bosko/NixOS/.claude/skills/vpn-status/scripts/vpn-status.sh`. It SSHes to the server, runs `sudo wg show wg0 dump`, and does the
    parsing itself: resolves each peer's public key to a host name via `.claude/hosts.json`
    `.vpn.peers` (a `publicKey → hostname` map; source of truth, shared with `fleet-status` — the
    script does **not** hardcode the roster), classifies each peer's connection status against fixed
@@ -40,5 +40,5 @@ None — it always targets `vpn-server`.
 ## Script
 
 ```
-scripts/vpn-status.sh
+bash /home/bosko/NixOS/.claude/skills/vpn-status/scripts/vpn-status.sh
 ```

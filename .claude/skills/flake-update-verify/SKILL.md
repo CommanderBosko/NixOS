@@ -66,8 +66,13 @@ explicit approval first — see the commit gate above.
    `flake.lock`. Run `git -C /home/bosko/NixOS status --porcelain`.
    - Done-rule: output empty. If dirty, stop and use the **AskUserQuestion** tool with
      options **Commit first** (hand off to `git-commit`, then re-check), **Stash first**
-     (`git stash -u`, then re-check), and **Abort** — don't ask in free prose, and do NOT
-     update on top of unrelated changes.
+     (`git -C /home/bosko/NixOS stash push -u -m "flake-update-verify-<ts>"`, then re-check),
+     and **Abort** — don't ask in free prose, and do NOT update on top of unrelated changes.
+     The stash stack is shared across worktrees and sessions, so never bare `git stash` /
+     `stash pop`: right after pushing, capture the entry's SHA from
+     `git -C /home/bosko/NixOS stash list --format='%H %gs'` (match the tag); once the Verification plan
+     passes, restore with `git -C /home/bosko/NixOS stash apply <sha>`, then drop that entry
+     (re-find its current `stash@{n}` by tag first).
 
 3. **Snapshot the current lock** — capture the pre-update lock for a clean restore path:
    note it is recoverable via `git -C /home/bosko/NixOS checkout -- flake.lock` (the tree
@@ -114,6 +119,8 @@ explicit approval first — see the commit gate above.
 
 Before declaring the run done, prove the overall done-rule holds:
 - `nix flake check` (the `flake-check` skill) passes against the final tree state.
+- `deep-eval-check` reports PASS for every host against the final tree state (the shallow
+  `flake-check` alone doesn't prove the hosts evaluate).
 - `git -C /home/bosko/NixOS status --porcelain` is empty (either committed or restored —
   never left dirty).
 - On the **committed** path: `git -C /home/bosko/NixOS status -sb` shows the branch is not

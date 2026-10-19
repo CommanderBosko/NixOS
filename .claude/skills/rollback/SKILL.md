@@ -50,8 +50,10 @@ sudo nixos-rebuild switch --rollback
 That only goes back **one** generation. If the resolved target is *not* current minus 1 (the user passed a specific generation), hand off the targeted form instead — `nixos-rebuild switch --rollback` would silently ignore the target:
 
 ```bash
-sudo nh os rollback --to <N>
+nh os rollback --to <N>
 ```
+
+No `sudo` here: nh elevates itself (prompting for the password, hence still the `!` prefix) and panics if run as root.
 
 Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
 

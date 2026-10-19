@@ -27,7 +27,7 @@ niri msg outputs    # confirms real connector names, e.g. DP-1, HDMI-A-1
 niri msg windows    # confirms the real App ID: of a running instance of the target app
 ```
 
-If the app isn't currently running, fall back to its known app-id (e.g. a flatpak app's niri app-id typically equals its flatpak ID verbatim — check `modules/desktop-apps.nix` or the host's `environment.nix` for the flatpak ID if needed).
+If the app isn't currently running, fall back to its known app-id (e.g. a flatpak app's niri app-id typically equals its flatpak ID verbatim — check `modules/flatpak.nix` or the host's `environment.nix` for the flatpak ID if needed).
 
 ## Step 2 — Find or choose a workspace slot
 
@@ -67,7 +67,7 @@ Show the user the exact new block(s) and confirm via the **AskUserQuestion** too
 
 ## Step 5 — Flag app-availability caveats
 
-Since the rule is written into the target host's own overlay file, there's no cross-host leakage risk to flag anymore. Still worth checking: is the target app actually installed on that host? Check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` (shared across all desktop hosts) vs the host's own `environment.nix`. If the app isn't installed on the target host, the rule will just never match anything there — say so before finishing.
+Since the rule is written into the target host's own overlay file, there's no cross-host leakage risk to flag anymore. Still worth checking: is the target app actually installed on that host? Check `modules/gaming.nix` (gaming-only packages) vs `modules/desktop-apps.nix` / `modules/flatpak.nix` (packages / flatpaks shared across all desktop hosts) vs the host's own `environment.nix`. If the app isn't installed on the target host, the rule will just never match anything there — say so before finishing.
 
 ## Step 6 — Verify
 
@@ -77,7 +77,7 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 This overlay file is Home-Manager-managed via a nix-store symlink, so the change only takes effect after a reboot — there's no live `nh os switch` in the normal flow here. Remind them:
 
-> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 1. Rebuild (`rebuild-boot`) and reboot to activate the rule.
 > 2. After rebooting, run `/wayland-screenshot <app>` to confirm it actually opens on the intended monitor/workspace.
 > 3. Commit the change: `/git-commit`
 
