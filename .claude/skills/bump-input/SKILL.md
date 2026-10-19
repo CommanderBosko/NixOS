@@ -15,7 +15,7 @@ Bump exactly **one** named flake input for `/home/bosko/NixOS` to its latest ups
 
 This skill is driven by a single input:
 
-- **input name** — the root flake input to bump (e.g. `nixpkgs`, `financeguru`, `dms`). If supplied in the user's prompt, match it case-insensitively against the live input list (Step 1) and skip the question. If omitted, ask which input via the AskUserQuestion tool, offering the live input names as options.
+- **input name** — the root flake input to bump (e.g. `nixpkgs`, `financeguru`, `dms`). If supplied in the user's prompt, match it case-insensitively against the live input list (Step 1) and skip the question. If omitted, ask which input via the AskUserQuestion tool, offering up to four live input names as options (see Step 1 for the cap).
 
 ## Step 1 — Resolve which input
 
@@ -27,7 +27,7 @@ the shared helper's `--names` mode (also used by `/pin-input`):
 ```
 
 - If the user named an input (e.g. "bump financeguru"), match it case-insensitively against that list and use the exact node name.
-- If they didn't name one, present the live list and ask which to bump via the **AskUserQuestion tool**, with one option per enumerated input name.
+- If they didn't name one, ask which to bump via the **AskUserQuestion tool**. The live list has about 12 names but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`nixpkgs` if it is in the list, then `home-manager`, `dms`, `sops-nix`, where present), and list every other live name in the question text so the user can type one via **Other**.
 - If the named input isn't in the list, say so and show the available names — do not guess.
 
 Note: inputs with `inputs.nixpkgs.follows = "nixpkgs"` (e.g. `home-manager`, `disko`) track `nixpkgs`'s revision. Bumping `nixpkgs` moves what those inputs see; bumping a follower on its own only moves that follower's own sources. Mention this when the user bumps `nixpkgs`.

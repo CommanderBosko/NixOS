@@ -25,7 +25,7 @@ Ask the user the following questions. You may batch them into a single message. 
 
 1. **Package name** — The `pkgs.*` attribute name (e.g. `ripgrep`, `kdePackages.kcalc`). If the user gave a plain English name, confirm the nixpkgs attribute before proceeding — you can reason from your knowledge of nixpkgs or ask the user to verify with `nix search nixpkgs <name>`.
 
-2. **Which host(s)** — One or more of the `.flakeHosts` in `.claude/hosts.json`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with one option per flake host plus `all` rather than free-form prose. If the user already named a host in their request, skip the question.
+2. **Which host(s)** — One or more of the `.flakeHosts` in `.claude/hosts.json`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with `multiSelect: true` and one option per flake host (`.flakeHosts` in `hosts.json`, enumerated live) rather than free-form prose. Selecting every host means `all`. The flake has four hosts, which is exactly the tool's option limit; if the list ever grows, offer the first four and name the rest in the question text so the user can type one via **Other**. If the user already named a host in their request, skip the question.
 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.

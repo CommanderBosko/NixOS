@@ -30,7 +30,7 @@ bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>
 
 It maps an alias to its host (each host's `.aliases` array in `hosts.json`) and looks up the SSH target there. On success (exit 0) it prints just the resolved SSH target — use it directly in Step 3. On failure (exit 1, no name given or not found) it prints the full host table (key, ssh, ip, notes) instead.
 
-If no host was named, or the resolver failed, present the pick via the **AskUserQuestion tool**, populating its options from the table the script just printed (one option per known host) rather than asking in free-form prose. Skip the question if the user already named a host in their request.
+If no host was named, or the resolver failed, present the pick via the **AskUserQuestion tool**, populating its options from the table the script just printed rather than asking in free-form prose. Skip the question if the user already named a host in their request. The table has up to six rows but the tool takes at most 4 options, so offer the four flake hosts (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`, read live from `.flakeHosts` in `hosts.json`), recommended first, and list any other table rows (e.g. `pi-hole`, `famdash`) in the question text so the user can type one via **Other**.
 
 ## Step 2 — Show the command
 
@@ -45,10 +45,10 @@ Connecting to <host>:
 
 Use the `.ssh` value resolved from hosts.json directly — no extra IP or key flag needed.
 
-**Interactive shell (no `<command>`) — hand off, don't run it via the Bash tool.** The Bash tool has no TTY, so an interactive `ssh` session can't run there. Print the exact command and ask the user to run it themselves (suggest the `!` prefix, or their own terminal for a long session):
+**Interactive shell (no `<command>`) — hand off, don't run it via the Bash tool.** The Bash tool has no TTY, so an interactive `ssh` session can't run there. The `!` prefix doesn't help: it also gives no TTY, so interactive `ssh` (and anything that prompts, like `sudo`) fails. Print the exact command and ask the user to run it in their own separate terminal, outside Claude Code:
 
 ```bash
-! ssh <resolved .ssh>
+ssh <resolved .ssh>
 ```
 
 **One-shot command — run it via the Bash tool**, quoting the remote command:
