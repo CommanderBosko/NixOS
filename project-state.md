@@ -475,7 +475,7 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 3. Session 123's Phase B + earlier rebuild backlog unchanged.
 
 **Session 123 next steps:**
-1. **Sidekick Phase B** when ready: add `adhd-assistant` flake input + `hosts/gaming/adhd-assistant.nix` + `adhd-assistant-env` sops secret (VAPID keys need the app's `gen-vapid`, milestone M2) + CI deploy key. Then remove the temporary `--operator=bosko` line.
+1. **Sidekick Phase B** when ready: add `sidekick` flake input + `hosts/gaming/sidekick.nix` + `sidekick-env` sops secret (VAPID keys need the app's `gen-vapid`, milestone M2) + CI deploy key. Then remove the temporary `--operator=bosko` line.
 2. Rebuild backlog from earlier sessions is unchanged.
 
 **Session 120 next steps:**
