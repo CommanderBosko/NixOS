@@ -39,8 +39,12 @@ jobs:
       # the toplevel is a derivation without forcing its full eval) — a broken
       # package deep in systemPackages sails through it. Proven 2026-07-02:
       # flake check passed while every desktop host failed to evaluate.
+      # No --no-build: that flag sets Nix read-only, so filtered sources (e.g.
+      # hermes-agent's pythonSrc) are never written to the store and their
+      # eval-time reads fail on a fresh runner. Nothing is built here anyway:
+      # nixosConfigurations are only evaluated unless --build-all is passed.
       - name: nix flake check
-        run: nix flake check --no-build
+        run: nix flake check
 
       # The real gate: force the FULL system derivation of every host in
       # nixosConfigurations. Eval-only, no builds; cross-arch is fine —
