@@ -6,9 +6,10 @@ cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # --- Project-specific configuration (filled in at generation time) ---------
 
-# Pathspecs excluded from plaintext-pattern scans. Always exclude this skill's own
-# directory (its docs legitimately contain example secret patterns) plus whatever
-# the project's encrypted-secrets directory is, if any.
+# Pathspecs excluded from plaintext-pattern scans. Always exclude only the generated
+# skill's own directory (.claude/skills/secret-scan/ — its docs legitimately contain
+# example secret patterns), plus whatever the project's encrypted-secrets directory is,
+# if any. Other skill directories stay scanned.
 EXCLUDE=(<EXCLUDE_PATHSPECS>)
 
 # Encrypted-secret integrity check (pass 2). If the project has no dedicated
@@ -90,9 +91,13 @@ else
     [ -z "$desc_pat" ] && continue
     desc=${desc_pat%%::*}; pat=${desc_pat#*::}
     # shellcheck disable=SC2086
-    out=$(git grep -lIE -e "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null | head -20)
+    out=$(git grep -lIE -e "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null)
     if [ -n "$out" ]; then
-      hit "$desc found in history (commit:path):"; echo "$out" | sed 's/^/      /'; histhit=1
+      n=$(printf '%s\n' "$out" | wc -l)
+      hit "$desc found in history (commit:path):"
+      printf '%s\n' "$out" | head -20 | sed 's/^/      /'
+      if [ "$n" -gt 20 ]; then echo "      ... truncated: showing 20 of $n hits (run git grep directly for the rest)"; fi
+      histhit=1
     fi
   done
   [ "$histhit" -eq 0 ] && echo "  clean"
@@ -104,7 +109,7 @@ if [ "${#GITIGNORE_PATTERNS[@]}" -eq 0 ]; then
   echo "  skip — no patterns configured"
 else
   for p in "${GITIGNORE_PATTERNS[@]}"; do
-    if grep -qF "$p" .gitignore 2>/dev/null; then echo "  ok   ignores $p"; else echo "  note missing $p in .gitignore"; fi
+    if grep -qxF "$p" .gitignore 2>/dev/null; then echo "  ok   ignores $p"; else echo "  note missing $p in .gitignore"; fi
   done
 fi
 

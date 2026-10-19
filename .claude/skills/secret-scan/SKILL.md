@@ -1,6 +1,6 @@
 ---
 name: secret-scan
-description: Triggers when the user says "secret scan", "scan for secrets", "check for leaked secrets", "is it safe to push", "any secrets in the repo", or "pre-public check". Read-only scan of the working tree and full git history for plaintext secrets, tuned to this repo's sops setup.
+description: Triggers when the user says "secret scan", "scan for secrets", "check for leaked secrets", "any secrets in the repo", or "pre-public check". Read-only scan of the working tree and full git history for plaintext secrets, tuned to this repo's sops setup.
 model: haiku
 version: 0.1.0
 ---
@@ -24,8 +24,9 @@ None.
 - **`secrets/`** holds sops-**encrypted** files — expected, not flagged. The scan instead
   verifies each is genuinely encrypted (a `secrets/*.yaml` missing the `sops:`/`ENC[`
   markers would be an accidental plaintext commit — that IS flagged).
-- **`.claude/skills/`** is excluded from pattern matching because skill docs (including this
-  one) legitimately contain example secret strings.
+- **`.claude/skills/secret-scan/`** (this skill's own directory) is excluded from pattern
+  matching because its docs and patterns legitimately contain example secret strings. Other
+  skill files, including scripts, are scanned.
 - **Intentional non-secrets are not flagged:** the WireGuard endpoint IP (`.vpn.endpoint`
   in `.claude/hosts.json`) and all SSH/WireGuard *public* keys are public by nature.
 
@@ -34,7 +35,7 @@ None.
 1. Run `/home/bosko/NixOS/.claude/skills/secret-scan/scripts/secret-scan.sh`. It performs four passes:
    - **Working tree** — high-signal patterns (private-key blocks, age secret keys, unix
      password hashes, inline WireGuard private keys, GitHub/AWS tokens) across tracked
-     files, excluding `secrets/` and `.claude/skills/`.
+     files, excluding `secrets/` and `.claude/skills/secret-scan/`.
    - **sops integrity** — every `secrets/*.yaml` must contain `ENC[` and a `sops:` block.
    - **Git history** — the worst patterns across *all commits* (catches secrets that were
      committed then removed but still live in history). Prints `commit:path` hits.

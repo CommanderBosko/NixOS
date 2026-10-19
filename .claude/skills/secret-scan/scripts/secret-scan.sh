@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # secret-scan.sh — read-only scan for leaked secrets in the working tree and git history.
-# Tuned for this repo: secrets/ holds sops-ENCRYPTED files (expected), .claude/skills/
-# holds documentation that mentions secret patterns (excluded to avoid self-matches).
+# Tuned for this repo: secrets/ holds sops-ENCRYPTED files (expected), and this skill's own
+# directory holds docs/patterns that mention secret patterns (excluded to avoid self-matches).
 # Intentional non-secrets (endpoint IP, SSH/WG *public* keys) are NOT flagged.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # Pathspecs excluded from plaintext-pattern scans:
-#   secrets/        — sops-encrypted on purpose
-#   .claude/skills/ — skill docs legitimately contain example secret patterns
-EXCLUDE=(':!secrets/' ':!.claude/skills/')
+#   secrets/                  — sops-encrypted on purpose
+#   .claude/skills/secret-scan/ — this skill's own docs/patterns; other skill scripts stay scanned
+EXCLUDE=(':!secrets/' ':!.claude/skills/secret-scan/')
 
 # High-signal patterns (tight enough that doc placeholders like "$6$…" don't match).
 PRIV_BLOCK='-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'
@@ -25,7 +25,7 @@ hit() { findings=$((findings+1)); printf '  [!] %s\n' "$1"; }
 echo "==> Secret scan — $(git rev-parse --short HEAD) ($(date '+%H:%M:%S'))"
 
 echo
-echo "-- 1. Working tree (tracked files, excluding secrets/ and .claude/skills/) --"
+echo "-- 1. Working tree (tracked files, excluding secrets/ and .claude/skills/secret-scan/) --"
 for desc_pat in \
   "private key block::$PRIV_BLOCK" \
   "age secret key::$AGE_SECRET" \
@@ -53,7 +53,7 @@ done < <(git ls-files 'secrets/*.yaml' 2>/dev/null)
 [ "$intacterr" -eq 0 ] && echo "  all encrypted"
 
 echo
-echo "-- 3. Git history (all commits, excluding secrets/, .claude/skills/, and refs/stash) --"
+echo "-- 3. Git history (all commits, excluding secrets/, .claude/skills/secret-scan/, and refs/stash) --"
 echo "     (scanning $(git rev-list --exclude=refs/stash --all --count) commits; this can take a moment)"
 # refs/stash is deliberately excluded: git push never transmits it, so a stash-only hit
 # is a local WIP leftover, not a public exposure — including it here caused a false
@@ -72,9 +72,13 @@ for desc_pat in \
   "inline WireGuard private key::$WG_INLINE"; do
   desc=${desc_pat%%::*}; pat=${desc_pat#*::}
   # shellcheck disable=SC2086
-  out=$(git grep -lIE -e "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null | head -20)
+  out=$(git grep -lIE -e "$pat" $allrev -- "${EXCLUDE[@]}" 2>/dev/null)
   if [ -n "$out" ]; then
-    hit "$desc found in history (commit:path):"; echo "$out" | sed 's/^/      /'; histhit=1
+    n=$(printf '%s\n' "$out" | wc -l)
+    hit "$desc found in history (commit:path):"
+    printf '%s\n' "$out" | head -20 | sed 's/^/      /'
+    if [ "$n" -gt 20 ]; then echo "      ... truncated: showing 20 of $n hits (run git grep directly for the rest)"; fi
+    histhit=1
   fi
 done
 [ "$histhit" -eq 0 ] && echo "  clean"
@@ -82,7 +86,7 @@ done
 echo
 echo "-- 4. .gitignore coverage (informational) --"
 for p in '*.key' '*.pem' '*.age' '.env'; do
-  if grep -qF "$p" .gitignore 2>/dev/null; then echo "  ok   ignores $p"; else echo "  note missing $p in .gitignore"; fi
+  if grep -qxF "$p" .gitignore 2>/dev/null; then echo "  ok   ignores $p"; else echo "  note missing $p in .gitignore"; fi
 done
 
 echo

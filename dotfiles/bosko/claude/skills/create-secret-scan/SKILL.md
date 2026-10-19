@@ -52,7 +52,7 @@ Ask these together as a numbered list. Where you can infer an answer from the re
 itself (see the detection hints), propose it and ask the user to confirm rather than
 asking blind.
 
-1. **Secret-management scheme** — ask via **AskUserQuestion** (put the scheme inferred from the detection hints first, marked Recommended; "Other" covers anything else). Options: sops/age, git-crypt/transcrypt/blackbox, gitignored `.env`, cloud/vault manager, none/not sure. How does this project handle secrets today? Common
+1. **Secret-management scheme** — ask via **AskUserQuestion** with at most 4 options (put the scheme inferred from the detection hints first, marked Recommended). Offer sops/age, git-crypt/transcrypt/blackbox, gitignored `.env`, and cloud/vault manager as the options. The question text must also name "none / not sure" so "Other" can take it (and any scheme not listed). How does this project handle secrets today? Common
    answers: no scheme / plain env vars, a gitignored `.env` file, an encrypted directory
    (sops, git-crypt, transcrypt, blackbox), a cloud/vault secrets manager (referenced by
    ID, not stored in-repo), or "not sure." Detection hints: grep for `sops:` / `ENC[` in
@@ -105,8 +105,9 @@ interview, and write the results:
 2. **`assets/secret-scan-script-template.sh`** (relative to this skill's directory) —
    the entire file **is** the script template (no markers needed, it's already valid
    bash apart from the placeholders). Placeholders: `<EXCLUDE_PATHSPECS>` (bash array
-   elements, always include `':!.claude/skills/'` plus the project's own excludes, git
-   pathspec syntax like `':!secrets/'`), `<ENCRYPTED_GLOB>` / `<ENCRYPTED_MARKERS>`
+   elements, always include only the generated skill's own directory,
+   `':!.claude/skills/secret-scan/'` (not all of `.claude/skills/`, so other skill scripts
+   stay scanned), plus the project's own excludes, git pathspec syntax like `':!secrets/'`), `<ENCRYPTED_GLOB>` / `<ENCRYPTED_MARKERS>`
    (empty strings if no scheme), `<SCAN_HISTORY>` ("yes"/"no"), `<EXTRA_PATTERNS>` (bash
    array elements, `"description::ERE-pattern"` format, empty if none), and
    `<GITIGNORE_PATTERNS>` (bash array elements, quoted globs).
