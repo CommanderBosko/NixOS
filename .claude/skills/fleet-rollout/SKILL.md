@@ -49,7 +49,9 @@ before it reaches the next.
 
 Every host in scope is on the **new generation** (matching the current flake), reports
 **zero failed systemd units**, has **no reboot-pending kernel/initrd mismatch**, and
-`vpn-server` shows a **fresh WireGuard handshake** (< 3 min). If any host fails, the run
+`vpn-server` shows a **fresh WireGuard handshake** (< 3 min) — but only while the tunnel is in
+the flake (`.claude/lib/wg-tunnel-in-flake.sh` exits 0; while `modules/vpn.nix` is commented out,
+the handshake check is skipped, not failed). If any host fails, the run
 is blocked at that host and the rest are NOT touched.
 
 ## Host order
@@ -105,7 +107,9 @@ current host passes its health sweep.**
    required to read the password." Hand off instead; this pause applies even in Training
    Mode OFF (background: `references/vpn-server-switch.md`):
    - Local host: print `nh os switch /home/bosko/NixOS` and ask the user to run it
-     themselves (suggest the `!` prefix). Wait for their confirmation it completed.
+     in their own separate terminal. Don't suggest the `!` prefix: it gives sudo no TTY,
+     so the password prompt fails ("a terminal is required to read the password").
+     Wait for their confirmation it completed.
    - Remote desktop host: print
      `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <ssh-target>` and
      hand it off the same way.
@@ -124,7 +128,9 @@ current host passes its health sweep.**
    - New generation matches the current flake, and `staged` is `no` (the built generation is
      the running one — not staged-but-not-activated).
    - `failed` is `none` (no failed systemd units).
-   - For `vpn-server` only: its WireGuard handshake is fresh (< 3 min old).
+   - For `vpn-server` only, and only while `.claude/lib/wg-tunnel-in-flake.sh` exits 0: its
+     WireGuard handshake is fresh (< 3 min old). When the tunnel is out of the flake, the sweep
+     prints `WireGuard: skipped (not in flake)` and that check is not applied.
    - Done-rule: all of the above pass for that host's row. If any fail, **stop the whole loop**
      at this host, record it, and surface the `rollback` skill as the remediation (do not
      auto-rollback). Advance to the next host only on full green.
@@ -139,7 +145,8 @@ hosts in scope (not just the last one touched):
 - Each host's `/run/current-system` derivation matches the current flake build.
 - `systemctl --failed` empty on every host (sweep via `fleet-status` or `ssh ... --failed`).
 - No host reports reboot-pending.
-- `vpn-server` WireGuard handshake is fresh.
+- `vpn-server` WireGuard handshake is fresh — only if `.claude/lib/wg-tunnel-in-flake.sh` exits 0;
+  otherwise the sweep reports the WireGuard section as skipped and this check is not applicable.
 If any check fails, the run is NOT done — record it in the Memory file and stop.
 
 ## End-of-run: write two files (ALWAYS)

@@ -27,7 +27,9 @@ None — this skill takes no user-supplied arguments.
      staged, e.g. via `nh os boot`, but not yet activated/rebooted), else `no`
    - **reboot** — `YES` if `/run/booted-system`'s kernel or initrd differs from
      `/run/current-system`'s (a switch changed them; only a reboot activates them), else `no`
-   - Then **WireGuard handshakes** for each client, read from vpn-server.
+   - Then **WireGuard handshakes** for each client, read from vpn-server. While `modules/vpn.nix`
+     is out of the flake (`.claude/lib/wg-tunnel-in-flake.sh` exits 1), the section is replaced
+     by `WireGuard: skipped (not in flake)` and nothing is read from vpn-server.
 
 2. Present a clean table, then a short interpretation. Example:
 

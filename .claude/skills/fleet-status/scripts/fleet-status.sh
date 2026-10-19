@@ -10,7 +10,8 @@
 # source of truth at .claude/hosts.json — do not re-hardcode them here.
 set -uo pipefail
 
-source /home/bosko/NixOS/.claude/lib/hosts.sh
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+source "$REPO/.claude/lib/hosts.sh"
 
 mapfile -t HOSTS < <(hosts_flake_names)
 declare -A SSH_TARGET
@@ -61,6 +62,12 @@ for h in "${HOSTS[@]}"; do
 done
 
 echo
+# The tunnel is out of the flake while vpn-server is Oracle-disabled (modules/vpn.nix
+# commented out of desktopModules), so there are no handshakes to read.
+if ! "$REPO/.claude/lib/wg-tunnel-in-flake.sh" "$REPO/flake.nix"; then
+  echo "==> WireGuard: skipped (not in flake)"
+  exit 0
+fi
 echo "==> WireGuard handshakes (from vpn-server)"
 raw=$(ssh -o BatchMode=yes -o ConnectTimeout=8 "$VPN_SSH" 'sudo wg show wg0 latest-handshakes' 2>/dev/null)
 if [ -z "${raw:-}" ]; then
