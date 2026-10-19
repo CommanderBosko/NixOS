@@ -36,7 +36,7 @@ List the available DE modules so the user can choose. Enumerate them **live** so
 ls /home/bosko/NixOS/modules/desktop-environments/*.nix | xargs -n1 basename | sed 's/.nix$//'
 ```
 
-These are the files in `modules/desktop-environments/`. If the user did not already name a target DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per available DE module) rather than free-form prose; skip the question if the user already supplied the target DE.
+These are the files in `modules/desktop-environments/`. If the user did not already name a target DE, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above rather than free-form prose; skip the question if the user already supplied the target DE. The enumeration has about 12 modules but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`niri` if it is in the list, then the next most likely live modules such as `hyprland`, `plasma`, `gnome`), and list every other enumerated module name in the question text so the user can type one via **Other**. Leave out the host's current DE if it is already known.
 
 Do not proceed to Step 2 until you have both answers.
 

@@ -15,7 +15,8 @@
 #     (first4...last4), never the full value.
 set -uo pipefail
 
-REPO=/home/bosko/NixOS
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 FILE="${1:-}"
 
 usage() {

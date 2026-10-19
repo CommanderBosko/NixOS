@@ -38,6 +38,8 @@
 # Prints one finding per line:
 #   DEAD_INDEX_LINK: MEMORY.md references <file> which does not exist
 #   WIKILINK_NEAR_MISS: <file> contains [[<slug>]] -- likely means <actual-file> (auto-fixable)
+#   WIKILINK_PREFIX_NEAR_MISS: <file> contains [[<slug>]] -- likely means <actual-file> (auto-fixable; differs only by a project_/feedback_/reference_/user_ filename prefix, exactly one file matches)
+#   WIKILINK_PREFIX_AMBIGUOUS: <file> contains [[<slug>]] matching several files once the prefix is stripped (informational only -- do NOT auto-fix)
 #   WIKILINK_UNRESOLVED: <file> contains [[<slug>]] with no matching file (informational only -- may be an intentional forward-reference per save-memory's own convention; do NOT auto-fix or delete)
 # Prints nothing if the dir doesn't exist or has no MEMORY.md (not an error --
 # plenty of projects have no memory system at all).
@@ -52,6 +54,11 @@ INDEX="$MEMORY_DIR/MEMORY.md"
 normalize() {
   # lowercase, collapse - and _ to the same char, for near-miss comparison
   echo "$1" | tr 'A-Z' 'a-z' | tr '-' '_'
+}
+
+strip_prefix() {
+  # drop a leading memory-type prefix (the filename convention, not part of the topic)
+  echo "$1" | sed -E 's/^(project|feedback|reference|user)_//'
 }
 
 # --- MEMORY.md index lines: - [Title](slug_name.md) — hook text ---
@@ -105,6 +112,23 @@ for f in "${existing_files[@]}"; do
     done
     if [ -n "$match" ]; then
       echo "WIKILINK_NEAR_MISS: $base contains [[$slug]] -- likely means $match (auto-fixable)"
+      continue
+    fi
+    # Second pass: same topic, different type prefix (e.g. [[land-prs-brief-reviewer]]
+    # -> project_land_prs_brief_reviewer). Auto-fix only when exactly one file matches.
+    stripped_slug="$(strip_prefix "$norm_slug")"
+    prefix_matches=()
+    for i in "${!existing_files[@]}"; do
+      if [ "$(strip_prefix "$(normalize "${existing_stems[$i]}")")" = "$stripped_slug" ]; then
+        prefix_matches+=("${existing_stems[$i]}.md")
+      elif [ -n "${existing_names[$i]}" ] && [ "$(strip_prefix "$(normalize "${existing_names[$i]}")")" = "$stripped_slug" ]; then
+        prefix_matches+=("${existing_stems[$i]}.md")
+      fi
+    done
+    if [ "${#prefix_matches[@]}" -eq 1 ]; then
+      echo "WIKILINK_PREFIX_NEAR_MISS: $base contains [[$slug]] -- likely means ${prefix_matches[0]} (auto-fixable: differs only by type prefix)"
+    elif [ "${#prefix_matches[@]}" -gt 1 ]; then
+      echo "WIKILINK_PREFIX_AMBIGUOUS: $base contains [[$slug]] matches ${#prefix_matches[@]} files once the type prefix is stripped (informational only -- do NOT auto-fix)"
     else
       echo "WIKILINK_UNRESOLVED: $base contains [[$slug]] with no matching file (informational only -- may be an intentional forward-reference per save-memory's own convention; do NOT auto-fix or delete)"
     fi

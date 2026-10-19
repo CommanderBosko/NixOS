@@ -46,7 +46,7 @@ A Canon queue with a Gutenprint/"Apollo" driver, or `Job completed` seconds afte
 
 ### 4. Propose the fix (never run it directly)
 
-Only `vpn-server` has passwordless sudo — every other host needs an interactive password the Bash tool can't supply, so hand privileged steps to the user via the `!` prefix rather than attempting them directly (even over SSH).
+Only `vpn-server` has passwordless sudo — every other host needs an interactive password the Bash tool can't supply, so hand privileged steps to the user to run in their own separate terminal rather than attempting them directly (even over SSH).
 
 - Bogus/duplicate queue: `sudo lpadmin -x <queue-name>` (e.g. `Canon-TS9500-series`). The declarative `Canon_TS9500_series` is re-asserted on every CUPS start, so never delete that one as a "fix".
 - Stale per-user default pointing at a deleted queue: `lpoptions -d Canon_TS9500_series` (as that user, no sudo).

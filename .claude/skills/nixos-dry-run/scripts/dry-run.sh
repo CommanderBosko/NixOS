@@ -3,7 +3,8 @@
 # Safe: read-only. Does not modify system state.
 set -uo pipefail
 
-FLAKE_PATH="/home/bosko/NixOS"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FLAKE_PATH="$(cd "$SKILL_DIR/../../.." && pwd)"
 
 echo "==> NixOS dry-run preview (no changes will be applied)"
 echo "    Flake: ${FLAKE_PATH}"

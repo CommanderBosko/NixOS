@@ -28,9 +28,12 @@ Resolve which DE module to check, in this order:
    ```bash
    .claude/skills/de-smoke-check/scripts/de-smoke-check.sh
    ```
-   Then ask which one to check via the **AskUserQuestion tool**, with one option per listed
-   module name — don't ask in free-form prose (matches `bump-input`'s equivalent
-   ambiguous-input pick-one).
+   Then ask which one to check via the **AskUserQuestion tool** — don't ask in free-form prose
+   (matches `bump-input`'s equivalent ambiguous-input pick-one). Offer at most 4 options: the
+   likeliest unwired modules, recommended first — `omarchy` (recommended), `hyprland`, `plasma`,
+   `gnome`. Name the remaining modules in the question text so the user can pick one via "Other":
+   `budgie`, `cinnamon`, `cosmic`, `mate`, `pantheon`, `wayfire`, `xfce` (and `niri`, which is
+   wired into the desktop hosts — prefer `nixos-dry-run` for it).
 
 ## Step 2 — Deep-evaluate the module's build graph
 
@@ -38,7 +41,7 @@ Resolve which DE module to check, in this order:
 .claude/skills/de-smoke-check/scripts/de-smoke-check.sh <name>
 ```
 
-This forces full evaluation of the laptop config with `<name>` swapped in as the DE — not just a shallow "is it a derivation" check. Allow up to 5 minutes (300000ms timeout). The script prints `PASS: <drv>` on success or `FAIL:` followed by the full error output on failure.
+This runs `bash .claude/lib/deep-eval.sh --set lib.deSmoke <name>`, which forces full evaluation of the laptop config with `<name>` swapped in as the DE — not just a shallow "is it a derivation" check. Allow up to 5 minutes (300000ms timeout). The script prints `PASS: <drv>` on success, and a per-member verdict line, or `FAIL:` followed by the full error output on failure.
 
 ## Step 3 — Report the result
 
@@ -47,12 +50,12 @@ This forces full evaluation of the laptop config with `<name>` swapped in as the
 
 ## Scripts
 
-- `.claude/skills/de-smoke-check/scripts/de-smoke-check.sh [module-name]` — with no argument, lists the available `lib.deSmoke` module names (Step 1's fallback). With a module name, runs the deep-eval and prints `PASS: <drv>` or `FAIL:` + the full error (Step 2), matching `deep-eval-check.sh`'s convention.
+- `.claude/skills/de-smoke-check/scripts/de-smoke-check.sh [module-name...]` — a wrapper that `exec`s `.claude/lib/deep-eval.sh --set lib.deSmoke`. With no argument it passes `--list` and prints the available `lib.deSmoke` module names (Step 1's fallback). With module names, it evaluates those and prints `PASS: <drv>` or `FAIL:` + the full error (Step 2).
 
 ## Key facts
 
-- Working directory: `/home/bosko/NixOS`
+- Run it from anywhere inside the repo (main checkout or a worktree); the script resolves its own repo root.
 - Read-only, safe to run anytime — it only evaluates, never builds or activates.
-- `lib.deSmoke` always swaps the target DE into the **laptop** host's other modules (`laptopModules` in `flake.nix`: hardware-configuration, environment.nix, nvidia, qbittorrent and shared-folder-client) — a failure could in rare cases stem from a laptop-specific interaction rather than the DE module itself, but for the common case (a typo, an unknown option, a missing package) this is exactly equivalent to what CI's weekly `de-smoke` job runs.
+- `lib.deSmoke` always swaps the target DE into the **laptop** host's other modules (`laptopModules` in `flake.nix`: hardware-configuration, environment.nix, nvidia, qbittorrent and shared-folder-client) — a failure could in rare cases stem from a laptop-specific interaction rather than the DE module itself, but for the common case (a typo, an unknown option, a missing package) this is the same check CI's weekly `de-smoke` job runs. That job has a second step, `deep-eval.sh --set lib.moduleSmoke` (the unused `amd` and `vpn` modules), which this skill does not cover.
 - This is the DE-module-specific counterpart to `deep-eval-check`, which deep-evaluates the four real hosts. Use `deep-eval-check` for hosts, `de-smoke-check` for unwired DE modules.
 - If the DE module is actually wired into a host, prefer `nixos-dry-run` / `deep-eval-check` on that host instead — `de-smoke-check` is specifically for the unwired case.

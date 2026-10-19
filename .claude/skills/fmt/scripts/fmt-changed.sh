@@ -3,7 +3,8 @@
 # (fallback nixpkgs-fmt). Prints which files ended up reformatted. Exits 0 on
 # a clean no-op; exits 1 only if no formatter is available.
 set -uo pipefail
-REPO="/home/bosko/NixOS"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 
 mapfile -t files < <(
   {

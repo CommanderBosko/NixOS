@@ -28,6 +28,9 @@
 
 set -uo pipefail
 
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
+
 usage() {
   echo "usage: journal.sh <service> [host] [-n N] [-f [--for SECONDS]]" >&2
   exit 2
@@ -78,7 +81,7 @@ if [ -z "$HOST" ]; then
   finish $?
 fi
 
-TARGET="$(bash /home/bosko/NixOS/.claude/lib/resolve-host.sh "$HOST")"
+TARGET="$(bash "$REPO/.claude/lib/resolve-host.sh" "$HOST")"
 STATUS=$?
 
 if [ "$STATUS" -ne 0 ]; then

@@ -33,7 +33,7 @@ Ask the user the following questions (you may batch them into a single message).
 
 3. **Purpose** — One sentence describing what this module configures. Used as the top comment in the file.
 
-4. **Hosts** — Which hosts will import this module? Present this pick via the **AskUserQuestion tool** (allow multi-select) rather than free-form prose, with one option per `.flakeHosts` entry in `.claude/hosts.json` — enumerate live, don't hardcode: `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json` — plus an `all desktop hosts` option (the `"desktop": true` hosts) and an `all hosts` option. This is informational — it determines where the import line goes in `flake.nix`. Skip the question if the user already named the host(s).
+4. **Hosts** — Which hosts will import this module? Present this pick via the **AskUserQuestion tool** with `multiSelect: true` rather than free-form prose, with one option per `.flakeHosts` entry in `.claude/hosts.json` — enumerate live, don't hardcode: `jq -r '.flakeHosts[]' /home/bosko/NixOS/.claude/hosts.json`. The flake has four hosts, which is exactly the tool's option limit. Selecting every host means "all hosts". For a desktop-only module, select only the `"desktop": true` hosts (not `vpn-server`). If the list ever grows past four, offer the first four and name the rest in the question text so the user can type one via **Other**. This is informational — it determines where the import line goes in `flake.nix`. Skip the question if the user already named the host(s).
 
 **Optional (ask only if relevant):**
 
@@ -45,7 +45,7 @@ Ask the user the following questions (you may batch them into a single message).
 
 8. **Home Manager config** — Does this module need to configure anything via `home-manager.users.<name>`? Present this as a pick-one via the **AskUserQuestion tool** (`Yes` / `No`) rather than free-form prose; if yes, ask which user(s) in the same follow-up. Skip the question if the user already said.
 
-9. **Flake inputs needed** — Does this module need access to a flake input (e.g. `inputs.dms`, `inputs.nix-flatpak`)? Present this as a pick-one via the **AskUserQuestion tool** (`Yes` / `No`) rather than free-form prose; if yes, ask which input in the same follow-up. Skip the question if the user already said.
+9. **Flake inputs needed** — Does this module need access to a flake input (e.g. `inputs.dms`, `inputs.nix-flatpak`)? Present this as a pick-one via the **AskUserQuestion tool** (`Yes` / `No`) rather than free-form prose; if yes, ask which input in the same follow-up, capped at four options (the likeliest, recommended first) with the other live input names listed in the question text so the user can type one via **Other** (same rule as `pin-input`). Skip the question if the user already said.
 
 ## Step 2 — Determine the correct file path
 

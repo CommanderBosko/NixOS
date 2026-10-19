@@ -49,7 +49,10 @@ For every project in the analysis file's project list (via `list-all-projects.sh
    ```bash
    ~/.claude/skills/improve-memory/scripts/find-memory-issues.sh <transcript-dir>/memory
    ```
-   Only `DEAD_INDEX_LINK` and `WIKILINK_NEAR_MISS` findings are real staleness —
+   Only `DEAD_INDEX_LINK`, `WIKILINK_NEAR_MISS` and `WIKILINK_PREFIX_NEAR_MISS` findings are real staleness —
+   (`WIKILINK_PREFIX_NEAR_MISS` = the link differs from a file only by a `project_` /
+   `feedback_` / `reference_` / `user_` filename prefix, and exactly one file matches;
+   `WIKILINK_PREFIX_AMBIGUOUS` = several files match, so it is informational only) —
    `WIKILINK_UNRESOLVED` is very often an **intentional** forward-reference
    (`save-memory`'s own convention: "a link whose target doesn't exist yet is fine; it
    marks something worth writing later"). Never auto-fix or even flag an `UNRESOLVED`
@@ -79,8 +82,8 @@ This boundary is the whole point of the skill — get it right, don't blur it.
   content (e.g. a "PENDING" note whose own linked memory shows it was already resolved
   weeks ago).
 - **Dead-file/link cleanup** — `DEAD_INDEX_LINK` findings (remove or fix the stale
-  `MEMORY.md` line) and `WIKILINK_NEAR_MISS` findings (fix the `[[slug]]` text to the
-  real filename). Never touch a `WIKILINK_UNRESOLVED` finding — see Step 2.2.
+  `MEMORY.md` line) and `WIKILINK_NEAR_MISS` / `WIKILINK_PREFIX_NEAR_MISS` findings (fix the
+  `[[slug]]` text to the real filename). Never touch a `WIKILINK_UNRESOLVED` finding — see Step 2.2.
 
 ### Flag tier (never auto-applied — needs `Status: APPROVED`)
 
@@ -154,7 +157,7 @@ apply them.
 ## Gotchas
 
 - **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
-- **A `WIKILINK_UNRESOLVED` finding is not a bug** — only `WIKILINK_NEAR_MISS` is a real
+- **A `WIKILINK_UNRESOLVED` finding is not a bug** — only `WIKILINK_NEAR_MISS` and `WIKILINK_PREFIX_NEAR_MISS` are real
   staleness fix; never touch unresolved links. See `references/classification.md` for why
   and for the 2026-09-04 check of the classification method.
 - **Don't blur the CLAUDE.md/contradiction/deletion line into auto-apply "for convenience"

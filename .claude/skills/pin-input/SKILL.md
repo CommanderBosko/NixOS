@@ -50,7 +50,7 @@ It prints one aligned line per root input — `<name>  <original url, e.g. githu
 
 ## Step 2 — Ask which input and what to pin it to
 
-Ask which input to pin via the **AskUserQuestion tool**, offering one option per name from the live input list enumerated above. Then ask what to pin it to:
+Ask which input to pin via the **AskUserQuestion tool**. The live list above has about 12 names but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`nixpkgs` if it is in the list, then `home-manager`, `dms`, `sops-nix`, where present), and list every other live name in the question text so the user can type one via **Other**. Then ask what to pin it to:
 
 > What would you like to pin it to? Options:
 >   - A full commit rev (40-char SHA), e.g. `abc123def456...`
@@ -114,6 +114,15 @@ nix flake lock \
   --override-input nixpkgs github:nixos/nixpkgs/abc123def456 \
   --flake /home/bosko/NixOS
 ```
+
+Then record the pin so `/update` can see it. The lock alone can't show an override pin:
+
+```bash
+echo "<name> <locked rev> <short reason>" >> /home/bosko/NixOS/.claude/temp-pins
+```
+
+Use the full locked rev from `show-pin-state.sh`. Commit `.claude/temp-pins` together with
+`flake.lock`. To lift the pin later, delete the line.
 
 ### Permanent pin (edit flake.nix + sync lock)
 

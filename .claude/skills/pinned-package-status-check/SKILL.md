@@ -9,7 +9,7 @@ Given a package tracked in the pinned-packages registry as pinned/waived pending
 
 ## Arguments
 
-- **package** (optional) — the specific pinned package to check (e.g. "rtk"). If not given, present every `CURRENT` entry from the registry via the **AskUserQuestion** tool (one option per package, plus a "Check all" option) rather than asking in free prose — or check all of them directly if the user already asked generically ("check the pins").
+- **package** (optional) — the specific pinned package to check (e.g. "rtk"). If not given, present the `CURRENT` entries from the registry via the **AskUserQuestion** tool, capped at four options: "Check all" first (recommended), then up to three packages (most recently pinned first), with any remaining `CURRENT` package names listed in the question text so the user can type one via **Other** (rather than asking in free prose), or check all of them directly if the user already asked generically ("check the pins").
 
 ## Steps
 

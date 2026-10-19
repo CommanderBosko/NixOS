@@ -9,7 +9,9 @@
 # of truth at .claude/hosts.json — do not re-hardcode either here.
 set -euo pipefail
 
-source /home/bosko/NixOS/.claude/lib/hosts.sh
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
+source "$REPO/.claude/lib/hosts.sh"
 VPN_SSH="$(hosts_ssh vpn-server)"
 
 echo "==> WireGuard VPN status — ${VPN_SSH}"

@@ -19,7 +19,8 @@ set -uo pipefail
 
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
-REPO=/home/bosko/NixOS
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 MODE="${1:-}"
 FILE="${2:-}"
 

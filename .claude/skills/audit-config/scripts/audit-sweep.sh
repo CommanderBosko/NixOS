@@ -7,7 +7,8 @@
 # guarantee (and any override of it) so the model can judge regressions.
 set -uo pipefail
 
-REPO=/home/bosko/NixOS
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 
 echo "== secret-pattern sweep (*.nix) =="
 echo "# Triage: distinguish OPTION REFERENCES (passwordFile=, .path) from LITERAL embedded secrets."

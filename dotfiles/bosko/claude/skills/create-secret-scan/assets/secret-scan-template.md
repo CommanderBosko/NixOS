@@ -6,7 +6,7 @@ substitute every `<…>` placeholder from the interview and write the result to
 <!-- BEGIN -->
 ---
 name: secret-scan
-description: Triggers when the user says "secret scan", "scan for secrets", "check for leaked secrets", "is it safe to push", "any secrets in the repo", or "pre-public check". Read-only scan of the working tree and full git history for plaintext secrets, tuned to this project's <SCHEME_LABEL> setup.
+description: Triggers when the user says "secret scan", "scan for secrets", "check for leaked secrets", "any secrets in the repo", or "pre-public check". Read-only scan of the working tree and full git history for plaintext secrets, tuned to this project's <SCHEME_LABEL> setup.
 model: haiku
 version: 0.1.0
 ---

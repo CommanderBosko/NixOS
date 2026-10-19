@@ -38,7 +38,8 @@ set -uo pipefail
 
 HOST="${1:?usage: current-de.sh <host> [target-de]}"
 TARGET="${2:-}"
-REPO="/home/bosko/NixOS"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 FLAKE="$REPO/flake.nix"
 
 # Wayland-only compositors with no canonical session string (Step 4 names

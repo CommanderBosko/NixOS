@@ -41,7 +41,7 @@ Do not proceed until the user picks **Roll back to gen N**.
 
 ## Step 3 — Hand off the rollback command
 
-**Do not run this via the Bash tool.** `sudo` has no NOPASSWD rule on this host, so it will fail with "a terminal is required to read the password" (see Gotchas). Print the exact command and ask the user to run it themselves (suggest the `!` prefix):
+**Do not run this via the Bash tool.** `sudo` has no NOPASSWD rule on this host, so it will fail with "a terminal is required to read the password" (see Gotchas). Print the exact command and ask the user to run it themselves in their own separate terminal:
 
 ```bash
 sudo nixos-rebuild switch --rollback
@@ -53,7 +53,7 @@ That only goes back **one** generation. If the resolved target is *not* current 
 nh os rollback --to <N>
 ```
 
-No `sudo` here: nh elevates itself (prompting for the password, hence still the `!` prefix) and panics if run as root.
+No `sudo` here: nh elevates itself (prompting for the password, hence the user's own separate terminal) and panics if run as root.
 
 Do not add `--dry` or any other flags. Wait for the user to confirm it completed before moving to Step 4.
 
@@ -86,5 +86,5 @@ the user to run themselves, never executed by Claude directly.
 
 ## Gotchas
 
-- **`sudo` has no NOPASSWD rule on this host — it always needs an interactive password.** Running `sudo nixos-rebuild switch --rollback` directly via the Bash tool will fail with "a terminal is required to read the password". Instead, tell the user the exact command to run themselves (suggest the `!` prefix), or ask them to run it — don't attempt it and then report failure.
+- **`sudo` has no NOPASSWD rule on this host — it always needs an interactive password.** Running `sudo nixos-rebuild switch --rollback` directly via the Bash tool will fail with "a terminal is required to read the password". Instead, tell the user the exact command to run themselves in their own separate terminal, or ask them to run it — don't attempt it and then report failure.
 - `nh os rollback --to <gen>` exists and is used only for the explicit-target case (Step 3); the default one-step rollback stays on `nixos-rebuild switch --rollback`. History of the earlier "no `nh` rollback" claim and why the default stays `nixos-rebuild`: `references/gotchas.md`.

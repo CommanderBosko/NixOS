@@ -31,7 +31,8 @@ fi
 
 pkg_file="$1"
 system="${2:-x86_64-linux}"
-repo_root="/home/bosko/NixOS"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$SKILL_DIR/../../.." && pwd)"
 
 if [ ! -f "$repo_root/$pkg_file" ]; then
   echo "error: $repo_root/$pkg_file not found" >&2
