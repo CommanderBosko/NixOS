@@ -26,7 +26,9 @@ PROJECT_DIR="${2:-$PWD}"
 LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TRANSCRIPT_DIR="$("$LIB_DIR/find-transcript-dir.sh" "$PROJECT_DIR" 2>/dev/null)" || exit 0
 
-FILES=$(cd "$TRANSCRIPT_DIR" && ls -- *.jsonl 2>/dev/null)
+# Include subagent transcripts: a skill run inside a subagent (e.g. manager) is
+# logged only there, and without it timestamps[0] below drops the real prior run.
+FILES=$(cd "$TRANSCRIPT_DIR" && ls -- *.jsonl */subagents/*.jsonl 2>/dev/null)
 [ -z "$FILES" ] && exit 0
 
 cd "$TRANSCRIPT_DIR"

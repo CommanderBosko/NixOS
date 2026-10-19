@@ -4,8 +4,7 @@
 # duplicate, what's just conversational noise) is Claude's job, done by
 # fanning out transcript-scanner sub-agents over the manifest this script
 # prints -- this script only does the deterministic file enumeration and
-# cutoff filtering, reusing the shared lib scripts for the single-project
-# mechanics rather than reimplementing them.
+# cutoff filtering, reusing list-all-projects.sh for project enumeration.
 #
 # Usage: scan-projects.sh <mode> [since-iso-timestamp]
 #   mode                 dream (implemented) | time-analysis (not yet built --
@@ -31,6 +30,41 @@ SINCE="${2:-}"
 
 mkdir -p "$DREAM_DIR"
 
+# Same filter as lib/list-transcripts-since.sh, but on the transcript dir
+# list-all-projects.sh already resolved -- re-deriving it from the real path
+# can land on a different dir (renamed projects, slug-formula drift).
+list_since() {  # <cutoff-or-empty> <transcript-dir>
+  ( cd "$2" 2>/dev/null || exit 1
+    FILES=$(ls -t -- *.jsonl 2>/dev/null)
+    [ -z "$FILES" ] && exit 0
+    [ -z "$1" ] && { printf '%s\n' "$FILES"; exit 0; }
+    python3 - "$1" $FILES <<'PYEOF'
+import json, sys
+
+cutoff = sys.argv[1]
+files = sys.argv[2:]
+
+for fn in files:
+    try:
+        with open(fn) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                ts = obj.get("timestamp")
+                if ts and ts >= cutoff:
+                    print(fn)
+                    break
+    except OSError:
+        continue
+PYEOF
+  )
+}
+
 case "$MODE" in
   dream)
     "$LIB_DIR/list-all-projects.sh" | while IFS=$'\t' read -r real_path transcript_dir; do
@@ -44,7 +78,7 @@ case "$MODE" in
         continue
       fi
 
-      files="$("$LIB_DIR/list-transcripts-since.sh" "$SINCE" "$real_path" 2>/dev/null)"
+      files="$(list_since "$SINCE" "$transcript_dir" 2>/dev/null)"
       count=0
       [ -n "$files" ] && count="$(printf '%s\n' "$files" | grep -c .)"
       echo "TRANSCRIPTS_IN_SCOPE: $count"
