@@ -10,6 +10,7 @@
     gcc
     gdb
     godot-mono # C#-enabled Godot 4 build; NOT plain godot (no Mono/C# support)
+    himalaya # email CLI (IMAP/SMTP), used for Gmail
     nil
     nix-init
     nixd
