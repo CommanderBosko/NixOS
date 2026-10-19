@@ -30,7 +30,9 @@
 
 set -uo pipefail
 
-RESOLVE_HOST="/home/bosko/NixOS/.claude/lib/resolve-host.sh"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
+RESOLVE_HOST="$REPO/.claude/lib/resolve-host.sh"
 
 METHOD="${1:-}"
 API_PATH="${2:-}"

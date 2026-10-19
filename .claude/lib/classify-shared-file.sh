@@ -29,8 +29,9 @@
 
 set -euo pipefail
 
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 file="${1:?usage: classify-shared-file.sh <file-path> [flake.nix path]}"
-flake="${2:-/home/bosko/NixOS/flake.nix}"
+flake="${2:-$REPO/flake.nix}"
 
 # Normalize to a repo-relative path (strip a leading repo-root prefix if given).
 repo_root="$(cd "$(dirname "$flake")" && pwd)"

@@ -3,7 +3,7 @@
 # resolve-host.sh — Resolve a short host name to its SSH target.
 #
 # Normalizes aliases (each host's optional `.aliases` array), then looks up
-# `.hosts["<name>"].ssh` in /home/bosko/NixOS/.claude/hosts.json (via the
+# `.hosts["<name>"].ssh` in .claude/hosts.json (via the
 # shared hosts.sh helpers) — never hardcode a copy of either map.
 #
 # On success: prints just the resolved SSH target (e.g. "bosko@gaming") to

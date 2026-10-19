@@ -3,12 +3,14 @@
 # to the expected .desktop entry, instead of just trusting a clean eval.
 set -uo pipefail
 
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 MIMETYPE="${1:?usage: verify-mimeapps.sh <mimetype>}"
 ERR_FILE=$(mktemp)
 trap 'rm -f "$ERR_FILE"' EXIT
 
 if ! OUT_PATH=$(nix build --no-link --print-out-paths --impure --expr \
-  '(builtins.getFlake (toString /home/bosko/NixOS)).nixosConfigurations.gaming.config.home-manager.users.bosko.xdg.configFile."mimeapps.list".source' \
+  "(builtins.getFlake (toString \"$REPO\")).nixosConfigurations.gaming.config.home-manager.users.bosko.xdg.configFile.\"mimeapps.list\".source" \
   2>"$ERR_FILE"); then
   echo "build failed:"
   cat "$ERR_FILE"

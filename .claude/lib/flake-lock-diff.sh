@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# flake-lock-diff.sh — Summarize flake.lock revision changes for /home/bosko/NixOS.
+# flake-lock-diff.sh — Summarize flake.lock revision changes for this repo checkout.
 #
 # Compares the committed flake.lock against the working-tree flake.lock and prints,
 # for each root input whose locked `rev` changed, one aligned line:
@@ -18,7 +18,7 @@
 
 set -uo pipefail
 
-REPO=/home/bosko/NixOS
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OLD_REF="${1:-HEAD}"
 
 NEW_LOCK="$REPO/flake.lock"

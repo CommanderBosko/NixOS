@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
-# Deep-evaluate a single unwired desktop-environment module via lib.deSmoke.
-# With no argument, lists the available module names instead.
+# Deep-evaluate unwired desktop-environment modules via lib.deSmoke.
+# A thin wrapper over .claude/lib/deep-eval.sh --set lib.deSmoke, the same
+# command CI's weekly de-smoke job runs. With no argument, lists the available
+# lib.deSmoke member names (deep-eval.sh --list) instead of evaluating.
 set -uo pipefail
 
-REPO="/home/bosko/NixOS"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 
-if [ -z "${1:-}" ]; then
-  nix eval "$REPO#lib.deSmoke" --apply builtins.attrNames --json
-  exit 0
-fi
+ARGS=(--set lib.deSmoke)
+[ $# -eq 0 ] && ARGS+=(--list)
 
-NAME="$1"
-
-if drv=$(nix eval --raw "$REPO#lib.deSmoke.$NAME.config.system.build.toplevel.drvPath" 2>&1); then
-  echo "PASS: $drv"
-else
-  echo "FAIL:"
-  echo "$drv"
-  exit 1
-fi
+exec bash "$REPO/.claude/lib/deep-eval.sh" "${ARGS[@]}" "$@"

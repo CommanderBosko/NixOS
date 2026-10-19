@@ -5,7 +5,7 @@
 # not execute it:
 #
 #   source "$(dirname "${BASH_SOURCE[0]}")/hosts.sh"      # from a .claude/lib script
-#   source /home/bosko/NixOS/.claude/lib/hosts.sh         # from a skill script
+#   source "$REPO/.claude/lib/hosts.sh"                   # from a skill script (REPO = repo root)
 #
 # Sets HOSTS_JSON (default: hosts.json next to this file's .claude/ dir, so it
 # also resolves correctly inside a git worktree or a CI checkout; export
