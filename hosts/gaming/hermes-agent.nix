@@ -34,6 +34,9 @@ let
     url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-IQ4_XS.gguf";
     sha256 = "7e918aeca06c52bcb528ea6b04b4ec957e75ee8c0a73138854c0dfcf371ea429";
   };
+  memoryCheck = pkgs.writers.writePython3Bin "hermes-memory-check" {
+    flakeIgnore = [ "E501" ];
+  } (builtins.readFile ./hermes-memory-check.py);
 in
 {
   services.llama-cpp = {
@@ -105,6 +108,19 @@ in
       # and routed web_search through Nous's gateway with it. Web search falls
       # back to the keyless public endpoints (Exa, Parallel, ...) instead.
       settings.nous.guest = false;
+
+      # Every memory save goes to a Claude checker first (agent prompt in
+      # .claude/agents/hermes-memory-checker.md). It keeps, fixes or rejects
+      # the entry, and rejections tell Hermes why. Unprompted, Hermes saved task
+      # narration and premature "results" as facts. Fails open. Approve it once
+      # at the first interactive `hermes` run after a rebuild (first-use consent).
+      settings.hooks.pre_tool_call = [
+        {
+          matcher = "memory";
+          command = "${memoryCheck}/bin/hermes-memory-check ${pkgs.mcp-nixos}/bin/mcp-nixos";
+          timeout = 120;
+        }
+      ];
 
       # Same plugins as Claude Code (dotfiles/bosko/claude-hm/plugins.nix),
       # from flake inputs so `nix flake update` bumps them. Plugins are opt-in.
