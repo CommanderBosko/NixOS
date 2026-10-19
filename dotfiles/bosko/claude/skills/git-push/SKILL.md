@@ -15,7 +15,9 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 4 needs judgment and stays here.
 
 1. Run `/home/bosko/.claude/skills/git-push/scripts/push.sh status` — prints the current branch,
-   working-tree status, and the commits ahead of upstream (or all commits, if there's no upstream yet).
+   working-tree status, and the commits ahead of upstream. With no upstream yet, it lists the
+   commits not on origin's default branch (`origin/HEAD`, falling back to `origin/main`, then
+   `origin/master`), not the whole history.
 
 2. If there are uncommitted changes, warn the user and ask via the **AskUserQuestion** tool with
    options **Commit first** / **Push anyway** / **Cancel**. Uncommitted changes are never pushed, so
@@ -42,6 +44,8 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
    pushes nothing, prints `nothing to push: ...`, and exits 0 — report that instead of step 6.
 
 6. Report: how many commits were pushed, the branch name, and the remote URL (from step 5's output).
+   If git printed a `https://github.com/<owner>/<repo>/pull/new/<branch>` link, mention it as an
+   "open a PR" link only (see Gotchas).
 
 ## Rules
 
@@ -53,4 +57,8 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
 
 ## Gotchas
 
+- **The `pull/new/<branch>` link is not a pending PR.** After a push, git prints
+  `https://github.com/<owner>/<repo>/pull/new/<branch>` as a convenience. It only opens GitHub's
+  "new pull request" form for that branch. Nothing is waiting for review, and no PR exists until
+  someone opens and submits that form. Don't report it as an open PR or as a reminder to review.
 - **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

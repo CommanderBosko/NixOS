@@ -17,7 +17,7 @@ Parse from the user's invocation phrase, if given:
 - **Loop name** — a proposed kebab-case name, if the user names it directly.
 - **Steps** — any workflow detail already volunteered (commands, files, decisions).
 
-Pre-fill Step 1's interview questions from whatever is already given, and confirm rather than re-asking. Only ask for what's still missing.
+Pre-fill Step 2's interview questions from whatever is already given, and confirm rather than re-asking. Only ask for what's still missing.
 
 ## Key facts (don't re-derive these)
 
@@ -29,7 +29,13 @@ Pre-fill Step 1's interview questions from whatever is already given, and confir
 
 ## Steps
 
-### 1. Interview for the loop's spec
+### 1. Offer a workspace scan (built-in capability)
+
+Before or instead of a from-scratch spec, use the **AskUserQuestion** tool to offer a workspace scan for repeatable, loop-worthy tasks, with options **Scan** (scan the workspace for loop-worthy tasks) and **Skip** (proceed straight to the interview spec in step 2).
+
+If **Scan**: look at `CLAUDE.md`, existing `.claude/skills/`, recent git history, and any session/close docs for multi-step tasks that recur. For each candidate, propose a one-line loop spec: **task → your preference → what counts as done**. Let the user pick which to generate. If **Skip**, proceed with the interview spec in step 2.
+
+### 2. Interview for the loop's spec
 
 Ask Goal, Loop name, Ordered steps, Overall done-rule, and Output artifact together as a numbered prose list (open-ended). Ask the three pick-one items (6–8: retry cap, Training Mode default, Model tier) in one **AskUserQuestion** call with the recommended option first. Pre-fill anything the user already gave and confirm rather than re-asking.
 
@@ -44,15 +50,9 @@ Ask Goal, Loop name, Ordered steps, Overall done-rule, and Output artifact toget
 
 If the goal is fuzzy, push for concreteness before generating — a vague done-rule produces a loop that never knows when it's finished.
 
-### 2. Offer a workspace scan (built-in capability)
-
-Before or instead of a from-scratch spec, use the **AskUserQuestion** tool to offer a workspace scan for repeatable, loop-worthy tasks, with options **Scan** (scan the workspace for loop-worthy tasks) and **Skip** (proceed straight to the interview spec from step 1).
-
-If **Scan**: look at `CLAUDE.md`, existing `.claude/skills/`, recent git history, and any session/close docs for multi-step tasks that recur. For each candidate, propose a one-line loop spec: **task → your preference → what counts as done**. Let the user pick which to generate. If **Skip**, proceed with the interview spec from step 1.
-
 ### 3. Generate the loop skill from the template
 
-Write `<repo-root>/.claude/skills/<loop-name>/SKILL.md` using the **Generated Loop Template** below. Fill every `<…>` placeholder from the interview. Keep the Training Mode block verbatim — it is the contract. If step 1's model tier came out **grunt**, add a `model: haiku` line directly after `description:` in the generated frontmatter; if **judgment**, leave the frontmatter as the template has it (no `model:` field).
+Write `<repo-root>/.claude/skills/<loop-name>/SKILL.md` using the **Generated Loop Template** below. Fill every `<…>` placeholder from the interview. Keep the Training Mode block verbatim — it is the contract. If step 2's model tier came out **grunt**, add a `model: haiku` line directly after `description:` in the generated frontmatter; if **judgment**, leave the frontmatter as the template has it (no `model:` field).
 
 Create `.claude/skills/` and `.claude/loops/<loop-name>/` with `mkdir -p` if they don't exist.
 
