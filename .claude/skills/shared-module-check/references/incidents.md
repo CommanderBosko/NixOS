@@ -21,9 +21,9 @@ optional afterthought.
 
 **A plain membership check against the two named arrays (`commonModules`/`desktopModules`)
 misses a module wired directly into 2+ hosts' own per-host module lists.** Found 2026-09-04
-via `skill-audit`: `modules/desktop-environments/niri.nix` is imported directly by
-`gaming`'s and `natalie-laptop`'s host blocks (and via `laptopModules` for `laptop`) — three
-hosts — without ever appearing in `desktopModules`, so the old Step 2 test silently skipped
+via `skill-audit`: `modules/desktop-environments/niri.nix` reaches three hosts (via the
+`gamingModules` helper for `gaming`, `laptopModules` for `laptop`, and directly in
+`natalie-laptop`'s host block) without ever appearing in `desktopModules`, so the old Step 2 test silently skipped
 the 4-host sweep for the one DE module actually in production use. Fixed by routing Step 2
 through `classify-shared-file.sh`, which also checks for direct multi-host references, not
 just array membership.
