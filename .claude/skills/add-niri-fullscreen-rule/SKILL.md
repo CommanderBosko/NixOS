@@ -10,7 +10,7 @@ Make an app always open maximized (equivalent to pressing Mod+F on it) by adding
 
 This is a sibling of `add-niri-window-rule`: that skill pins an app to a monitor/workspace (`open-on-workspace`/`open-on-output`); this skill only ever sets `open-maximized true`, reusing an app's existing window-rule block if one exists rather than creating a duplicate.
 
-Since 2026-07-17, all app-id `window-rule` blocks live in a per-host overlay file, not the shared `dotfiles/common/configs/niri-config.kdl`. Check the overlay files live (`wc -c hosts/*/niri-overlay.kdl`) to see which hosts actually have window-rule content.
+Since 2026-07-17, per-app `window-rule` blocks live in a per-host overlay file; the shared `dotfiles/common/configs/niri-config.kdl` keeps only host-agnostic rules (e.g. Firefox PiP floating, kitty `open-focused false`), which apply to every niri host. Check the overlay files live (`wc -c hosts/*/niri-overlay.kdl`) to see which hosts actually have window-rule content.
 
 ## Arguments
 
@@ -25,7 +25,7 @@ Parse from the user's request:
 niri msg windows    # confirms the real App ID of a running instance of the target app
 ```
 
-If the app isn't currently running, fall back to its known app-id: check existing `window-rule` blocks in `hosts/<host>/niri-overlay.kdl` for the convention already used, or check the flatpak ID in `modules/desktop-apps.nix` / the host's `environment.nix` for flatpak apps.
+If the app isn't currently running, fall back to its known app-id: check existing `window-rule` blocks in `hosts/<host>/niri-overlay.kdl` for the convention already used, or check the flatpak ID in `modules/flatpak.nix` / the host's `environment.nix` for flatpak apps.
 
 **Gotcha — one app-id can mean multiple windows:** a rule maximizes every window sharing the app-id (e.g. all of Steam's windows), and games launched from Steam each have their own app-id — don't try to blanket-cover per-game windows. Details in `references/edge-cases.md`.
 
@@ -54,7 +54,7 @@ Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly afte
 
 ## Step 5 — Flag app-availability caveats
 
-Since the rule is written into the target host's own overlay file, there's no cross-host leakage to worry about anymore. Still worth checking: is the target app installed on that host? Check `modules/gaming.nix` (gaming-only packages) vs the shared `modules/desktop-apps.nix` vs the host's own `environment.nix` — if it's not installed there, say so.
+Since the rule is written into the target host's own overlay file, there's no cross-host leakage to worry about anymore. Still worth checking: is the target app installed on that host? Check `modules/gaming.nix` (gaming-only packages) vs the shared `modules/desktop-apps.nix` (packages) / `modules/flatpak.nix` (flatpaks) vs the host's own `environment.nix` — if it's not installed there, say so.
 
 **If the app doesn't seem to pick up the rule after rebuild**, check for a single-instance app with its own login autostart entry — flag it to the user (the fix is disabling the app's autostart preference, not a window-rule change); see `references/edge-cases.md`.
 
@@ -62,7 +62,7 @@ Since the rule is written into the target host's own overlay file, there's no cr
 
 The per-host overlay file is Home-Manager-managed via a nix-store symlink, same as `niri-config.kdl` — this repo's normal workflow is `nh os boot` (stages for the *next* boot), so the change only takes effect after a reboot; there's no live `nh os switch` in the normal flow here. Remind them:
 
-> 1. Rebuild (`rebuild`) and reboot to activate the rule.
+> 1. Rebuild (`rebuild-boot`) and reboot to activate the rule.
 > 2. After rebooting, run `/wayland-screenshot <app>` to confirm the app actually opens maximized.
 > 3. Commit the change: `/git-commit`
 

@@ -12,6 +12,16 @@ This repo has deliberate, documented deviations. Flagging them as findings is no
   works around a blank-line parse error in the rules loader (audit-4.1.2); `auditd` itself still
   runs for AppArmor logging. This is **intentional**, not a silently-disabled audit daemon. Not a
   finding.
+- **`security.apparmor.killUnconfinedConfinables = false`** (`modules/security.nix`):
+  intentional — most desktop apps on NixOS lack AppArmor profiles, so killing unconfined
+  processes would break normal desktop use; enforcement still applies to profiled apps (e.g.
+  dbus, cups). Not a finding.
+- **TEMPORARY `systemd.services.apparmor.reloadIfChanged = lib.mkForce false`**
+  (`modules/security.nix`): works around an apparmor-parser-5.0.0 nixpkgs bug where
+  apparmor.service's ExecReload (`aa-remove-unknown`) hardcodes a missing
+  `rc.apparmor.functions` path, failing every activation that reloads policies. Activation does
+  a full restart instead; enforcement is unaffected. Not a finding — but drop it once nixpkgs
+  ships a fixed apparmor-parser.
 - **`nvidia.nix` imported per-host, not via `desktopModules`**: intentional, so gaming can drop it
   for the AMD card. Not a structural smell.
 - **dbus-broker via plain assignment** (not `mkDefault`) in security.nix: intentional, beats

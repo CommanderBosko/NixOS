@@ -3,8 +3,8 @@
 # Usage: verify-service.sh <unit> [mount-path] [data-dir] [port-pattern]
 # port-pattern defaults to the unit name; pass a known port (e.g. "8096")
 # too when the process name doesn't appear in `ss` output verbatim.
-# Runs locally — for a remote host, the skill prefixes this whole invocation
-# with the resolved SSH command itself; this script has no host logic.
+# Runs locally — for a remote host, the skill pipes this script over SSH
+# (`ssh <target> "bash -s -- <args>" < <this script>`); this script has no host logic.
 set -uo pipefail
 shopt -s nullglob  # so an empty $DATADIR/* expands to nothing instead of erroring on the literal glob
 

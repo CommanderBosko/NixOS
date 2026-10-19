@@ -29,6 +29,11 @@ else
 fi
 
 if [ -z "$FILES" ]; then
+  # Nothing new since the cutoff is a valid "nothing to review" result, not an error.
+  if [ -n "$SINCE" ]; then
+    echo "no transcripts since $SINCE"
+    exit 0
+  fi
   echo "No .jsonl transcripts found in $TRANSCRIPT_DIR" >&2
   exit 1
 fi

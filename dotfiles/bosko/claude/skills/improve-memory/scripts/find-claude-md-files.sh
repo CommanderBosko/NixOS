@@ -22,5 +22,5 @@ if [ ! -d "$PROJECT_PATH" ]; then
 fi
 
 find "$PROJECT_PATH" -iname "CLAUDE.md" 2>/dev/null \
-  | grep -v -e '/node_modules/' -e '/\.git/' -e '/vendor/'
+  | grep -v -e '/node_modules/' -e '/\.git/' -e '/vendor/' -e '/\.claude/worktrees/'
 exit 0

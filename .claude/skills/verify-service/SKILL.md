@@ -28,9 +28,12 @@ Parse from the user's request:
 
 ### 2. Run the check battery
 
-Run `scripts/verify-service.sh <unit> [mount-path] [data-dir] [port-pattern]` (relative to
-this skill's directory) — prefixed with the resolved SSH command from Step 1 if remote. It
-runs, in order: the service check (always), the tcp+udp port check (always), the mount check
+Run `bash /home/bosko/NixOS/.claude/skills/verify-service/scripts/verify-service.sh <unit> [mount-path] [data-dir] [port-pattern]`.
+If remote, pipe the script over SSH so the host needs no checkout, single-quoting each arg
+inside the remote command (ssh re-joins args into one shell string, so an unquoted empty
+placeholder vanishes and a `|` in a port pattern becomes a pipe):
+`ssh <target> "bash -s -- '<unit>' '<mount-path>' '<data-dir>' '<port-pattern>'" < /home/bosko/NixOS/.claude/skills/verify-service/scripts/verify-service.sh`
+(pass `''` for a skipped optional arg). It runs, in order: the service check (always), the tcp+udp port check (always), the mount check
 (only if a mount path was given), and the data-dir check (only if a dir was given).
 `port-pattern` defaults to the unit name; pass a known port too (e.g. `8096`) if the process
 name doesn't appear verbatim in `ss` output.
@@ -60,4 +63,4 @@ If anything FAILED, suggest the next step (e.g. `journal` skill for the unit's l
 
 - Read-only and safe — no confirmation needed to run.
 - This is a **project-local** skill: it lives under the repo's `.claude/skills/` and is picked up directly. No Home Manager symlink or rebuild is required (that only applies to the global, repo-managed skills under `dotfiles/bosko/claude/skills/`, auto-linked by `claude-hm/files.nix`).
-- `scripts/verify-service.sh` holds the mechanical check battery; this file keeps only the PASS/FAIL interpretation, which needs context the script can't have (firewall scoping, expected-absent daemons, root-vs-non-root `ss` output).
+- `/home/bosko/NixOS/.claude/skills/verify-service/scripts/verify-service.sh` holds the mechanical check battery; this file keeps only the PASS/FAIL interpretation, which needs context the script can't have (firewall scoping, expected-absent daemons, root-vs-non-root `ss` output).

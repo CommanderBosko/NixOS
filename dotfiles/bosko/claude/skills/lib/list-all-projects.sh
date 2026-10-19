@@ -6,7 +6,12 @@
 # not bijective: a real path segment containing a literal "-" (e.g.
 # /home/bosko/projects/Codingame-Mad-Pod-Racing) collides with a path
 # separator and un-slugifies wrong. Reading the ground-truth `cwd` field
-# avoids that entirely.
+# avoids that entirely. Only a `cwd` whose Claude Code slug (every
+# non-alphanumeric char -> "-") equals the dir's own name is accepted: after a
+# project rename, a dir's transcripts can record the OTHER name's cwd, and
+# taking the first cwd blindly mapped renamed projects to each other's paths.
+# If no cwd matches, a sibling dir of any recorded cwd whose slug matches is
+# accepted instead (the project was renamed in place).
 #
 # This is a *new* script rather than a change to find-transcript-dir.sh /
 # list-transcripts-since.sh / find-last-skill-invocation.sh -- those three
@@ -21,8 +26,9 @@
 # Prints one line per project dir found under ~/.claude/projects/, tab-separated:
 #   <real-project-path-or-UNKNOWN><TAB><transcript-dir>
 #
-# A project whose dir holds no .jsonl with a readable `cwd` field (e.g. all
-# transcripts have since been pruned but a memory/ dir remains) prints
+# A project whose dir holds no .jsonl with a slug-matching `cwd` field and no
+# slug-matching renamed sibling (e.g. all transcripts have since been pruned
+# but a memory/ dir remains) prints
 # "UNKNOWN" as its real path instead of guessing -- callers must handle that
 # case explicitly (typically: still process memory/ dir, skip anything that
 # needs the real project path such as CLAUDE.md discovery).
@@ -40,28 +46,48 @@ for dir in "$PROJECTS_ROOT"/*/; do
   jsonl_files=("$dir"/*.jsonl)
   shopt -u nullglob
 
-  for f in "${jsonl_files[@]}"; do
-    real_path="$(python3 -c "
-import json, sys
-try:
-    with open(sys.argv[1]) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-            except (ValueError, json.JSONDecodeError):
-                continue
-            cwd = obj.get('cwd')
-            if cwd:
-                print(cwd)
-                break
-except OSError:
-    pass
-" "$f" 2>/dev/null)"
-    [ -n "$real_path" ] && break
-  done
+  # shortcut: no handling of Claude Code's 200+ char slug truncation, so such paths stay UNKNOWN
+  real_path="$(python3 - "$(basename "$dir")" "${jsonl_files[@]}" 2>/dev/null <<'PYEOF'
+import json, os, re, sys
+
+def slug(p):
+    return re.sub(r'[^A-Za-z0-9]', '-', p)
+
+want, seen = sys.argv[1], []
+for fn in sys.argv[2:]:
+    try:
+        with open(fn) as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                cwd = obj.get('cwd') if isinstance(obj, dict) else None
+                if not cwd:
+                    continue
+                if slug(cwd) == want:
+                    print(cwd)
+                    sys.exit(0)
+                if cwd not in seen:
+                    seen.append(cwd)
+    except OSError:
+        pass
+
+# Covers a project dir renamed in place: transcripts still record the old name.
+for cwd in seen:
+    try:
+        entries = sorted(os.scandir(os.path.dirname(cwd)), key=lambda e: e.name)
+    except OSError:
+        continue
+    for e in entries:
+        if e.is_dir() and slug(e.path) == want:
+            print(e.path)
+            sys.exit(0)
+PYEOF
+)"
 
   printf '%s\t%s\n' "${real_path:-UNKNOWN}" "$dir"
 done

@@ -13,7 +13,9 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-TARGET="$1"
+# Known host name/alias -> its hosts.json SSH target; anything else (a new
+# host's IP, or an explicit user@host) is used as-is.
+TARGET="$(bash /home/bosko/NixOS/.claude/lib/resolve-host.sh "$1")" || TARGET="$1"
 
-ssh "bosko@${TARGET}" 'cat /etc/ssh/ssh_host_ed25519_key.pub' \
+ssh "$TARGET" 'cat /etc/ssh/ssh_host_ed25519_key.pub' \
   | nix shell nixpkgs#ssh-to-age --command ssh-to-age

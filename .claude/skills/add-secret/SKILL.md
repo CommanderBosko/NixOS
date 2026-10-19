@@ -34,6 +34,7 @@ Ask, in one message:
 2. **Scope** — who needs to decrypt it? Present this as a pick-one via the
    **AskUserQuestion tool** (skip if the user already specified scope):
    - **All hosts** → `secrets/common.yaml`.
+   - **Desktop hosts only** (not vpn-server) → `secrets/desktop.yaml`.
    - **One specific host** → `secrets/hosts/<host>.yaml`.
    - **A new grouping** → a new file; you'll add a `creation_rule` for it (Step 2).
 3. **New or existing?** Adding a key, or changing an existing one. Present this as a
@@ -50,7 +51,7 @@ If the user is generating a **password hash**, the canonical way is
 
 ## Step 2 — Make sure `.sops.yaml` covers the target file
 
-- Editing `secrets/common.yaml` or an existing `secrets/hosts/<host>.yaml` → already
+- Editing `secrets/common.yaml`, `secrets/desktop.yaml`, or an existing `secrets/hosts/<host>.yaml` → already
   covered, skip ahead.
 - Targeting a **new file** → add a `creation_rule` with a `path_regex` matching it and the
   intended recipients (always include `*admin`). If it's per-host, include that host's

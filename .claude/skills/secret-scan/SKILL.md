@@ -31,7 +31,7 @@ None.
 
 ## Instructions
 
-1. Run `scripts/secret-scan.sh`. It performs four passes:
+1. Run `/home/bosko/NixOS/.claude/skills/secret-scan/scripts/secret-scan.sh`. It performs four passes:
    - **Working tree** — high-signal patterns (private-key blocks, age secret keys, unix
      password hashes, inline WireGuard private keys, GitHub/AWS tokens) across tracked
      files, excluding `secrets/` and `.claude/skills/`.
@@ -66,7 +66,7 @@ None.
 ## Script
 
 ```
-scripts/secret-scan.sh
+/home/bosko/NixOS/.claude/skills/secret-scan/scripts/secret-scan.sh
 ```
 
 ## References

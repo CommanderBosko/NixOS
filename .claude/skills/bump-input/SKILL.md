@@ -62,7 +62,6 @@ Run the shared lock-diff script and present its output:
 Because only the one input was bumped (assuming the lock was otherwise clean — see Step 2), the script prints a single aligned line for it:
 
 ```
-Bumped: financeguru
   financeguru   a1b2c3d4 -> e5f6a7b8   (2026-06-23)
 ```
 
@@ -96,7 +95,7 @@ Do not run either automatically.
 - Never edit `flake.nix` — only `flake.lock` changes.
 - Do not auto-commit, `git add`, or auto-rebuild — suggest, don't invoke.
 - No `Co-Authored-By` trailer here — that belongs only in commit messages.
-- When bumping `nixpkgs`, note the `home-manager` / `disko` follows dependency.
+- When bumping `nixpkgs`, note the inputs with `inputs.nixpkgs.follows` in `flake.nix` (grep it; currently home-manager, disko, sops-nix — verify) — they move with it.
 
 ## Gotchas
 

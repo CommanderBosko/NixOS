@@ -1,6 +1,6 @@
 ---
 name: skill-audit
-description: Audit every skill in the project against a structured quality rubric — single-bucket fit, deterministic-work-to-scripts, templates-to-assets, re-entered-config, AskUserQuestion, and invocation arguments — then produce one prioritized report. Use when the user says "skill-audit", "audit my skills", "audit every skill", "review all my skills", or "check my skills for improvements".
+description: Audit every skill in the project against a structured quality rubric — single-bucket fit, deterministic-work-to-scripts, templates-to-assets, re-entered-config, AskUserQuestion, invocation arguments, and heavy-context-to-references — then produce one prioritized report. Use when the user says "skill-audit", "audit my skills", "audit every skill", "review all my skills", or "check my skills for improvements".
 ---
 
 # Skill Audit

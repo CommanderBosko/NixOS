@@ -25,22 +25,26 @@ None — this skill takes no user-supplied arguments.
    - **up** — uptime (`d h m`, computed from `/proc/uptime`)
    - **staged** — `YES` if the latest built generation isn't the running one (a rebuild was
      staged, e.g. via `nh os boot`, but not yet activated/rebooted), else `no`
+   - **reboot** — `YES` if `/run/booted-system`'s kernel or initrd differs from
+     `/run/current-system`'s (a switch changed them; only a reboot activates them), else `no`
    - Then **WireGuard handshakes** for each client, read from vpn-server.
 
 2. Present a clean table, then a short interpretation. Example:
 
    ```
-   Host             Gen   Failed   Staged   Uptime      WG handshake
-   gaming           834   none     no       2d 4h 1m    41s ago
-   laptop           512   none     YES      0d 6h 12m   33s ago
-   natalie-laptop   389   none     no       1d 2h 0m    18s ago
-   vpn-server       77    none     no       29d 1h 5m   —
+   Host             Gen   Failed   Staged   Reboot   Uptime      WG handshake
+   gaming           834   none     no       no       2d 4h 1m    41s ago
+   laptop           512   none     YES      no       0d 6h 12m   33s ago
+   natalie-laptop   389   none     no       YES      1d 2h 0m    18s ago
+   vpn-server       77    none     no       no       29d 1h 5m   —
    ```
 
 3. **Flag anything that needs attention**, in priority order:
    - **Failed units** → suggest the `journal` skill for that unit/host.
    - **staged YES** → a newer generation is built but not running; note that a reboot (or
      `nh os switch` for non-boot changes) will activate it.
+   - **reboot YES** → the host is running a kernel/initrd it didn't boot with; a reboot is
+     needed for those to take effect.
    - **Stale/missing WG handshake** (> ~3 min, or `never`) → that client's tunnel is down;
      suggest the `vpn-status` skill or checking `wg-quick-wg0` on that host.
    - **UNREACHABLE host** → powered off or off-network; just report it, don't treat it as a

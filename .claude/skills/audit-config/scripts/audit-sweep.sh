@@ -27,7 +27,7 @@ for arg in "$@"; do
       echo
       echo "== hardening guarantees (security.nix) and any overrides elsewhere =="
       echo "# Judge: anything silently disabled, mkForce'd, or overridden per host is a finding."
-      grep -rnE 'apparmor|killUnconfinedConfinables|audit(d)?\.enable|wheelOnly|execWheelOnly|kexec|protectKernelImage|randomize_va_space' \
+      grep -rnE 'apparmor|killUnconfinedConfinables|audit(d)?\.enable|requireWheel|wheelOnly|execWheelOnly|kexec|protectKernelImage|randomize_va_space' \
         "$REPO/modules" "$REPO/hosts" --include=*.nix || echo "(no hardening-option hits)"
       ;;
     --flake-check)

@@ -15,7 +15,7 @@ Optional: a request for a full re-mine instead of the incremental since-last-run
 
 ### 1–2. Discover projects and per-project file lists
 
-Steps 1–2 are mechanical, so a script does them: it enumerates every project this user has run Claude Code in (via `list-all-projects.sh`, which reads each transcript's real `cwd` rather than un-slugifying directory names, skipping `UNKNOWN` rows), finds each project's cutoff, and lists transcripts newer than it.
+Steps 1–2 are mechanical, so a script does them: it enumerates every project this user has run Claude Code in (via `list-all-projects.sh`, which takes a transcript `cwd` whose slug matches the dir name, or a renamed-in-place sibling of one, rather than un-slugifying directory names, skipping `UNKNOWN` rows), finds each project's cutoff, and lists transcripts newer than it.
 
 ```bash
 ~/.claude/skills/refresh-manager-profile/scripts/list-new-activity.sh [full [<project-path>]]

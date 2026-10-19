@@ -3,6 +3,7 @@
 Load this when the user says "fix it" (or picks **Implement now** in Step 4). Implement in priority order:
 
 - Work highest-priority first; **commit at phase boundaries** so each lands cleanly.
+- **Fanning the fixes out?** Reuse Step 2's disjoint partitions: spawn one `subagent_type: "slice-builder"` per group in a single message, with that group's approved findings as the spec, its skill dirs as the boundary, and `bash -n`/`grep` checks as verification. Don't hand-type a `general-purpose` or `fork` brief instead (two past runs did, each differently).
 - **Verify empirically as you go** — run the scripts you extract (read-only paths), `bash -n` every script, and prove drift fixes against the live system. Don't guess at a value you can test.
 - Re-derive drift-prone data **live** rather than re-hardcoding it (enumerate inputs/DE modules from the tree; resolve hosts from the shared config).
 - For NixOS repos: after touching anything the flake evaluates (or a symlinked global skill), run a dry-run (`nixos-dry-run`) to certify it still evaluates. Project-local `.claude/` changes don't affect the flake.

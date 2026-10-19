@@ -56,7 +56,7 @@ After showing logs, present the follow-up choice via the **AskUserQuestion tool*
 - `--no-pager` is mandatory to get plain text output without interactive paging.
 - NixOS's `networking.wg-quick.interfaces.wg0` generates a plain named unit, `wg-quick-wg0` — not an `@`-style template unit.
 - vpn-server is a NixOS host — log in as `bosko` (not `ubuntu`).
-- All local hosts use static IPs via `~/.ssh/config` — use hostnames, not raw IPs.
+- Each `~/.ssh/config` alias (from `dotfiles/common/configs/ssh.nix`) dials the host's stable `tailscaleIp` — LAN IPs are DHCP and drift, so use hostnames, not raw IPs. vpn-server has no `tailscaleIp`, so it gets no alias (see Gotchas).
 
 ## Gotchas
 

@@ -24,7 +24,8 @@ case "$MODE" in
       exit 1
     fi
     git add -- "$@"
-    git commit -F -
+    # pathspec limits the commit to the named files, leaving anything else pre-staged untouched
+    git commit -F - -- "$@"
     echo "--- git status ---"
     git status
     ;;

@@ -17,8 +17,6 @@ Scan the conversation for every skill that was invoked. Flag the ones where some
 - A repo-specific constraint (e.g. repo-managed skills, dry-run-before-commit) was missed
 - Anything that would trip up the next run the same way
 
-If no skill caused friction this session, say so plainly and stop.
-
 **Always check the logs since the last time skill-upgrade itself ran** — not just this session. First get the cutoff:
 
 ```bash
@@ -32,6 +30,8 @@ Its first line is `cutoff: <ts>` (skill-upgrade's previous invocation for this p
 ```
 
 from this skill's own base directory (the "Base directory for this skill" line shown when it launched — e.g. `~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh`). Pass the cutoff as the third argument and it scans every transcript touched since then instead of a fixed recent-N window; omit it (or leave it empty) to fall back to the most-recently-modified `max-files` transcripts (default 15) — that fallback only applies on skill-upgrade's first-ever run for this project. It prints every `is_error` tool result alongside the tool call and the `Skill` that was active at the time. Treat a recurring cross-session failure — the same skill, same tool, same error shape — as a stronger signal than a one-off slip this session.
+
+Only once the scan has run: if neither this session nor the scan turned up any skill friction, say so plainly and stop.
 
 **Report every misfire found, not just one.** List each flagged skill and its gotcha in Step 3/4 below — don't stop at the first candidate. A single finding is fine if that's genuinely all the logs turned up, but don't truncate a longer list for brevity.
 

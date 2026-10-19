@@ -6,7 +6,8 @@ do it if they ask):
 ```nix
 # declare it (in sops.nix for shared, or the relevant host module for per-host)
 sops.secrets."new-key-name" = {
-  sopsFile = ../../../secrets/common.yaml;   # adjust relative path to the file
+  sopsFile = ../secrets/common.yaml;         # from modules/*.nix
+  # sopsFile = ../../secrets/hosts/<host>.yaml;  # from hosts/<host>/*.nix
   # neededForUsers = true;                    # only for user password hashes
   # owner = "someservice"; mode = "0400";     # if a service must read it
 };
