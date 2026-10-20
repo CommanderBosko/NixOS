@@ -120,6 +120,7 @@ in
         mode = "manual";
         deny = [
           "git push*"
+          "git * push*"
           "nixos-rebuild*"
           "nh os *"
           "nix flake update*"
