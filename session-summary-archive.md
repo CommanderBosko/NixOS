@@ -1,3 +1,30 @@
+## Session: 2026-10-13 (session 129) — skill-audit fixes applied across 70+ skill files
+
+**Focus**: Apply every finding from the 2026-10-13 `/improve-system` skill audit (17 correctness bugs + structural fixes), which the user approved in full via the boss session.
+
+### What changed (and why)
+- **Project-local skills (`27eb91f`):** correctness fixes across ~25 skills. For example, new-module's verify step now branches to `de-smoke-check` for DE modules, and ssh-host hands `!` commands off instead of running them. Hosts and aliases are now read from `hosts.json` (new per-host `aliases` field) instead of being repeated in each skill.
+- **Global skills (`79607cc`):** create-loop fence bug fixed and a lint check added for it. Two new shared files, `lib/script-paths.md` and `lib/scope-since-last-run.sh`, replace per-skill copies. New helper scripts for land-prs (`merge-step.sh`) and send-results (`wrap-html.sh`).
+- Long incident write-ups moved out of SKILL.md bodies into `references/`, and output templates into `assets/`, so SKILL.md files load lighter.
+
+### Decisions
+- Split the work across 10 parallel sub-agents by skill group. Six were cut off by the usage limit and resumed from where they stopped, not restarted.
+- Skipped the 4-host deep-eval: no Nix code reads the new `aliases` field, and the dry-run diff was flake source only.
+- Six problems found outside the audit were logged in `project-state.md`, not fixed (`classify-shared-file.sh` misses transitive imports; `diff-generations.sh` compares the wrong generation after `nh os boot`; stale `desktop-apps.nix` mentions; add-package's HM path; `vpn.nix` hardcoded endpoint; land-prs merge path never run live).
+
+### Issues / surprises
+- Several audit findings cited the wrong line or file. Each was fixed where the text actually was.
+- Last session's close said `13e4616` wasn't live. gaming was switched to gen 439 at 23:46 that night, after the close, so it is live now.
+- Secret-scan: clean (tree + 1845 commits of history; all 6 sops files encrypted).
+
+### Next session
+- gaming: `rebuild-switch` to bring `79607cc` live. Let it idle 10 min once to prove the DMS lock.
+- `/fleet-rollout` for laptop, natalie-laptop and vpn-server.
+
+**Commits**: `27eb91f..79607cc` (2 commits)
+
+---
+
 ## Session: 2026-10-12 (session 128) — lock-crash fix, CI runner, boss-session wiring, DMS idle lock
 
 **Focus**: Close out the evening's 7 commits, made across 5 separate NixOS sessions (several relayed by the new boss session). This close-out session made no code changes itself.

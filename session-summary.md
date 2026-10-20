@@ -4,6 +4,25 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-19 (session 134) — close-out after Proton/Hermes hardening day
+
+**Focus**: Close-only session. Several earlier conversations the same day (not visible here) landed the work below.
+
+### What changed (and why)
+- **`130730a`:** Proton Mail Bridge + himalaya for Hermes on gaming, config as a sops template so the address stays out of the public repo; replaces Gmail after an app password leaked into Hermes memory.
+- **PR #38:** Hermes memory checker blocks credential-like entries locally before calling `claude -p`.
+- **PR #35/#36/#37/#39:** skill-audit fixes, CI `--no-build` removal, improve-system leftovers. `2b09612` bumps hermes-agent.
+
+### Decisions
+- No code changes this session. Secret-scan clean on tree and history.
+
+### Next session
+- Post-reboot verification (Bridge login, himalaya, Hermes checker); user revokes the Gmail app password.
+
+**Commits**: `7443ee5..2b09612`
+
+---
+
 ## Session: 2026-10-18 (session 133) — flake input bump
 
 **Focus**: Bump flake inputs and prove they still evaluate (no apply).
@@ -94,33 +113,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - `/fleet-rollout` for laptop + natalie-laptop + vpn-server (carry-over).
 
 **Commits**: `5756d62` (1 commit)
-
----
-
-## Session: 2026-10-13 (session 129) — skill-audit fixes applied across 70+ skill files
-
-**Focus**: Apply every finding from the 2026-10-13 `/improve-system` skill audit (17 correctness bugs + structural fixes), which the user approved in full via the boss session.
-
-### What changed (and why)
-- **Project-local skills (`27eb91f`):** correctness fixes across ~25 skills. For example, new-module's verify step now branches to `de-smoke-check` for DE modules, and ssh-host hands `!` commands off instead of running them. Hosts and aliases are now read from `hosts.json` (new per-host `aliases` field) instead of being repeated in each skill.
-- **Global skills (`79607cc`):** create-loop fence bug fixed and a lint check added for it. Two new shared files, `lib/script-paths.md` and `lib/scope-since-last-run.sh`, replace per-skill copies. New helper scripts for land-prs (`merge-step.sh`) and send-results (`wrap-html.sh`).
-- Long incident write-ups moved out of SKILL.md bodies into `references/`, and output templates into `assets/`, so SKILL.md files load lighter.
-
-### Decisions
-- Split the work across 10 parallel sub-agents by skill group. Six were cut off by the usage limit and resumed from where they stopped, not restarted.
-- Skipped the 4-host deep-eval: no Nix code reads the new `aliases` field, and the dry-run diff was flake source only.
-- Six problems found outside the audit were logged in `project-state.md`, not fixed (`classify-shared-file.sh` misses transitive imports; `diff-generations.sh` compares the wrong generation after `nh os boot`; stale `desktop-apps.nix` mentions; add-package's HM path; `vpn.nix` hardcoded endpoint; land-prs merge path never run live).
-
-### Issues / surprises
-- Several audit findings cited the wrong line or file. Each was fixed where the text actually was.
-- Last session's close said `13e4616` wasn't live. gaming was switched to gen 439 at 23:46 that night, after the close, so it is live now.
-- Secret-scan: clean (tree + 1845 commits of history; all 6 sops files encrypted).
-
-### Next session
-- gaming: `rebuild-switch` to bring `79607cc` live. Let it idle 10 min once to prove the DMS lock.
-- `/fleet-rollout` for laptop, natalie-laptop and vpn-server.
-
-**Commits**: `27eb91f..79607cc` (2 commits)
 
 ---
 

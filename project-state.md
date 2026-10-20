@@ -1,10 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-10-18 (session 133)_
+_Last updated: 2026-10-19 (session 134)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**2026-10-19 (session 134, close-only; the work below was done in other conversations): main is at `2b09612`, pushed, CI green, secret-scan clean (tree + 1867 commits). User rebuilt (`nh os boot`) and rebooted hosts that day; post-reboot verification NOT done yet — see memory `project_post_reboot_pickup_20261019`.**
+- **Landed since session 133:** PR #35/#36/#39 (skill-audit and improve-system fixes: classifier, transcript lib, temp-pin tracking, AskUserQuestion 4-option cap, nixos-gc keeps current+booted gens), PR #37 (CI `flake check` dropped `--no-build`; read-only mode broke hermes uv2nix eval on fresh runners), PR #38 (Hermes memory checker rejects credential-looking entries locally before any `claude -p` call, redacts what it forwards, still fails open on checker errors), `fdc41da` himalaya CLI, `1352dd3` vpn-server auditd/sudo baseline.
+- **`130730a` Proton Mail Bridge + himalaya for Hermes (gaming):** Bridge runs as a user service; himalaya config is a sops template (address stays encrypted in this public repo) symlinked read-only; Bridge password lives in the GNOME keyring via `secret-tool`. Managed `proton-mail` skill for Hermes. Motivation: a Gmail app password was saved into Hermes memory on 10-18. User still owes Bridge login and revoking the Gmail app password.
+- **`2b09612`:** hermes-agent input bumped to `0b10b9f`; deep-eval passes on all four hosts.
+- laptop and natalie-laptop need pull + rebuild; vpn-server still offline.
 
 **Flake inputs bumped 2026-10-18 (`23bda63`), verified but NOT applied on any host.** dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix; flake-check + 4-host deep-eval clean. Needs `/fleet-rollout`; re-check `hermes` on gaming afterward (hermes-agent moved).
 
@@ -24,13 +30,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Cause:** two files moved into `/srv/shared` on gaming that morning were `bosko:users 644`. A move keeps the original group, since the dir's setgid only applies to new files. The clients' `guest` CIFS mount is `sec=none` (anonymous), and that session only gets the *group* perms, not "other". So group-`users` files couldn't be read and group-`shared` `644` files were read-only from natalie-laptop. `smbclient -N` on gaming *could* read them (it logs in as guest, not anonymous), which is why a local test looked fine.
 - **Fix:** existing files `chgrp shared` + `chmod g+rw` by hand, then `"force user" = "bosko"` in `hosts/gaming/samba-shared.nix`. Client uploads now land as `bosko:shared` (previously `nobody:shared`; Natty never owned her uploads).
 - **Verified live:** a fresh `bosko:users 644` test file reads, writes and renames from natalie-laptop; a new file created from the client lands `bosko:shared 660`; all real files read OK. Test files removed. `nixos-dry-run` was clean beforehand.
-
-**2026-10-13 skill audit (from that day's `/improve-system` run, relayed by the boss with the user's "I approve all the items") applied in two commits, both pushed: `27eb91f` (project-local skills) + `79607cc` (global skills). Project-local half is LIVE (no rebuild needed); global half is NOT live on any host yet. Correction to session 128: `13e4616` IS live on gaming — gen 439 was switched 2026-10-12 23:46, after that close (2026-10-13, session 129).**
-- **Scope:** all 17 correctness bugs + the structural fixes in `~/.claude/improve-system/audit-findings-20261013.md`, split across 10 parallel sub-agents by skill group (6 were cut off by the usage limit mid-run and resumed). Nothing skipped; one item partial — the improve-system "duplicate gotchas" weren't in `references/gotchas.md` as reported, they repeated the skill's own sections, so they were collapsed into one pointer line.
-- **Notable structural changes:** `.claude/hosts.json` gains a per-host `aliases` field that `resolve-host.sh` now reads (every Nix consumer reads named fields only, so eval is unaffected — dry-run diff was flake source only); new shared `dotfiles/bosko/claude/skills/lib/script-paths.md` + `lib/scope-since-last-run.sh` replace per-skill copies of the absolute-path note and the audit/suggestion/upgrade cutoff chain (output verified identical); new helper scripts `land-prs/scripts/merge-step.sh`, `send-results/scripts/wrap-html.sh`, `add-niri-window-rule/scripts/next-slot.sh`, `ship-nix-change/scripts/plan-checks.sh`, `new-peer/scripts/render-client-conf.sh`; incident narratives moved to `references/`, templates to `assets/`.
-- **Verification:** `bash -n` on all 21 changed/new scripts; new scripts run on safe local inputs, except the merge/push/repo-create paths (`land-prs`, `git-push`, `repo-creator`) — syntax-checked only, never run live; `resolve-host.sh` output identical for every host and alias; `check-hosts-json.sh` passes; every cited `references/`/`assets/` path exists; `nixos-dry-run` clean. 4-host deep-eval skipped (no Nix code reads `aliases`).
-- **Live state checked at close (gaming):** current system = gen 439 (switched 2026-10-12 23:46), booted = 21:23 gen. No `swayidle` process; DMS `settings.json` has `acLockTimeout`/`batteryLockTimeout` = 600 → `13e4616` is live. `~/.claude/skills/lib/scope-since-last-run.sh` and `land-prs/scripts/merge-step.sh` don't exist yet → `79607cc` needs a rebuild.
-- Six out-of-audit problems found along the way were recorded, not fixed — see Known Issues. This close-out session made no code changes.
 
 ## Current Goals
 
@@ -429,6 +428,11 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 134 next steps:**
+1. Walk the post-reboot checklist (memory `project_post_reboot_pickup_20261019`): confirm gaming's new generation, Proton Bridge login + keyring entry, `himalaya envelope list`, Hermes checker logging a real verdict.
+2. User-only: revoke the Gmail app password.
+3. Carry-overs from session 132: Hermes checks 6–8, Mod+G visual check, `/fleet-rollout` for laptop + natalie-laptop (+ vpn-server when online).
 
 **Session 132 next steps:**
 1. Hermes: run plan checks 6–8 (tool calls, ~50K-token session, `llm-off` frees VRAM).
