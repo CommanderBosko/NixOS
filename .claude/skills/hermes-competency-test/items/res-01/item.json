@@ -1,0 +1,9 @@
+{
+  "id": "res-01",
+  "category": "research",
+  "title": "Current nixos-unstable version of starship, with real citations",
+  "timeout_s": 900,
+  "live": true,
+  "protected": ["flake.lock", "flake.nix"],
+  "needs": ["nix"]
+}

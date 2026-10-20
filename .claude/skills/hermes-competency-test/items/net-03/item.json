@@ -1,0 +1,9 @@
+{
+  "id": "net-03",
+  "category": "network",
+  "title": "Live: status page unreachable from the tailnet",
+  "timeout_s": 900,
+  "live": true,
+  "protected": ["task/status-page.service"],
+  "needs": ["python3", "curl", "patch"]
+}

@@ -1,0 +1,106 @@
+# Captured on laptop, 2026-10-18, at the cabin (Wi-Fi from a cellular router), as bosko.
+# The hub's WireGuard endpoint is 203.0.113.10; its tunnel address is 10.10.0.1.
+
+$ sudo wg show wg0
+interface: wg0
+  public key: bGFwdG9wLXB1YmtleS1leGFtcGxlLW5vdC1yZWFsISE=
+  private key: (hidden)
+  listening port: 51820
+
+peer: aHViLXB1YmxpYy1rZXktZXhhbXBsZS1ub3QtcmVhbCE=
+  endpoint: 203.0.113.10:51820
+  allowed ips: 10.10.0.0/24
+  latest handshake: 41 seconds ago
+  transfer: 2.31 MiB received, 61.70 MiB sent
+  persistent keepalive: every 25 seconds
+
+$ ip link show wg0
+6: wg0: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1420 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/none
+
+$ ip link show wlp0s20f3
+3: wlp0s20f3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+    link/ether 02:00:5e:10:00:57 brd ff:ff:ff:ff:ff:ff
+
+# Outside the tunnel: straight to the WireGuard endpoint, Don't Fragment set.
+
+$ ping -c 3 -M do -s 1472 203.0.113.10
+PING 203.0.113.10 (203.0.113.10) 1472(1500) bytes of data.
+
+--- 203.0.113.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2041ms
+
+$ ping -c 3 -M do -s 1400 203.0.113.10
+PING 203.0.113.10 (203.0.113.10) 1400(1428) bytes of data.
+
+--- 203.0.113.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2036ms
+
+$ ping -c 3 -M do -s 1385 203.0.113.10
+PING 203.0.113.10 (203.0.113.10) 1385(1413) bytes of data.
+
+--- 203.0.113.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2047ms
+
+$ ping -c 3 -M do -s 1384 203.0.113.10
+PING 203.0.113.10 (203.0.113.10) 1384(1412) bytes of data.
+1392 bytes from 203.0.113.10: icmp_seq=1 ttl=51 time=48.2 ms
+1392 bytes from 203.0.113.10: icmp_seq=2 ttl=51 time=47.6 ms
+1392 bytes from 203.0.113.10: icmp_seq=3 ttl=51 time=49.0 ms
+
+--- 203.0.113.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 47.600/48.266/49.000/0.574 ms
+
+$ ping -c 3 -M do -s 1200 203.0.113.10
+PING 203.0.113.10 (203.0.113.10) 1200(1228) bytes of data.
+1208 bytes from 203.0.113.10: icmp_seq=1 ttl=51 time=46.9 ms
+1208 bytes from 203.0.113.10: icmp_seq=2 ttl=51 time=47.3 ms
+1208 bytes from 203.0.113.10: icmp_seq=3 ttl=51 time=46.8 ms
+
+--- 203.0.113.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 46.800/47.000/47.300/0.216 ms
+
+# Inside the tunnel: to the hub's tunnel address, Don't Fragment set.
+
+$ ping -c 3 -M do -s 1393 10.10.0.1
+PING 10.10.0.1 (10.10.0.1) 1393(1421) bytes of data.
+ping: local error: message too long, mtu=1420
+ping: local error: message too long, mtu=1420
+ping: local error: message too long, mtu=1420
+
+--- 10.10.0.1 ping statistics ---
+3 packets transmitted, 0 received, +3 errors, 100% packet loss, time 2050ms
+
+$ ping -c 3 -M do -s 1392 10.10.0.1
+PING 10.10.0.1 (10.10.0.1) 1392(1420) bytes of data.
+
+--- 10.10.0.1 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2044ms
+
+$ ping -c 3 -M do -s 1325 10.10.0.1
+PING 10.10.0.1 (10.10.0.1) 1325(1353) bytes of data.
+
+--- 10.10.0.1 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2039ms
+
+$ ping -c 3 -M do -s 1324 10.10.0.1
+PING 10.10.0.1 (10.10.0.1) 1324(1352) bytes of data.
+1332 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=51.4 ms
+1332 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=50.8 ms
+1332 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=52.1 ms
+
+--- 10.10.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 50.800/51.433/52.100/0.531 ms
+
+$ ping -c 3 -M do -s 1200 10.10.0.1
+PING 10.10.0.1 (10.10.0.1) 1200(1228) bytes of data.
+1208 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=50.2 ms
+1208 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=50.9 ms
+1208 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=51.0 ms
+
+--- 10.10.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 50.200/50.700/51.000/0.356 ms

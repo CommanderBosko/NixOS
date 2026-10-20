@@ -1,0 +1,9 @@
+{
+  "id": "nix-03",
+  "category": "nixos",
+  "title": "Journal debugging: a service that won't start",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/journal.txt", "modules/", "hosts/", "flake.nix", "flake.lock"],
+  "needs": []
+}

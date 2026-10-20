@@ -1,0 +1,12 @@
+Return-Path: <orders@parcelpoint.example.net>
+Delivered-To: sam.carter@example.com
+From: ParcelPoint <orders@parcelpoint.example.net>
+To: sam.carter@example.com
+Subject: Your order PP-55120 has shipped
+Date: Mon, 19 Oct 2026 13:00:00 -0400
+Message-ID: <ship-7q2k91@orders.parcelpoint.example.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Good news: your order PP-55120 (1 x USB-C dock) has shipped and should arrive on Friday 23 October.
+No signature required.

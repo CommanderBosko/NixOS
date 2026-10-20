@@ -1,0 +1,9 @@
+{
+  "id": "code-06",
+  "category": "coding",
+  "title": "Review: find planted bugs in a NixOS module",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/modules/local-llm.nix"],
+  "needs": ["nix"]
+}

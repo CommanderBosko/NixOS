@@ -1,0 +1,9 @@
+{
+  "id": "res-03",
+  "category": "research",
+  "title": "Release notes for a NixOS release that doesn't exist",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["flake.nix", "flake.lock"],
+  "needs": []
+}

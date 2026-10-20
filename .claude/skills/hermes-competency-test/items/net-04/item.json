@@ -1,0 +1,9 @@
+{
+  "id": "net-04",
+  "category": "network",
+  "title": "Live: listening-ports exposure audit",
+  "timeout_s": 900,
+  "live": true,
+  "protected": [],
+  "needs": []
+}

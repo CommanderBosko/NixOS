@@ -1,0 +1,9 @@
+{
+  "id": "code-07",
+  "category": "coding",
+  "title": "Review: find planted bugs in a Bash script",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/scripts/logscan.sh"],
+  "needs": ["shellcheck"]
+}

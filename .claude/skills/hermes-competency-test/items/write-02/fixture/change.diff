@@ -1,0 +1,129 @@
+diff --git a/docs/backups.md b/docs/backups.md
+new file mode 100644
+index 0000000..6f3c2a1
+--- /dev/null
++++ b/docs/backups.md
+@@ -0,0 +1,25 @@
++# Backups
++
++atlas backs up `/var/lib/paperless`, `/var/lib/vaultwarden` and `/home/mira/Documents` to the
++restic repository on the backup box (`sftp:restic@192.0.2.50:/srv/restic/atlas`) every night at
++02:30, with up to 45 minutes of random delay so it doesn't collide with the box's own scrub.
++
++Paperless's consume folder and any `.cache` directories are excluded.
++
++Retention: 7 daily, 4 weekly and 6 monthly snapshots. Pruning runs after each backup.
++
++The repository password is the `restic_password` sops secret (`secrets/atlas.yaml`).
++
++## Checking a backup
++
++```sh
++sudo restic-nightly snapshots
++sudo restic-nightly check
++```
++
++## Restoring
++
++```sh
++sudo restic-nightly restore latest --target /tmp/restore --include /var/lib/paperless
++```
++
+diff --git a/hosts/atlas/default.nix b/hosts/atlas/default.nix
+index 3a91be0..c07d2f4 100644
+--- a/hosts/atlas/default.nix
++++ b/hosts/atlas/default.nix
+@@ -6,13 +6,14 @@
+   imports = [
+     ./hardware-configuration.nix
+     ./networking.nix
+     ../../modules/common.nix
+     ../../modules/sops.nix
+     ../../modules/paperless.nix
+     ../../modules/vaultwarden.nix
++    ../../modules/restic-backup.nix
+   ];
+ 
+-  boot.loader.timeout = 5;
++  boot.loader.timeout = 1;
+   boot.loader.systemd-boot.enable = true;
+   boot.loader.efi.canTouchEfiVariables = true;
+ 
+diff --git a/modules/restic-backup.nix b/modules/restic-backup.nix
+new file mode 100644
+index 0000000..b84e0d9
+--- /dev/null
++++ b/modules/restic-backup.nix
+@@ -0,0 +1,35 @@
++# Nightly restic backup of atlas's service data to the backup box.
++{ config, ... }:
++{
++  services.restic.backups.nightly = {
++    initialize = true;
++    repository = "sftp:restic@192.0.2.50:/srv/restic/atlas";
++    passwordFile = config.sops.secrets.restic_password.path;
++
++    paths = [
++      "/var/lib/paperless"
++      "/var/lib/vaultwarden"
++      "/home/mira/Documents"
++    ];
++    exclude = [
++      "/var/lib/paperless/consume"
++      "**/.cache"
++    ];
++
++    extraOptions = [
++      "sftp.command='ssh restic@192.0.2.50 -i /etc/ssh/ssh_host_ed25519_key -s sftp'"
++    ];
++
++    timerConfig = {
++      OnCalendar = "02:30";
++      RandomizedDelaySec = "45m";
++      Persistent = true;
++    };
++
++    pruneOpts = [
++      "--keep-daily 7"
++      "--keep-weekly 4"
++      "--keep-monthly 6"
++    ];
++  };
++}
+diff --git a/modules/sops.nix b/modules/sops.nix
+index 5d0e7f3..9a1c44b 100644
+--- a/modules/sops.nix
++++ b/modules/sops.nix
+@@ -9,8 +9,13 @@
+     sops.defaultSopsFile = ../secrets + "/${config.networking.hostName}.yaml";
+     sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+ 
+     sops.secrets.wireguard_key = {
+       owner = "systemd-network";
+     };
++
++    sops.secrets.restic_password = {
++      owner = "root";
++      mode = "0400";
++    };
+   };
+ }
+diff --git a/secrets/atlas.yaml b/secrets/atlas.yaml
+index 0c4e1d2..7be93f5 100644
+--- a/secrets/atlas.yaml
++++ b/secrets/atlas.yaml
+@@ -1,4 +1,5 @@
+ wireguard_key: ENC[AES256_GCM,data:Qm9ndXNEYXRhRm9yVGVzdGluZ09ubHlOb3RBS2V5AA==,iv:c3ludGhldGljaXY=,tag:ZmFrZXRhZ2ZvcnRlc3Q=,type:str]
++restic_password: ENC[AES256_GCM,data:U3ludGhldGljQ2lwaGVydGV4dEZvckRvY3M=,iv:ZXhhbXBsZWl2MTIz,tag:ZXhhbXBsZXRhZzQ1Ng==,type:str]
+ sops:
+     age:
+         - recipient: age1examplerecipientplaceholderxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+@@ -8,6 +9,6 @@ sops:
+             U3ludGhldGljIGFnZSBzdGFuemEgZm9yIGRvY3VtZW50YXRpb24gb25seQ==
+             -----END AGE ENCRYPTED FILE-----
+-    lastmodified: "2026-09-02T18:11:47Z"
+-    mac: ENC[AES256_GCM,data:b2xkbWFjdmFsdWVwbGFjZWhvbGRlcg==,iv:b2xkaXY=,tag:b2xkdGFn,type:str]
++    lastmodified: "2026-10-18T20:42:03Z"
++    mac: ENC[AES256_GCM,data:bmV3bWFjdmFsdWVwbGFjZWhvbGRlcg==,iv:bmV3aXY=,tag:bmV3dGFn,type:str]
+     unencrypted_suffix: _unencrypted
+     version: 3.9.0

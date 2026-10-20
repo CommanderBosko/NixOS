@@ -1,0 +1,9 @@
+{
+  "id": "nix-01",
+  "category": "nixos",
+  "title": "Override a vendored module: conflicting Restart plus the wantedBy merge trap",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/upstream", "task/eval.nix", "modules/", "hosts/", "flake.nix", "flake.lock"],
+  "needs": ["nix"]
+}

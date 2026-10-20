@@ -1,0 +1,16 @@
+[Unit]
+Description=Family status page for every device on the tailnet (port 18473)
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/status-page/www
+# Serve the static status page on all interfaces so phones and laptops on the
+# tailnet can open http://gaming:18473/.
+ExecStart=/run/current-system/sw/bin/python3 -m http.server 18473 --bind 127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

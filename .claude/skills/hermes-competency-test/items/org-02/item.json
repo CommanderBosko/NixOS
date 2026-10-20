@@ -1,0 +1,9 @@
+{
+  "id": "org-02",
+  "category": "organization",
+  "title": "Tidy a messy notes inbox into topic folders",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/inbox"],
+  "needs": []
+}

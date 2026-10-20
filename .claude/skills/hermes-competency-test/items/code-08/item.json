@@ -1,0 +1,10 @@
+{
+  "id": "code-08",
+  "category": "coding",
+  "title": "Validate a config change: apply a patch, prove the flake evaluates, fix minimally",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/change.diff", "flake.nix", "flake.lock"],
+  "needs": ["nix"],
+  "check_timeout_s": 240
+}

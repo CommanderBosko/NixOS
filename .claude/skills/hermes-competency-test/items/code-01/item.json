@@ -1,0 +1,9 @@
+{
+  "id": "code-01",
+  "category": "coding",
+  "title": "Python: implement a duration parser to spec",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/test_durations_examples.py"],
+  "needs": ["python3"]
+}

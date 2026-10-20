@@ -1,0 +1,9 @@
+{
+  "id": "nix-02",
+  "category": "nixos",
+  "title": "nh os boot vs switch vs test for a kernel-param change",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["modules/", "hosts/", "flake.nix", "flake.lock"],
+  "needs": []
+}

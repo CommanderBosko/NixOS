@@ -1,0 +1,9 @@
+{
+  "id": "write-03",
+  "category": "writing",
+  "title": "Tighten a verbose doc section",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/draft.md"],
+  "needs": []
+}

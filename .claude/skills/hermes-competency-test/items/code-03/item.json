@@ -1,0 +1,9 @@
+{
+  "id": "code-03",
+  "category": "coding",
+  "title": "Nix: pure /etc/hosts renderer with validation",
+  "timeout_s": 900,
+  "live": false,
+  "protected": [],
+  "needs": ["nix"]
+}

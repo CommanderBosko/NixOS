@@ -1,0 +1,9 @@
+{
+  "id": "code-02",
+  "category": "coding",
+  "title": "Bash: backup-pruning script to spec",
+  "timeout_s": 900,
+  "live": false,
+  "protected": [],
+  "needs": ["shellcheck"]
+}

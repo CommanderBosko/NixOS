@@ -1,0 +1,9 @@
+{
+  "id": "org-04",
+  "category": "organization",
+  "title": "Memory hygiene from a chatty message",
+  "timeout_s": 900,
+  "live": false,
+  "protected": [],
+  "needs": []
+}
