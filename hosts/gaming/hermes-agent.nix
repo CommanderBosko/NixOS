@@ -109,6 +109,28 @@ in
       # back to the keyless public endpoints (Exa, Parallel, ...) instead.
       settings.nous.guest = false;
 
+      # write_file/patch may only touch these dirs; anything else (the real
+      # repo included) is hard-blocked. Shell redirects via the terminal tool
+      # are NOT covered, so approvals below still matter.
+      environment.HERMES_WRITE_SAFE_ROOT = "~/hermes-work:~/projects/hermes-tests";
+      # Pin manual approval (a 9B "smart" judge would be worse) and refuse
+      # these outright; denies hold even under --yolo. Pattern-based only:
+      # execute_code scripts can bypass them.
+      settings.approvals = {
+        mode = "manual";
+        deny = [
+          "git push*"
+          "nixos-rebuild*"
+          "nh os *"
+          "nix flake update*"
+          "rm -r*"
+          "sudo *"
+        ];
+      };
+      # Agent-created skills are staged in ~/.hermes/pending/skills for review
+      # (/skills approve), the same gate-before-save as the memory checker.
+      settings.skills.write_approval = true;
+
       # Every memory save (the memory tool and Mnemosyne's writers; the
       # matcher is a full-match regex) goes to a Claude checker first (agent prompt in
       # .claude/agents/hermes-memory-checker.md). It keeps, fixes or rejects
