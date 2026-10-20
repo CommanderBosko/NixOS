@@ -192,6 +192,22 @@
         "type": "github"
       }
     },
+    "mnemosyne": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792500144,
+        "narHash": "sha256-G/SkFHzuJXtihN7NXIqWweIBb+qsSVfb4F7yibsZ1bg=",
+        "owner": "mnemosyne-oss",
+        "repo": "mnemosyne",
+        "rev": "ed944d78b48e044bbd7c0155cb4b115e39f496a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mnemosyne-oss",
+        "repo": "mnemosyne",
+        "type": "github"
+      }
+    },
     "nix-colors": {
       "inputs": {
         "base16-schemes": "base16-schemes",
@@ -416,6 +432,7 @@
         "financeguru": "financeguru",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
+        "mnemosyne": "mnemosyne",
         "nix-colors": "nix-colors",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs_4",

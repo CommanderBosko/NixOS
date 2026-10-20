@@ -57,6 +57,11 @@
       url = "github:DietrichGebert/ponytail";
       flake = false;
     };
+    # Hermes memory provider (hosts/gaming/hermes-mnemosyne.nix).
+    mnemosyne = {
+      url = "github:mnemosyne-oss/mnemosyne";
+      flake = false;
+    };
   };
 
   outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
