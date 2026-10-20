@@ -138,15 +138,16 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1792323898,
-        "narHash": "sha256-+lwRhBPpi3WxZiaKLsjbPHZtXUEuUbXxAqel0p7L4EY=",
-        "owner": "NousResearch",
+        "lastModified": 1792463041,
+        "narHash": "sha256-DbJRxim6j5+DuGopiC0ovDtGbD6H46unh192jCfYITU=",
+        "owner": "CommanderBosko",
         "repo": "hermes-agent",
-        "rev": "9e01b44dd23978f9ff40b7837467f3a9f1582130",
+        "rev": "68ce9ec90170ab8b9d7429669a54cbc281430c09",
         "type": "github"
       },
       "original": {
-        "owner": "NousResearch",
+        "owner": "CommanderBosko",
+        "ref": "cron-bugfix-141750",
         "repo": "hermes-agent",
         "type": "github"
       }

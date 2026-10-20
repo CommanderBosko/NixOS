@@ -44,7 +44,7 @@ jobs:
       # eval-time reads fail on a fresh runner. Nothing is built here anyway:
       # nixosConfigurations are only evaluated unless --build-all is passed.
       - name: nix flake check
-        run: nix flake check
+        run: nix flake check --no-build
 
       # The real gate: force the FULL system derivation of every host in
       # nixosConfigurations. Eval-only, no builds; cross-arch is fine —

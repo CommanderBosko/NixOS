@@ -45,7 +45,7 @@
 
     # Hermes Agent — AI agent framework by Nous Research (gaming only).
     # No `follows`: upstream pins its own nixpkgs.
-    hermes-agent.url = "github:NousResearch/hermes-agent";
+    hermes-agent.url = "github:CommanderBosko/hermes-agent/cron-bugfix-141750";
 
     # Hermes copies of the Claude Code plugins (hosts/gaming/hermes-agent.nix).
     # Track the default branch so `nix flake update` bumps them.
