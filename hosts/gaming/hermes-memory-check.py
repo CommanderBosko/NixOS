@@ -1,4 +1,4 @@
-"""Hermes pre_tool_call hook: vet memory saves with the hermes-memory-checker agent.
+"""Hermes pre_tool_call hook: vet memory saves (the memory tool and Mnemosyne's writers) with the hermes-memory-checker agent.
 
 Hook wire (stdin JSON): {tool_name, tool_input, session_id, cwd, ...}. Each add/patch
 entry is judged by `claude -p` running the hermes-memory-checker agent prompt (.claude/agents/ in the
@@ -105,8 +105,15 @@ def scan(text):
     return list(dict.fromkeys(found)), text
 
 
-def candidates(args):
+# Mnemosyne's free-text writers (matched in hosts/gaming/hermes-agent.nix). Each takes a
+# single `content` string and has no `action`, so it is one add.
+MNEMOSYNE_WRITERS = {"mnemosyne_remember", "mnemosyne_update", "mnemosyne_shared_remember"}
+
+
+def candidates(args, tool="memory"):
     """Ops in their call form, plus (op index, text field, text) for ops that write text."""
+    if tool in MNEMOSYNE_WRITERS:
+        return False, [args], [(0, "content", args["content"])] if args.get("content") else []
     batch = isinstance(args.get("operations"), list)
     ops = args["operations"] if batch else [args]
     found = []
@@ -189,10 +196,10 @@ def ask_checker(target, user_msg, found, mcp_nixos):
 def main():
     payload = json.load(sys.stdin)
     args = payload.get("tool_input") or payload.get("args") or {}
-    batch, ops, found = candidates(args)
+    batch, ops, found = candidates(args, payload.get("tool_name") or "memory")
     if not found:
         return
-    target = args.get("target", "memory")
+    target = args.get("target", "memory")  # Mnemosyne calls have none: judged as agent notes
     session = payload.get("session_id")
     entries = [scan(text)[1] for _, _, text in found]  # redacted, for the log and block message
     kinds = {n: scan(text)[0] for n, (_, _, text) in enumerate(found)}

@@ -37,8 +37,9 @@ EOF
 chmod +x "$stub/claude"
 
 # Offline hook run: the stub comes first on PATH. Prints the hook's stdout.
-hook() {
-  printf '{"hook_event_name":"pre_tool_call","tool_name":"memory","session_id":"test","tool_input":%s}' "$1" |
+hook() { hook_as memory "$1"; }
+hook_as() { # hook_as <tool_name> <tool_input JSON>
+  printf '{"hook_event_name":"pre_tool_call","tool_name":"%s","session_id":"test","tool_input":%s}' "$1" "$2" |
     PATH="$stub:$PATH" python3 "$here/hermes-memory-check.py"
 }
 action() { python3 -c 'import sys,json; s=sys.stdin.read().strip(); print(json.loads(s)["action"] if s else "allow")'; }
@@ -137,7 +138,19 @@ PY
 echo "== fallback: verdicts inside result are parsed"
 touch "$HERMES_HOME/stub-fallback"
 expect "verdict from result JSON applied" block "$(hook "$benign" | action)"
-rm -f "$HERMES_HOME/stub-fallback"
+
+echo "== mnemosyne writers (same checks, action-less content)"
+rm -f "$HERMES_HOME/stub-calls"
+for t in mnemosyne_remember mnemosyne_update mnemosyne_shared_remember; do
+  expect "$t verdict applied" block "$(hook_as $t '{"content":"mcp__nixos__nix_versions cannot filter by channel."}' | action)"
+done
+if [[ -e $HERMES_HOME/stub-calls ]]; then ok "mnemosyne entry was sent to claude"
+else bad "mnemosyne entry never reached claude"; fi
+rm -f "$HERMES_HOME/stub-fallback" "$HERMES_HOME/stub-calls"
+expect "mnemosyne credential blocked locally" block "$(hook_as mnemosyne_remember '{"content":"password: hunter2"}' | action)"
+expect "mnemosyne recall is not vetted" allow "$(hook_as mnemosyne_recall '{"content":"password: hunter2"}' | action)"
+if [[ ! -e $HERMES_HOME/stub-calls ]]; then ok "no claude call for mnemosyne credential or recall"
+else bad "claude was called for a mnemosyne credential or recall"; fi
 
 if [[ ${HERMES_MEMORY_CHECK_LIVE:-0} == 1 ]]; then
   MCP=${1:-}
