@@ -52,8 +52,10 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   probably looked like.
 - **STEP 6 commit and push forms.** `git commit -m` drops the `Co-Authored-By:` body: a single
   `-m` has no body, and `-m` plus a heredoc silently loses the heredoc. Use `git commit -F -`.
-  Push with `git push origin HEAD`, not `origin main`: from any other branch, `origin main` pushes
-  the stale local `main`, reports success, and leaves the close commit unpushed.
+  Push with the git-push skill's `push.sh execute` (it pushes the current branch, like
+  `git push origin HEAD`), not `origin main`: from any other branch, `origin main` pushes
+  the stale local `main`, reports success, and leaves the close commit unpushed. On a protected
+  default branch, `push.sh` falls back to a `pr/*` branch plus PR (merge via `land-prs`).
 - **`secret-scan/SKILL.md` exists on disk but the Skill tool says `Unknown skill: secret-scan`**
   (observed 2026-10-10, Sidekick): the session was launched from the project's old path
   (`~/projects/ADHD-Assistant`) and the directory was renamed mid-session, so the session's
