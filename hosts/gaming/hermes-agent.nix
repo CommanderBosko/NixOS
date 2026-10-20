@@ -134,7 +134,6 @@ in
           cp -r ${inputs.superpowers}/{.hermes-plugin/.,skills} $out/
         '')
         (pkgs.runCommand "ponytail" { } "ln -s ${inputs.ponytail} $out")
-        (import ./hermes-mnemosyne.nix { inherit pkgs; src = inputs.mnemosyne; })
       ];
       settings.plugins.enabled = [
         "superpowers"
@@ -144,10 +143,13 @@ in
       # Long-term memory backend. Data stays in ~/.hermes/mnemosyne/data,
       # outside the store, so rebuilds never touch it.
       settings.memory.provider = "mnemosyne";
-
-      # How to use the user's Proton mail (hosts/gaming/proton-mail.nix).
-      # Rewritten on every rebuild, so Hermes can't drift it.
-      hermesHomeFiles."skills/email/proton-mail/SKILL.md" = ./hermes-proton-mail-skill.md;
+      hermesHomeFiles = lib.mapAttrs' (
+        name: content: lib.nameValuePair "plugins/mnemosyne/${name}" content
+      ) (import ./hermes-mnemosyne.nix { inherit pkgs; src = inputs.mnemosyne; }).files // {
+        # How to use the user's Proton mail (hosts/gaming/proton-mail.nix).
+        # Rewritten on every rebuild, so Hermes can't drift it.
+        "skills/email/proton-mail/SKILL.md" = ./hermes-proton-mail-skill.md;
+      };
     };
   };
 }

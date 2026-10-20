@@ -3,9 +3,9 @@
 # Mnemosyne memory provider for Hermes, built from the flake input instead of
 # the pip-installed ~/.hermes/mnemosyne-venv. Two Python packages live in the
 # one repo: the core (mnemosyne-memory) and the Hermes adapter under
-# integrations/hermes (mnemosyne-hermes). Returns the plugin directory for
-# `extraPlugins`: it puts the Python env on sys.path, then re-exports the
-# adapter, the same job as the wrapper the upstream installer generates.
+# integrations/hermes (mnemosyne-hermes). Returns the plugin's files: they put
+# the Python env on sys.path, then re-export the adapter, the same job as the
+# wrapper the upstream installer generates.
 let
   py = pkgs.python314Packages;
 
@@ -45,23 +45,28 @@ let
   env = pkgs.python314.withPackages (_: [ mnemosyne-hermes ]);
   sitePackages = "${env}/${pkgs.python314.sitePackages}";
 in
-pkgs.runCommand "mnemosyne" { passthru = { inherit env; }; } ''
-  mkdir $out
-  cp ${src}/integrations/hermes/src/mnemosyne_hermes/plugin.yaml $out/
-  cat > $out/__init__.py <<PY
-  """Nix-built Mnemosyne Hermes plugin wrapper."""
-  import sys
+{
+  inherit env;
+  # File contents for hermesHomeFiles."plugins/mnemosyne/<name>". Hermes finds a
+  # memory provider by directory name (plugins/<memory.provider>), which rules
+  # out extraPlugins: it installs as nix-managed-<name>.
+  files = {
+    "plugin.yaml" = builtins.readFile "${src}/integrations/hermes/src/mnemosyne_hermes/plugin.yaml";
+    "__init__.py" = ''
+      """Nix-built Mnemosyne Hermes plugin wrapper."""
+      import sys
 
-  sys.path.insert(0, "${sitePackages}")
+      sys.path.insert(0, "${sitePackages}")
 
-  from mnemosyne_hermes import *  # noqa: F401,F403,E402
-  PY
-  cat > $out/cli.py <<PY
-  """Hermes CLI wrapper for the Nix-built Mnemosyne package."""
-  import sys
+      from mnemosyne_hermes import *  # noqa: F401,F403,E402
+    '';
+    "cli.py" = ''
+      """Hermes CLI wrapper for the Nix-built Mnemosyne package."""
+      import sys
 
-  sys.path.insert(0, "${sitePackages}")
+      sys.path.insert(0, "${sitePackages}")
 
-  from mnemosyne_hermes.cli import *  # noqa: F401,F403,E402
-  PY
-''
+      from mnemosyne_hermes.cli import *  # noqa: F401,F403,E402
+    '';
+  };
+}
