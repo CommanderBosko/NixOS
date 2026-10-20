@@ -3,7 +3,11 @@
 # Usage:
 #   push.sh status    — print working-tree status, branch, and commits ahead of upstream
 #   push.sh execute   — push (with -u if no upstream yet) and report the result;
-#                       exits 0 without pushing if origin/<branch>..HEAD is empty
+#                       exits 0 without pushing if origin/<branch>..HEAD is empty.
+#                       If the branch is origin's default branch and the push is rejected by
+#                       a protection rule (GH013 / PR required), falls back to: new pr/<slug>-<sha>
+#                       branch at HEAD, push it, `gh pr create`, reset local default branch to
+#                       origin/<default> (clean tree only), stay on the PR branch. Never forces.
 set -euo pipefail
 
 MODE="${1:-status}"
@@ -57,10 +61,38 @@ case "$MODE" in
       exit 0
     fi
     if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
-      git push
+      PUSH=(git push)
     else
-      git push -u origin "$BRANCH"
+      PUSH=(git push -u origin "$BRANCH")
     fi
+    # Capture output so protection errors can be pattern-matched, but still show it.
+    if ! OUT="$("${PUSH[@]}" 2>&1)"; then
+      echo "$OUT" >&2
+      DEFAULT="$(default_base 2>/dev/null || true)"
+      DEFAULT="${DEFAULT#origin/}"
+      if [ -n "$DEFAULT" ] && [ "$BRANCH" = "$DEFAULT" ] &&
+        grep -qiE 'GH013|Repository rule violations|protected branch|must be made through a pull request' <<<"$OUT"; then
+        N="$(git rev-list --count "origin/$DEFAULT..HEAD")"
+        SUBJECT="$(git log -1 --format=%s)"
+        SLUG="$(tr '[:upper:]' '[:lower:]' <<<"$SUBJECT" | tr -c 'a-z0-9\n' '-' | tr -s '-' | cut -c1-40 | sed 's/^-//; s/-$//')"
+        PR_BRANCH="pr/${SLUG:-changes}-$(git rev-parse --short=7 HEAD)"
+        echo "$DEFAULT is protected: pushing $PR_BRANCH and opening a PR instead" >&2
+        git switch -c "$PR_BRANCH"
+        git push -u origin "$PR_BRANCH"
+        PR_URL="$(gh pr create --fill --base "$DEFAULT" --head "$PR_BRANCH")"
+        echo "$PR_URL"
+        if [ -z "$(git status --porcelain)" ]; then
+          git branch -f "$DEFAULT" "origin/$DEFAULT"
+          RESET="local $DEFAULT reset to origin/$DEFAULT"
+        else
+          RESET="WARNING: working tree dirty, local $DEFAULT NOT reset (run: git branch -f $DEFAULT origin/$DEFAULT)"
+        fi
+        echo "$DEFAULT is protected: pushed $N commit(s) as PR $PR_URL; $RESET; merge via land-prs"
+        exit 0
+      fi
+      exit 1
+    fi
+    echo "$OUT"
     echo "--- pushed ---"
     echo "branch: $BRANCH"
     git remote get-url origin

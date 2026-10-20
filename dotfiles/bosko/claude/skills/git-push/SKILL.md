@@ -43,6 +43,13 @@ judgment involved), so they're handled by a script — only the confirm-skip dec
    if so), and prints the branch name and remote URL. If `origin/<branch>..HEAD` is empty it
    pushes nothing, prints `nothing to push: ...`, and exits 0 — report that instead of step 6.
 
+   **Protected default branch:** if the current branch is the remote default branch and the push
+   is rejected by a ruleset (GH013 / "must be made through a pull request"), the script falls back
+   on its own: it pushes the commits as a new `pr/<slug>-<sha>` branch, opens a PR with
+   `gh pr create`, resets local `main` to `origin/main` (clean tree only) and stays on the PR
+   branch. The PR is not merged automatically; merging is the `land-prs` skill's job. Report the PR
+   URL and tell the user to merge via land-prs.
+
 6. Report: how many commits were pushed, the branch name, and the remote URL (from step 5's output).
    If git printed a `https://github.com/<owner>/<repo>/pull/new/<branch>` link, mention it as an
    "open a PR" link only (see Gotchas).

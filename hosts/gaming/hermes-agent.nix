@@ -115,12 +115,13 @@ in
       environment.HERMES_WRITE_SAFE_ROOT = "~/hermes-work:~/projects/hermes-tests";
       # Pin manual approval (a 9B "smart" judge would be worse) and refuse
       # these outright; denies hold even under --yolo. Pattern-based only:
-      # execute_code scripts can bypass them.
+      # execute_code scripts can bypass them. Pushes are NOT denied: main is
+      # protected by a GitHub ruleset (PR + CI, no bypass), so Hermes may push
+      # branches and open PRs (each asks first) but cannot merge its own.
       settings.approvals = {
         mode = "manual";
         deny = [
-          "git push*"
-          "git * push*"
+          "gh pr merge*"
           "nixos-rebuild*"
           "nh os *"
           "nix flake update*"

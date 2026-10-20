@@ -209,7 +209,7 @@ GitHub," unlike a bare "push" reaching `git-push` directly.)
    End the commit message body with a `Co-Authored-By:` trailer using whatever model name the
    harness's own Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
    hardcode a specific model name here, it will drift the next time the underlying model changes.
-3. Push: `git push origin HEAD` (never `--force`, never `--no-verify`).
+3. Push: run the git-push skill's `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` (path pattern per `~/.claude/skills/lib/script-paths.md`; never `--force`, never `--no-verify`). It falls back to a PR branch when the default branch is protected; report that PR URL and that merging is `land-prs`'s job.
 4. Confirm the push succeeded and report the final commit hash.
 
 ---
