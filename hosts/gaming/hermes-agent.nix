@@ -109,7 +109,7 @@ in
       # back to the keyless public endpoints (Exa, Parallel, ...) instead.
       settings.nous.guest = false;
 
-      # Every memory save (the memory tool and Mnemosyne's free-text writers; the
+      # Every memory save (the memory tool and Mnemosyne's writers; the
       # matcher is a full-match regex) goes to a Claude checker first (agent prompt in
       # .claude/agents/hermes-memory-checker.md). It keeps, fixes or rejects
       # the entry, and rejections tell Hermes why. Unprompted, Hermes saved task
@@ -117,7 +117,7 @@ in
       # at the first interactive `hermes` run after a rebuild (first-use consent).
       settings.hooks.pre_tool_call = [
         {
-          matcher = "memory|mnemosyne_remember|mnemosyne_update|mnemosyne_shared_remember";
+          matcher = "memory|mnemosyne_(remember|update|shared_remember|remember_canonical|triple_add|batch|scratchpad_write|task_progress|import)";
           command = "${memoryCheck}/bin/hermes-memory-check ${pkgs.mcp-nixos}/bin/mcp-nixos";
           timeout = 120;
         }

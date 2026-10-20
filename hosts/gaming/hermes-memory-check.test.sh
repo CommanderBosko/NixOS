@@ -148,6 +148,25 @@ if [[ -e $HERMES_HOME/stub-calls ]]; then ok "mnemosyne entry was sent to claude
 else bad "mnemosyne entry never reached claude"; fi
 rm -f "$HERMES_HOME/stub-fallback" "$HERMES_HOME/stub-calls"
 expect "mnemosyne credential blocked locally" block "$(hook_as mnemosyne_remember '{"content":"password: hunter2"}' | action)"
+for c in 'mnemosyne_remember_canonical:{"category":"c","name":"n","body":"fact"}' \
+         'mnemosyne_triple_add:{"subject":"user","predicate":"prefers","object":"neovim"}'; do
+  expect "${c%%:*} reaches the checker" block "$(touch "$HERMES_HOME/stub-fallback"; hook_as "${c%%:*}" "${c#*:}" | action)"
+done
+# A rejected op is dropped and the rest of the batch goes through.
+touch "$HERMES_HOME/stub-fallback"
+out=$(hook_as mnemosyne_batch '{"operations":[{"action":"remember","content":"fact"},{"action":"forget","memory_id":"x"}]}')
+if [[ $(printf %s "$out" | action) == modify ]] && printf %s "$out" | python3 -c 'import sys,json; o=json.load(sys.stdin)["args"]["operations"]; sys.exit(o != [{"action":"forget","memory_id":"x"}])'
+then ok "batch: junk remember dropped, forget kept"; else bad "batch partial reject: $out"; fi
+rm -f "$HERMES_HOME/stub-fallback" "$HERMES_HOME/stub-calls"
+expect "triple_add credential blocked" block "$(hook_as mnemosyne_triple_add '{"subject":"u","predicate":"has","object":"password: hunter2"}' | action)"
+expect "batch credential blocked" block "$(hook_as mnemosyne_batch '{"operations":[{"action":"remember","content":"api_key=xq8Lm2Zr9Pw4Tb1"}]}' | action)"
+expect "scratchpad credential blocked" block "$(hook_as mnemosyne_scratchpad_write '{"content":"password: hunter2"}' | action)"
+expect "task_progress credential blocked" block "$(hook_as mnemosyne_task_progress '{"action":"set","task":"t","state":"token=xq8Lm2Zr9Pw4Tb1"}' | action)"
+expect "scratchpad narration allowed, unchecked" allow "$(hook_as mnemosyne_scratchpad_write '{"content":"working on the flake bump now"}' | action)"
+expect "task_progress narration allowed, unchecked" allow "$(hook_as mnemosyne_task_progress '{"action":"set","task":"t","state":"halfway through the bump"}' | action)"
+expect "import blocked" block "$(hook_as mnemosyne_import '{"input_path":"/tmp/x.json"}' | action)"
+if [[ ! -e $HERMES_HOME/stub-calls ]]; then ok "no claude call for scratch, import or credentials"
+else bad "claude was called for a scratch, import or credential case"; fi
 expect "mnemosyne recall is not vetted" allow "$(hook_as mnemosyne_recall '{"content":"password: hunter2"}' | action)"
 if [[ ! -e $HERMES_HOME/stub-calls ]]; then ok "no claude call for mnemosyne credential or recall"
 else bad "claude was called for a mnemosyne credential or recall"; fi

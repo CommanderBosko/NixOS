@@ -105,20 +105,38 @@ def scan(text):
     return list(dict.fromkeys(found)), text
 
 
-# Mnemosyne's free-text writers (matched in hosts/gaming/hermes-agent.nix). Each takes a
-# single `content` string and has no `action`, so it is one add.
-MNEMOSYNE_WRITERS = {"mnemosyne_remember", "mnemosyne_update", "mnemosyne_shared_remember"}
+# Mnemosyne's writers (matched in hosts/gaming/hermes-agent.nix). Tools that take a single
+# text field have no `action`, so each call is one add. {tool: field}
+MNEMOSYNE_TEXT = {
+    "mnemosyne_remember": "content",
+    "mnemosyne_update": "content",
+    "mnemosyne_shared_remember": "content",
+    "mnemosyne_remember_canonical": "body",
+}
+# Transient notes (narrating the current task is their job): credential guard only.
+MNEMOSYNE_SCRATCH = {"mnemosyne_scratchpad_write": "content", "mnemosyne_task_progress": "state"}
+# Bulk-loads memories from a file or another provider, which nothing here can read.
+MNEMOSYNE_BLOCKED = {"mnemosyne_import": "mnemosyne_import is disabled for the agent: its content "
+                     "can't be checked. Ask the user to run `mnemosyne import` themselves."}
+# Ops that write text. The memory tool and mnemosyne_batch both carry a list of them.
+WRITE_ACTIONS = ("add", "patch", "remember", "update")
 
 
 def candidates(args, tool="memory"):
-    """Ops in their call form, plus (op index, text field, text) for ops that write text."""
-    if tool in MNEMOSYNE_WRITERS:
-        return False, [args], [(0, "content", args["content"])] if args.get("content") else []
+    """Ops in their call form, plus (op index, text field, text) for ops that write text.
+    The field is None when the text is assembled from several fields (a check can reject
+    such a call but not rewrite it)."""
+    if tool in MNEMOSYNE_TEXT or tool in MNEMOSYNE_SCRATCH:
+        field = MNEMOSYNE_TEXT.get(tool) or MNEMOSYNE_SCRATCH[tool]
+        return False, [args], [(0, field, args[field])] if args.get(field) else []
+    if tool == "mnemosyne_triple_add":
+        text = " ".join(str(args.get(k) or "") for k in ("subject", "predicate", "object"))
+        return False, [args], [(0, None, text)] if text.strip() else []
     batch = isinstance(args.get("operations"), list)
     ops = args["operations"] if batch else [args]
     found = []
     for i, op in enumerate(ops):
-        if isinstance(op, dict) and op.get("action") in ("add", "patch"):
+        if isinstance(op, dict) and op.get("action") in WRITE_ACTIONS:
             field = "new_text" if op.get("new_text") else "content"
             if op.get(field):
                 found.append((i, field, op[field]))
@@ -196,7 +214,11 @@ def ask_checker(target, user_msg, found, mcp_nixos):
 def main():
     payload = json.load(sys.stdin)
     args = payload.get("tool_input") or payload.get("args") or {}
-    batch, ops, found = candidates(args, payload.get("tool_name") or "memory")
+    tool = payload.get("tool_name") or "memory"
+    if tool in MNEMOSYNE_BLOCKED:
+        print(json.dumps({"action": "block", "message": MNEMOSYNE_BLOCKED[tool]}))
+        return
+    batch, ops, found = candidates(args, tool)
     if not found:
         return
     target = args.get("target", "memory")  # Mnemosyne calls have none: judged as agent notes
@@ -206,6 +228,8 @@ def main():
     if any(kinds.values()):
         # Local reject: the whole write is blocked and claude is never called.
         verdicts = {n: {"verdict": "reject", "reason": SECRET_REASON} for n in kinds}
+    elif tool in MNEMOSYNE_SCRATCH:
+        return
     else:
         try:
             verdicts = ask_checker(target, last_user_message(session or ""), found,
@@ -228,7 +252,7 @@ def main():
         if v["verdict"] == "reject":
             drop.add(i)
             rejected.append(f'"{entries[n][:120]}": {v["reason"]}')
-        elif v["verdict"] == "fix" and v.get("content"):
+        elif v["verdict"] == "fix" and v.get("content") and field:
             ops[i] = {**ops[i], field: v["content"]}
             changed = True
 
