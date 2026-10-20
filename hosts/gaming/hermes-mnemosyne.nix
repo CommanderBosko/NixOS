@@ -58,6 +58,7 @@ in
 
       sys.path.insert(0, "${sitePackages}")
 
+      # Hermes discovery marker: register_memory_provider / MnemosyneMemoryProvider
       from mnemosyne_hermes import *  # noqa: F401,F403,E402
     '';
     "cli.py" = ''
