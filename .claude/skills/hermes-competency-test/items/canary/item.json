@@ -1,0 +1,8 @@
+{
+  "id": "canary",
+  "category": "canary",
+  "title": "Detector canary (not scored, no model)",
+  "timeout_s": 60,
+  "live": false,
+  "protected": ["task/protected.txt"]
+}

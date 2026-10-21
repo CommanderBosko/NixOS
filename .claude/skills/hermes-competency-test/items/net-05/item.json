@@ -1,0 +1,9 @@
+{
+  "id": "net-05",
+  "category": "network",
+  "title": "Captured: laptop has tailnet but no internet",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/laptop-captures.txt"],
+  "needs": []
+}

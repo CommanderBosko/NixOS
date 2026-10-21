@@ -1,0 +1,9 @@
+{
+  "id": "net-07",
+  "category": "network",
+  "title": "Config: NixOS firewall review",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/networking.nix"],
+  "needs": ["nix", "patch"]
+}

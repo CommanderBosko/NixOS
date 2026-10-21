@@ -1,0 +1,24 @@
+diff --git a/modules/audio.nix b/modules/audio.nix
+index d93a24b..f5246f1 100644
+--- a/modules/audio.nix
++++ b/modules/audio.nix
+@@ -11,6 +11,19 @@
+       };
+ 
+       pulse.enable = true;
++
++      # JACK clients (Ardour, Carla) talk to PipeWire directly
++      jack.enable = true;
++
++      # Low-latency defaults for music production: 48 kHz, 128-frame quantum
++      extraConfig.pipwire."92-low-latency" = {
++        "context.properties" = {
++          "default.clock.rate" = 48000;
++          "default.clock.quantum" = 128;
++          "default.clock.min-quantum" = 64;
++          "default.clock.max-quantum" = 256;
++        };
++      };
+     };
+ 
+     # Pulseaudio is pretty outdated at this point

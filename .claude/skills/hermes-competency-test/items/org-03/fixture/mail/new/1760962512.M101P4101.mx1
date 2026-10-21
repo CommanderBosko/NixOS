@@ -1,0 +1,18 @@
+Return-Path: <dana.whitfield@example.com>
+Delivered-To: sam.carter@example.com
+From: Dana Whitfield <dana.whitfield@example.com>
+To: Sam Carter <sam.carter@example.com>
+Subject: Client demo moved to tomorrow 9:00 - need slides by 17:00 today
+Date: Tue, 20 Oct 2026 08:15:12 -0400
+Message-ID: <20261020081512.dana.4471@mail.example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Hi Sam,
+
+Northwind just moved the demo to tomorrow (Wednesday) at 9:00. Can you send me the updated
+deck with the new pricing slide by 17:00 today so I can rehearse tonight? If the pricing numbers
+aren't final yet, send what you have and flag the open ones.
+
+Thanks,
+Dana

@@ -1,0 +1,9 @@
+{
+  "id": "org-01",
+  "category": "organization",
+  "title": "Turn a messy request into a dependency-ordered plan",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/request.md"],
+  "needs": []
+}

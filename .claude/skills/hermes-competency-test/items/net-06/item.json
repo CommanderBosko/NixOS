@@ -1,0 +1,9 @@
+{
+  "id": "net-06",
+  "category": "network",
+  "title": "Captured: WireGuard MTU black hole",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/wireguard.nix", "task/captures.txt"],
+  "needs": ["nix", "patch"]
+}

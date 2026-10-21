@@ -1,0 +1,9 @@
+{
+  "id": "write-02",
+  "category": "writing",
+  "title": "PR description from a NixOS diff",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/change.diff"],
+  "needs": []
+}

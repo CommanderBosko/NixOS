@@ -1,0 +1,9 @@
+{
+  "id": "write-01",
+  "category": "writing",
+  "title": "Summarize an incident log under format constraints",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/incident.md"],
+  "needs": []
+}

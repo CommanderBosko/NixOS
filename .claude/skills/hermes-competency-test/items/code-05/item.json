@@ -1,0 +1,9 @@
+{
+  "id": "code-05",
+  "category": "coding",
+  "title": "TypeScript: typed config loader (runtime + strict types)",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/config.test.ts"],
+  "needs": ["node", "tsc"]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "net-02",
+  "category": "network",
+  "title": "Live: DNS path on gaming",
+  "timeout_s": 900,
+  "live": true,
+  "protected": [],
+  "needs": ["tailscale"]
+}

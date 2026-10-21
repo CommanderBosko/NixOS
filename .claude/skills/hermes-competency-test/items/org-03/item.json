@@ -1,0 +1,9 @@
+{
+  "id": "org-03",
+  "category": "organization",
+  "title": "Triage a synthetic inbox and draft urgent replies",
+  "timeout_s": 900,
+  "live": false,
+  "protected": ["task/mail"],
+  "needs": []
+}

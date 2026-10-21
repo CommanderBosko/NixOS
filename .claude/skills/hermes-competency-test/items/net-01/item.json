@@ -1,0 +1,9 @@
+{
+  "id": "net-01",
+  "category": "network",
+  "title": "Live: offline devices on the tailnet",
+  "timeout_s": 900,
+  "live": true,
+  "protected": [],
+  "needs": ["tailscale"]
+}

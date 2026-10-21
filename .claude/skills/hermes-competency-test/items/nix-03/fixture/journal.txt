@@ -1,0 +1,96 @@
+Oct 19 08:13:41 atlas kernel: Linux version 6.17.4-zen1 (nixbld@localhost) (gcc (GCC) 14.3.0, GNU ld (GNU Binutils) 2.44) #1-NixOS ZEN SMP PREEMPT_DYNAMIC Tue Oct 14 12:00:00 UTC 2026
+Oct 19 08:13:41 atlas kernel: Command line: initrd=\EFI\nixos\initrd.efi init=/nix/store/7q2k8d0x3hj1v9w5m4c6b2n8p0r1s3t5-nixos-system-atlas-26.11.20261012/init splash loglevel=4
+Oct 19 08:13:41 atlas kernel: ACPI BIOS Error (bug): Could not resolve symbol [\_SB.PCI0.GPP0.SWUS], AE_NOT_FOUND (20250404/dswload2-162)
+Oct 19 08:13:41 atlas kernel: ACPI Error: AE_NOT_FOUND, During name lookup/catalog (20250404/psobject-220)
+Oct 19 08:13:42 atlas kernel: amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+Oct 19 08:13:43 atlas kernel: nvidia: loading out-of-tree module taints kernel.
+Oct 19 08:13:43 atlas kernel: nvidia: module license 'NVIDIA' taints kernel.
+Oct 19 08:13:43 atlas kernel: nvidia-nvlink: Nvlink Core is being initialized, major device number 509
+Oct 19 08:13:44 atlas systemd[1]: systemd 258.2 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF -XKBCOMMON +UTMP -SYSVINIT +LIBARCHIVE)
+Oct 19 08:13:44 atlas systemd[1]: Detected architecture x86-64.
+Oct 19 08:13:44 atlas systemd[1]: Hostname set to <atlas>.
+Oct 19 08:13:45 atlas systemd-journald[412]: Journal started
+Oct 19 08:13:45 atlas systemd-journald[412]: System Journal (/var/log/journal/3f9c2a7e5b1d4e60a8c7f2e9d1b3a5c4) is 1.2G, max 4G, 2.8G free.
+Oct 19 08:13:46 atlas systemd[1]: Starting Network Manager...
+Oct 19 08:13:46 atlas NetworkManager[903]: <info>  [1792498426.1043] NetworkManager (version 1.54.1) is starting... (boot:5b2e0c71-9a4d-4c8e-b6f1-2d7a3e9c0f11)
+Oct 19 08:13:46 atlas systemd[1]: Started Network Manager.
+Oct 19 08:13:47 atlas avahi-daemon[911]: Found user 'avahi' (UID 997) and group 'avahi' (GID 996).
+Oct 19 08:13:47 atlas avahi-daemon[911]: avahi-daemon 0.8 starting up.
+Oct 19 08:13:48 atlas NetworkManager[903]: <info>  [1792498428.3381] device (enp6s0): state change: ip-config -> ip-check (reason 'none', managed-type: 'full')
+Oct 19 08:13:48 atlas NetworkManager[903]: <info>  [1792498428.3519] device (enp6s0): Activation: successful, device activated.
+Oct 19 08:13:48 atlas avahi-daemon[911]: Joining mDNS multicast group on interface enp6s0.IPv4 with address 192.0.2.251.
+Oct 19 08:13:49 atlas avahi-daemon[911]: Host name conflict, retrying with atlas-2
+Oct 19 08:13:49 atlas avahi-daemon[911]: Registering new address record for 192.0.2.251 on enp6s0.IPv4.
+Oct 19 08:13:49 atlas avahi-daemon[911]: Server startup complete. Host name is atlas-2.local. Local service cookie is 2871640193.
+Oct 19 08:13:50 atlas systemd-resolved[688]: Using degraded feature set UDP instead of UDP+EDNS0 for DNS server 192.0.2.53.
+Oct 19 08:13:51 atlas systemd[1]: Reached target Network is Online.
+Oct 19 08:13:51 atlas systemd[1]: Starting Open WebUI, a self-hosted AI interface...
+Oct 19 08:13:51 atlas systemd[1]: Started Open WebUI, a self-hosted AI interface.
+Oct 19 08:13:52 atlas sshd[1902]: Server listening on 0.0.0.0 port 22.
+Oct 19 08:13:52 atlas sshd[1902]: Server listening on :: port 22.
+Oct 19 08:13:53 atlas open-webui[1873]: Loading WEBUI_SECRET_KEY from file, not provided as an environment variable.
+Oct 19 08:13:53 atlas open-webui[1873]: Loading WEBUI_SECRET_KEY from /var/lib/open-webui/.webui_secret_key
+Oct 19 08:13:57 atlas open-webui[1873]: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+Oct 19 08:13:57 atlas open-webui[1873]: INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+Oct 19 08:13:58 atlas open-webui[1873]: WARNING: CORS_ALLOW_ORIGIN IS SET TO '*' - NOT RECOMMENDED FOR PRODUCTION DEPLOYMENTS.
+Oct 19 08:13:59 atlas open-webui[1873]: INFO:     Started server process [1873]
+Oct 19 08:13:59 atlas open-webui[1873]: INFO:     Waiting for application startup.
+Oct 19 08:14:00 atlas open-webui[1873]: 2026-10-19 08:14:00.412 | INFO     | open_webui.utils.logger:start_logger:140 - GLOBAL_LOG_LEVEL: INFO
+Oct 19 08:14:00 atlas open-webui[1873]: INFO:     Application startup complete.
+Oct 19 08:14:00 atlas open-webui[1873]: INFO:     Uvicorn running on http://127.0.0.1:3000 (Press CTRL+C to quit)
+Oct 19 08:14:01 atlas systemd[1]: Starting Grafana Service Daemon...
+Oct 19 08:14:01 atlas systemd[1]: Started Grafana Service Daemon.
+Oct 19 08:14:02 atlas grafana[2214]: logger=settings t=2026-10-19T08:14:02.118+02:00 level=info msg="Starting Grafana" version=12.2.0 commit=NA branch=HEAD compiled=2026-10-19T08:14:02+02:00
+Oct 19 08:14:02 atlas grafana[2214]: logger=settings t=2026-10-19T08:14:02.119+02:00 level=info msg="Config loaded from" file=/nix/store/1x9f3k2m7q8v0b4n6c5d2s1a8p3r7t0w-grafana-12.2.0/share/grafana/conf/defaults.ini
+Oct 19 08:14:02 atlas grafana[2214]: logger=settings t=2026-10-19T08:14:02.119+02:00 level=info msg="Path Data" path=/var/lib/grafana/data
+Oct 19 08:14:02 atlas grafana[2214]: logger=settings t=2026-10-19T08:14:02.119+02:00 level=info msg="Path Logs" path=/var/lib/grafana/data/log
+Oct 19 08:14:02 atlas grafana[2214]: logger=sqlstore t=2026-10-19T08:14:02.164+02:00 level=info msg="Connecting to DB" dbtype=sqlite3
+Oct 19 08:14:02 atlas grafana[2214]: logger=migrator t=2026-10-19T08:14:02.201+02:00 level=info msg="migrations completed" performed=0 skipped=671 duration=1.392ms
+Oct 19 08:14:02 atlas grafana[2214]: logger=provisioning.plugins t=2026-10-19T08:14:02.388+02:00 level=error msg="Failed to read plugin provisioning files from directory" path=/nix/store/9d2c4f6h8j0k1m3n5p7q9r2s4t6v8w0y-grafana-provisioning/plugins error="open /nix/store/9d2c4f6h8j0k1m3n5p7q9r2s4t6v8w0y-grafana-provisioning/plugins: no such file or directory"
+Oct 19 08:14:02 atlas grafana[2214]: logger=grafana.update.checker t=2026-10-19T08:14:02.402+02:00 level=error msg="Update check failed" error="failed to get latest.json repo from github.com: Get \"https://raw.githubusercontent.com/grafana/grafana/main/latest.json\": dial tcp: lookup raw.githubusercontent.com on 127.0.0.53:53: server misbehaving" duration=12.4ms
+Oct 19 08:14:02 atlas grafana[2214]: logger=server t=2026-10-19T08:14:02.437+02:00 level=error msg="Stopped background service" service=*api.HTTPServer reason="failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use"
+Oct 19 08:14:02 atlas grafana[2214]: logger=server t=2026-10-19T08:14:02.441+02:00 level=info msg="Shutdown started"
+Oct 19 08:14:02 atlas grafana[2214]: Error: ✗ failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use
+Oct 19 08:14:02 atlas systemd[1]: grafana.service: Main process exited, code=exited, status=1/FAILURE
+Oct 19 08:14:02 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:02 atlas systemd[1]: grafana.service: Scheduled restart job, restart counter is at 1.
+Oct 19 08:14:02 atlas systemd[1]: Started Grafana Service Daemon.
+Oct 19 08:14:03 atlas grafana[2251]: logger=settings t=2026-10-19T08:14:03.006+02:00 level=info msg="Starting Grafana" version=12.2.0 commit=NA branch=HEAD compiled=2026-10-19T08:14:03+02:00
+Oct 19 08:14:03 atlas grafana[2251]: logger=provisioning.plugins t=2026-10-19T08:14:03.271+02:00 level=error msg="Failed to read plugin provisioning files from directory" path=/nix/store/9d2c4f6h8j0k1m3n5p7q9r2s4t6v8w0y-grafana-provisioning/plugins error="open /nix/store/9d2c4f6h8j0k1m3n5p7q9r2s4t6v8w0y-grafana-provisioning/plugins: no such file or directory"
+Oct 19 08:14:03 atlas grafana[2251]: logger=server t=2026-10-19T08:14:03.318+02:00 level=error msg="Stopped background service" service=*api.HTTPServer reason="failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use"
+Oct 19 08:14:03 atlas grafana[2251]: Error: ✗ failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use
+Oct 19 08:14:03 atlas systemd[1]: grafana.service: Main process exited, code=exited, status=1/FAILURE
+Oct 19 08:14:03 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:03 atlas systemd[1]: grafana.service: Scheduled restart job, restart counter is at 2.
+Oct 19 08:14:03 atlas systemd[1]: Started Grafana Service Daemon.
+Oct 19 08:14:04 atlas grafana[2268]: logger=settings t=2026-10-19T08:14:04.002+02:00 level=info msg="Starting Grafana" version=12.2.0 commit=NA branch=HEAD compiled=2026-10-19T08:14:04+02:00
+Oct 19 08:14:04 atlas grafana[2268]: logger=server t=2026-10-19T08:14:04.297+02:00 level=error msg="Stopped background service" service=*api.HTTPServer reason="failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use"
+Oct 19 08:14:04 atlas grafana[2268]: Error: ✗ failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use
+Oct 19 08:14:04 atlas systemd[1]: grafana.service: Main process exited, code=exited, status=1/FAILURE
+Oct 19 08:14:04 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:04 atlas systemd[1]: grafana.service: Scheduled restart job, restart counter is at 3.
+Oct 19 08:14:04 atlas systemd[1]: Started Grafana Service Daemon.
+Oct 19 08:14:05 atlas grafana[2290]: logger=settings t=2026-10-19T08:14:05.011+02:00 level=info msg="Starting Grafana" version=12.2.0 commit=NA branch=HEAD compiled=2026-10-19T08:14:05+02:00
+Oct 19 08:14:05 atlas grafana[2290]: logger=server t=2026-10-19T08:14:05.302+02:00 level=error msg="Stopped background service" service=*api.HTTPServer reason="failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use"
+Oct 19 08:14:05 atlas grafana[2290]: Error: ✗ failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use
+Oct 19 08:14:05 atlas systemd[1]: grafana.service: Main process exited, code=exited, status=1/FAILURE
+Oct 19 08:14:05 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:05 atlas systemd[1]: grafana.service: Scheduled restart job, restart counter is at 4.
+Oct 19 08:14:05 atlas systemd[1]: Started Grafana Service Daemon.
+Oct 19 08:14:06 atlas grafana[2305]: logger=settings t=2026-10-19T08:14:06.004+02:00 level=info msg="Starting Grafana" version=12.2.0 commit=NA branch=HEAD compiled=2026-10-19T08:14:06+02:00
+Oct 19 08:14:06 atlas grafana[2305]: logger=server t=2026-10-19T08:14:06.291+02:00 level=error msg="Stopped background service" service=*api.HTTPServer reason="failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use"
+Oct 19 08:14:06 atlas grafana[2305]: Error: ✗ failed to open listener on address 127.0.0.1:3000: listen tcp 127.0.0.1:3000: bind: address already in use
+Oct 19 08:14:06 atlas systemd[1]: grafana.service: Main process exited, code=exited, status=1/FAILURE
+Oct 19 08:14:06 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:06 atlas systemd[1]: grafana.service: Scheduled restart job, restart counter is at 5.
+Oct 19 08:14:06 atlas systemd[1]: grafana.service: Start request repeated too quickly.
+Oct 19 08:14:06 atlas systemd[1]: grafana.service: Failed with result 'exit-code'.
+Oct 19 08:14:06 atlas systemd[1]: Failed to start Grafana Service Daemon.
+Oct 19 08:14:09 atlas systemd[1]: Reached target Multi-User System.
+Oct 19 08:14:09 atlas systemd[1]: Reached target Graphical Interface.
+Oct 19 08:14:12 atlas systemd-resolved[688]: Using degraded feature set UDP instead of UDP+EDNS0 for DNS server 192.0.2.53.
+Oct 19 08:14:20 atlas open-webui[1873]: INFO:     127.0.0.1:51874 - "GET /api/config HTTP/1.1" 200 OK
+Oct 19 08:14:20 atlas open-webui[1873]: INFO:     127.0.0.1:51874 - "GET /_app/version.json HTTP/1.1" 200 OK
+Oct 19 08:15:03 atlas sshd-session[2391]: Invalid user admin from 203.0.113.45 port 51122
+Oct 19 08:15:03 atlas sshd-session[2391]: Connection closed by invalid user admin 203.0.113.45 port 51122 [preauth]
+Oct 19 08:16:44 atlas open-webui[1873]: INFO:     127.0.0.1:51902 - "GET /api/v1/auths/ HTTP/1.1" 200 OK
