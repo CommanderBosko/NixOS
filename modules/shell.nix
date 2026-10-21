@@ -54,12 +54,6 @@ in
           echo ""
           nh os switch ~/NixOS/. -H ${hostName}
         '';
-        rebuild-natalie-laptop = ''
-          echo ""
-          echo "Building natalie-laptop here and staging it for next boot"
-          echo ""
-          nh os boot /home/bosko/NixOS -H natalie-laptop --target-host bosko@natalie-laptop
-        '';
         update = ''
           echo ""
           echo "Updating your flake"
@@ -118,6 +112,18 @@ in
             return 1
           fi
           ssh -t bosko@"$1" 'sudo reboot'
+        }
+
+        # Builds <host> here and stages it for its next boot. The flake host name must match the tailnet name.
+        rebuild-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: rebuild-host <tailnet-host>" >&2
+            return 1
+          fi
+          echo ""
+          echo "Building $1 here and staging it for next boot"
+          echo ""
+          nh os boot /home/bosko/NixOS -H "$1" --target-host bosko@"$1"
         }
 
         # Aliases aren't loaded by a non-interactive ssh command, so this repeats the `cleanup` alias's commands.
