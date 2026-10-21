@@ -108,6 +108,18 @@ in
           unsetopt EQUALS NOMATCH
         fi
       '';
+
+      # Takes a host argument, so it is a function rather than an alias. -t gives sudo a
+      # tty for its password prompt; the name resolves via Tailscale MagicDNS.
+      interactiveShellInit = ''
+        reboot-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: reboot-host <tailnet-host>" >&2
+            return 1
+          fi
+          ssh -t bosko@"$1" 'sudo reboot'
+        }
+      '';
     };
 
     # Direnv
