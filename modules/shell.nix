@@ -54,6 +54,12 @@ in
           echo ""
           nh os switch ~/NixOS/. -H ${hostName}
         '';
+        rebuild-natalie-laptop = ''
+          echo ""
+          echo "Building natalie-laptop here and staging it for next boot"
+          echo ""
+          nh os boot /home/bosko/NixOS -H natalie-laptop --target-host bosko@natalie-laptop
+        '';
         update = ''
           echo ""
           echo "Updating your flake"
