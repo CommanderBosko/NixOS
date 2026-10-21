@@ -4,6 +4,37 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-20 (session 135) — Hermes hardening, protected main, competency test
+
+**Focus**: Close-only. 12 conversations since the 10-19 close hardened Hermes on gaming, protected `main`, and built a Hermes test suite.
+
+### What changed (and why)
+- **Mnemosyne made declarative** (`7aaddad`, `70b41d8`, `994b558`): Hermes had half-installed its own memory provider imperatively and reported it working when it wasn't. Now a flake input, installed at `plugins/mnemosyne`, and every free-text Mnemosyne writer goes through the memory checker (`980bd7d`, `b7d3efa`).
+- **Hermes gates** (`3d9f0d0`, `006c38c`, `f183040`): write-safe root, manual approvals, staged skill creation, `gh pr merge*` denied, repo `AGENTS.md`. Follows the Hermes-improvement research: safety and context hygiene beat new plugins.
+- **`main` ruleset-protected, no bypass** (PR #41): Hermes shares bosko's unlocked ssh-agent and `gh` login, so only a server-side rule really stops a push. `push.sh` now falls back to a PR branch.
+- **Superpowers + Ponytail dropped from Claude** (PR #43): overlap and conflict with the CLAUDE.md rules, plus per-session token cost.
+- **`hermes-competency-test` skill** (PR #44, open): 31 items × 3 repeats, trust tiers, canary, noise floor, supervised ssh stage; keys kept outside git.
+
+### Decisions
+- Hermes may push branches and open PRs but not merge; ssh stays allowed with manual approval for networking help.
+- The test drives Hermes in single-query mode because `hermes -z` auto-approves anything not denied.
+- `mnemosyne_import` blocked; Mnemosyne not wired into Claude Code.
+- Calibration and baselines paused for Claude token budget until the week of 10-26.
+
+### Issues / surprises
+- A `git reset --hard` after a push probe wiped uncommitted edits (redone; now a feedback memory).
+- Hermes's own Mnemosyne install overclaimed success; its checker's 3 `KeyError`s were usage-limit fail-opens (stores audited clean).
+- Every `hermes` run prints "install out of sync": upstream #134249, cosmetic.
+
+### Next session
+- `land-prs` #44 and this docs PR; then calibrate + two full baselines; `/fleet-rollout` laptop + natalie-laptop.
+
+**Commits**: `7aaddad..4944fc4` (11 commits; `4944fc4` is on PR #44's branch)
+
+Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-19 (session 134) — close-out after Proton/Hermes hardening day
 
 **Focus**: Close-only session. Several earlier conversations the same day (not visible here) landed the work below.
@@ -89,30 +120,6 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - "start the Hermes plan" when ready. The six decisions come first.
 
 **Commits**: `c8062a6..18d3b61` (2 commits)
-
----
-
-## Session: 2026-10-15 (session 130) — Natty's ~/Shared "permission denied" fixed
-
-**Focus**: Natty couldn't open or move files in `~/Shared` on natalie-laptop.
-
-### What changed (and why)
-- **Cause:** the two `.jpg`s moved into `/srv/shared` on gaming that morning kept group `users` (setgid only applies to new files, not moved ones). The clients mount the share anonymously (`sec=none`), which only gets group perms. So `users`-group files were unreadable and `644` `shared`-group files were read-only.
-- **Fix:** existing files regrouped to `shared` + `g+rw` by hand; `"force user" = "bosko"` added to the Samba share (`5756d62`) so group/mode no longer matter for network access. Live on gaming, verified from natalie-laptop with a fresh `bosko:users 644` test file.
-
-### Decisions
-- `force user` over a `systemd.path` chgrp watcher (top-level-only trigger) or per-user Samba logins (bigger change, doesn't fix this bug alone). Natty's ownership was never at stake: her uploads were already `nobody`-owned.
-
-### Issues / surprises
-- `smbclient -N` on gaming read the "broken" files fine. It logs in as guest, not anonymous like the kernel mount, so it isn't a fair test of what clients see.
-- The same switch (gen 441) brought `79607cc`'s global-skill fixes live on gaming.
-- Secret-scan: clean (tree + 1847 commits of history; all 6 sops files encrypted).
-
-### Next session
-- Have Natty confirm she can move the `.jpg`s off the share.
-- `/fleet-rollout` for laptop + natalie-laptop + vpn-server (carry-over).
-
-**Commits**: `5756d62` (1 commit)
 
 ---
 
