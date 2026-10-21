@@ -54,6 +54,12 @@ in
           echo ""
           nh os switch ~/NixOS/. -H ${hostName}
         '';
+        rebuild-natalie-laptop = ''
+          echo ""
+          echo "Building natalie-laptop here and staging it for next boot"
+          echo ""
+          nh os boot /home/bosko/NixOS -H natalie-laptop --target-host bosko@natalie-laptop
+        '';
         update = ''
           echo ""
           echo "Updating your flake"
@@ -101,6 +107,27 @@ in
         if [[ -n $CLAUDECODE ]]; then
           unsetopt EQUALS NOMATCH
         fi
+      '';
+
+      # Takes a host argument, so it is a function rather than an alias. -t gives sudo a
+      # tty for its password prompt; the name resolves via Tailscale MagicDNS.
+      interactiveShellInit = ''
+        reboot-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: reboot-host <tailnet-host>" >&2
+            return 1
+          fi
+          ssh -t bosko@"$1" 'sudo reboot'
+        }
+
+        # Aliases aren't loaded by a non-interactive ssh command, so this repeats the `cleanup` alias's commands.
+        cleanup-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: cleanup-host <tailnet-host>" >&2
+            return 1
+          fi
+          ssh -t bosko@"$1" 'nh clean all --keep 3 && sudo flatpak remove --unused --noninteractive'
+        }
       '';
     };
 
