@@ -1,3 +1,28 @@
+## Session: 2026-10-17 (session 131) — Mod+G no-focus + Hermes Agent attempt-2 plan
+
+**Focus**: Two conversations: stop Mod+G's apps from yanking the monitors, and re-check whether Hermes Agent can run locally on the RTX 3070.
+
+### What changed (and why)
+- **Mod+G (`c8062a6`):** `open-focused false` on the Steam, Lutris, Vesktop, Deezer and qBittorrent window rules in gaming's niri overlay, so the startup launch no longer jumps either monitor to each new window. `niri validate` and the dry-run were both clean. It's live on gaming (gen 442), but nobody has watched it work yet.
+- **Hermes research + plan (`18d3b61`):** the 64K-context minimum hasn't changed, but Qwen3.5-9B's small KV cache makes it look like it fits in 8 GB (tight). The plan uses llama.cpp, started on demand. It's in `docs/plans/hermes-agent-local-llm.md` and nothing is built yet.
+
+### Decisions
+- llama.cpp over Ollama for attempt 2 (recommended, not yet confirmed). It sets context on the server side, and it can load a text-only GGUF smaller than Ollama's vision-bundled `qwen3.5:9b`.
+- The no-focus rule also applies when those five apps are opened by hand. The user accepted this.
+
+### Issues / surprises
+- May's Hermes attempt was partly sabotaged by Ollama: its `/v1` endpoint ignores per-request `num_ctx`, so models loaded at a 4096 context whatever the config said.
+- May's VRAM budget never counted the desktop's own ~1.5 GB.
+- Secret-scan: clean (tree + 1850 commits of history; all 6 sops files encrypted).
+
+### Next session
+- Press Mod+G on gaming and confirm nothing jumps.
+- "start the Hermes plan" when ready. The six decisions come first.
+
+**Commits**: `c8062a6..18d3b61` (2 commits)
+
+---
+
 ## Session: 2026-10-15 (session 130) — Natty's ~/Shared "permission denied" fixed
 
 **Focus**: Natty couldn't open or move files in `~/Shared` on natalie-laptop.

@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-21 (session 136) — Proton VPN via Hermes, `rebuild-host`
+
+**Focus**: Install Proton VPN on the three desktops (Hermes drafts, Claude reviews), then generalize the rebuild alias.
+
+### What changed (and why)
+- **PR #47, `modules/proton-vpn.nix`:** installs the Proton VPN GUI on gaming, laptop and natalie-laptop via `desktopModules`. Hermes wrote it in its sandbox clone with the commit/push steps forbidden in the prompt; Claude cut its duplicated comments and ran the 4-host deep-eval. gnome-keyring is already on for all three, which the client needs.
+- **CLI added, then reverted:** `proton-vpn-cli` co-installs cleanly, but Proton says not to run both at once. The user preferred the GUI, so it was reverted with a revert commit (no force-push).
+- **PR #48, `rebuild-host <host>`:** the `rebuild-natalie-laptop` alias became a function like `cleanup-host`/`reboot-host`, so any desktop can be built here and staged for next boot.
+
+### Decisions
+- Hermes writes drafts only in the sandbox clone and never commits; Claude reviews and lands them via PR.
+- GUI only; the CLI stays out.
+
+### Issues / surprises
+- A branch cut from `origin/main` tracks `main`, so `push.sh execute`'s plain `git push` failed and `| tail` hid it; pushed with `-u origin <branch>`.
+- Untested: pi-hole DNS and Tailscale behavior while Proton is connected.
+
+### Next session
+- Merge #47 and #48, rebuild, then test Proton + pi-hole + Tailscale on gaming.
+
+**Commits**: `de4ffdc..c3c2cca` (4 commits on two PR branches, unmerged at close)
+
+Secret-scan: clean (tree + 1,892 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-20 (session 135) — Hermes hardening, protected main, competency test
 
 **Focus**: Close-only. 12 conversations since the 10-19 close hardened Hermes on gaming, protected `main`, and built a Hermes test suite.
@@ -95,31 +121,6 @@ Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
 - Mod+G no-jump check on gaming; `/fleet-rollout` backlog.
 
 **Commits**: `1b37b3d..d4b6ffb` (2 commits)
-
----
-
-## Session: 2026-10-17 (session 131) — Mod+G no-focus + Hermes Agent attempt-2 plan
-
-**Focus**: Two conversations: stop Mod+G's apps from yanking the monitors, and re-check whether Hermes Agent can run locally on the RTX 3070.
-
-### What changed (and why)
-- **Mod+G (`c8062a6`):** `open-focused false` on the Steam, Lutris, Vesktop, Deezer and qBittorrent window rules in gaming's niri overlay, so the startup launch no longer jumps either monitor to each new window. `niri validate` and the dry-run were both clean. It's live on gaming (gen 442), but nobody has watched it work yet.
-- **Hermes research + plan (`18d3b61`):** the 64K-context minimum hasn't changed, but Qwen3.5-9B's small KV cache makes it look like it fits in 8 GB (tight). The plan uses llama.cpp, started on demand. It's in `docs/plans/hermes-agent-local-llm.md` and nothing is built yet.
-
-### Decisions
-- llama.cpp over Ollama for attempt 2 (recommended, not yet confirmed). It sets context on the server side, and it can load a text-only GGUF smaller than Ollama's vision-bundled `qwen3.5:9b`.
-- The no-focus rule also applies when those five apps are opened by hand. The user accepted this.
-
-### Issues / surprises
-- May's Hermes attempt was partly sabotaged by Ollama: its `/v1` endpoint ignores per-request `num_ctx`, so models loaded at a 4096 context whatever the config said.
-- May's VRAM budget never counted the desktop's own ~1.5 GB.
-- Secret-scan: clean (tree + 1850 commits of history; all 6 sops files encrypted).
-
-### Next session
-- Press Mod+G on gaming and confirm nothing jumps.
-- "start the Hermes plan" when ready. The six decisions come first.
-
-**Commits**: `c8062a6..18d3b61` (2 commits)
 
 ---
 

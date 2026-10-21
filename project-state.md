@@ -1,10 +1,18 @@
 # NixOS Project State
 
-_Last updated: 2026-10-20 (session 135)_
+_Last updated: 2026-10-21 (session 136)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**2026-10-21 (session 136): Proton VPN GUI client written by Hermes, reviewed and shipped as PR #47; `rebuild-natalie-laptop` generalized to `rebuild-host <host>` as PR #48. Neither is merged or rebuilt anywhere yet. main was at `b983e8f` when this close started.**
+- **Proton VPN on the 3 desktops (PR #47, branch `feat/proton-vpn`, `de4ffdc` + CLI add/revert `6514275`/`0c8c46c`):** new `modules/proton-vpn.nix` installs `pkgs.proton-vpn` (the GUI, binary `protonvpn-app`) and is listed in `desktopModules` right after tailscale, so gaming, laptop and natalie-laptop get it and vpn-server does not. Hermes drafted it headlessly (`hermes chat --query-file ... --format stream-json` in the sandbox clone `~/projects/hermes-tests/NixOS`, branch `hermes/proton-vpn`, no commit/push allowed in the prompt); it was correct but duplicated the explanatory comment in `flake.nix` and the module, so Claude trimmed it. The sandbox clone still holds Hermes's uncommitted copy; harmless.
+- **CLI tried and dropped:** `proton-vpn-cli` (`protonvpn`) built into one `buildEnv` with the GUI with no file collisions, but Proton's support page says both can be installed and not run at the same time (single source, Vietnamese page; CLI is beta, WireGuard-only). It was added, then the user said the GUI works well and asked to undo it; removed by a revert commit, not a force-push, so the branch tree equals `de4ffdc`.
+- **Verified:** `deep-eval-check` PASS on all 4 hosts (twice, before and after the CLI change); `proton-vpn` confirmed in `environment.systemPackages` on all 3 desktops; gnome-keyring is enabled on all 3 (the client stores its session in the Secret Service). The user reported the GUI works (the PR branch was evidently built on gaming). Still untested: whether pi-hole DNS (`networkmanager.dns = "none"`) is bypassed or leaks while the tunnel is up, and whether Tailscale routes survive a full-tunnel connection.
+- **`rebuild-host` (PR #48, branch `feat/shell-rebuild-host`, `c3c2cca`):** the `rebuild-natalie-laptop` alias (from `beb118b`, a separate earlier session) became a `rebuild-host <tailnet-host>` zsh function in `modules/shell.nix`, beside `cleanup-host` and `reboot-host`. It runs `nh os boot /home/bosko/NixOS -H "$1" --target-host bosko@"$1"`, so the flake host name must equal the tailnet name; vpn-server is aarch64 and keeps `vpn-rebuild`. Deep-eval PASS on all 4 hosts; the generated zsh init contains the function. Not run against a real host yet.
+- **Gotcha hit:** a branch created with `git checkout -b X origin/main` tracks `origin/main`, so a plain `git push` (what `push.sh execute` runs when an upstream exists) refuses with an upstream-name mismatch, and `| tail` hid it. Fix: `git push -u origin <branch>` once.
+- **Commits by another session** (`beb118b`, `af963f0`, `ff3dbbc`, merged as PR #46 before this session) added `rebuild-natalie-laptop`, `reboot-host` and `cleanup-host`; they were not part of this conversation.
 
 **2026-10-20 (session 135, close-only; the work below was done in 12 other conversations since the 10-19 close): Hermes on gaming got hard safety gates and declarative Mnemosyne memory, `main` is now ruleset-protected (PRs only), Superpowers/Ponytail were dropped from Claude Code, and the `hermes-competency-test` skill is built but its PR #44 is still open. main is at `bdb5c93`; gaming is on gen 460 (switched 15:56), which carries all of it.**
 - **10-19 post-reboot checklist mostly done:** gen 454 booted cleanly; Proton Bridge active, Bridge password in the keyring, `himalaya envelope list` returns the inbox. The Hermes memory checker logs real verdicts on the hardened hook. Its three earlier `KeyError('structured_output')` rows were most likely the Claude usage limit hitting the fail-open path; the stores were audited and hold nothing bad. gws/gmail-cli leftovers (~387 MB + 2 `.bashrc` lines) deleted. Not done: asking Hermes to list the inbox.
@@ -29,11 +37,6 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **Fix:** dropped `hermes-agent.nixosModules.default`, the `hermes` system user/service, the group membership and the tmpfiles rule; Hermes now comes from `homeManagerModules.default` under `home-manager.users.bosko` (`programs.hermes-agent.enable`, CLI-only, no `gateway.enable`; the CLI spawns its own idle-exiting gateway). After the switch the old system-wide `HERMES_HOME=/var/lib/hermes/.hermes` stuck in the login session (systemd user env + `__HM_SESS_VARS_SOURCED` guard) until a re-login.
 - **Verified:** `nixos-dry-run` clean (only `hermes-agent.service` removed, `switch`); user confirmed the CLI works; at close `llama-cpp` was active with `/props` n_ctx 65536, 1 slot, `nvidia-smi` 7217 / 8192 MiB with the desktop up, 0 OOM lines this boot → plan checks 1–5 pass. Checks 6–8 (tool calls, ~50K-token session, `llm-off` returns VRAM) not run. `deep-eval-check` was not run (gaming-only change).
 - `/var/lib/hermes` (May OpenRouter leftovers incl. an old `OPENROUTER_API_KEY` in `.env`) was not migrated; the user deleted it 2026-10-18.
-
-**Two conversations since session 130: Mod+G apps now open unfocused on gaming (`c8062a6`, LIVE — gen 442 switched 2026-10-17 14:52, behavior not yet confirmed by eye), and a fresh Hermes Agent research pass + attempt-2 plan (`18d3b61`, docs only, nothing built) (2026-10-15 → 10-17, session 131).**
-- **`c8062a6` niri:** `open-focused false` on the Steam, Lutris, Vesktop, Deezer and qBittorrent window rules in `hosts/gaming/niri-overlay.kdl` (kitty already had no-focus from `0e3eaca`). The Mod+G launch was yanking both monitors to each new window. The user accepted that manual launches of these five apps also open unfocused. Verified: `niri validate` on shared config + overlay, `nixos-dry-run` clean (HM files only, ~+4 KiB, `switch`). Live check at close: `~/.config/niri/niri-overlay.kdl` has all 5 lines and `/run/current-system` = gen 442. gaming-only overlay, so no other host owes anything.
-- **Hermes research (`/research`, 10 sources):** Hermes' 64K-context minimum is unchanged as of v0.22.0 (2026-10-13). New since May: Qwen3.5-9B's KV cache is ~4× smaller than llama3.1:8b's, so 64K on the RTX 3070 looks plausible but tight (est. ~5.7–5.9 GB vs ~6.5 GB free with the desktop's ~1.5 GB counted). Also found that May's config hit an Ollama bug: the `/v1` endpoint ignores per-request `num_ctx`, so every model loaded at Ollama's 4096 default. Saved to memory `reference_hermes_agent_8gb_research` (Volatility: fast).
-- **`18d3b61` plan** (`docs/plans/hermes-agent-local-llm.md`, first file under `docs/`): llama.cpp (`services.llama-cpp`, `llama-cpp-cuda`) instead of Ollama, text-only Qwen3.5-9B GGUF, `-c 65536`, 1 slot, q8_0 KV cache, on-demand via `llm-on`/`llm-off`. Six decisions are open, plus an 8-step verification checklist and ordered fallbacks. Start it with "start the Hermes plan".
 
 ## Current Goals
 
@@ -446,6 +449,11 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`ship-skill`'s full internal chain (new-skill → smoke-test → git-commit → push-pause → git-push) is untested end-to-end** (session 39) — the one live `/loop /ship-skill` run this session hit "nothing found" at Step 1 (`skill-suggestion`) and stopped before ever reaching Steps 2-6, so those handoffs are unverified in practice (each sub-skill works standalone; the orchestration wiring between them doesn't yet have a real run). Next time a genuine new-skill idea comes up, invoke `ship-skill` directly (not `new-skill` by hand) to prove the full chain, including whether its internal `git-commit`/`git-push` handoffs behave as documented.
 
 ## Next Steps
+
+**Session 136 next steps:**
+1. `land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`) once CI is green; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
+2. After PR #48 lands and gaming is rebuilt, try `rebuild-host natalie-laptop` for real; it replaces the alias.
+3. Everything from session 135 below still stands (competency-test calibration the week of 10-26, `/fleet-rollout` laptop + natalie-laptop).
 
 **Session 135 next steps:**
 1. `land-prs`: merge PR #44 (competency test, CI green) and this close's docs PR.
