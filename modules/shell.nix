@@ -119,6 +119,15 @@ in
           fi
           ssh -t bosko@"$1" 'sudo reboot'
         }
+
+        # Aliases aren't loaded by a non-interactive ssh command, so this repeats the `cleanup` alias's commands.
+        cleanup-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: cleanup-host <tailnet-host>" >&2
+            return 1
+          fi
+          ssh -t bosko@"$1" 'nh clean all --keep 3 && sudo flatpak remove --unused --noninteractive'
+        }
       '';
     };
 
