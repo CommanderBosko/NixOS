@@ -1,3 +1,27 @@
+## Session: 2026-10-15 (session 130) — Natty's ~/Shared "permission denied" fixed
+
+**Focus**: Natty couldn't open or move files in `~/Shared` on natalie-laptop.
+
+### What changed (and why)
+- **Cause:** the two `.jpg`s moved into `/srv/shared` on gaming that morning kept group `users` (setgid only applies to new files, not moved ones). The clients mount the share anonymously (`sec=none`), which only gets group perms. So `users`-group files were unreadable and `644` `shared`-group files were read-only.
+- **Fix:** existing files regrouped to `shared` + `g+rw` by hand; `"force user" = "bosko"` added to the Samba share (`5756d62`) so group/mode no longer matter for network access. Live on gaming, verified from natalie-laptop with a fresh `bosko:users 644` test file.
+
+### Decisions
+- `force user` over a `systemd.path` chgrp watcher (top-level-only trigger) or per-user Samba logins (bigger change, doesn't fix this bug alone). Natty's ownership was never at stake: her uploads were already `nobody`-owned.
+
+### Issues / surprises
+- `smbclient -N` on gaming read the "broken" files fine. It logs in as guest, not anonymous like the kernel mount, so it isn't a fair test of what clients see.
+- The same switch (gen 441) brought `79607cc`'s global-skill fixes live on gaming.
+- Secret-scan: clean (tree + 1847 commits of history; all 6 sops files encrypted).
+
+### Next session
+- Have Natty confirm she can move the `.jpg`s off the share.
+- `/fleet-rollout` for laptop + natalie-laptop + vpn-server (carry-over).
+
+**Commits**: `5756d62` (1 commit)
+
+---
+
 ## Session: 2026-10-13 (session 129) — skill-audit fixes applied across 70+ skill files
 
 **Focus**: Apply every finding from the 2026-10-13 `/improve-system` skill audit (17 correctness bugs + structural fixes), which the user approved in full via the boss session.
