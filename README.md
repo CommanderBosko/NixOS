@@ -200,11 +200,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-20 (session 135, latest)** — `main` is now protected by a no-bypass ruleset, and pushes fall back to PRs. Hermes on gaming got a write-safe root, manual approvals, staged skill creation and a merge deny; its Mnemosyne memory provider is now Nix-packaged and vetted by the memory checker. Superpowers and Ponytail were removed from Claude Code. A Hermes competency-test skill is in review (PR #44).
+**2026-10-21 (session 136, latest)** — The Proton VPN GUI client was written by Hermes, reviewed, and opened as a PR for all three desktops (PR #47); `rebuild-natalie-laptop` became a `rebuild-host <host>` function (PR #48). Both await CI and a rebuild.
+
+**2026-10-20 (session 135)** — `main` is now protected by a no-bypass ruleset, and pushes fall back to PRs. Hermes on gaming got a write-safe root, manual approvals, staged skill creation and a merge deny; its Mnemosyne memory provider is now Nix-packaged and vetted by the memory checker. Superpowers and Ponytail were removed from Claude Code. A Hermes competency-test skill is in review (PR #44).
 
 **2026-10-19 (session 134)** — Hermes got a Proton Mail Bridge + himalaya setup on gaming (config rendered from sops so the address stays private), its memory checker now rejects credential-like entries before calling Claude, and CI's flake check no longer fails on fresh runners. Skill-audit fixes merged.
-
-**2026-10-18 (session 133)** — Flake inputs bumped (dms, home-manager, nixpkgs, sops-nix, hermes-agent); flake-check and 4-host deep-eval clean; since applied on gaming.
 
 ## Roadmap
 
