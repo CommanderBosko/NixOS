@@ -62,3 +62,10 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   project-skill list was loaded from a path that no longer exists. That is not the
   "absent" branch of STEP 5B. Don't offer `/create-secret-scan`; `Read`
   `<repo-root>/.claude/skills/secret-scan/SKILL.md` directly and follow its steps by hand.
+- **STEP 1 baseline is branch-local** (observed 2026-10-22, NixOS): `scan-session.sh git-changes`
+  finds the last `chore(session):` commit in the *current branch's* history. A close that
+  merged to `main` as a PR is missing from a feature branch cut before it, so the baseline is
+  a stale earlier close and the commit range overstates the session. `git fetch` and compare
+  with `git log origin/main --grep='chore(session)'` first; if newer, write the docs in a
+  `git worktree add --no-track -b <branch> <dir> origin/main` (leaves the user's checked-out
+  feature branch alone, and avoids conflicting with its PR on `project-state.md`).
