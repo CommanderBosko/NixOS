@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-22 (session 137) — Proton autostart, Vesktop bypass, qBittorrent leak
+
+**Focus**: Make Proton VPN usable day to day on gaming: start at login, keep Discord working, and stop torrent traffic leaking.
+
+### What changed (and why)
+- **Autostart (`e3fa102`):** a system-wide XDG autostart entry runs `protonvpn-app --start-minimized` for every user on the three desktops. Hermes drafted it, Claude reviewed and deep-evaled it. After a reboot the app started in the tray and auto-connected.
+- **Vesktop outside the tunnel (`4461aaf`, `hosts/gaming/vesktop-direct.nix`):** Discord's edge returns 403 / code 40333 to browser-style API requests from Proton exit IPs (two exits tested), so no messages loaded. Vesktop now runs in `app-novpn.slice`; its packets get a fwmark routed out the LAN with masquerade, replies are exempted from the strict rpfilter, and its IPv6 is rejected. Verified live on gen 467: Discord API 200 from the slice, everything else still on Proton.
+- **qBittorrent leak (outside the repo):** it listened on every interface and its log recorded the home IP. Bound it to `proton0` in its config; sockets and log now show only Proton addresses, and with the VPN down it sends nothing.
+- **Advice only:** port forwarding, Moderate NAT and IPv6 left at defaults; custom DNS can't be declarative and is probably moot because DNS goes Tailscale → pi-hole. Proton Drive stays on hold (no official Linux client; `proton-cli` is community). `MEMORY.md` trimmed from 20 KB to 16.4 KB.
+
+### Decisions
+- Bypass Vesktop with a narrow per-cgroup route rather than loosening `checkReversePath` host-wide; the price is that Discord sees the home IP.
+- Autostart for every user, not just bosko.
+
+### Issues / surprises
+- This close ran on `feat/proton-vpn`, whose history lacks the 10-21 close (it merged to `main` as PR #49), so `scan-session.sh git-changes` picked the 10-20 close as baseline. The docs were written in a worktree off `origin/main` instead so they don't conflict with PR #47.
+- Phone connectivity under Proton is unresolved; DNS and Tailscale behavior with the tunnel up is still untested.
+
+### Next session
+- `land-prs` #47 (CI was still running) and #48, rebuild laptop and natalie-laptop, test pi-hole DNS + Tailscale with Proton connected.
+
+**Commits**: `e3fa102..4461aaf` (2 commits on PR #47's branch, unmerged at close)
+
+Secret-scan: clean (tree + 1,896 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-21 (session 136) — Proton VPN via Hermes, `rebuild-host`
 
 **Focus**: Install Proton VPN on the three desktops (Hermes drafts, Claude reviews), then generalize the rebuild alias.
@@ -94,33 +121,6 @@ Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
 - Apply the 10-18 bump (includes a hermes-agent bump, so re-check `hermes` on gaming after the rebuild).
 
 **Commits**: `23bda63` (1 commit)
-
----
-
-## Session: 2026-10-18 (session 132) — Hermes Agent attempt 2 live on gaming
-
-**Focus**: Build the Hermes attempt-2 plan and get the `hermes` CLI working against the local model (three conversations).
-
-### What changed (and why)
-- **`1b37b3d`:** llama.cpp (CUDA) serves a hash-pinned Qwen3.5-9B IQ4_XS at a 64K context, one slot, q8_0 KV cache, started on demand with `llm-on` / `llm-off`. Hermes comes from the upstream Home Manager module and runs as bosko with state in `~/.hermes`.
-- **`d4b6ffb`:** README's stale May Ollama bullet replaced; the plan doc is marked implemented and records why it deviates from step 2.
-
-### Decisions
-- Home Manager module instead of the planned NixOS module. The current hermes CLI won't attach to a gateway whose home is owned by another uid, so the shared `/var/lib/hermes` + `hermes` group setup can't work. CLI-only, no always-on gateway.
-- Old `/var/lib/hermes` state not migrated: it only held May OpenRouter leftovers.
-
-### Issues / surprises
-- First switch: `storage_unavailable`. The service couldn't read a May-leftover `auth.json`, and the stale shell lacked `HERMES_HOME` and the group. A tmpfiles chown rule fixed ownership but led straight into the next error.
-- After reboot: `Gateway inaccessible: unsafe_control_path` (uid 986 vs 1000), the root cause above.
-- After moving to HM, the old system-wide `HERMES_HOME` lingered in the login session until a re-login.
-- Measured at close: 7217 / 8192 MiB VRAM with the desktop up, n_ctx 65536, no OOM.
-- Secret-scan: clean (tree + 1853 commits of history; all 6 sops files encrypted).
-
-### Next session
-- Hermes plan checks 6–8 (tool calls, long session, `llm-off` frees VRAM), then `sudo rm -rf /var/lib/hermes`.
-- Mod+G no-jump check on gaming; `/fleet-rollout` backlog.
-
-**Commits**: `1b37b3d..d4b6ffb` (2 commits)
 
 ---
 
