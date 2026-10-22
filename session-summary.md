@@ -11,7 +11,7 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 ### What changed (and why)
 - **Alias mixup:** the report named `reboot-*`, but the user meant `rebuild-*`. `reboot-host` was fine on gaming and natalie-laptop; `rebuild-host` lived only on unmerged PR #48, so `main` and the live system still defined the old alias.
 - **Landed PRs #48, #47 and #50** with `land-prs` (merge commits `cdc8b87`, `3c16bbe`, `360300a`). #50, the morning's session close, went in first-of-this-close because it edits the same state files. Merging #47 was approved before the user spotted a worry that it drops the Proton VPN GUI; it does not (the CLI was added and reverted inside it, net GUI only), but the interrupt arrived after the merge.
-- **Dry-run from `main`:** builds clean for gaming, +13/-13 paths, +5.38 KiB, recommendation `switch`. Not applied; privileged apply is left to the user.
+- **Dry-run from `main`:** builds clean for gaming, +13/-13 paths, +5.38 KiB, recommendation `switch`. The user then ran `rebuild-switch` (gen 468, 08:54) and confirmed `rebuild-host` is live; the apply stayed with the user.
 
 ### Decisions
 - Landed #50 before writing this close rather than stacking on its branch or skipping, so the state files don't conflict.
@@ -22,7 +22,7 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 - The merge happened before the user's concern about #47 landed; worth re-confirming scope immediately before an irreversible merge when the user is mid-thought.
 
 ### Next session
-- `rebuild-switch` on gaming, restart terminals and Vesktop; first real `rebuild-host natalie-laptop`; pull + rebuild laptop.
+- First real `rebuild-host natalie-laptop`; pull + rebuild laptop; restart Vesktop if not already.
 
 **Commits**: `cdc8b87..360300a` (3 merge commits; the underlying work is in sessions 136-137)
 

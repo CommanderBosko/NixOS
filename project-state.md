@@ -6,7 +6,7 @@ _Last updated: 2026-10-22 (session 138)_
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 
-**2026-10-22 (session 138, after the 08:32 close): PRs #48 (`rebuild-host`), #47 (Proton VPN GUI + autostart + Vesktop bypass) and #50 (this morning's close) are all merged; `main` is at `360300a`. gaming still runs gen 467 and has not switched to `main`'s tree: the dry-run shows +13/-13 paths and +5.38 KiB, recommendation `switch`, and the only user-visible change is `rebuild-host` replacing `rebuild-natalie-laptop`.**
+**2026-10-22 (session 138, after the 08:32 close): PRs #48 (`rebuild-host`), #47 (Proton VPN GUI + autostart + Vesktop bypass) and #50 (this morning's close) are all merged; `main` is at `360300a`. gaming switched to it as gen 468 (2026-10-22 08:54): the dry-run showed +13/-13 paths and +5.38 KiB, and the only user-visible change is `rebuild-host` replacing `rebuild-natalie-laptop`; the user confirmed the alias is there.**
 - **Alias mixup:** the user first reported seeing `reboot-natalie-laptop` and no `reboot-host`; that was a typo for `rebuild-*`. `reboot-host` was already fine (in the live zshrc of gaming since at least gen 465, and on natalie-laptop). `rebuild-natalie-laptop` was still there because PR #48 (`c3c2cca`) was unmerged, so `main` and `feat/proton-vpn` both still defined it; no generation ever contained a `reboot-natalie-laptop`.
 - **Landed with `land-prs` (merge commits):** #48 `cdc8b87`, #47 `3c16bbe`, #50 `360300a`. #50 went in before this close because it edits the same state files (README, project-state, session-summary) and would have conflicted. The user briefly worried #47 removes the Proton VPN GUI; it does not. The CLI was added and then reverted inside the PR, so the net tree installs only `pkgs.proton-vpn` (`modules/proton-vpn.nix`). The interrupt arrived after the merge had already gone through.
 - **Branches:** `feat/shell-rebuild-host` and `feat/proton-vpn` deleted locally and on origin; `chore/session-close-20261022` deleted locally only (remote delete not confirmed). Local `main` is fast-forwarded and is gaming's checkout again.
@@ -463,7 +463,7 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 ## Next Steps
 
 **Session 138 next steps:**
-1. On gaming, run `rebuild-switch` (dry-run clean, recommendation `switch`, no kernel/DM/driver changes), then restart open terminals (or `exec zsh`) so `rebuild-host` exists and `rebuild-natalie-laptop` is gone; restart Vesktop afterwards (only new connections use the bypass).
+1. ~~On gaming, run `rebuild-switch`~~ — **DONE: gen 468 switched 2026-10-22 08:54, `rebuild-host` confirmed present.** Restart Vesktop if it hasn't been restarted since (only new connections use the bypass).
 2. `rebuild-host natalie-laptop` from gaming for its first real run (it builds from gaming's checkout, so natalie-laptop needs no pull first); laptop was unreachable over SSH, so it still needs `git pull` + rebuild when it is on.
 3. Delete the remote `chore/session-close-20261022` branch if it is still listed (`git push origin --delete`).
 4. Items 2-4 of the session 137 steps below (pi-hole DNS and Tailscale with Proton up, the phone question) still stand.
@@ -476,7 +476,7 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 
 **Session 136 next steps:**
 1. ~~`land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`)~~ — **DONE session 138**; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
-2. After gaming is rebuilt (PR #48 landed session 138; `rebuild-switch` pending), try `rebuild-host natalie-laptop` for real; it replaces the alias.
+2. After gaming is rebuilt (PR #48 landed and live on gaming as of gen 468, session 138), try `rebuild-host natalie-laptop` for real; it replaces the alias.
 3. Everything from session 135 below still stands (competency-test calibration the week of 10-26, `/fleet-rollout` laptop + natalie-laptop).
 
 **Session 135 next steps:**
