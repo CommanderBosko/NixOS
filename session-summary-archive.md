@@ -1,3 +1,30 @@
+## Session: 2026-10-18 (session 132) — Hermes Agent attempt 2 live on gaming
+
+**Focus**: Build the Hermes attempt-2 plan and get the `hermes` CLI working against the local model (three conversations).
+
+### What changed (and why)
+- **`1b37b3d`:** llama.cpp (CUDA) serves a hash-pinned Qwen3.5-9B IQ4_XS at a 64K context, one slot, q8_0 KV cache, started on demand with `llm-on` / `llm-off`. Hermes comes from the upstream Home Manager module and runs as bosko with state in `~/.hermes`.
+- **`d4b6ffb`:** README's stale May Ollama bullet replaced; the plan doc is marked implemented and records why it deviates from step 2.
+
+### Decisions
+- Home Manager module instead of the planned NixOS module. The current hermes CLI won't attach to a gateway whose home is owned by another uid, so the shared `/var/lib/hermes` + `hermes` group setup can't work. CLI-only, no always-on gateway.
+- Old `/var/lib/hermes` state not migrated: it only held May OpenRouter leftovers.
+
+### Issues / surprises
+- First switch: `storage_unavailable`. The service couldn't read a May-leftover `auth.json`, and the stale shell lacked `HERMES_HOME` and the group. A tmpfiles chown rule fixed ownership but led straight into the next error.
+- After reboot: `Gateway inaccessible: unsafe_control_path` (uid 986 vs 1000), the root cause above.
+- After moving to HM, the old system-wide `HERMES_HOME` lingered in the login session until a re-login.
+- Measured at close: 7217 / 8192 MiB VRAM with the desktop up, n_ctx 65536, no OOM.
+- Secret-scan: clean (tree + 1853 commits of history; all 6 sops files encrypted).
+
+### Next session
+- Hermes plan checks 6–8 (tool calls, long session, `llm-off` frees VRAM), then `sudo rm -rf /var/lib/hermes`.
+- Mod+G no-jump check on gaming; `/fleet-rollout` backlog.
+
+**Commits**: `1b37b3d..d4b6ffb` (2 commits)
+
+---
+
 ## Session: 2026-10-17 (session 131) — Mod+G no-focus + Hermes Agent attempt-2 plan
 
 **Focus**: Two conversations: stop Mod+G's apps from yanking the monitors, and re-check whether Hermes Agent can run locally on the RTX 3070.

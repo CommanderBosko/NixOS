@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). gaming runs `main` at `bdb5c93` (gen 460, 2026-10-20), including the local Hermes Agent stack with its safety gates and Mnemosyne memory. natalie-laptop (gen 96) is on the 2026-10-11 bump without the 10-12/13 changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). gaming runs gen 467 (2026-10-22), built from the unmerged Proton VPN branch (PR #47) on top of `main`, so it carries the local Hermes Agent stack with its safety gates and Mnemosyne memory plus Proton VPN with a Vesktop bypass. natalie-laptop (gen 96) is on the 2026-10-11 bump without the 10-12/13 changes, and laptop and vpn-server still owe a `/fleet-rollout` pass for a longer backlog.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -200,12 +200,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-21 (session 136, latest)** — The Proton VPN GUI client was written by Hermes, reviewed, and opened as a PR for all three desktops (PR #47); `rebuild-natalie-laptop` became a `rebuild-host <host>` function (PR #48). Both await CI and a rebuild.
+**2026-10-22 (session 137, latest)** — Proton VPN now starts minimized at login on the three desktops, and on gaming Vesktop is routed outside the tunnel because Discord rejects Proton exit IPs (403, code 40333). qBittorrent was also pinned to the VPN interface after it leaked the home IP. All of it is on PR #47, running on gaming but not merged.
+
+**2026-10-21 (session 136)** — The Proton VPN GUI client was written by Hermes, reviewed, and opened as a PR for all three desktops (PR #47); `rebuild-natalie-laptop` became a `rebuild-host <host>` function (PR #48). Both await CI and a rebuild.
 
 **2026-10-20 (session 135)** — `main` is now protected by a no-bypass ruleset, and pushes fall back to PRs. Hermes on gaming got a write-safe root, manual approvals, staged skill creation and a merge deny; its Mnemosyne memory provider is now Nix-packaged and vetted by the memory checker. Superpowers and Ponytail were removed from Claude Code. A Hermes competency-test skill is in review (PR #44).
-
-**2026-10-19 (session 134)** — Hermes got a Proton Mail Bridge + himalaya setup on gaming (config rendered from sops so the address stays private), its memory checker now rejects credential-like entries before calling Claude, and CI's flake check no longer fails on fresh runners. Skill-audit fixes merged.
-
 ## Roadmap
 
 - Roll the backlog out with `/fleet-rollout`: laptop (offline; owes everything since mid-September — managed Claude Code policy, FinanceGuru, package consolidation, the OnlyOffice font fix, the static Canon printer queue, and every flake bump since PR #29), natalie-laptop (gen 96, owes everything since 2026-10-12, including the 2026-10-18 flake bump), and vpn-server (sops-nix bumps); remove the hand-maintained `~/.ssh/config` on each host afterward
