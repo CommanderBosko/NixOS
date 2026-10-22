@@ -107,6 +107,8 @@
       "${self}/modules/sddm.nix"
       # Mesh VPN on every desktop; first-time auth is manual (`tailscale up`)
       "${self}/modules/tailscale.nix"
+      # Proton VPN GUI client; sign-in is manual per host (see the module)
+      "${self}/modules/proton-vpn.nix"
       # WireGuard client to vpn-server temporarily pulled from the fleet —
       # Oracle admin-disabled that instance 2026-08-18 (see
       # project_vpn_server_oracle_disabled memory), so the tunnel has no
@@ -155,6 +157,7 @@
       "${self}/hosts/gaming/github-runner.nix"
       "${self}/hosts/gaming/hermes-agent.nix"
       "${self}/hosts/gaming/proton-mail.nix"
+      "${self}/hosts/gaming/vesktop-direct.nix"
     ] ++ extra;
   in
   {
