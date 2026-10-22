@@ -157,6 +157,7 @@
       "${self}/hosts/gaming/github-runner.nix"
       "${self}/hosts/gaming/hermes-agent.nix"
       "${self}/hosts/gaming/proton-mail.nix"
+      "${self}/hosts/gaming/vesktop-direct.nix"
     ] ++ extra;
   in
   {
