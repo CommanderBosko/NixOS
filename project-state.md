@@ -1,10 +1,16 @@
 # NixOS Project State
 
-_Last updated: 2026-10-22 (session 137)_
+_Last updated: 2026-10-22 (session 138)_
 
 ## Current Project State
 
 _Older blocks are in [project-state-archive.md](project-state-archive.md)._
+
+**2026-10-22 (session 138, after the 08:32 close): PRs #48 (`rebuild-host`), #47 (Proton VPN GUI + autostart + Vesktop bypass) and #50 (this morning's close) are all merged; `main` is at `360300a`. gaming switched to it as gen 468 (2026-10-22 08:54): the dry-run showed +13/-13 paths and +5.38 KiB, and the only user-visible change is `rebuild-host` replacing `rebuild-natalie-laptop`; the user confirmed the alias is there.**
+- **Alias mixup:** the user first reported seeing `reboot-natalie-laptop` and no `reboot-host`; that was a typo for `rebuild-*`. `reboot-host` was already fine (in the live zshrc of gaming since at least gen 465, and on natalie-laptop). `rebuild-natalie-laptop` was still there because PR #48 (`c3c2cca`) was unmerged, so `main` and `feat/proton-vpn` both still defined it; no generation ever contained a `reboot-natalie-laptop`.
+- **Landed with `land-prs` (merge commits):** #48 `cdc8b87`, #47 `3c16bbe`, #50 `360300a`. #50 went in before this close because it edits the same state files (README, project-state, session-summary) and would have conflicted. The user briefly worried #47 removes the Proton VPN GUI; it does not. The CLI was added and then reverted inside the PR, so the net tree installs only `pkgs.proton-vpn` (`modules/proton-vpn.nix`). The interrupt arrived after the merge had already gone through.
+- **Branches:** `feat/shell-rebuild-host` and `feat/proton-vpn` deleted locally and on origin; `chore/session-close-20261022` deleted locally only (remote delete not confirmed). Local `main` is fast-forwarded and is gaming's checkout again.
+- **Other hosts, read-only SSH check:** natalie-laptop is on `main` at `301c44e` (PR #45) with `reboot-host` and `cleanup-host` in its live zshrc but not `rebuild-host`; laptop timed out on port 22.
 
 **2026-10-22 (session 137, five conversations since the 10-21 close): Proton VPN now autostarts minimized at login, Vesktop is routed around the tunnel on gaming because Discord blocks Proton exit IPs, and qBittorrent is pinned to `proton0`. The two repo changes (`e3fa102`, `4461aaf`) are on PR #47's branch `feat/proton-vpn`, unmerged, so `main` (`fb7fc6e`) has none of it; gaming runs it as gen 467 (switched 2026-10-22 08:30).**
 - **Autostart (`e3fa102`):** `modules/proton-vpn.nix` gained `environment.etc."xdg/autostart/protonvpn-app.desktop"` running `protonvpn-app --start-minimized`, for every user on all three desktops (the user chose system-wide over bosko-only). Hermes drafted it in the sandbox clone ("you plan it, Hermes codes it, you check/test it"); Claude only tidied the comments. Deep-eval PASS on 4 hosts and systemd's xdg-autostart generator accepted the entry. Confirmed live: after a reboot the app started in the tray and auto-connected. "Auto connect = Fastest" and custom DNS are in-app per-user settings (`~/.config/Proton/VPN/settings.json`), not declarative; an HM jq-merge would be overwritten whenever the app runs.
@@ -38,11 +44,9 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 - **`2b09612`:** hermes-agent input bumped to `0b10b9f`; deep-eval passes on all four hosts.
 - laptop and natalie-laptop need pull + rebuild; vpn-server still offline.
 
-**Flake inputs bumped 2026-10-18 (`23bda63`), verified; LIVE on gaming since its 10-19/10-20 rebuilds (gen 460's nixpkgs `fe13242` matches the lock), not yet on laptop/natalie-laptop.** dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix; flake-check + 4-host deep-eval clean. Needs `/fleet-rollout`; re-check `hermes` on gaming afterward (hermes-agent moved).
-
 ## Current Goals
 
-- **Proton VPN: land PR #47 and roll it to laptop + natalie-laptop** (session 137) — PR #47 now carries the GUI, system-wide autostart and gaming's Vesktop bypass; gaming already runs it (gen 467). After it lands, rebuild the other two desktops and have each user sign in once and set Auto connect = `Fastest`; test pi-hole DNS and Tailscale routes with the tunnel up.
+- **Proton VPN: roll it out to laptop + natalie-laptop** (session 137; PR #47 LANDED session 138, `3c16bbe`) — `main` carries the GUI, system-wide autostart and gaming's Vesktop bypass; gaming already runs it (gen 467). Pull and rebuild the other two desktops and have each user sign in once and set Auto connect = `Fastest`; test pi-hole DNS and Tailscale routes with the tunnel up.
 - **Hermes competency test: land PR #44, calibrate, then two full baselines** (session 135) — paused for Claude token budget until the week of 2026-10-26. Order: `land-prs` #44 → `/hermes-competency-test calibrate` (Sonnet, ~1–2 h, token-heavy; fix any item under 90 and bump `manifest.json` `.version`) → `/hermes-competency-test full` twice after `llm-on` (4–7 h each; the second one sets the noise floor). `quick` (8 items, ~1 h) is the cheap first look.
 - **Hermes: decide on toolset pruning** (session 135) — measure-first was chosen; the numbers are in: the fixed prompt is ~94 KB (~24K of the 64K-token window), tool schemas 66 KB across 62 tools, the memory toolset alone 33.6 KB. `code_execution` also bypasses the approval deny globs. Offered, not applied: disable `code_execution`, `tts`, `vision`, `delegation`, `browser-use` and filter the Mnemosyne tools.
 - **laptop + natalie-laptop: drop Superpowers/Ponytail** (session 135) — after their pull + rebuild, run `claude plugin uninstall` for both if they were ever installed there (the removed activation block only stops reinstalls).
@@ -353,7 +357,7 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 ## Known Issues / Tech Debt
 
 - **Vesktop bypass limits** (session 137) — `hosts/gaming/vesktop-direct.nix` affects new connections only (restart Vesktop after a rebuild), Discord sees the home IP, the cgroup path is hard-wired to uid 1000 (pinned in the module), and it relies on the NixOS firewall re-running `extraCommands`, so any firewall change must keep `ipt_append`/`ipt_insert` idempotent.
-- **gaming runs an unmerged branch** (session 137) — gen 467 was built from `feat/proton-vpn`; a rebuild from `main` drops Proton VPN, its autostart and the Vesktop bypass until PR #47 lands.
+- ~~**gaming runs an unmerged branch**~~ — **RESOLVED session 138:** PR #47 merged (`3c16bbe`) and gaming's checkout is `main` again, so a rebuild from `main` keeps Proton VPN, its autostart and the Vesktop bypass. (session 137)
 - **qBittorrent interface binding is imperative** (session 137) — `Session\Interface=proton0` lives in `~/.config/qBittorrent/qBittorrent.conf` only (the key names were verified by behavior, not documentation), and port forwarding is off so seeding stalls. Phone connectivity under Proton is also unresolved.
 - **Hermes can reach bosko's credentials** (session 135) — it runs as bosko with the unlocked ssh-agent (`id_ed25519`, `legions_chunk3_vm`) and the `gh` keyring; its file tools block `~/.ssh` but its terminal tool doesn't. The ruleset guards `main`; nothing stops `gh api` or a script from merging its own PR or touching other repos. The real fix (separate user or a locked-down container) conflicts with the HM-as-bosko setup and wasn't pursued.
 - **Hermes memory checker fails open** (session 135) — a Claude usage-limit blackout lets every Hermes memory save through unchecked, and errored log rows don't record the entry, so they can't be audited afterwards.
@@ -458,15 +462,21 @@ _Older blocks are in [project-state-archive.md](project-state-archive.md)._
 
 ## Next Steps
 
+**Session 138 next steps:**
+1. ~~On gaming, run `rebuild-switch`~~ — **DONE: gen 468 switched 2026-10-22 08:54, `rebuild-host` confirmed present.** Restart Vesktop if it hasn't been restarted since (only new connections use the bypass).
+2. `rebuild-host natalie-laptop` from gaming for its first real run (it builds from gaming's checkout, so natalie-laptop needs no pull first); laptop was unreachable over SSH, so it still needs `git pull` + rebuild when it is on.
+3. Delete the remote `chore/session-close-20261022` branch if it is still listed (`git push origin --delete`).
+4. Items 2-4 of the session 137 steps below (pi-hole DNS and Tailscale with Proton up, the phone question) still stand.
+
 **Session 137 next steps:**
-1. `land-prs` PR #47 once `evaluate all hosts` is green (it now includes autostart and the Vesktop bypass; the PR title still says "gui client only") and PR #48; then pull + rebuild laptop and natalie-laptop (`rebuild-host`), sign in to Proton once per user, set Auto connect = `Fastest`.
+1. ~~`land-prs` PR #47 and PR #48~~ — **DONE session 138** (`3c16bbe`, `cdc8b87`); then pull + rebuild laptop and natalie-laptop (`rebuild-host`), sign in to Proton once per user, set Auto connect = `Fastest`.
 2. On gaming with Proton connected: confirm `resolvectl`/`/etc/resolv.conf` still reach the pi-hole through Tailscale and `tailscale status` stays healthy; confirm Vesktop still loads after the next rebuild (restart it first).
 3. Ask what the phone's Proton app shows if the no-connectivity problem recurs.
 4. Everything from sessions 135–136 below still stands.
 
 **Session 136 next steps:**
-1. `land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`) once CI is green; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
-2. After PR #48 lands and gaming is rebuilt, try `rebuild-host natalie-laptop` for real; it replaces the alias.
+1. ~~`land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`)~~ — **DONE session 138**; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
+2. After gaming is rebuilt (PR #48 landed and live on gaming as of gen 468, session 138), try `rebuild-host natalie-laptop` for real; it replaces the alias.
 3. Everything from session 135 below still stands (competency-test calibration the week of 10-26, `/fleet-rollout` laptop + natalie-laptop).
 
 **Session 135 next steps:**

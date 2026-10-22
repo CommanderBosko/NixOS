@@ -1,3 +1,20 @@
+## Session: 2026-10-18 (session 133) — flake input bump
+
+**Focus**: Bump flake inputs and prove they still evaluate (no apply).
+
+### What changed (and why)
+- **`23bda63`:** bumped dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix. flake-check + deep-eval clean on all 4 hosts. Committed and pushed but not rebuilt on any host.
+
+### Decisions
+- Lock bump left unapplied, per the `/flake-update-verify` workflow; roll out later via `/fleet-rollout`.
+
+### Next session
+- Apply the 10-18 bump (includes a hermes-agent bump, so re-check `hermes` on gaming after the rebuild).
+
+**Commits**: `23bda63` (1 commit)
+
+---
+
 ## Session: 2026-10-18 (session 132) — Hermes Agent attempt 2 live on gaming
 
 **Focus**: Build the Hermes attempt-2 plan and get the `hermes` CLI working against the local model (three conversations).
