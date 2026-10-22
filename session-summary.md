@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-22 (session 138) — land the Proton VPN and rebuild-host PRs
+
+**Focus**: Make `rebuild-host` real: the user still saw `rebuild-natalie-laptop` because its replacement was sitting in an unmerged PR.
+
+### What changed (and why)
+- **Alias mixup:** the report named `reboot-*`, but the user meant `rebuild-*`. `reboot-host` was fine on gaming and natalie-laptop; `rebuild-host` lived only on unmerged PR #48, so `main` and the live system still defined the old alias.
+- **Landed PRs #48, #47 and #50** with `land-prs` (merge commits `cdc8b87`, `3c16bbe`, `360300a`). #50, the morning's session close, went in first-of-this-close because it edits the same state files. Merging #47 was approved before the user spotted a worry that it drops the Proton VPN GUI; it does not (the CLI was added and reverted inside it, net GUI only), but the interrupt arrived after the merge.
+- **Dry-run from `main`:** builds clean for gaming, +13/-13 paths, +5.38 KiB, recommendation `switch`. Not applied; privileged apply is left to the user.
+
+### Decisions
+- Landed #50 before writing this close rather than stacking on its branch or skipping, so the state files don't conflict.
+- Left the remote `chore/session-close-20261022` branch undeleted: the delete wasn't confirmed.
+
+### Issues / surprises
+- laptop timed out over SSH, so its state is still unknown.
+- The merge happened before the user's concern about #47 landed; worth re-confirming scope immediately before an irreversible merge when the user is mid-thought.
+
+### Next session
+- `rebuild-switch` on gaming, restart terminals and Vesktop; first real `rebuild-host natalie-laptop`; pull + rebuild laptop.
+
+**Commits**: `cdc8b87..360300a` (3 merge commits; the underlying work is in sessions 136-137)
+
+Secret-scan: clean (tree + 1,901 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-22 (session 137) — Proton autostart, Vesktop bypass, qBittorrent leak
 
 **Focus**: Make Proton VPN usable day to day on gaming: start at login, keep Discord working, and stop torrent traffic leaking.
@@ -104,23 +130,6 @@ Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
 - Post-reboot verification (Bridge login, himalaya, Hermes checker); user revokes the Gmail app password.
 
 **Commits**: `7443ee5..2b09612`
-
----
-
-## Session: 2026-10-18 (session 133) — flake input bump
-
-**Focus**: Bump flake inputs and prove they still evaluate (no apply).
-
-### What changed (and why)
-- **`23bda63`:** bumped dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix. flake-check + deep-eval clean on all 4 hosts. Committed and pushed but not rebuilt on any host.
-
-### Decisions
-- Lock bump left unapplied, per the `/flake-update-verify` workflow; roll out later via `/fleet-rollout`.
-
-### Next session
-- Apply the 10-18 bump (includes a hermes-agent bump, so re-check `hermes` on gaming after the rebuild).
-
-**Commits**: `23bda63` (1 commit)
 
 ---
 
