@@ -18,6 +18,24 @@ in
   # (`networkmanager.dns = "none"`) — test both after connecting.
   environment.systemPackages = [ pkgs.proton-vpn ];
 
+  # Upstream race in proton-vpn-api-core 5.2.5: for WireGuard it starts the
+  # local agent only from NM's state-changed signal, attached after activation
+  # is requested. WireGuard can reach ACTIVATED first, the signal is missed, and
+  # the app sits at "Connecting" with a working tunnel (seen 2026-10-24). The
+  # patch also starts the agent if the connection is already activated. Drop it
+  # once a release fixes this (the patch fails to apply, loudly, on a bump).
+  nixpkgs.overlays = [
+    (final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (pyFinal: pyPrev: {
+          proton-vpn-api-core = pyPrev.proton-vpn-api-core.overridePythonAttrs (old: {
+            patches = (old.patches or [ ]) ++ [ ./proton-vpn-activation-race.patch ];
+          });
+        })
+      ];
+    })
+  ];
+
   # Autostart at login, minimized to the tray, for every user on the host.
   # The app checks for org.kde.StatusNotifierWatcher once at startup and shows
   # its window if the tray isn't there yet; DMS registers it ~2 s after login,

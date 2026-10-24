@@ -1,0 +1,44 @@
+--- a/proton/vpn/backend/networkmanager/core/networkmanager.py
++++ b/proton/vpn/backend/networkmanager/core/networkmanager.py
+@@ -120,6 +120,9 @@
+                 self.SIGNAL_NAME,
+                 self._on_state_changed
+             )
++            # The connection can reach ACTIVATED before the handler above is
++            # attached, and NM does not re-emit a missed state change.
++            self._on_connection_started(vpn_connection)
+         except GLib.GError:
+             logger.exception("Error starting NetworkManager connection.")
+             self._notify_subscribers(
+@@ -210,6 +213,12 @@
+         """
+         raise NotImplementedError
+ 
++    def _on_connection_started(self, vpn_connection: NM.ActiveConnection):
++        """
++        Called once the state change handler is attached to a started
++        connection, so subclasses can act on a state reached before that.
++        """
++
+     def _get_servername(self) -> "str":
+         server_name = self._vpnserver.server_name or "Connection"
+         return f"ProtonVPN {server_name}"
+--- a/proton/vpn/backend/networkmanager/protocol/wireguard/wireguard.py
++++ b/proton/vpn/backend/networkmanager/protocol/wireguard/wireguard.py
+@@ -343,6 +343,16 @@
+         else:
+             logger.debug("Ignoring VPN state change: %s", state.value_name)
+ 
++    def _on_connection_started(self, vpn_connection: NM.ActiveConnection):
++        """
++        Wireguard activates within milliseconds, often before the state
++        change handler is attached. Without the local agent the connection
++        would stay in "Connecting" forever, so start it if already activated.
++        """
++        if vpn_connection.get_state() == NM.ActiveConnectionState.ACTIVATED:
++            logger.info("Connection already activated, starting local agent.")
++            self._async_start_local_agent_listener()
++
+     def _initialize_persisted_connection(
+             self, connection_id: str
+     ) -> states.State:
