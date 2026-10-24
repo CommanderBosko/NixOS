@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 
 # Pinchflat — self-hosted YouTube archiver (yt-dlp-backed), feeding the
 # existing Jellyfin library on this host.
@@ -7,6 +7,11 @@
 #          jellyfin-server.nix), sharing the same "media" group so Jellyfin's
 #          scanner can read what Pinchflat downloads.
 # Access:  LAN (enp4s0) + WireGuard (wg0) only, same scoping as Jellyfin.
+# Package: pinchflat-ngx (TheBadFella/Pinchflat-NGX), a maintained fork that
+#          keeps upstream's SQLite DB and env vars. Replaces nixpkgs' `pinchflat`,
+#          which upstream abandoned and nixpkgs marked insecure (2026-10-16).
+#          The fork migrates the DB schema on first start, so back up
+#          /var/lib/pinchflat/db/pinchflat.db before switching.
 # Setup:   channels/media profiles/output templates aren't declarative in the
 #          nixpkgs module — configure those once through the web UI at
 #          http://gaming:8945 after the first rebuild (use the built-in
@@ -15,6 +20,7 @@
 {
   services.pinchflat = {
     enable = true;
+    package = pkgs.pinchflat-ngx;
     mediaDir = "/mnt/media/YouTube";
     group = "media"; # joins Jellyfin's shared group instead of a standalone "pinchflat" group
     port = 8945;
