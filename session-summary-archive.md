@@ -1,3 +1,22 @@
+## Session: 2026-10-19 (session 134) — close-out after Proton/Hermes hardening day
+
+**Focus**: Close-only session. Several earlier conversations the same day (not visible here) landed the work below.
+
+### What changed (and why)
+- **`130730a`:** Proton Mail Bridge + himalaya for Hermes on gaming, config as a sops template so the address stays out of the public repo; replaces Gmail after an app password leaked into Hermes memory.
+- **PR #38:** Hermes memory checker blocks credential-like entries locally before calling `claude -p`.
+- **PR #35/#36/#37/#39:** skill-audit fixes, CI `--no-build` removal, improve-system leftovers. `2b09612` bumps hermes-agent.
+
+### Decisions
+- No code changes this session. Secret-scan clean on tree and history.
+
+### Next session
+- Post-reboot verification (Bridge login, himalaya, Hermes checker); user revokes the Gmail app password.
+
+**Commits**: `7443ee5..2b09612`
+
+---
+
 ## Session: 2026-10-18 (session 133) — flake input bump
 
 **Focus**: Bump flake inputs and prove they still evaluate (no apply).

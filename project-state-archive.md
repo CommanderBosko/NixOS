@@ -2,6 +2,12 @@
 
 Older `Current Project State` blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**2026-10-19 (session 134, close-only; the work below was done in other conversations): main is at `2b09612`, pushed, CI green, secret-scan clean (tree + 1867 commits). User rebuilt (`nh os boot`) and rebooted hosts that day; post-reboot verification NOT done yet — see memory `project_post_reboot_pickup_20261019`.**
+- **Landed since session 133:** PR #35/#36/#39 (skill-audit and improve-system fixes: classifier, transcript lib, temp-pin tracking, AskUserQuestion 4-option cap, nixos-gc keeps current+booted gens), PR #37 (CI `flake check` dropped `--no-build`; read-only mode broke hermes uv2nix eval on fresh runners), PR #38 (Hermes memory checker rejects credential-looking entries locally before any `claude -p` call, redacts what it forwards, still fails open on checker errors), `fdc41da` himalaya CLI, `1352dd3` vpn-server auditd/sudo baseline.
+- **`130730a` Proton Mail Bridge + himalaya for Hermes (gaming):** Bridge runs as a user service; himalaya config is a sops template (address stays encrypted in this public repo) symlinked read-only; Bridge password lives in the GNOME keyring via `secret-tool`. Managed `proton-mail` skill for Hermes. Motivation: a Gmail app password was saved into Hermes memory on 10-18. User still owes Bridge login and revoking the Gmail app password.
+- **`2b09612`:** hermes-agent input bumped to `0b10b9f`; deep-eval passes on all four hosts.
+- laptop and natalie-laptop need pull + rebuild; vpn-server still offline.
+
 **Flake inputs bumped 2026-10-18 (`23bda63`), verified; LIVE on gaming since its 10-19/10-20 rebuilds (gen 460's nixpkgs `fe13242` matches the lock), not yet on laptop/natalie-laptop.** dms, dank-qml-common, hermes-agent, home-manager, nixpkgs, sops-nix; flake-check + 4-host deep-eval clean. Needs `/fleet-rollout`; re-check `hermes` on gaming afterward (hermes-agent moved).
 
 **Hermes Agent attempt 2 is LIVE on gaming: llama.cpp (CUDA) serving Qwen3.5-9B IQ4_XS at 64K, on demand, with the Hermes CLI running as bosko via the upstream Home Manager module (`1b37b3d` + docs `d4b6ffb`). User confirmed `hermes` works; gen 445 (2026-10-18, session 132, three conversations).**
