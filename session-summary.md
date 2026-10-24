@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-24 (session 139) — Proton/Vesktop boot and stall fixes, sixth rule
+
+**Focus**: Close out four conversations: three fixes that make Proton VPN and the Vesktop bypass survive a cold boot, plus a new standing rule (PR #55).
+
+### What changed (and why)
+- **Firewall no longer dies at boot (`d926620`, PR #52):** Vesktop's cgroup rule ran before `user@1000` created `app-novpn.slice`, so `firewall.service` failed on two cold boots and gaming ran with no firewall until a manual restart. The rules now live in `vesktop-direct.service`, ordered after login, with the slice as a login-time user unit. Verified on the 16:03 cold boot.
+- **Proton tray icon (`741a092`, PR #53):** the app checked once for the tray watcher and lost the race with DMS/quickshell; the autostart now waits (≤30 s) for it. Verified after the 08:01 boot.
+- **Proton stuck at "Connecting" (`4274364`, PR #54):** api-core 5.2.5 missed NM's activation signal when WireGuard came up first; patched to start the local agent if already activated. Live on gen 472, not yet proven (intermittent).
+- **Sixth standing rule (`2a44c82`, PR #55, open):** "Read Everything Before Editing". A "Supervisor, Not Builder" rule was added and removed in the same conversation.
+
+### Decisions
+- Late-start rules service over `|| true` or a gid match; a package patch over a watchdog; Supervisor dropped as overhead.
+
+### Issues / surprises
+- The boot-order bug hid because gen 467 was switched live with the slice already present.
+- Hermes's tray-wait draft did not evaluate on the first try; no token saving on small Nix edits.
+- The live `~/.claude` still has the seven-rule version until PR #55 merges and a host rebuilds.
+
+### Next session
+- Land #55 and rebuild; watch Proton over several boots; carry-overs from 138.
+
+**Commits**: `2c9c8ed..2a44c82` (9 commits, 4 of them merges)
+
+Secret-scan: clean (tree + 1,911 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-22 (session 138) — land the Proton VPN and rebuild-host PRs
 
 **Focus**: Make `rebuild-host` real: the user still saw `rebuild-natalie-laptop` because its replacement was sitting in an unmerged PR.
@@ -111,25 +138,6 @@ Secret-scan: clean (tree + 1,892 commits, all `secrets/*.yaml` encrypted).
 **Commits**: `7aaddad..4944fc4` (11 commits; `4944fc4` is on PR #44's branch)
 
 Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-19 (session 134) — close-out after Proton/Hermes hardening day
-
-**Focus**: Close-only session. Several earlier conversations the same day (not visible here) landed the work below.
-
-### What changed (and why)
-- **`130730a`:** Proton Mail Bridge + himalaya for Hermes on gaming, config as a sops template so the address stays out of the public repo; replaces Gmail after an app password leaked into Hermes memory.
-- **PR #38:** Hermes memory checker blocks credential-like entries locally before calling `claude -p`.
-- **PR #35/#36/#37/#39:** skill-audit fixes, CI `--no-build` removal, improve-system leftovers. `2b09612` bumps hermes-agent.
-
-### Decisions
-- No code changes this session. Secret-scan clean on tree and history.
-
-### Next session
-- Post-reboot verification (Bridge login, himalaya, Hermes checker); user revokes the Gmail app password.
-
-**Commits**: `7443ee5..2b09612`
 
 ---
 

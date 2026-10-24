@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## /init Also Runs claude-rules
 
-Whenever `/init` is run in this repo, invoke the `claude-rules` skill immediately after `/init` finishes generating or updating `CLAUDE.md` — don't treat `/init` as done until that check has run. This ensures the five standing rules below are present (and restored if `/init`'s own pass ever stripped or reworded them) every time `/init` touches this file.
+Whenever `/init` is run in this repo, invoke the `claude-rules` skill immediately after `/init` finishes generating or updating `CLAUDE.md` — don't treat `/init` as done until that check has run. This ensures the six standing rules below are present (and restored if `/init`'s own pass ever stripped or reworded them) every time `/init` touches this file.
 
 ## Skill Awareness
 
@@ -38,6 +38,10 @@ Before doing a task by hand, check whether an existing skill already covers it a
 ## Ask via AskUserQuestion
 
 When you need a decision, choice, or clarification from the user — not just information you can look up yourself — use the **AskUserQuestion** tool rather than asking in plain text. Phrase it as 2-4 concrete options (with a recommended one first); when the answer could be open-ended, the tool's built-in "Other" choice covers free text. This keeps answers structured, makes trade-offs explicit, and avoids an answer getting buried in prose. Reserve plain-text questions for genuinely open, generative prompts where no sensible options exist yet (e.g. "describe the project in your own words").
+
+## Read Everything Before Editing
+
+Before changing anything, list every file you'll need and read them in one pass. Then make all edits, then run the validation tests.
 
 ## Editing Claude Skills
 
