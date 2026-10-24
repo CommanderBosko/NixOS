@@ -1,16 +1,16 @@
 ---
 name: claude-rules
-description: Ensure the current project's CLAUDE.md contains the user's five standing workflow rules — Scope First (Interview), Verification Plan, Parallelize with Sub-Agents, Use Existing Skills First, and Ask via AskUserQuestion — adding any that are missing. Use when the user says "claude-rules", "check claude rules", "apply my rules", "add my rules to this project", or "make sure CLAUDE.md has my rules".
+description: Ensure the current project's CLAUDE.md contains the user's six standing workflow rules — Scope First (Interview), Verification Plan, Parallelize with Sub-Agents, Use Existing Skills First, Ask via AskUserQuestion, and Read Everything Before Editing — adding any that are missing. Use when the user says "claude-rules", "check claude rules", "apply my rules", "add my rules to this project", or "make sure CLAUDE.md has my rules".
 model: haiku
 ---
 
 # Claude Rules
 
-These five sections are rules the user wants followed in **every** project. This skill checks the current project's `CLAUDE.md` and adds any that are missing, leaving existing ones untouched.
+These six sections are rules the user wants followed in **every** project. This skill checks the current project's `CLAUDE.md` and adds any that are missing, leaving existing ones untouched.
 
-## The five rules (canonical, project-agnostic text)
+## The six rules (canonical, project-agnostic text)
 
-The exact, canonical Markdown for all five rules lives verbatim in `assets/rules.md`, one `## <Rule Name>` section per rule. That file is also the roster: its `## ` headings are the rule names, and `scripts/check-rules.sh` reads them from there, so they aren't re-listed here.
+The exact, canonical Markdown for all six rules lives verbatim in `assets/rules.md`, one `## <Rule Name>` section per rule. That file is also the roster: its `## ` headings are the rule names, and `scripts/check-rules.sh` reads them from there, so they aren't re-listed here.
 
 When adding a missing section, **read `assets/rules.md`, find the section whose `## <Rule Name>` header matches the rule you're adding, and insert the exact Markdown block beneath it verbatim.** Do **not** rewrite or "improve" the wording — these are the agreed canonical versions. (If the user's NixOS repo has richer, project-specific variants of these sections, leave those as-is; they already satisfy the rule.)
 
@@ -20,7 +20,7 @@ When adding a missing section, **read `assets/rules.md`, find the section whose 
 
 Find `CLAUDE.md` at the root of the current project (the working directory the session was launched in). Do not touch `~/.claude/CLAUDE.md` or any other project's file — only the current project.
 
-- **If no `CLAUDE.md` exists:** stop and tell the user there is no `CLAUDE.md` in this project. Use the **AskUserQuestion** tool to ask whether to create one containing all five rules, with options **Create** (write a new `CLAUDE.md` with all five canonical rules) and **Skip** (do nothing). Only create it if the user picks Create. Do not create it silently.
+- **If no `CLAUDE.md` exists:** stop and tell the user there is no `CLAUDE.md` in this project. Use the **AskUserQuestion** tool to ask whether to create one containing all six rules, with options **Create** (write a new `CLAUDE.md` with all six canonical rules) and **Skip** (do nothing). Only create it if the user picks Create. Do not create it silently.
 
 ### 2. Check which rules are present
 
@@ -30,9 +30,9 @@ The script only catches an exact (case-insensitive) heading match. If a rule com
 
 ### 3. Add the missing sections
 
-For each rule that is **missing**, append its canonical Markdown block (read it from the matching `## <Rule Name>` section of `assets/rules.md`). Preserve a blank line between sections. Prefer to keep the five rules grouped together near the top of the file, after any intro paragraph, in the order they appear in `assets/rules.md`. If some already exist mid-file, just append the missing ones near them rather than reordering the whole file.
+For each rule that is **missing**, append its canonical Markdown block (read it from the matching `## <Rule Name>` section of `assets/rules.md`). Preserve a blank line between sections. Prefer to keep the six rules grouped together near the top of the file, after any intro paragraph, in the order they appear in `assets/rules.md`. If some already exist mid-file, just append the missing ones near them rather than reordering the whole file.
 
-If all five are already present, report that and make no changes.
+If all six are already present, report that and make no changes.
 
 ### 4. Report
 
@@ -47,7 +47,7 @@ Tell the user exactly which sections were already present and which were added, 
 
 ## Assets
 
-- `assets/rules.md` — the five canonical rule blocks, one per `## <Rule Name>` section; those headings are also the roster `check-rules.sh` checks. Insert each missing block verbatim from here; never edit the wording.
+- `assets/rules.md` — the six canonical rule blocks, one per `## <Rule Name>` section; those headings are also the roster `check-rules.sh` checks. Insert each missing block verbatim from here; never edit the wording.
 
 ## Scripts
 
