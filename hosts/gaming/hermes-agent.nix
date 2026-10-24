@@ -168,9 +168,16 @@ in
       # Long-term memory backend. Data stays in ~/.hermes/mnemosyne/data,
       # outside the store, so rebuilds never touch it.
       settings.memory.provider = "mnemosyne";
+      # Built from Hermes's own nixpkgs, not the system one: the plugin loads
+      # native code (sqlite-vec's vec0.so, onnxruntime) into Hermes's Python,
+      # and when the two nixpkgs drift apart the newer glibc symbols don't
+      # resolve in the older process (GLIBC_2.43 not found, vector search off).
       hermesHomeFiles = lib.mapAttrs' (
         name: content: lib.nameValuePair "plugins/mnemosyne/${name}" content
-      ) (import ./hermes-mnemosyne.nix { inherit pkgs; src = inputs.mnemosyne; }).files // {
+      ) (import ./hermes-mnemosyne.nix {
+        pkgs = inputs.hermes-agent.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+        src = inputs.mnemosyne;
+      }).files // {
         # How to use the user's Proton mail (hosts/gaming/proton-mail.nix).
         # Rewritten on every rebuild, so Hermes can't drift it.
         "skills/email/proton-mail/SKILL.md" = ./hermes-proton-mail-skill.md;
