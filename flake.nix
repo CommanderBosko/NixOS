@@ -3,18 +3,17 @@
 
   inputs = {
     # Nix packages
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # TEMPORARY (pinned 2026-10-24): rev fe132422 (2026-10-15), the last nixpkgs
+    # that is known to work on every host. The 2026-10-24 bump to 3ec63636
+    # (linux-zen 7.2.11) broke gaming's build (vendor-reset has no .ko.cer, see
+    # NixOS/nixpkgs#575192), marked mcp-nixos's python3.14-fastmcp-slim broken,
+    # and flagged pinchflat insecure. The other inputs stay on their bumped revs.
+    # To lift: restore "nixos-unstable" and run
+    #   nix flake lock --update-input nixpkgs
+    nixpkgs.url = "github:nixos/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
 
     # Stable nixpkgs — used by vpn-server for stability
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
-
-    # TEMPORARY (added 2026-10-24): nixpkgs rev fe132422 (2026-10-15), the last
-    # one where mcp-nixos evaluates. Later nixpkgs marks python3.14-fastmcp-slim
-    # broken (meta.broken = mcp >= 2), which fails every host that installs
-    # mcp-nixos. Consumed only by the overlay in modules/claude-mcp.nix, which
-    # pulls just that one package — this does NOT hold back nixpkgs itself.
-    # Remove this input + the overlay once nixpkgs fixes mcp-nixos/fastmcp-slim.
-    nixpkgs-mcp-pin.url = "github:nixos/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
 
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
