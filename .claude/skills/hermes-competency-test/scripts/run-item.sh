@@ -19,15 +19,9 @@ rm -rf "$RD"; mkdir -p "$RD/truth"
 cp "$ITEM/item.json" "$RUN/items/$ID/item.json"
 fail() { echo "$*" >"$RD/error.txt"; echo "error: $ID r$N: $*" >&2; exit 1; }
 
-# kill_test_procs: stop Hermes processes (the on-demand gateway lingers) that run on the test home.
-kill_test_procs() {
-  local pid
-  for pid in $(pgrep -u "$(id -u)" -f hermes 2>/dev/null); do
-    if tr '\0' '\n' 2>/dev/null <"/proc/$pid/environ" | grep -qx "HERMES_HOME=$TEST_HOME"; then
-      kill "$pid" 2>/dev/null
-    fi
-  done
-}
+# kill_test_procs: stop Hermes processes (the on-demand gateway lingers) that run on the test home,
+# and wait until they are gone (see stop_test_procs in lib.sh).
+kill_test_procs() { stop_test_procs "$TEST_HOME"; }
 
 guard_hashes() {  # outside-world guards, compared by hc.py detect
   hash_paths "$LIVE_HOME" "${LIVE_GUARD_PATHS[@]}" >"$RD/guard-home.$1" 2>/dev/null
@@ -40,7 +34,7 @@ TIMEOUT=$(jq -r '.timeout_s // 900' "$ITEM/item.json")
 CHECK_TIMEOUT=$(jq -r '.check_timeout_s // 120' "$ITEM/item.json")
 
 # 1. Reset Hermes state and sandbox.
-kill_test_procs
+kill_test_procs || fail "Hermes processes on the test home survived SIGTERM and SIGKILL"
 if [ "$TAKER" = hermes ]; then
   rsync -a --delete "$RUN/home-snapshot/" "$TEST_HOME/" || fail "home reset failed"
 else
@@ -65,9 +59,19 @@ fi
 start=$(date +%s.%N)
 case "$TAKER" in
   hermes)
-    (cd "$SANDBOX_DIR" && HERMES_HOME="$TEST_HOME" timeout --kill-after=30 "$TIMEOUT" \
-      hermes chat --query-file "$ITEM/prompt.md" --format stream-json) >"$RD/stream.jsonl" 2>"$RD/stderr.txt"
-    rc=$? ;;
+    # A gateway that fails to start means nothing ran, so try again (up to 3 attempts); if it never
+    # starts, record an infrastructure error (excluded from scores) instead of grading a zero.
+    for attempt in 1 2 3; do
+      start=$(date +%s.%N)
+      (cd "$SANDBOX_DIR" && HERMES_HOME="$TEST_HOME" timeout --kill-after=30 "$TIMEOUT" \
+        hermes chat --query-file "$ITEM/prompt.md" --format stream-json) >"$RD/stream.jsonl" 2>"$RD/stderr.txt"
+      rc=$?
+      { [ "$rc" -ne 0 ] && gateway_start_failed "$RD/stderr.txt"; } || break
+      echo "retry: $ID r$N attempt $attempt: $(grep -m1 -E 'Gateway could not start|Gateway draining|gateway is already running' "$RD/stderr.txt")" >&2
+      [ "$attempt" -lt 3 ] || fail "hermes gateway failed to start in 3 attempts: $(grep -m1 -E 'Gateway could not start|Gateway draining|gateway is already running' "$RD/stderr.txt")"
+      kill_test_procs || fail "Hermes processes on the test home survived SIGTERM and SIGKILL"
+      sleep "${HC_RETRY_SLEEP_S:-2}"
+    done ;;
   claude)
     (cd "$SANDBOX_DIR" && env -u CLAUDECODE timeout --kill-after=30 "$TIMEOUT" \
       claude -p --model "$(jq -r '.calibration_model // "sonnet"' "$META")" \

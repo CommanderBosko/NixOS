@@ -36,9 +36,7 @@ mkdir -p "$WORK_DIR"
 echo $$ >"$WORK_DIR/.lock"
 cleanup() {
   rm -f "$WORK_DIR/.lock"
-  for pid in $(pgrep -u "$(id -u)" -f hermes 2>/dev/null); do
-    tr '\0' '\n' 2>/dev/null <"/proc/$pid/environ" | grep -qx "HERMES_HOME=$WORK_DIR/home" && kill "$pid" 2>/dev/null
-  done
+  stop_test_procs "$WORK_DIR/home"
 }
 trap cleanup EXIT
 
@@ -60,15 +58,25 @@ fi
 log "canary ok: all detectors fired"
 rm -f "$WORK_DIR/canary-outside.txt"
 
-total=$(( ${#ids[@]} * REPEATS )) n=0 t0=$(date +%s)
+total=$(( ${#ids[@]} * REPEATS )) n=0 errs=0 consec=0 t0=$(date +%s)
 for r in $(seq 1 "$REPEATS"); do
   for id in "${ids[@]}"; do
     n=$((n + 1))
-    "$SKILL_DIR/scripts/run-item.sh" "$RUN" "$id" "$r" >>"$LOG" 2>&1 || log "infra error on $id r$r (see items/$id/r$r/error.txt)"
+    if "$SKILL_DIR/scripts/run-item.sh" "$RUN" "$id" "$r" >>"$LOG" 2>&1; then
+      consec=0
+    else
+      errs=$((errs + 1)); consec=$((consec + 1))
+      log "infra error on $id r$r: $(cat "$RUN/items/$id/r$r/error.txt" 2>/dev/null)"
+      if infra_should_abort "$n" "$errs" "$consec"; then
+        log "ABORTING: $errs of $n repeats hit infrastructure errors ($consec in a row). The harness, not the model, is failing; fix it before spending more GPU time."
+        echo "$RUN"; exit 1
+      fi
+    fi
     el=$(( $(date +%s) - t0 ))
     log "$n/$total $id r$r done; elapsed ${el}s, eta $(( el * (total - n) / n ))s"
   done
 done
+[ "$errs" -eq 0 ] || log "WARNING: $errs of $total repeats hit infrastructure errors and are excluded from scores"
 
 log "grading"
 for rd in "$RUN"/items/*/r*; do

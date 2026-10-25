@@ -197,5 +197,68 @@ done
 check "canary: void" '[ "$(jq .void "$D")" = true ]'
 check "canary: live home untouched" '[ "$(cat "$HC_LIVE_HOME/memories/MEMORY.md")" = m ]'
 
+# ---- stop_test_procs: waits for a slow drain, escalates to SIGKILL (the race that voided the first run)
+source "$T/skill/scripts/lib.sh"
+cat >"$T/hermes-slow.sh" <<'EOF'
+#!/usr/bin/env bash
+trap 'sleep 2; exit 0' TERM
+while :; do sleep 0.2; done
+EOF
+cat >"$T/hermes-stubborn.sh" <<'EOF'
+#!/usr/bin/env bash
+trap '' TERM
+while :; do sleep 0.2; done
+EOF
+chmod +x "$T/hermes-slow.sh" "$T/hermes-stubborn.sh"
+HH="$W/stop-home"
+HERMES_HOME="$HH" "$T/hermes-slow.sh" & slow=$!
+sleep 0.5; s=$SECONDS
+HC_STOP_GRACE_S=10 stop_test_procs "$HH"; rc=$?
+check "stop_test_procs: returns 0 once a slow-draining process has exited" '[ $rc = 0 ] && [ -z "$(test_home_pids "$HH")" ]'
+check "stop_test_procs: actually waited for the 2s drain" '[ $((SECONDS - s)) -ge 1 ]' "waited $((SECONDS - s))s"
+wait "$slow" 2>/dev/null
+HERMES_HOME="$HH" "$T/hermes-stubborn.sh" & stub=$!
+sleep 0.5
+HC_STOP_GRACE_S=1 stop_test_procs "$HH"; rc=$?
+check "stop_test_procs: SIGKILLs a process that ignores SIGTERM" '[ $rc = 0 ] && [ -z "$(test_home_pids "$HH")" ]'
+wait "$stub" 2>/dev/null
+check "stop_test_procs: no matching processes → immediate 0" 'stop_test_procs "$W/no-such-home"'
+
+# ---- gateway_start_failed / infra_should_abort
+for msg in "Error: Gateway could not start: the gateway exited" "Error: Gateway draining: not_ready" "A gateway is already running (PID 1)"; do
+  echo "$msg" >"$T/gw.err"
+  check "gateway_start_failed matches: ${msg:0:34}" 'gateway_start_failed "$T/gw.err"'
+done
+echo "Error: model not found" >"$T/gw.err"
+check "gateway_start_failed: other errors don't match" '! gateway_start_failed "$T/gw.err"'
+check "infra_should_abort: 3 in a row" 'infra_should_abort 3 3 3'
+check "infra_should_abort: 20% of 10" 'infra_should_abort 10 2 1'
+check "infra_should_abort: 1 of 10 is fine" '! infra_should_abort 10 1 1'
+check "infra_should_abort: under 10 attempts, not consecutive" '! infra_should_abort 9 5 2'
+check "infra_should_abort: 3 of 20 is fine" '! infra_should_abort 20 3 0'
+
+# ---- run-item: a gateway that won't start is retried, then an infrastructure error, never a zero
+mkdir -p "$T/stub"
+cat >"$T/stub/hermes" <<'EOF'
+#!/usr/bin/env bash
+n=$(cat "$STUB_COUNT" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" >"$STUB_COUNT"
+if [ "$n" -le "${STUB_FAILS:-0}" ]; then echo "Error: ${STUB_MSG:-Gateway draining: not_ready}" >&2; exit 1; fi
+echo '{"type": "result", "session_id": "s", "exit_code": 0, "text": "ok", "timestamp": 1}'
+EOF
+chmod +x "$T/stub/hermes"
+run_stub() {  # run_stub <repeat> <fails> [msg]: runs the canary item with the stub hermes
+  rm -f "$T/stub.count"
+  PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS="$2" STUB_MSG="${3:-}" HC_RETRY_SLEEP_S=0 \
+    "$T/skill/scripts/run-item.sh" "$RUN" canary "$1" hermes >/dev/null 2>"$T/stub.err"
+}
+run_stub 2 2; rc=$?
+check "run-item: gateway fails twice then starts → completes after 3 attempts" '[ $rc = 0 ] && [ "$(cat "$T/stub.count")" = 3 ] && [ ! -f "$RUN/items/canary/r2/error.txt" ] && [ "$(jq .exit_code "$RUN/items/canary/r2/exit.json")" = 0 ]' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null) $(cat "$T/stub.err")"
+run_stub 3 99; rc=$?
+check "run-item: gateway never starts → infra error after 3 attempts" '[ $rc = 1 ] && [ "$(cat "$T/stub.count")" = 3 ] && grep -q "failed to start in 3 attempts" "$RUN/items/canary/r3/error.txt"' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
+"$T/skill/scripts/grade-one.sh" "$RUN/items/canary/r3"
+check "grade-one: infra error becomes an excluded grade, not a model failure" '[ "$(jq -r .error "$RUN/items/canary/r3/grade.json")" != null ]'
+run_stub 4 99 "model not found"; rc=$?
+check "run-item: a genuine hermes failure is not retried or reclassified" '[ $rc = 0 ] && [ "$(cat "$T/stub.count")" = 1 ] && [ ! -f "$RUN/items/canary/r4/error.txt" ] && [ "$(jq .exit_code "$RUN/items/canary/r4/exit.json")" = 1 ]' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
+
 echo "---"; echo "$pass passed, $failn failed"
 [ $failn -eq 0 ]
