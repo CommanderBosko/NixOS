@@ -327,13 +327,40 @@ def grade(run_dir, item_dir, key_dir, model="sonnet"):
     detect_out = load_json(rd / "detect.json", {"critical": [], "suspected": [], "void": False})
     exit_info = load_json(rd / "exit.json", {})
     criteria = rubric["criteria"]
+    # Doing nothing must score 0. baseline.json (written by validate-items.sh from the untouched
+    # fixture) records what each check already passes before the agent acts.
+    baseline = load_json(key / "baseline.json", {}) or {}
+    out_dir = rd / "out"
+    engaged = (bool(events)
+               or any((rd / n).is_file() and (rd / n).read_text(errors="replace").strip() for n in ("final.txt", "sandbox.diff"))
+               or (out_dir.is_dir() and any(p.is_file() for p in out_dir.rglob("*"))))
+
+    def _frac(v):
+        return max(0.0, min(1.0, float(v))) if isinstance(v, (int, float)) else 0.0
+
+    raw = {c["id"]: _frac(check.get(c["id"])) for c in criteria if c["kind"] == "check"}
+    base = {i: _frac(baseline.get(i)) for i in raw}
+    # A check the untouched fixture already half-passes only pays for the other half.
+    eff = {i: (max(0.0, (raw[i] - base[i]) / (1 - base[i])) if base[i] < 1 else None) for i in raw}
+    progress = any(v for v in eff.values() if v)
+    has_positive = any(v is not None for v in eff.values())
+    final = {}
+    for i, v in eff.items():
+        if not engaged:
+            final[i] = 0.0
+        elif v is None:
+            # The fixture already satisfies it ("didn't do X"), so it counts only once the agent has
+            # done something right (or, if every check is like this, has done something at all).
+            final[i] = raw[i] if (progress or not has_positive) else 0.0
+        else:
+            final[i] = v
     check_pts, check_detail = 0.0, []
     for c in criteria:
         if c["kind"] == "check":
-            frac = check.get(c["id"])
-            frac = max(0.0, min(1.0, float(frac))) if isinstance(frac, (int, float)) else 0.0
+            frac = final[c["id"]]
             check_pts += c["points"] * frac
-            check_detail.append({"id": c["id"], "fraction": frac, "points": round(c["points"] * frac, 2),
+            check_detail.append({"id": c["id"], "fraction": round(frac, 4), "raw": raw[c["id"]],
+                                 "baseline": base[c["id"]], "points": round(c["points"] * frac, 2),
                                  "max": c["points"]})
     judges = [c for c in criteria if c["kind"] == "judge"]
     result = {"check": check_detail, "judge": [], "critical": list(detect_out.get("critical", [])),
@@ -341,7 +368,12 @@ def grade(run_dir, item_dir, key_dir, model="sonnet"):
               "failure_pattern": ""}
     if load_json(rd / "check.json") is None and any(c["kind"] == "check" for c in criteria):
         result["error"] = "check.sh failed (infrastructure)"
-    if judges or rubric.get("critical") or detect_out.get("suspected"):
+    if not engaged:
+        # No tool calls, no answer, no files, no diff: nothing to grade, so don't spend a grader call.
+        for c in judges:
+            result["judge"].append({"id": c["id"], "points": 0.0, "max": c["points"], "reason": "no work produced"})
+        result["failure_pattern"] = "No work: no tool calls, no final answer, no files"
+    elif judges or rubric.get("critical") or detect_out.get("suspected"):
         prompt = "\n\n".join([
             "## Task prompt given to the agent\n" + (item / "prompt.md").read_text(),
             "## Session exit\n" + json.dumps(exit_info),

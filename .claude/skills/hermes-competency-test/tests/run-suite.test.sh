@@ -120,12 +120,51 @@ check "guard: home drift with reference → critical" '[ "$(jq "[.critical[]|sel
 # ---- grade: check-only rubric needs no grader call
 key="$T/priv/keys/g1"; item="$T/skill/items/g1"; rd="$T/g1"; mkdir -p "$key" "$item" "$rd"
 echo '{"criteria":[{"id":"a","points":60,"kind":"check","desc":""},{"id":"b","points":40,"kind":"check","desc":""}],"critical":[],"grader_notes":""}' >"$key/rubric.json"
-echo "task" >"$item/prompt.md"; echo '{"a":1,"b":0.5}' >"$rd/check.json"; echo '[]' >"$rd/events.json"
+echo "task" >"$item/prompt.md"; echo '{"a":1,"b":0.5}' >"$rd/check.json"
+echo '[{"tool":"terminal","input":{"command":"ls"}}]' >"$rd/events.json"
 echo '{"critical":[],"suspected":[],"void":false,"warnings":[]}' >"$rd/detect.json"
 "${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
 check "grade: check points (60*1 + 40*0.5 = 80)" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
 rm "$rd/check.json"; "${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
 check "grade: missing check.json → infrastructure error, not silent zero" '[ "$(jq -r .error "$rd/grade.json")" != null ]'
+
+# ---- grade: doing nothing scores 0
+echo '{"a":1,"b":0.5}' >"$rd/check.json"; echo '[]' >"$rd/events.json"; rm -f "$rd/final.txt" "$rd/sandbox.diff"; rm -rf "$rd/out"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: no events, answer, files or diff → 0 even if checks pass" 'jq -e ".score == 0 and (.failure_pattern | startswith(\"No work\"))" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo "an answer" >"$rd/final.txt"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: a final answer alone counts as engagement" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+rm "$rd/final.txt"; mkdir -p "$rd/out"; echo x >"$rd/out/f.md"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: an output file alone counts as engagement" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null'
+rm -rf "$rd/out"; echo '[{"tool":"terminal","input":{"command":"ls"}}]' >"$rd/events.json"
+
+# ---- grade: credit only improvement over the untouched fixture (baseline.json)
+echo '{"a":0.5,"b":0}' >"$key/baseline.json"
+echo '{"a":0.5,"b":0.5}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: a check at its baseline earns nothing (a: 0.5 vs 0.5 → 0, b: 20)" 'jq -e ".score == 20" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo '{"a":1,"b":0}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: a full pass on a half-passing baseline earns full credit" 'jq -e ".score == 60" "$rd/grade.json" >/dev/null'
+echo '{"a":0.75,"b":0}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: partial improvement scaled ((0.75-0.5)/0.5 = 0.5 → 30)" 'jq -e ".score == 30" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+
+# ---- grade: "didn't do X" checks (already satisfied by the untouched fixture) need real progress
+echo '{"a":0,"b":1}' >"$key/baseline.json"
+echo '{"a":0,"b":1}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: leaving things alone earns nothing when the task itself wasn't done" 'jq -e ".score == 0" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo '{"a":0.5,"b":1}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: …but counts once the task is partly done (30 + 40)" 'jq -e ".score == 70" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo '{"a":1,"b":1}' >"$key/baseline.json"
+echo '{"a":1,"b":1}' >"$rd/check.json"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: every check already satisfied at baseline → paid once the agent engaged" 'jq -e ".score == 100" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+rm -f "$key/baseline.json"
 
 # ---- score: medians, voids, criticals, caps, weights, history, noise floor
 mkrun() {  # mkrun <run-id>

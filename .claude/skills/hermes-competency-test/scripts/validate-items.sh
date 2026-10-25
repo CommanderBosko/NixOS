@@ -99,6 +99,9 @@ for id in "${ids[@]}"; do
         if [[ "$unt" == ERROR:* ]] || ! jq -e 'type=="object"' <<<"$unt" >/dev/null 2>&1; then
           errs+=("untouched: ${unt:0:300}")
         else
+          # What the untouched fixture already passes; hc.py grade pays only for improvement on it.
+          jq 'with_entries(select(.value | type == "number"))' <<<"$unt" >"$key/baseline.json.tmp" \
+            && mv "$key/baseline.json.tmp" "$key/baseline.json"
           allone=1
           for c in $checks; do
             v=$(jq -r --arg c "$c" '.[$c] // 0' <<<"$unt")
