@@ -84,3 +84,62 @@ hash_paths() {
 }
 
 item_json() { jq -r "$2" "$SKILL_DIR/items/$1/item.json"; }
+
+# test_home_pids <home>: PIDs of Hermes processes (a chat, the on-demand gateway, its MCP supervisor)
+# whose environment has HERMES_HOME=<home>.
+test_home_pids() {
+  local pid
+  for pid in $(pgrep -u "$(id -u)" -f hermes 2>/dev/null); do
+    tr '\0' '\n' 2>/dev/null <"/proc/$pid/environ" | grep -qx "HERMES_HOME=$1" && echo "$pid"
+  done
+}
+
+# stop_test_procs <home>: SIGTERM those processes, wait for them to exit, SIGKILL stragglers, wait
+# again. Returns 1 if any survive. Waiting is the point: the gateway drains for a few seconds after
+# SIGTERM, and a `hermes chat` started meanwhile exits 1 within ~1.5 s ("A gateway is already
+# running" / "Gateway draining"). That cost 42 of 90 repeats in the first full run, graded as 0.
+stop_test_procs() {
+  local home="$1" grace="${HC_STOP_GRACE_S:-30}" pid i
+  [ -n "$(test_home_pids "$home")" ] || return 0
+  for pid in $(test_home_pids "$home"); do kill "$pid" 2>/dev/null; done
+  for ((i = 0; i < grace * 2; i++)); do
+    [ -z "$(test_home_pids "$home")" ] && return 0
+    sleep 0.5
+  done
+  for pid in $(test_home_pids "$home"); do kill -KILL "$pid" 2>/dev/null; done
+  for ((i = 0; i < 10; i++)); do
+    [ -z "$(test_home_pids "$home")" ] && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+# gateway_start_failed <stderr-file>: true if a hermes chat died because its gateway wouldn't start.
+gateway_start_failed() {
+  grep -qE 'Gateway could not start|Gateway draining|gateway is already running' "$1" 2>/dev/null
+}
+
+# startup_failed <rc> <seconds> <stderr-file> <stream-file>: true if a hermes chat never got going, so
+# nothing ran and the repeat can simply be tried again. Either its gateway wouldn't start (known
+# messages), or, whatever the message, it exited non-zero within HC_FAST_CRASH_S (10) seconds before a
+# single tool call: a model can't fail a task that fast, so that's the harness. Timeouts don't count.
+startup_failed() {
+  local rc="$1" secs="$2" err="$3" stream="$4"
+  { [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ]; } || return 1
+  gateway_start_failed "$err" && return 0
+  awk -v s="$secs" -v t="${HC_FAST_CRASH_S:-10}" 'BEGIN { exit !(s < t) }' || return 1
+  ! grep -qE '"type": *"tool_use"' "$stream" 2>/dev/null
+}
+
+# startup_failure_reason <stderr-file>: one line saying why, for logs and error.txt.
+startup_failure_reason() {
+  local line
+  line=$(grep -m1 -E '^Error' "$1" 2>/dev/null) || line=$(head -n 1 "$1" 2>/dev/null)
+  echo "${line:-no output}"
+}
+
+# infra_should_abort <attempted> <errors> <consecutive-errors>: true when the harness, not the model,
+# is failing (3 infrastructure errors in a row, or at least 20% of 10+ attempts).
+infra_should_abort() {
+  [ "$3" -ge 3 ] || { [ "$1" -ge 10 ] && [ $(($2 * 5)) -ge "$1" ]; }
+}

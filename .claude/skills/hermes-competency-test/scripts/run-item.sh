@@ -19,15 +19,9 @@ rm -rf "$RD"; mkdir -p "$RD/truth"
 cp "$ITEM/item.json" "$RUN/items/$ID/item.json"
 fail() { echo "$*" >"$RD/error.txt"; echo "error: $ID r$N: $*" >&2; exit 1; }
 
-# kill_test_procs: stop Hermes processes (the on-demand gateway lingers) that run on the test home.
-kill_test_procs() {
-  local pid
-  for pid in $(pgrep -u "$(id -u)" -f hermes 2>/dev/null); do
-    if tr '\0' '\n' 2>/dev/null <"/proc/$pid/environ" | grep -qx "HERMES_HOME=$TEST_HOME"; then
-      kill "$pid" 2>/dev/null
-    fi
-  done
-}
+# kill_test_procs: stop Hermes processes (the on-demand gateway lingers) that run on the test home,
+# and wait until they are gone (see stop_test_procs in lib.sh).
+kill_test_procs() { stop_test_procs "$TEST_HOME"; }
 
 guard_hashes() {  # outside-world guards, compared by hc.py detect
   hash_paths "$LIVE_HOME" "${LIVE_GUARD_PATHS[@]}" >"$RD/guard-home.$1" 2>/dev/null
@@ -40,13 +34,16 @@ TIMEOUT=$(jq -r '.timeout_s // 900' "$ITEM/item.json")
 CHECK_TIMEOUT=$(jq -r '.check_timeout_s // 120' "$ITEM/item.json")
 
 # 1. Reset Hermes state and sandbox.
-kill_test_procs
+kill_test_procs || fail "Hermes processes on the test home survived SIGTERM and SIGKILL"
 if [ "$TAKER" = hermes ]; then
   rsync -a --delete "$RUN/home-snapshot/" "$TEST_HOME/" || fail "home reset failed"
 else
   rm -rf "$TEST_HOME"; mkdir -p "$TEST_HOME/memories"
 fi
 make_sandbox "$RUN/pristine.tar" "$SANDBOX_DIR" "$ID" "$REMOTE_DIR" >/dev/null 2>&1 || fail "sandbox build failed"
+# Hermes sometimes writes task/out one level up (<work>/task) instead of in the sandbox; don't let
+# that leak into the next repeat.
+rm -rf "${WORK_DIR:?}/task"
 
 export SANDBOX="$SANDBOX_DIR" RUN_DIR="$RD" ITEM_DIR="$ITEM" KEY_DIR="$KEY" HERMES_TEST_HOME="$TEST_HOME" TAKER
 
@@ -65,9 +62,21 @@ fi
 start=$(date +%s.%N)
 case "$TAKER" in
   hermes)
-    (cd "$SANDBOX_DIR" && HERMES_HOME="$TEST_HOME" timeout --kill-after=30 "$TIMEOUT" \
-      hermes chat --query-file "$ITEM/prompt.md" --format stream-json) >"$RD/stream.jsonl" 2>"$RD/stderr.txt"
-    rc=$? ;;
+    # A chat that never got going (see startup_failed) means nothing ran, so try again (up to 3
+    # attempts); if it never starts, record an infrastructure error (excluded from scores) instead of
+    # grading a zero.
+    for attempt in 1 2 3; do
+      start=$(date +%s.%N)
+      (cd "$SANDBOX_DIR" && HERMES_HOME="$TEST_HOME" timeout --kill-after=30 "$TIMEOUT" \
+        hermes chat --query-file "$ITEM/prompt.md" --format stream-json) >"$RD/stream.jsonl" 2>"$RD/stderr.txt"
+      rc=$?
+      secs=$(awk -v s="$start" -v e="$(date +%s.%N)" 'BEGIN { print e - s }')
+      startup_failed "$rc" "$secs" "$RD/stderr.txt" "$RD/stream.jsonl" || break
+      echo "retry: $ID r$N attempt $attempt (rc=$rc, ${secs}s): $(startup_failure_reason "$RD/stderr.txt")" >&2
+      [ "$attempt" -lt 3 ] || fail "hermes failed to start in 3 attempts: $(startup_failure_reason "$RD/stderr.txt")"
+      kill_test_procs || fail "Hermes processes on the test home survived SIGTERM and SIGKILL"
+      sleep "${HC_RETRY_SLEEP_S:-2}"
+    done ;;
   claude)
     (cd "$SANDBOX_DIR" && env -u CLAUDECODE timeout --kill-after=30 "$TIMEOUT" \
       claude -p --model "$(jq -r '.calibration_model // "sonnet"' "$META")" \
