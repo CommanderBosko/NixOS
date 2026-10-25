@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # diagnose-hung-game.sh — fixed diagnostic command battery for a hung/frozen/crashed
 # Steam/Proton game on the gaming host. Runs the judgment-free part of the runbook
-# (steps 1-5, 7, and the --sentry/--proton-chain/--ue-logs modes below) and prints
-# raw output for interpretation.
+# (SKILL.md step 1's battery, plus the --sentry/--proton-chain/--ue-logs modes below)
+# and prints raw output for interpretation.
+#
+# The battery's own sections are numbered [N/7] to keep them distinct from SKILL.md's
+# step numbers.
 #
 # What it does NOT do:
-#   - Step 6 (sudo dmesg) — can't run non-interactively; prints the command to run manually.
+#   - Battery [6/7] (sudo dmesg, SKILL.md step 3) — can't run non-interactively; prints
+#     the command to run manually.
 #
 # Usage:
 #   diagnose-hung-game.sh <game-grep-pattern> [pid]
@@ -100,11 +104,11 @@ if [[ -z "$PATTERN" ]]; then
   exit 1
 fi
 
-echo "=== 1. Host / uptime ==="
+echo "=== [1/7] Host / uptime ==="
 hostname && echo "---" && uptime
 echo
 
-echo "=== 2. Matching processes (pattern: $PATTERN) ==="
+echo "=== [2/7] Matching processes (pattern: $PATTERN) ==="
 # Exclude grep noise and this script's own invocation line (the wrapping shell/bash
 # process's command line contains this script's path + the literal pattern argument,
 # so it self-matches almost any pattern when no real game process is running).
@@ -117,33 +121,33 @@ else
   PID=$(ps aux | grep -i -E "$PATTERN" | grep -v -E "grep|diagnose-hung-game\.sh" | awk '{print $2}' | head -1)
 fi
 
-echo "=== 3. GPU state (nvidia-smi) ==="
+echo "=== [3/7] GPU state (nvidia-smi) ==="
 nvidia-smi 2>&1 | head -50
 echo
 
-echo "=== 4. Memory / load pressure ==="
+echo "=== [4/7] Memory / load pressure ==="
 free -h && echo "---" && cat /proc/loadavg
 echo
 
 if [[ -n "${PID:-}" ]]; then
-  echo "=== 5. Per-thread state for PID $PID ==="
+  echo "=== [5/7] Per-thread state for PID $PID ==="
   nproc && echo "---STATUS---" && cat "/proc/$PID/status" 2>&1 | head -20
   echo "---WCHAN---"
   cat "/proc/$PID/wchan" 2>&1; echo
   echo "---THREADS (top10 by cpu)---"
   ps -L -p "$PID" -o pid,tid,pcpu,stat,wchan:32,comm --sort=-pcpu 2>&1 | head -15
 else
-  echo "=== 5. Per-thread state ==="
+  echo "=== [5/7] Per-thread state ==="
   echo "No PID found or given for pattern '$PATTERN' — process may have already exited. Skipping."
 fi
 echo
 
-echo "=== 6. Kernel dmesg — requires sudo, run manually and paste output back ==="
+echo "=== [6/7] Kernel dmesg — requires sudo, run manually and paste output back ==="
 echo 'sudo dmesg -T 2>&1 | tail -80'
 echo
 
-echo "=== 7. Kernel journal — nvidia/xid/hung/oom/error/fault/reset, last hour ==="
+echo "=== [7/7] Kernel journal — nvidia/xid/hung/oom/error/fault/reset, last hour ==="
 journalctl -k --since "1 hour ago" 2>&1 | grep -i -E "nvidia|xid|hung|nmi|oom|error|fault|reset" | tail -60
 echo
 
-echo "=== Done: steps 1-5 and 7 complete. Run step 6 manually, then continue with SKILL.md steps 4-6 for crash-log locations. ==="
+echo "=== Done: battery [1/7]-[7/7] complete. Run the [6/7] dmesg command manually (SKILL.md step 3), then continue with SKILL.md steps 4-6 for crash-log locations. ==="
