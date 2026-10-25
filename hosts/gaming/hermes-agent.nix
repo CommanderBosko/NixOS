@@ -181,6 +181,8 @@ in
         # How to use the user's Proton mail (hosts/gaming/proton-mail.nix).
         # Rewritten on every rebuild, so Hermes can't drift it.
         "skills/email/proton-mail/SKILL.md" = ./hermes-proton-mail-skill.md;
+        # Read-only view of the monitoring stack (hosts/gaming/monitoring.nix).
+        "skills/monitoring/homelab-monitoring/SKILL.md" = ./hermes-monitoring-skill.md;
       };
     };
   };

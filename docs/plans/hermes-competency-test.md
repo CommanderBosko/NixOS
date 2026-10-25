@@ -104,6 +104,19 @@ grader model.
 This is done once at build time. Sonnet runs the same prompts on the same sandbox through
 `claude -p`. Any item Sonnet can't clear at about 90% is fixed or dropped.
 
+## Follow-ups gated on results
+
+**Monitoring permissions (decided 2026-10-24).** Hermes has read-only access to the homelab
+monitoring stack (Prometheus on gaming) through `hermes-monitor` and the `homelab-monitoring`
+skill (`hosts/gaming/monitoring.nix`). The user chose read-only for now: if Hermes scores high on
+this test, they want to give it more appropriate permissions. After a full Hermes run:
+
+- If **Network** reaches the "alone" tier (80+ and the supervised stage passed), tell the user
+  the decision is open, and offer via **AskUserQuestion** what to widen. Candidates: Alertmanager
+  silences, scheduled health reports, restarting named non-critical services.
+- If Network is at "supervised" or below, say monitoring stays read-only and why.
+- Never widen anything automatically: the test only reports.
+
 ## Out of scope
 
 Training or teaching Hermes, acting on results automatically, model swaps, live network changes
