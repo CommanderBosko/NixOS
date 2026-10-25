@@ -128,12 +128,15 @@ in
   # own script when it exists, so the boss iterates on it without a rebuild.
   # Set only when .statusLine is absent or already ours (its command points at
   # boss-statusline) — never clobbers a different hand-set status line.
+  # refreshInterval re-runs the script every 30 s so its Hermes competency-run
+  # progress bar keeps moving while the session is idle.
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
     let
       statusLine = {
         type = "command";
         command = ''f="$HOME/projects/boss/bin/boss-statusline"; [ -x "$f" ] && exec "$f"; exit 0'';
         padding = 0;
+        refreshInterval = 30;
       };
     in
     ''
