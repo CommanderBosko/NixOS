@@ -11,7 +11,7 @@ Deploy the NixOS configuration to the remote headless **vpn-server** host from t
 
 ## Arguments
 
-None — the target is fixed. This skill always deploys to `vpn-server`; there is no user-supplied argument to parse (mirrors `nixos-gc`'s "no arguments" style).
+**`<host>` (optional)** — if the user names a host, it's resolved through the shared alias lookup (`hosts_canonical` in `.claude/lib/hosts.sh`, see Target below) and validated against `vpn-server` — the only valid remote-rebuild target. A desktop host, the old `nixos-server` (not a flake host), or an unknown name all stop the skill with an explanation rather than proceeding. With no host named, the target defaults to `vpn-server` directly, since it's the only valid target anyway.
 
 ## Target — from the single source of truth
 
