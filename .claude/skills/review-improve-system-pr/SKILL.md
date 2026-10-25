@@ -16,7 +16,7 @@ recently opened (resolved automatically in Step 1).
 
 ### 1. Find the PR and check the guardrail
 
-Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/`/`references/` subdirectory.
+Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/`/`references/` subdirectory. The one exception is `.claude/settings.json`, which passes only when the PR purely adds scoped entries to `permissions.allow` (no removals, no deny/ask/hooks edits, no `Bash(*)`-style wildcards — checked by `check-settings-diff.sh`); on a pass the script lists them under `SETTINGS_ALLOW_ADDED:`, so surface those in Step 2.
 
 Interpret the exit code:
 - **1 (no PR found)** — this is a normal, expected outcome most weeks. Report "nothing to review" and stop here.
@@ -47,6 +47,7 @@ Report: the PR number, files changed, and the outcome — merged / held for manu
 ## Scripts
 
 - `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` — finds the open weekly improve-system PR and checks its changed files against the auto-apply guardrail; read-only, exit 0/1/2 as described in Step 1.
+- `.claude/skills/review-improve-system-pr/scripts/check-settings-diff.sh <base.json> <head.json>` — called by the script above; decides whether a `.claude/settings.json` change is purely additive to `permissions.allow`. Pure local check, exit 0 (prints `ADDED:` lines) or 1 (prints `REASON:`).
 
 ## Gotchas
 
