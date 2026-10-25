@@ -103,10 +103,11 @@ Gather from the user (or infer from context) before starting:
 ## Scripts
 
 - `.claude/skills/diagnose-hung-game/scripts/diagnose-hung-game.sh <game-pattern> [pid]` —
-  runs the fixed, judgment-free command battery (steps 1-2 and 4-5 above): host/uptime,
-  process lookup + PID resolution, `nvidia-smi`, memory/load, per-thread
-  status/wchan/top-CPU-threads, and the kernel-journal grep. Prints the sudo `dmesg`
-  command as a suggested manual step rather than running it. Called by Step 1.
+  runs the fixed, judgment-free command battery (Step 1 above), its sections numbered
+  `[N/7]` so they don't collide with this file's step numbers: host/uptime, process lookup
+  + PID resolution, `nvidia-smi`, memory/load, per-thread status/wchan/top-CPU-threads,
+  the sudo `dmesg` command (printed as a suggested manual step, Step 3, rather than run),
+  and the kernel-journal grep.
 - `... --sentry <game-dir>` — Step 4's Sentry crash-handler DB lookup.
 - `... --proton-chain <crash-time> [game-name]` — Step 5's Steam/Proton/reaper/crashpad
   process-chain and journal/coredump check.
