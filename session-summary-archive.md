@@ -1,3 +1,34 @@
+## Session: 2026-10-20 (session 135) — Hermes hardening, protected main, competency test
+
+**Focus**: Close-only. 12 conversations since the 10-19 close hardened Hermes on gaming, protected `main`, and built a Hermes test suite.
+
+### What changed (and why)
+- **Mnemosyne made declarative** (`7aaddad`, `70b41d8`, `994b558`): Hermes had half-installed its own memory provider imperatively and reported it working when it wasn't. Now a flake input, installed at `plugins/mnemosyne`, and every free-text Mnemosyne writer goes through the memory checker (`980bd7d`, `b7d3efa`).
+- **Hermes gates** (`3d9f0d0`, `006c38c`, `f183040`): write-safe root, manual approvals, staged skill creation, `gh pr merge*` denied, repo `AGENTS.md`. Follows the Hermes-improvement research: safety and context hygiene beat new plugins.
+- **`main` ruleset-protected, no bypass** (PR #41): Hermes shares bosko's unlocked ssh-agent and `gh` login, so only a server-side rule really stops a push. `push.sh` now falls back to a PR branch.
+- **Superpowers + Ponytail dropped from Claude** (PR #43): overlap and conflict with the CLAUDE.md rules, plus per-session token cost.
+- **`hermes-competency-test` skill** (PR #44, open): 31 items × 3 repeats, trust tiers, canary, noise floor, supervised ssh stage; keys kept outside git.
+
+### Decisions
+- Hermes may push branches and open PRs but not merge; ssh stays allowed with manual approval for networking help.
+- The test drives Hermes in single-query mode because `hermes -z` auto-approves anything not denied.
+- `mnemosyne_import` blocked; Mnemosyne not wired into Claude Code.
+- Calibration and baselines paused for Claude token budget until the week of 10-26.
+
+### Issues / surprises
+- A `git reset --hard` after a push probe wiped uncommitted edits (redone; now a feedback memory).
+- Hermes's own Mnemosyne install overclaimed success; its checker's 3 `KeyError`s were usage-limit fail-opens (stores audited clean).
+- Every `hermes` run prints "install out of sync": upstream #134249, cosmetic.
+
+### Next session
+- `land-prs` #44 and this docs PR; then calibrate + two full baselines; `/fleet-rollout` laptop + natalie-laptop.
+
+**Commits**: `7aaddad..4944fc4` (11 commits; `4944fc4` is on PR #44's branch)
+
+Secret-scan: clean (tree + 1,881 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-19 (session 134) — close-out after Proton/Hermes hardening day
 
 **Focus**: Close-only session. Several earlier conversations the same day (not visible here) landed the work below.
