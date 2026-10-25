@@ -83,6 +83,7 @@ Invoke the `send-results` skill with `<run-root>/report.md` and a one-line summa
 - the top failure patterns
 - errors, voids, and guard warnings, if any
 - the report path
+- for a full Hermes run: the open **monitoring-permissions decision**. Hermes is read-only on the homelab monitoring stack until it scores well. If Network reached "alone", say so and offer to widen its access via **AskUserQuestion**; otherwise say it stays read-only. See `docs/plans/hermes-competency-test.md` § Follow-ups gated on results. Report only: never widen anything yourself.
 
 ## Calibrate mode
 

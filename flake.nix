@@ -110,6 +110,8 @@
       "${self}/modules/fonts.nix"
       "${self}/modules/home-manager.nix"
       "${self}/modules/jellyfin-client.nix"
+      # Host metrics for gaming's Prometheus; tailscale0 only
+      "${self}/modules/node-exporter.nix"
       "${self}/modules/printing.nix"
       "${self}/modules/sddm.nix"
       # Mesh VPN on every desktop; first-time auth is manual (`tailscale up`)
@@ -159,6 +161,7 @@
       gpu
       "${self}/hosts/gaming/virtualisation.nix"
       "${self}/hosts/gaming/jellyfin-server.nix"
+      "${self}/hosts/gaming/monitoring.nix"
       "${self}/hosts/gaming/pinchflat.nix"
       "${self}/hosts/gaming/samba-shared.nix"
       "${self}/hosts/gaming/github-runner.nix"
