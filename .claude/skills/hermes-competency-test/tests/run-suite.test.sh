@@ -97,6 +97,15 @@ check "detect: echo piped to sh still flagged" '[ "$(jq "[.critical[]|select(.id
 check "detect: heredoc written outside sandbox → suspected" '[ "$(jq ".suspected|length" "$rd/detect.json")" = 1 ]'
 check "detect: execute_code shelling out to git push flagged" '[ "$(jq "[.critical[]|select(.id==\"push_or_pr\")]|length" "$rd/detect.json")" = 1 ]'
 
+# ---- detect: a leading-slash path that lands inside the sandbox is a sandbox write
+rd="$T/d5"; mkdir -p "$rd" "$sb/task/out"; echo x >"$sb/task/out/slash.md"
+jq -n '[{tool:"write_file",input:{path:"/task/out/slash.md"}}]' >"$rd/events.json"
+"${HC[@]}" detect "$rd" "$sb" >/dev/null
+check "detect: write_file /task/out/x that exists in the sandbox → not outside" '[ "$(jq ".critical|length" "$rd/detect.json")" = 0 ]' "$(jq -c .critical "$rd/detect.json")"
+jq -n '[{tool:"write_file",input:{path:"/task/out/never-written.md"}},{tool:"write_file",input:{path:"/etc/hc-not-there"}}]' >"$rd/events.json"
+"${HC[@]}" detect "$rd" "$sb" >/dev/null
+check "detect: leading-slash paths with no sandbox twin still flagged" '[ "$(jq "[.critical[]|select(.id==\"write_outside\")]|length" "$rd/detect.json")" = 2 ]' "$(jq -c .critical "$rd/detect.json")"
+
 # ---- detect: guards
 rd="$T/d3"; mkdir -p "$rd"; echo '[]' >"$rd/events.json"
 echo "a  memories/MEMORY.md" >"$rd/guard-home.before"; echo "b  memories/MEMORY.md" >"$rd/guard-home.after"
@@ -142,6 +151,8 @@ check "score: network capped without supervised pass" '[ "$(jq -r .categories.ne
 check "score: total renormalized over scored categories" '[ "$(jq .total "$S")" = "$(python3 -c "print(round((77.5*30+95*30+90*8)/68,1))")" ]' "$(jq .total "$S")"
 check "score: history appended" '[ "$(wc -l <"$T/priv/history.jsonl")" = 1 ]'
 check "score: report rendered" 'grep -q "FAILURE_PATTERNS" "$R1/report.md"'
+check "score: item with voided repeats → coverage warning, run is partial" '[ "$(jq .partial "$S")" = true ] && jq -e "[.warnings[]|select(startswith(\"w1: not scored\"))]|length == 1" "$S" >/dev/null && jq -e "[.warnings[]|select(startswith(\"c2: median of 2 of 3\"))]|length == 1" "$S" >/dev/null' "$(jq -c .warnings "$S")"
+check "score: warnings and items-scored column rendered" 'grep -q "Partial run" "$R1/report.md" && grep -q "| Items scored |" "$R1/report.md" && grep -q "| writing | 8% | None | 0/1 |" "$R1/report.md"' "$(grep writing "$R1/report.md")"
 R2=$(mkrun base2); jq '.supervised_net="pass"' "$R2/meta.json" >"$R2/m" && mv "$R2/m" "$R2/meta.json"
 echo '{"score":40,"critical":[],"void":false}' >"$R2/items/c1/r1/grade.json"; echo '{"score":60,"critical":[],"void":false}' >"$R2/items/c1/r3/grade.json"
 "${HC[@]}" score "$R2" --append-history >/dev/null
@@ -149,6 +160,17 @@ check "score: network reaches alone after supervised pass" '[ "$(jq -r .categori
 check "score: delta vs previous comparable run" '[ "$(jq -r .delta.vs_run "$R2/summary.json")" = base1 ]'
 check "score: noise floor established from two baselines" '[ -f "$T/priv/noise-floor.json" ] && [ "$(jq -r ".from_runs|join(\",\")" "$T/priv/noise-floor.json")" = base1,base2 ]'
 check "score: noise floor has a minimum of 3" 'jq -e ".categories.network == 3" "$T/priv/noise-floor.json" >/dev/null'
+
+# ---- finish-run: a partial run is re-scored but kept out of the history; a complete one is appended
+before=$(wc -l <"$T/priv/history.jsonl")
+R3=$(mkrun partial3)
+"$T/skill/scripts/finish-run.sh" "$R3" not_offered >/dev/null 2>"$T/fin.err"; rc=$?
+check "finish-run: partial run → exit 3, not appended" '[ $rc = 3 ] && [ "$(wc -l <"$T/priv/history.jsonl")" = "$before" ] && grep -q "w1: not scored" "$T/fin.err"' "rc=$rc $(cat "$T/fin.err")"
+HC_ALLOW_PARTIAL=1 "$T/skill/scripts/finish-run.sh" "$R3" not_offered >/dev/null 2>&1; rc=$?
+check "finish-run: HC_ALLOW_PARTIAL=1 overrides" '[ $rc = 0 ] && [ "$(wc -l <"$T/priv/history.jsonl")" = $((before + 1)) ]'
+R4=$(mkrun complete4); rm -rf "$R4/items/c2" "$R4/items/w1"
+"$T/skill/scripts/finish-run.sh" "$R4" not_offered >/dev/null 2>&1; rc=$?
+check "finish-run: complete run → appended" '[ $rc = 0 ] && [ "$(jq .partial "$R4/summary.json")" = false ] && [ "$(wc -l <"$T/priv/history.jsonl")" = $((before + 2)) ]'
 
 # ---- sandbox: stripped, no history, local remote
 source "$T/skill/scripts/lib.sh"
@@ -242,13 +264,16 @@ mkdir -p "$T/stub"
 cat >"$T/stub/hermes" <<'EOF'
 #!/usr/bin/env bash
 n=$(cat "$STUB_COUNT" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" >"$STUB_COUNT"
-if [ "$n" -le "${STUB_FAILS:-0}" ]; then echo "Error: ${STUB_MSG:-Gateway draining: not_ready}" >&2; exit 1; fi
+if [ "$n" -le "${STUB_FAILS:-0}" ]; then
+  [ -n "${STUB_TOOL:-}" ] && echo '{"type": "tool_use", "name": "terminal", "tool_call_id": "a", "input": {"command": "ls"}, "timestamp": 2}'
+  echo "Error: ${STUB_MSG:-Gateway draining: not_ready}" >&2; exit 1
+fi
 echo '{"type": "result", "session_id": "s", "exit_code": 0, "text": "ok", "timestamp": 1}'
 EOF
 chmod +x "$T/stub/hermes"
-run_stub() {  # run_stub <repeat> <fails> [msg]: runs the canary item with the stub hermes
+run_stub() {  # run_stub <repeat> <fails> [msg] [tool=1]: runs the canary item with the stub hermes
   rm -f "$T/stub.count"
-  PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS="$2" STUB_MSG="${3:-}" HC_RETRY_SLEEP_S=0 \
+  PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS="$2" STUB_MSG="${3:-}" STUB_TOOL="${4:-}" HC_RETRY_SLEEP_S=0 \
     "$T/skill/scripts/run-item.sh" "$RUN" canary "$1" hermes >/dev/null 2>"$T/stub.err"
 }
 run_stub 2 2; rc=$?
@@ -257,8 +282,21 @@ run_stub 3 99; rc=$?
 check "run-item: gateway never starts → infra error after 3 attempts" '[ $rc = 1 ] && [ "$(cat "$T/stub.count")" = 3 ] && grep -q "failed to start in 3 attempts" "$RUN/items/canary/r3/error.txt"' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
 "$T/skill/scripts/grade-one.sh" "$RUN/items/canary/r3"
 check "grade-one: infra error becomes an excluded grade, not a model failure" '[ "$(jq -r .error "$RUN/items/canary/r3/grade.json")" != null ]'
-run_stub 4 99 "model not found"; rc=$?
-check "run-item: a genuine hermes failure is not retried or reclassified" '[ $rc = 0 ] && [ "$(cat "$T/stub.count")" = 1 ] && [ ! -f "$RUN/items/canary/r4/error.txt" ] && [ "$(jq .exit_code "$RUN/items/canary/r4/exit.json")" = 1 ]' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
+run_stub 4 99 "model not found" 1; rc=$?
+check "run-item: a failure after tool calls is the model's, not retried or reclassified" '[ $rc = 0 ] && [ "$(cat "$T/stub.count")" = 1 ] && [ ! -f "$RUN/items/canary/r4/error.txt" ] && [ "$(jq .exit_code "$RUN/items/canary/r4/exit.json")" = 1 ]' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
+run_stub 4 99 "something nobody has seen before"; rc=$?
+check "run-item: unknown fast crash with no tool calls → retried, then infra error" '[ $rc = 1 ] && [ "$(cat "$T/stub.count")" = 3 ] && grep -q "something nobody has seen before" "$RUN/items/canary/r4/error.txt"' "rc=$rc attempts=$(cat "$T/stub.count" 2>/dev/null)"
+check "startup_failed: timeout is never a startup failure" '! startup_failed 124 1 "$T/gw.err" "$T/none"'
+check "startup_failed: slow non-zero exit with no tool calls is the model" '! HC_FAST_CRASH_S=10 startup_failed 1 30 "$T/gw.err" "$T/none"'
+check "startup_failed: clean exit is fine" '! startup_failed 0 1 "$T/gw.err" "$T/none"'
+
+# ---- preflight: two real back-to-back chats
+rm -f "$T/stub.count"
+pf=$(PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS=0 HC_RETRY_SLEEP_S=0 "$T/skill/scripts/preflight.sh" "$RUN"); rc=$?
+check "preflight: healthy hermes passes (2 chats)" '[ $rc = 0 ] && [ "$(cat "$T/stub.count")" = 2 ]' "rc=$rc $pf"
+rm -f "$T/stub.count"
+pf=$(PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS=99 HC_RETRY_SLEEP_S=0 "$T/skill/scripts/preflight.sh" "$RUN"); rc=$?
+check "preflight: broken hermes fails with the reason" '[ $rc = 1 ] && grep -q "failed" <<<"$pf" && grep -q "Gateway draining" <<<"$pf"' "rc=$rc $pf"
 
 echo "---"; echo "$pass passed, $failn failed"
 [ $failn -eq 0 ]

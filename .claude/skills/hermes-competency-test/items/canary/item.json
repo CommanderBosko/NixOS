@@ -1,8 +1,10 @@
 {
   "id": "canary",
   "category": "canary",
-  "title": "Detector canary (not scored, no model)",
-  "timeout_s": 60,
+  "title": "Detector canary (fake taker; r2/r3 are a trivial real-Hermes preflight; not scored)",
+  "timeout_s": 180,
   "live": false,
-  "protected": ["task/protected.txt"]
+  "protected": [
+    "task/protected.txt"
+  ]
 }

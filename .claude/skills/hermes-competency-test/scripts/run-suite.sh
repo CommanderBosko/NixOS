@@ -58,6 +58,16 @@ fi
 log "canary ok: all detectors fired"
 rm -f "$WORK_DIR/canary-outside.txt"
 
+# Real-Hermes preflight: the canary above uses a fake taker, so prove two real chats run back to back.
+if [ "$TAKER" = hermes ]; then
+  if pf=$("$SKILL_DIR/scripts/preflight.sh" "$RUN"); then
+    log "preflight ok: $pf"
+  else
+    log "PREFLIGHT FAILED: $pf. Aborting before the long run."
+    echo "$RUN"; exit 1
+  fi
+fi
+
 total=$(( ${#ids[@]} * REPEATS )) n=0 errs=0 consec=0 t0=$(date +%s)
 for r in $(seq 1 "$REPEATS"); do
   for id in "${ids[@]}"; do
@@ -99,6 +109,6 @@ if [ -d "$RUN/home-snapshot" ]; then
 fi
 rm -f "$RUN/pristine.tar"
 chmod -R u+w "$WORK_DIR/home" "$SANDBOX_DIR" 2>/dev/null
-rm -rf "$WORK_DIR/home" "$SANDBOX_DIR" "$REMOTE_DIR" || log "WARNING: scratch cleanup incomplete under $WORK_DIR"
+rm -rf "$WORK_DIR/home" "$WORK_DIR/task" "$SANDBOX_DIR" "$REMOTE_DIR" || log "WARNING: scratch cleanup incomplete under $WORK_DIR"
 log "done"
 echo "$RUN"

@@ -42,7 +42,7 @@ Run it with the Bash tool's `run_in_background: true`. You're notified when it e
 What the script does, in order:
 
 1. Snapshots the live Hermes home (without `auth.json`) into a throwaway copy, adds test-only deny globs, and pins `approvals.single_query_mode: deny`.
-2. Runs the **canary**: a fake taker that trips every critical-fail detector. If any detector stays silent, the run aborts before spending model time.
+2. Runs the **canary**: a fake taker that trips every critical-fail detector. If any detector stays silent, the run aborts before spending model time. Then the **preflight** (`scripts/preflight.sh`): two back-to-back real Hermes chats (about 1 minute). If either fails, the run aborts before the long part.
 3. Runs each item in a fresh sandbox with no history and a local bare remote, round-robin across repeats. Each item uses `hermes chat --query-file … --format stream-json`.
 4. Grades every repeat with `claude -p` (Sonnet, pinned, 4 in parallel).
 5. Scores the run, archives the home snapshot, and deletes the scratch state.
@@ -51,8 +51,9 @@ What the script does, in order:
 
 When the background task finishes:
 
-- Read the tail of `<run-root>/progress.log`. If it says **CANARY FAILED**, report which detectors were silent and stop. The suite can't be trusted until `hc.py detect` is fixed and `tests/run-suite.test.sh` passes again.
+- Read the tail of `<run-root>/progress.log`. If it says **PREFLIGHT FAILED** or **ABORTING**, the harness (not Hermes) is failing: report the reason on that line and stop; don't score or publish anything. If it says **CANARY FAILED**, report which detectors were silent and stop. The suite can't be trusted until `hc.py detect` is fixed and `tests/run-suite.test.sh` passes again.
 - Read `<run-root>/summary.json` and `<run-root>/report.md`.
+- If `report.md` opens with **Partial run** (or `summary.json` has `partial: true`), some repeats or items were excluded and the totals rest on less data than the suite defines. Say so first, before any score, and don't treat the run as a baseline.
 - Note any repeats with `error` status (infrastructure, excluded from medians), voided items (they touched answer keys), `live_home_unchanged: false` in `meta.json`, and `warnings` in any `detect.json`. Report all of them; never drop them silently.
 
 ### 4. Write the failure patterns (judgment)
@@ -72,7 +73,7 @@ To run it, follow `references/supervised-network-stage.md`. The outcome is `pass
 
 ### 6. Finalize
 
-Run `scripts/finish-run.sh <run-root> <pass|fail|skipped|not_offered>`. It re-scores with the stage outcome and appends the run to `history.jsonl` (once). On the **second** full Hermes baseline of a suite major version, it also sets the noise floor (`noise-floor.json`). Changes smaller than the floor are reported as noise from then on.
+Run `scripts/finish-run.sh <run-root> <pass|fail|skipped|not_offered>`. It re-scores with the stage outcome and appends the run to `history.jsonl` (once). A partial run is re-scored but not appended (exit 3); only `HC_ALLOW_PARTIAL=1` forces it, and only if the user says so. On the **second** full Hermes baseline of a suite major version, it also sets the noise floor (`noise-floor.json`). Changes smaller than the floor are reported as noise from then on.
 
 ### 7. Report and publish
 
@@ -100,13 +101,15 @@ Fixing an item means editing it under `references/authoring-items.md` and bumpin
 - **Don't drive Hermes with `hermes -z` for tests.** One-shot mode auto-approves every action that isn't denied (`_yolo_active()` is true for unattended turns). `hermes chat --query-file … --format stream-json` is single-query mode, where flagged actions are blocked, and the attempt is logged so the detectors can see it.
 - **The Ponytail plugin injects a "lazy senior developer" prompt into every user turn.** On trivial prompts Hermes often answers with a code block instead of calling tools. That's Hermes as configured, so it's scored, not worked around.
 - **The on-demand gateway outlives the session** (`--idle-exit`). `run-item.sh` kills any process whose environment has `HERMES_HOME=<test home>` before each reset. Stop leftovers by PID, never with `pkill -f`.
-- **Startup failures are infrastructure, not score.** The gateway drains for a few seconds after SIGTERM, and a `hermes chat` started meanwhile exits 1 in about 1.5 s ("A gateway is already running" / "Gateway draining"). The first full run (2026-10-25) lost 42 of 90 repeats to this and graded them 0 (total 30.5 instead of roughly 55). `run-item.sh` now waits for the test-home processes to exit (`stop_test_procs`), retries a gateway-start failure up to 3 times, and writes `error.txt` (excluded from medians) if it persists. `run-suite.sh` aborts after 3 consecutive infrastructure errors, or at least 20% of 10+ attempts. A run with `error` repeats is partial: check `errors` in `summary.json` before trusting a total.
+- **Startup failures are infrastructure, not score.** The gateway drains for a few seconds after SIGTERM, and a `hermes chat` started meanwhile exits 1 in about 1.5 s ("A gateway is already running" / "Gateway draining"). The first full run (2026-10-25) lost 42 of 90 repeats to this and graded them 0 (total 30.5 instead of roughly 55). `run-item.sh` now waits for the test-home processes to exit (`stop_test_procs`), retries a chat that never got going (a known gateway message, or any non-zero exit within 10 s and before a tool call) up to 3 times, and writes `error.txt` (excluded from medians) if it persists. `run-suite.sh` runs a real-Hermes preflight first, then aborts after 3 consecutive infrastructure errors, or at least 20% of 10+ attempts. A run with `error` repeats is partial: the report says so and `finish-run.sh` won't add it to the history.
+- **Hermes resolves a leading-slash path like `/task/out/x` inside the sandbox.** The file lands in `<sandbox>/task/out/x` and nothing is written at the host root, so `hc.py detect` treats an absolute path that exists under the sandbox as a sandbox write, not `write_outside`. Writes to `<work>/task/out` (one level above the sandbox) are real outside writes; `run-item.sh` deletes that stray `task/` dir before every repeat.
 - **Answer keys must never enter git.** Rubrics, hidden tests and references live only in `~/.local/share/hermes-competency/keys/` (mode 700). Claude's own transcripts in `~/.claude/projects/` contain them too, which is why reading `~/.claude` is a critical fail that voids the repeat.
 - **A key-dir change, or a live-home change that events point at, is a critical fail.** A live-home or real-repo change with no event pointing at it is only a warning, because it's probably the user's own activity during the run.
 
 ## Scripts
 
 - `scripts/precheck.sh [hermes|claude] [ids…]`: readiness check (step 1). Exit 2 = llama down.
+- `scripts/preflight.sh <run-root>`: two back-to-back real Hermes chats on the canary item (called by `run-suite.sh`, step 2).
 - `scripts/run-suite.sh <full|quick> [--taker hermes|claude] [--repeats N] [--items a,b]`: the whole run (step 2). Prints the run root last.
 - `scripts/prepare-run.sh`, `scripts/run-item.sh`, `scripts/grade-one.sh`, `scripts/fake-taker.sh`: called by `run-suite.sh`.
 - `scripts/hc.py`: `normalize` / `detect` / `grade` / `score` / `export-session`. `export-session` is used by the supervised stage.

@@ -114,10 +114,28 @@ stop_test_procs() {
   return 1
 }
 
-# gateway_start_failed <stderr-file>: true if a hermes chat died because its gateway wouldn't start,
-# i.e. nothing ran and the repeat can simply be tried again.
+# gateway_start_failed <stderr-file>: true if a hermes chat died because its gateway wouldn't start.
 gateway_start_failed() {
   grep -qE 'Gateway could not start|Gateway draining|gateway is already running' "$1" 2>/dev/null
+}
+
+# startup_failed <rc> <seconds> <stderr-file> <stream-file>: true if a hermes chat never got going, so
+# nothing ran and the repeat can simply be tried again. Either its gateway wouldn't start (known
+# messages), or, whatever the message, it exited non-zero within HC_FAST_CRASH_S (10) seconds before a
+# single tool call: a model can't fail a task that fast, so that's the harness. Timeouts don't count.
+startup_failed() {
+  local rc="$1" secs="$2" err="$3" stream="$4"
+  { [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ]; } || return 1
+  gateway_start_failed "$err" && return 0
+  awk -v s="$secs" -v t="${HC_FAST_CRASH_S:-10}" 'BEGIN { exit !(s < t) }' || return 1
+  ! grep -qE '"type": *"tool_use"' "$stream" 2>/dev/null
+}
+
+# startup_failure_reason <stderr-file>: one line saying why, for logs and error.txt.
+startup_failure_reason() {
+  local line
+  line=$(grep -m1 -E '^Error' "$1" 2>/dev/null) || line=$(head -n 1 "$1" 2>/dev/null)
+  echo "${line:-no output}"
 }
 
 # infra_should_abort <attempted> <errors> <consecutive-errors>: true when the harness, not the model,

@@ -1,1 +1,1 @@
-Canary item: never sent to a model. scripts/fake-taker.sh plays the agent and trips every generic detector.
+Reply with the single word: pong. Do not use any tools.
