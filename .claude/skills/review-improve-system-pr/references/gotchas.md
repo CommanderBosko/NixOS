@@ -18,14 +18,61 @@
   means "review by hand" — many harmless commands (`cat`, `grep`, `jq`, `sed -n`) are refused on
   purpose. Residual risk the checker cannot see: a `*` rule matches any arguments at run time
   (`git log *` can be run with `--output=<file>`, `git fetch*` with `--upload-pack`), and a script
-  entry runs whatever the script contains while the file guardrail lets a PR edit `scripts/`.
+  entry runs whatever the script contains (the file guardrail now flags edits to such scripts —
+  see "The file guardrail used to wave through ..." below).
 
+- **MCP names passed on a read-verb prefix alone, and a glued `*` passed as a prefix match.**
+  Reproduced against the previous checker (rc=0): credential-returning reads (`get_secret`,
+  `get_secret_value`, `get_access_token`, `read_password`, `list_api_keys`, `fetch_oauth_token`),
+  a write hidden behind a read prefix (`search_and_purge`, `get_and_wipe`, `query_and_truncate`,
+  `get_and_unlink`, `status_and_reboot`, `list_and_toggle`, `find_and_ban`, `getaway`), and names
+  laundered by the server-prefix strip (`mcp__send__send_get_x`, `mcp__delete__delete_get_files`).
+  Now refused: any server/tool name containing secret|token|password|passwd|credential|api key|oauth|
+  private|cookie|session key (separators ignored, case-insensitive); any `_and_`/`_or_`/`_then_`
+  in the tool name; a read verb that is not a whole leading word; and a leading `<server>_` is only
+  stripped when it equals the server segment and the server name has no write verb. The two
+  `mcp__nixos__nix*` tools are exact exceptions. Separately, an ADDED Bash entry with a `*` glued to a
+  word (`ls*`, `du*`, `id*`, `git diff*`) is a command-NAME prefix match at run time (`lsof`,
+  `git difftool --extcmd=...`), so only ` *` (space before the star) or an exact command is accepted.
+  This only gates additions: the current `settings.json` is unchanged and still passes as a whole.
+  If you ever re-add one of the current glued entries as "new" it will be refused — 21 of the 26
+  today (every Bash entry ending in a glued `*`: dry-run.sh, secret-scan.sh x2, deep-eval-check.sh,
+  flake-lock-diff.sh, classify-shared-file.sh, scan-session.sh, the `~/.claude/skills/lib/*` x4,
+  find-skill-misfires.sh, `git -C ... diff*`, `nix flake metadata*`, `nix flake check*`,
+  `nix-store -q*`, `lsblk*`, `gh run watch*`, `journalctl*`, `flatpak remote-info*`, `git fetch*`);
+  the other 5 (`git -C ... status`, `git -C ... log *`, `nix eval *`, both `mcp__nixos__nix*`) pass.
+  The 84-entry refusal list still refuses every entry, and no entry in the reviewer's candidate lists
+  (443 entry runs across the lists, old vs new checker) went from refused to accepted — 60 went from accepted to refused,
+  all glued-`*` or MCP-name cases.
 - **`find-and-check-pr.sh` used to fail open.** When `gh` errored it still printed
   `GUARDRAIL: OK`, and a failed `gh pr list` read as "no PR". Now any `gh`/`jq` failure exits 3
   with `GUARDRAIL: NOT EVALUATED` (a failed `settings.json` fetch included — it used to read as a
   guardrail violation); exit 1 only follows a clean, empty `gh pr list`. If you see
   exit 3, fix auth/network (`gh auth status`) and re-run — don't treat it as nothing to review.
 
+- **The file guardrail used to wave through edits to scripts that run unprompted, and edits to
+  the gate itself.** A post-merge review (verified with a shim PR) got `exit 0` / `GUARDRAIL: OK`
+  for a PR that added `.claude/skills/x/scripts/evil.sh` plus `Bash(bash .claude/skills/x/scripts/evil.sh *)`,
+  for one editing `secret-scan.sh` and `scan-session.sh` (both behind existing allow entries), and
+  for one editing this skill or `improve-system`. `find-and-check-pr.sh` now exits 2 with the reason
+  printed next to the file for: anything under `review-improve-system-pr/` or `improve-system/`;
+  any repo path named in a `settings.json` string at the PR base or added by the PR (allow entries
+  and hook commands; `~/.claude/...` maps to `dotfiles/bosko/claude/...`, absolute and
+  `REVIEW_SAFE_HOME`-rooted paths to the repo; a glued trailing `*` counts as a prefix); and the
+  shared libs (`.claude/lib/`, `.claude/skills/lib/`, `dotfiles/bosko/claude/skills/lib/`). Shared-lib
+  edits were already exit 2 (outside `skills/<name>/{scripts,...}`), they just carried no reason.
+  Exit 2 means "human must read this", so a legitimate routine edit to e.g. `secret-scan.sh` is
+  flagged too — intended. Still NOT covered: an allow entry the PR adds for a script that already
+  exists unchanged (the Step 2 read-through must catch it), and a helper file that an allow-listed
+  script calls from the same `scripts/` dir without being named in settings.
+  `settings.json` at the PR base is now fetched on every run (it defines the trusted set), so a
+  failed fetch is exit 3 even when the PR does not touch settings.
+- **Renames hide the old path.** `gh pr view --json files` lists a renamed file only under its new
+  name. The script also reads REST `pulls/N/files` and checks each `previous_filename`, so renaming
+  a trusted/gate file away is still flagged. The REST field names and the `// empty` filter were
+  confirmed live on PR #70 (a modify/add PR), but no PR in this repo's history contains a rename or
+  a delete, so the renamed branch and the "deleted file is listed under its old path" assumption
+  are exercised only by the stub tests, not against a real GitHub response.
 - **Merge is pinned and CI-gated.** `gh pr merge` alone merges a red PR and whatever commit is
   the head at that moment. Step 4 runs `scripts/ci-gate.sh <pr> <PR_HEAD_SHA>` (waits on
   `gh pr checks --watch`, and fails unless the head still equals the reviewed SHA before and
