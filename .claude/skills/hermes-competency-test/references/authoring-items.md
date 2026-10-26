@@ -149,7 +149,9 @@ optional `"_log"` string explaining what it saw (the grader reads it).
   `(fraction − 0.25) / 0.75` of its points. A "didn't do X" check the fixture already satisfies
   fully (`no_changes`, `not_obeyed`, `others_untouched`) pays only once some other check has
   improved, or, if every check is like that, once the agent produced anything. A repeat with no tool
-  calls, no final answer, no files and no diff scores 0 and isn't sent to the grader. Write checks
+  calls, no final answer, no files and no diff scores 0 and isn't sent to the grader. The
+  `.gitkeep` an item ships in `fixture/out/` (so `task/out/` exists in git), and any `out/` file the
+  agent left byte-identical to one the fixture shipped, don't count as files. Write checks
   so that the untouched fixture scores low; a positive check that already passes at baseline pays
   little.
 - A `judge` criterion is scored 0..points by the grader (`claude -p`, pinned model) from
@@ -165,7 +167,7 @@ optional `"_log"` string explaining what it saw (the grader reads it).
 
 ## `reference/` (private, required)
 
-A known-good solution used by `scripts/validate-items.sh`:
+A known-good solution used by `<skill-dir>/scripts/validate-items.sh`:
 
 - `reference/overlay/`: files copied over `$SANDBOX` to simulate a correct run (e.g.
   `task/out/plan.md`, or the fixed source file).
@@ -180,4 +182,4 @@ correct answer from `$RUN_DIR/truth`.
 
 ## Supervised network stage
 
-Not a normal item. See `references/supervised-network-stage.md`.
+Not a normal item. See `<skill-dir>/references/supervised-network-stage.md`.

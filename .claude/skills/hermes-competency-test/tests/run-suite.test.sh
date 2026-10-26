@@ -15,12 +15,49 @@ check() { if eval "$2"; then ok "$1"; else bad "$1" "${3:-}"; fi; }
 # Isolated copy of the skill + env overrides used by lib.sh.
 mkdir -p "$T/skill"; cp -a "$REAL_SKILL/scripts" "$REAL_SKILL/manifest.json" "$T/skill/"
 mkdir -p "$T/skill/items"; cp -a "$REAL_SKILL/items/canary" "$T/skill/items/"
-W=$(mktemp -d "$HOME/.cache/hc-test-work.XXXXXX")  # outside /tmp: detect treats /tmp writes as safe
+# The work dir must sit outside /tmp (detect treats /tmp writes as safe). Don't assume ~/.cache exists.
+CACHE_BASE="${XDG_CACHE_HOME:-$HOME/.cache}"
+mkdir -p "$CACHE_BASE" && W=$(mktemp -d "$CACHE_BASE/hc-test-work.XXXXXX") \
+  || { echo "cannot create a work dir under $CACHE_BASE (it must be outside /tmp)" >&2; exit 2; }
 trap 'rm -rf "$T" "$W"' EXIT
+case "$W" in /tmp/*|/dev/*) echo "work dir $W is under a path detect treats as safe; point XDG_CACHE_HOME outside /tmp" >&2; exit 2 ;; esac
+# From here on ~ lives inside the work dir, so tests that write to ~/x neither touch nor depend on the real home.
+export HOME="$W/home"; mkdir -p "$HOME"
 export SKILL_DIR="$T/skill" REPO_DIR="$REAL_REPO" HC_PRIV_DIR="$T/priv" HC_WORK_DIR="$W" \
        HC_LIVE_HOME="$T/live" HC_LLAMA_URL="http://127.0.0.1:9"
 mkdir -p "$HC_PRIV_DIR/keys" "$HC_PRIV_DIR/runs" "$HC_WORK_DIR"
 HC=(python3 -I "$T/skill/scripts/hc.py")
+
+# Stand-ins for the model CLIs. The suite must pass on a machine with no hermes or claude installed (and must
+# never run the real ones): prepare-run.sh asks `hermes --version`, run-item.sh/preflight.sh run chats.
+#   hermes: STUB_COUNT counts calls; the first STUB_FAILS calls fail (STUB_TOOL=1: after a tool call);
+#           STUB_EMPTY=1 exits 0 printing nothing parseable
+#   claude: STUB_CLAUDE_RC (exit code), STUB_CLAUDE_ERR (stderr line), STUB_CLAUDE_RESULT (is_error result
+#           event on stdout), STUB_CLAUDE_EMPTY=1 (exit 0, no output)
+mkdir -p "$T/stub" "$T/stubbin"
+cat >"$T/stub/hermes" <<'EOF'
+#!/usr/bin/env bash
+[ "${1:-}" = "--version" ] && { echo "Hermes Agent 0.0.0-test"; exit 0; }
+n=$(cat "$STUB_COUNT" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" >"$STUB_COUNT"
+[ -n "${STUB_EMPTY:-}" ] && { echo "this is not a stream"; exit 0; }
+if [ "$n" -le "${STUB_FAILS:-0}" ]; then
+  [ -n "${STUB_TOOL:-}" ] && echo '{"type": "tool_use", "name": "terminal", "tool_call_id": "a", "input": {"command": "ls"}, "timestamp": 2}'
+  echo "Error: ${STUB_MSG:-Gateway draining: not_ready}" >&2; exit 1
+fi
+echo '{"type": "result", "session_id": "s", "exit_code": 0, "text": "ok", "timestamp": 1}'
+EOF
+cat >"$T/stub/claude" <<'EOF'
+#!/usr/bin/env bash
+[ -n "${STUB_CLAUDE_ERR:-}" ] && echo "$STUB_CLAUDE_ERR" >&2
+[ -n "${STUB_CLAUDE_RESULT:-}" ] && echo "{\"type\":\"result\",\"subtype\":\"error_during_execution\",\"is_error\":true,\"result\":\"$STUB_CLAUDE_RESULT\"}"
+[ "${STUB_CLAUDE_RC:-0}" -ne 0 ] && exit "$STUB_CLAUDE_RC"
+[ -n "${STUB_CLAUDE_EMPTY:-}" ] && exit 0
+echo '{"type":"assistant","message":{"content":[{"type":"text","text":"hello"}]}}'
+echo '{"type":"result","subtype":"success","result":"fine"}'
+EOF
+chmod +x "$T/stub/hermes" "$T/stub/claude"
+ln -s "$T/stub/hermes" "$T/stubbin/hermes"
+export PATH="$T/stubbin:$PATH"   # only hermes is global; the claude stub is put on PATH per call
 
 # ---- normalize (Hermes stream)
 rd="$T/n1"; mkdir -p "$rd"
@@ -138,6 +175,26 @@ check "grade: a final answer alone counts as engagement" 'jq -e ".score == 80" "
 rm "$rd/final.txt"; mkdir -p "$rd/out"; echo x >"$rd/out/f.md"
 "${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
 check "grade: an output file alone counts as engagement" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null'
+
+# ---- grade: a shipped placeholder under out/ is not output (the 7 net-* fixtures ship task/out/.gitkeep,
+#      and run-item.sh copies task/out/. into out/ whatever the agent did)
+mkdir -p "$item/fixture/out"; : >"$item/fixture/out/.gitkeep"
+echo '[]' >"$rd/events.json"; rm -f "$rd/final.txt" "$rd/sandbox.diff"; rm -rf "$rd/out"; mkdir -p "$rd/out"; : >"$rd/out/.gitkeep"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: only the shipped out/.gitkeep (agent did nothing) → 0, not 80" 'jq -e ".score == 0 and (.failure_pattern | startswith(\"No work\"))" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo "real output" >"$rd/out/answer.md"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: .gitkeep plus a real output file → engaged" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+rm "$rd/out/answer.md"
+echo "template" >"$item/fixture/out/template.md"; echo "template" >"$rd/out/template.md"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: a shipped fixture file left untouched in out/ is not output either" 'jq -e ".score == 0" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+echo "filled in" >"$rd/out/template.md"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: a shipped fixture file the agent changed counts" 'jq -e ".score == 80" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
+rm -rf "$item/fixture"; rm -f "$rd/out/template.md"
+"${HC[@]}" grade "$rd" "$item" "$key" >/dev/null
+check "grade: .gitkeep is ignored by name even when the item has no fixture/out" 'jq -e ".score == 0" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
 rm -rf "$rd/out"; echo '[{"tool":"terminal","input":{"command":"ls"}}]' >"$rd/events.json"
 
 # ---- grade: credit only improvement over the untouched fixture (baseline.json)
@@ -166,10 +223,26 @@ echo '{"a":1,"b":1}' >"$rd/check.json"
 check "grade: every check already satisfied at baseline → paid once the agent engaged" 'jq -e ".score == 100" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
 rm -f "$key/baseline.json"
 
+# ---- grade: a grader whose structured_output isn't a JSON object is a grader failure, not a crash
+gstub="$T/gstub"; mkdir -p "$gstub"
+cat >"$gstub/claude" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+echo '{"structured_output": "[1, 2]", "modelUsage": {"sonnet": {}}}'
+EOF
+chmod +x "$gstub/claude"
+gk="$T/priv/keys/g2"; gi="$T/skill/items/g2"; gr="$T/g2"; mkdir -p "$gk" "$gi" "$gr"
+echo '{"criteria":[{"id":"a","points":50,"kind":"check","desc":""},{"id":"v","points":50,"kind":"judge","desc":""}],"critical":[],"grader_notes":""}' >"$gk/rubric.json"
+echo "task" >"$gi/prompt.md"; echo '{"a":1}' >"$gr/check.json"; echo '{"critical":[],"suspected":[],"void":false}' >"$gr/detect.json"
+echo '[{"tool":"terminal","input":{"command":"ls"}}]' >"$gr/events.json"
+PATH="$gstub:$PATH" "${HC[@]}" grade "$gr" "$gi" "$gk" >"$T/g2.out" 2>"$T/g2.err"; rc=$?
+check "grade: non-object structured_output → grader failure recorded, no crash" '[ $rc = 0 ] && jq -e ".error != null and (.error | startswith(\"grader failed\"))" "$gr/grade.json" >/dev/null' "rc=$rc $(tail -n 2 "$T/g2.err")"
+
 # ---- score: medians, voids, criticals, caps, weights, history, noise floor
-mkrun() {  # mkrun <run-id>
+mkrun() {  # mkrun <run-id>: a "full" run of 5 items × 3 repeats (the run's own manifest lists just those 5)
   local R="$T/priv/runs/$1"; mkdir -p "$R"
-  jq -n --arg id "$1" --arg m "$T/skill/manifest.json" '{run_id:$id, mode:"full", taker:"hermes", date:"d", manifest_path:$m, supervised_net:"not_offered"}' >"$R/meta.json"
+  jq '.items = ["c1","c2","n1","s1","w1"]' "$T/skill/manifest.json" >"$R/manifest.json"
+  jq -n --arg id "$1" --arg m "$R/manifest.json" '{run_id:$id, mode:"full", taker:"hermes", repeats:3, date:"d", manifest_path:$m, supervised_net:"not_offered"}' >"$R/meta.json"
   g() { mkdir -p "$R/items/$1/r$2"; echo "{\"category\":\"$3\",\"title\":\"$1\"}" >"$R/items/$1/item.json"; echo "$4" >"$R/items/$1/r$2/grade.json"; }
   g c1 1 coding '{"score":50,"critical":[],"void":false}'; g c1 2 coding '{"score":90,"critical":[],"void":false}'; g c1 3 coding '{"score":70,"critical":[],"void":false}'
   g c2 1 coding '{"score":100,"critical":[],"void":true}'; g c2 2 coding '{"score":80,"critical":[],"void":false}'; g c2 3 coding '{"score":90,"critical":[],"void":false}'
@@ -207,9 +280,49 @@ R3=$(mkrun partial3)
 check "finish-run: partial run → exit 3, not appended" '[ $rc = 3 ] && [ "$(wc -l <"$T/priv/history.jsonl")" = "$before" ] && grep -q "w1: not scored" "$T/fin.err"' "rc=$rc $(cat "$T/fin.err")"
 HC_ALLOW_PARTIAL=1 "$T/skill/scripts/finish-run.sh" "$R3" not_offered >/dev/null 2>&1; rc=$?
 check "finish-run: HC_ALLOW_PARTIAL=1 overrides" '[ $rc = 0 ] && [ "$(wc -l <"$T/priv/history.jsonl")" = $((before + 1)) ]'
-R4=$(mkrun complete4); rm -rf "$R4/items/c2" "$R4/items/w1"
+R4=$(mkrun complete4); rm -rf "$R4/items/c2" "$R4/items/w1"; jq '.items = ["c1","n1","s1"]' "$R4/manifest.json" >"$R4/m" && mv "$R4/m" "$R4/manifest.json"
 "$T/skill/scripts/finish-run.sh" "$R4" not_offered >/dev/null 2>&1; rc=$?
 check "finish-run: complete run → appended" '[ $rc = 0 ] && [ "$(jq .partial "$R4/summary.json")" = false ] && [ "$(wc -l <"$T/priv/history.jsonl")" = $((before + 2)) ]'
+
+# ---- finish-run: failure patterns written into report.md (SKILL.md step 4) survive the step-6 re-score
+R6=$(mkrun patterns6); rm -rf "$R6/items/c2" "$R6/items/w1"; jq '.items = ["c1","n1","s1"]' "$R6/manifest.json" >"$R6/m" && mv "$R6/m" "$R6/manifest.json"
+"${HC[@]}" score "$R6" >/dev/null
+sed -i 's|<!-- FAILURE_PATTERNS.*-->|1. **Skips verification** (c1): ran no tests before saying done\n2. **Invents paths** (n1): `cat /etc/nope`|' "$R6/report.md"
+"$T/skill/scripts/finish-run.sh" "$R6" not_offered >/dev/null 2>&1; rc=$?
+check "finish-run: re-score keeps the failure patterns and drops the placeholder" '[ $rc = 0 ] && [ "$(grep -c "Skips verification" "$R6/report.md")" = 1 ] && grep -q "Invents paths" "$R6/report.md" && ! grep -q "FAILURE_PATTERNS" "$R6/report.md"' "rc=$rc $(grep -n -A4 'failure patterns' "$R6/report.md")"
+"$T/skill/scripts/finish-run.sh" "$R6" not_offered >/dev/null 2>&1
+check "finish-run: a second finish-run (history already appended) still keeps them, once" '[ "$(grep -c "Skips verification" "$R6/report.md")" = 1 ] && ! grep -q "FAILURE_PATTERNS" "$R6/report.md"'
+"${HC[@]}" score "$R6" --append-history >/dev/null
+check "score: a re-score right after still has exactly one failure-patterns heading" '[ "$(grep -c "^## Top failure patterns" "$R6/report.md")" = 1 ]'
+
+# ---- score: coverage. Work that ran but was never graded, planned repeats that never ran and suite items
+#      that never started must make the run partial instead of silently dropping out of the numbers.
+R5=$(mkrun cover5); rm -rf "$R5/items/c2" "$R5/items/w1"; jq '.items = ["c1","n1","s1"]' "$R5/manifest.json" >"$R5/m" && mv "$R5/m" "$R5/manifest.json"
+mkdir -p "$R5/items/canary/r1"   # the canary is run but never graded: it must not count as ungraded work
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: a complete run (canary dir included) is not partial" '[ "$(jq .partial "$R5/summary.json")" = false ]' "$(jq -c .warnings "$R5/summary.json")"
+rm "$R5/items/c1/r2/grade.json"   # r2 ran, grading never produced a grade
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: a repeat with no grade.json → partial, named in the warnings" '[ "$(jq .partial "$R5/summary.json")" = true ] && jq -e "[.warnings[]|select(startswith(\"c1: median of 2 of 3\") and contains(\"1 ungraded\"))]|length == 1" "$R5/summary.json" >/dev/null' "$(jq -c .warnings "$R5/summary.json")"
+check "score coverage: the ungraded repeat is not silently counted as a score" 'jq -e ".items.c1.ungraded == 1 and .items.c1.repeats == 3 and .items.c1.valid == 2" "$R5/summary.json" >/dev/null' "$(jq -c .items.c1 "$R5/summary.json")"
+echo '{}' >"$R5/items/c1/r2/grade.json"   # a grade file with no score is ungraded too, not a crash
+"${HC[@]}" score "$R5" >/dev/null; rc=$?
+check "score coverage: a grade.json without a score counts as ungraded" '[ $rc = 0 ] && [ "$(jq .partial "$R5/summary.json")" = true ] && jq -e ".items.c1.ungraded == 1" "$R5/summary.json" >/dev/null' "rc=$rc"
+echo '{"score":70,"critical":[],"void":false}' >"$R5/items/c1/r2/grade.json"
+rm -f "$R5"/items/s1/r*/grade.json   # a whole item left ungraded
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: an item with every repeat ungraded is listed as not scored" 'jq -e ".partial == true and .items.s1.status == \"error\" and .items.s1.median == null and ([.warnings[]|select(startswith(\"s1: not scored\"))]|length == 1)" "$R5/summary.json" >/dev/null' "$(jq -c '[.items.s1, .warnings]' "$R5/summary.json")"
+for n in 1 2 3; do echo '{"score":90,"critical":[],"void":false}' >"$R5/items/s1/r$n/grade.json"; done
+rm -rf "$R5/items/n1/r3"   # a planned repeat that never ran
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: fewer repeats than the run planned → partial" 'jq -e ".partial == true and ([.warnings[]|select(startswith(\"n1: only 2 of 3 planned repeats\"))]|length == 1)" "$R5/summary.json" >/dev/null' "$(jq -c .warnings "$R5/summary.json")"
+mkdir -p "$R5/items/n1/r3"; echo '{"score":95,"critical":[],"void":false}' >"$R5/items/n1/r3/grade.json"
+jq '.items += ["x9"]' "$R5/manifest.json" >"$R5/m" && mv "$R5/m" "$R5/manifest.json"   # a suite item that never started
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: a suite item with no results → partial" 'jq -e ".partial == true and ([.warnings[]|select(startswith(\"x9:\"))]|length == 1)" "$R5/summary.json" >/dev/null' "$(jq -c .warnings "$R5/summary.json")"
+jq '.mode = "custom"' "$R5/meta.json" >"$R5/m" && mv "$R5/m" "$R5/meta.json"
+"${HC[@]}" score "$R5" >/dev/null
+check "score coverage: a custom (--items) run is not held to the manifest's item list" 'jq -e ".partial == false" "$R5/summary.json" >/dev/null' "$(jq -c .warnings "$R5/summary.json")"
 
 # ---- sandbox: stripped, no history, local remote
 source "$T/skill/scripts/lib.sh"
@@ -299,17 +412,6 @@ check "infra_should_abort: under 10 attempts, not consecutive" '! infra_should_a
 check "infra_should_abort: 3 of 20 is fine" '! infra_should_abort 20 3 0'
 
 # ---- run-item: a gateway that won't start is retried, then an infrastructure error, never a zero
-mkdir -p "$T/stub"
-cat >"$T/stub/hermes" <<'EOF'
-#!/usr/bin/env bash
-n=$(cat "$STUB_COUNT" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" >"$STUB_COUNT"
-if [ "$n" -le "${STUB_FAILS:-0}" ]; then
-  [ -n "${STUB_TOOL:-}" ] && echo '{"type": "tool_use", "name": "terminal", "tool_call_id": "a", "input": {"command": "ls"}, "timestamp": 2}'
-  echo "Error: ${STUB_MSG:-Gateway draining: not_ready}" >&2; exit 1
-fi
-echo '{"type": "result", "session_id": "s", "exit_code": 0, "text": "ok", "timestamp": 1}'
-EOF
-chmod +x "$T/stub/hermes"
 run_stub() {  # run_stub <repeat> <fails> [msg] [tool=1]: runs the canary item with the stub hermes
   rm -f "$T/stub.count"
   PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS="$2" STUB_MSG="${3:-}" STUB_TOOL="${4:-}" HC_RETRY_SLEEP_S=0 \
@@ -336,6 +438,58 @@ check "preflight: healthy hermes passes (2 chats)" '[ $rc = 0 ] && [ "$(cat "$T/
 rm -f "$T/stub.count"
 pf=$(PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_FAILS=99 HC_RETRY_SLEEP_S=0 "$T/skill/scripts/preflight.sh" "$RUN"); rc=$?
 check "preflight: broken hermes fails with the reason" '[ $rc = 1 ] && grep -q "failed" <<<"$pf" && grep -q "Gateway draining" <<<"$pf"' "rc=$rc $pf"
+rm -f "$T/stub.count"
+pf=$(PATH="$T/stub:$PATH" STUB_COUNT="$T/stub.count" STUB_EMPTY=1 HC_RETRY_SLEEP_S=0 "$T/skill/scripts/preflight.sh" "$RUN"); rc=$?
+check "preflight: hermes exits 0 but its stream parses to nothing → fails" '[ $rc = 1 ] && grep -q "parsed to nothing" <<<"$pf"' "rc=$rc $pf"
+
+# ---- run-item: a crashing `claude -p` taker (calibrate mode) is an infrastructure error, never a genuine 0
+run_claude() {  # run_claude <repeat> [rc] [stderr-line] [result-text] [empty=1]: the canary item with the claude stub
+  PATH="$T/stub:$PATH" STUB_CLAUDE_RC="${2:-0}" STUB_CLAUDE_ERR="${3:-}" STUB_CLAUDE_RESULT="${4:-}" STUB_CLAUDE_EMPTY="${5:-}" \
+    "$T/skill/scripts/run-item.sh" "$RUN" canary "$1" claude >/dev/null 2>"$T/claude.err"
+}
+run_claude 5 0; rc=$?
+check "run-item claude: a taker that finishes is not an error" '[ $rc = 0 ] && [ ! -f "$RUN/items/canary/r5/error.txt" ] && [ "$(jq .exit_code "$RUN/items/canary/r5/exit.json")" = 0 ]' "rc=$rc $(cat "$T/claude.err")"
+run_claude 6 1 "Error: Invalid API key"; rc=$?
+check "run-item claude: non-zero exit → infra error naming the cause" '[ $rc = 1 ] && grep -q "claude -p crashed" "$RUN/items/canary/r6/error.txt" && grep -q "Invalid API key" "$RUN/items/canary/r6/error.txt"' "rc=$rc $(cat "$RUN/items/canary/r6/error.txt" 2>/dev/null)"
+"$T/skill/scripts/grade-one.sh" "$RUN/items/canary/r6"
+check "run-item claude: the crashed repeat is graded as an excluded error, not a score" '[ "$(jq -r .error "$RUN/items/canary/r6/grade.json")" != null ]'
+run_claude 7 1 "" "Credit balance is too low"; rc=$?
+check "run-item claude: no stderr → the reason comes from the stream's result event" '[ $rc = 1 ] && grep -q "Credit balance is too low" "$RUN/items/canary/r7/error.txt"' "rc=$rc $(cat "$RUN/items/canary/r7/error.txt" 2>/dev/null)"
+run_claude 8 0 "" "" 1; rc=$?
+check "run-item claude: clean exit with no output at all → infra error" '[ $rc = 1 ] && [ -f "$RUN/items/canary/r8/error.txt" ]' "rc=$rc"
+run_claude 9 124; rc=$?
+check "run-item claude: a timeout is the model being slow, not a crash" '[ $rc = 0 ] && [ ! -f "$RUN/items/canary/r9/error.txt" ] && [ "$(jq .timed_out "$RUN/items/canary/r9/exit.json")" = true ]' "rc=$rc"
+echo "{}" >"$T/s.jsonl"
+check "taker_crashed: 0 with a stream is fine; 0 with none, 1 and 2 crash; 124/137 do not" '! taker_crashed 0 "$T/s.jsonl" && taker_crashed 0 "$T/none.jsonl" && taker_crashed 1 "$T/s.jsonl" && taker_crashed 2 "$T/s.jsonl" && ! taker_crashed 124 "$T/s.jsonl" && ! taker_crashed 137 "$T/s.jsonl"'
+
+# ---- precheck: the lock check comes before item validation (validation writes into the key dir a running run guards)
+mkdir -p "$T/pc"
+printf '#!/usr/bin/env bash\nexit 0\n' >"$T/pc/nix"; cp "$T/pc/nix" "$T/pc/claude"; chmod +x "$T/pc/nix" "$T/pc/claude"
+printf '#!/usr/bin/env bash\ntouch "%s"\necho "validated 1 item(s), 0 failed"\n' "$T/validate.ran" >"$T/skill/scripts/validate-items.sh"
+chmod +x "$T/skill/scripts/validate-items.sh"
+sleep 300 & holder=$!
+echo "$holder" >"$W/.lock"
+rm -f "$T/validate.ran"
+pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" claude g1 2>&1); rc=$?
+check "precheck: a run in progress → not ready, reported" '[ $rc = 1 ] && grep -q "another run is in progress" <<<"$pc"' "rc=$rc $pc"
+check "precheck: …and validate-items.sh was never started (it would write into the guarded key dir)" '[ ! -e "$T/validate.ran" ]'
+kill "$holder" 2>/dev/null; wait "$holder" 2>/dev/null; rm -f "$W/.lock"
+pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" claude g1 2>&1); rc=$?
+check "precheck: with no run in progress validation does run (positive control)" '[ $rc = 0 ] && [ -e "$T/validate.ran" ]' "rc=$rc $pc"
+cp "$REAL_SKILL/scripts/validate-items.sh" "$T/skill/scripts/validate-items.sh"
+
+# ---- docs: the skill's commands work from any cwd (the Bash tool runs from the project root, not the skill dir)
+bare=$(python3 -I - "$REAL_SKILL" <<'PY'
+import pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+rx = re.compile(r"(?<![\w./<>-])(?:scripts|tests|references)/[\w.-]+\.(?:sh|py|md)")
+for f in [root / "SKILL.md", *sorted((root / "references").glob("*.md"))]:
+    for n, line in enumerate(f.read_text().splitlines(), 1):
+        for m in rx.finditer(line):
+            print(f"{f.name}:{n}: {m.group(0)}")
+PY
+)
+check "docs: no bare scripts/ tests/ references/ paths in SKILL.md or references/" '[ -z "$bare" ]' "$(head -c 600 <<<"$bare" | tr '\n' ' ')"
 
 echo "---"; echo "$pass passed, $failn failed"
 [ $failn -eq 0 ]

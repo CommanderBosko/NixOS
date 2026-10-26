@@ -21,6 +21,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 HOME = str(Path.home())
 PRIV_DIR = os.environ.get("HC_PRIV_DIR", f"{HOME}/.local/share/hermes-competency")
@@ -85,7 +86,8 @@ def normalize(run_dir, taker):
                 final = ev.get("text")
         else:  # claude stream-json
             msg = ev.get("message") or {}
-            content = msg.get("content") if isinstance(msg.get("content"), list) else []
+            raw_content = msg.get("content")
+            content = raw_content if isinstance(raw_content, list) else []
             if t == "assistant":
                 for c in content:
                     if c.get("type") == "tool_use":
@@ -306,12 +308,40 @@ def _events_digest(events, budget=60000):
     return _clip(text, budget)
 
 
-def _dir_digest(d, budget=12000):
+PLACEHOLDER_NAMES = {".gitkeep"}
+
+
+def _produced_files(out_dir, fixture_out=None):
+    """Files under a repeat's out/ that the agent actually produced.
+
+    run-item.sh copies the sandbox's task/out/ into out/ whatever the agent did, and an item ships
+    task/out/.gitkeep (the 7 net-* items do) so the directory exists in git. A placeholder, or a file
+    byte-identical to one the item's fixture/out/ shipped, is not work: counting it made doing nothing
+    score 100 instead of 0."""
+    out = Path(out_dir)
+    if not out.is_dir():
+        return []
+    fx = Path(fixture_out) if fixture_out else None
+    produced = []
+    for p in sorted(x for x in out.rglob("*") if x.is_file()):
+        if p.name in PLACEHOLDER_NAMES:
+            continue
+        twin = fx / p.relative_to(out) if fx else None
+        try:
+            if twin is not None and twin.is_file() and twin.read_bytes() == p.read_bytes():
+                continue
+        except OSError:
+            pass
+        produced.append(p)
+    return produced
+
+
+def _dir_digest(d, budget=12000, files=None):
     d = Path(d)
     if not d.is_dir():
         return "(none)"
     parts = []
-    for f in sorted(p for p in d.rglob("*") if p.is_file()):
+    for f in (sorted(p for p in d.rglob("*") if p.is_file()) if files is None else files):
         try:
             parts.append(f"--- {f.relative_to(d)}\n{_clip(f.read_text(errors='replace'), 4000)}")
         except OSError:
@@ -322,18 +352,21 @@ def _dir_digest(d, budget=12000):
 def grade(run_dir, item_dir, key_dir, model="sonnet"):
     rd, item, key = Path(run_dir), Path(item_dir), Path(key_dir)
     rubric = load_json(key / "rubric.json")
+    if not isinstance(rubric, dict):
+        raise SystemExit(f"hc grade: no usable rubric at {key / 'rubric.json'}")
     events = load_json(rd / "events.json", [])
     check = load_json(rd / "check.json", {}) or {}
-    detect_out = load_json(rd / "detect.json", {"critical": [], "suspected": [], "void": False})
+    detect_out: dict[str, Any] = load_json(rd / "detect.json", {"critical": [], "suspected": [], "void": False})
     exit_info = load_json(rd / "exit.json", {})
     criteria = rubric["criteria"]
     # Doing nothing must score 0. baseline.json (written by validate-items.sh from the untouched
     # fixture) records what each check already passes before the agent acts.
     baseline = load_json(key / "baseline.json", {}) or {}
     out_dir = rd / "out"
+    produced = _produced_files(out_dir, item / "fixture" / "out")
     engaged = (bool(events)
                or any((rd / n).is_file() and (rd / n).read_text(errors="replace").strip() for n in ("final.txt", "sandbox.diff"))
-               or (out_dir.is_dir() and any(p.is_file() for p in out_dir.rglob("*"))))
+               or bool(produced))
 
     def _frac(v):
         return max(0.0, min(1.0, float(v))) if isinstance(v, (int, float)) else 0.0
@@ -379,7 +412,7 @@ def grade(run_dir, item_dir, key_dir, model="sonnet"):
             "## Session exit\n" + json.dumps(exit_info),
             "## Agent tool events (in order)\n" + _events_digest(events),
             "## Agent final answer\n" + _clip((rd / "final.txt").read_text(errors="replace") if (rd / "final.txt").exists() else "", 15000),
-            "## Files the agent produced (task/out and changed files)\n" + _dir_digest(rd / "out"),
+            "## Files the agent produced (task/out and changed files)\n" + _dir_digest(rd / "out", files=produced),
             "## Sandbox diff vs baseline\n" + _clip((rd / "sandbox.diff").read_text(errors="replace") if (rd / "sandbox.diff").exists() else "(none)", 12000),
             "## Live ground truth captured before the session\n" + _dir_digest(rd / "truth", 8000),
             "## Scripted check results\n" + json.dumps({"scores": check_detail, "log": check.get("_log", "")}, ensure_ascii=False),
@@ -413,12 +446,13 @@ def grade(run_dir, item_dir, key_dir, model="sonnet"):
                     data = json.loads(data)
                 mu = env_json.get("modelUsage") or {}
                 result["grader_model"] = next(iter(mu), model)
-                if data:
+                if isinstance(data, dict) and data:
                     break
-            except ValueError:
-                pass
+                data = None  # structured_output that isn't a JSON object is a grader failure
+            except (ValueError, AttributeError, TypeError):
+                data = None
             last_err = (out.stderr or out.stdout)[-300:]
-        if not data:
+        if not isinstance(data, dict) or not data:
             result["error"] = f"grader failed: {last_err}"
         else:
             got = {j["id"]: j for j in data.get("judge", [])}
@@ -457,13 +491,24 @@ def score(run_root, append_history=False):
     meta = load_json(root / "meta.json", {})
     manifest = load_json(meta.get("manifest_path", ""), None) or load_json(root / "manifest.json", {})
     weights = {c: v["weight"] for c, v in manifest.get("categories", {}).items()}
+    # Every repeat the run executed (the canary is never graded, so it isn't counted), so a repeat that
+    # was run but never graded is noticed instead of silently dropping out of the numbers.
+    ran = {}
+    for d in sorted(root.glob("items/*/r*")):
+        if d.is_dir() and d.parent.name != "canary":
+            ran.setdefault(d.parent.name, set()).add(d.name)
     items = {}
     for gfile in sorted(root.glob("items/*/r*/grade.json")):
         iid = gfile.parent.parent.name
         g = load_json(gfile, {})
+        if not isinstance(g, dict) or not isinstance(g.get("score"), (int, float)):
+            continue  # unreadable or empty: counts as ungraded below
         items.setdefault(iid, []).append({"repeat": gfile.parent.name, **g})
+        ran.setdefault(iid, set()).add(gfile.parent.name)
     item_rows, cats = {}, {}
-    for iid, reps in items.items():
+    for iid in sorted(set(items) | set(ran)):
+        reps = items.get(iid, [])
+        ungraded = len(ran.get(iid, set())) - len(reps)
         info = load_json(root / "items" / iid / "item.json", {}) or {}
         cat = info.get("category", "?")
         valid = [r for r in reps if not r.get("void") and not r.get("error")]
@@ -478,7 +523,8 @@ def score(run_root, append_history=False):
         med = round(statistics.median(r["score"] for r in valid), 1) if valid and status == "ok" else None
         item_rows[iid] = {"category": cat, "title": info.get("title", ""), "median": med,
                           "scores": [r.get("score") for r in reps], "status": status,
-                          "voided": voided, "errors": errors, "valid": len(valid), "repeats": len(reps),
+                          "voided": voided, "errors": errors, "valid": len(valid),
+                          "ungraded": ungraded, "repeats": len(reps) + ungraded,
                           "critical": sorted({c["id"] for c in crits}),
                           "failure_patterns": [r.get("failure_pattern", "") for r in valid if r.get("failure_pattern")]}
         cats.setdefault(cat, []).append(iid)
@@ -500,11 +546,25 @@ def score(run_root, append_history=False):
     # Coverage: anything that makes a number rest on less data than the suite defines. A run with
     # any of these is "partial" and finish-run.sh won't put it in the history without an override.
     warnings = []
+    planned = meta.get("repeats")
+    planned = planned if isinstance(planned, int) and planned > 0 else None
+    # Which items the run was supposed to cover: the manifest's list for full/quick; a custom (--items)
+    # run has no list beyond the items it actually started.
+    mode = meta.get("mode")
+    suite_key = {"full": "items", "quick": "quick"}.get(mode) if isinstance(mode, str) else None
+    suite_items = manifest.get(suite_key) if suite_key else None
     for iid, r in sorted(item_rows.items()):
         if r["status"] != "ok":
-            warnings.append(f"{iid}: not scored ({r['status']}: {r['errors']} infrastructure errors, {r['voided']} voided of {r['repeats']} repeats)")
+            warnings.append(f"{iid}: not scored ({r['status']}: {r['errors']} infrastructure errors, {r['voided']} voided, "
+                            f"{r['ungraded']} ungraded of {r['repeats']} repeats)")
         elif r["valid"] < r["repeats"]:
-            warnings.append(f"{iid}: median of {r['valid']} of {r['repeats']} repeats ({r['errors']} infrastructure errors, {r['voided']} voided)")
+            warnings.append(f"{iid}: median of {r['valid']} of {r['repeats']} repeats ({r['errors']} infrastructure errors, "
+                            f"{r['voided']} voided, {r['ungraded']} ungraded)")
+        if planned and r["repeats"] < planned:
+            warnings.append(f"{iid}: only {r['repeats']} of {planned} planned repeats ran")
+    for iid in (suite_items or []):
+        if iid not in item_rows:
+            warnings.append(f"{iid}: part of the {meta.get('mode')} suite but has no results in this run")
     for c, r in sorted(cat_rows.items()):
         if r["scored_items"] < r["items"]:
             warnings.append(f"{c}: score covers {r['scored_items']} of {r['items']} items")
@@ -537,7 +597,8 @@ def score(run_root, append_history=False):
     summary = {"run_id": meta.get("run_id"), "date": meta.get("date"), "mode": meta.get("mode"),
                "taker": meta.get("taker"), "suite_version": manifest.get("version"),
                "hermes_version": meta.get("hermes_version"), "model": meta.get("model"),
-               "grader_model": sorted({load_json(g, {}).get("grader_model") for g in root.glob("items/*/r*/grade.json")} - {None}),
+               "grader_model": sorted(m for m in {load_json(g, {}).get("grader_model") for g in root.glob("items/*/r*/grade.json")}
+                                      if m is not None),
                "hashes": meta.get("hashes"), "supervised_net": supervised,
                "total": total, "categories": cat_rows, "items": item_rows, "delta": delta,
                "noise_floor": floor, "warnings": warnings, "partial": bool(warnings)}
@@ -556,7 +617,11 @@ def score(run_root, append_history=False):
         summary["noise_floor"] = floor
         summary["noise_floor_established"] = True
     write_json(root / "summary.json", summary)
-    (root / "report.md").write_text(render_report(summary))
+    report = root / "report.md"
+    # SKILL.md step 4 writes the failure patterns into report.md; step 6 re-scores. Carry them over so
+    # the re-score doesn't put the placeholder back.
+    carried = _carried_patterns(report.read_text(errors="replace")) if report.is_file() else None
+    report.write_text(render_report(summary, carried))
     if append_history:
         rec = {k: summary[k] for k in ("run_id", "date", "mode", "taker", "suite_version", "hermes_version",
                                         "model", "grader_model", "hashes", "supervised_net", "total")}
@@ -575,7 +640,22 @@ def _sig(d, floor):
     return f"{d:+.1f} ({'beyond' if abs(d) > floor else 'within'} noise ±{floor})"
 
 
-def render_report(s):
+PATTERNS_HEAD = "## Top failure patterns"
+PATTERNS_MARKER = "<!-- FAILURE_PATTERNS: filled in by Claude from the per-item grades -->"
+
+
+def _carried_patterns(text):
+    """The failure-pattern text Claude wrote over the placeholder in an earlier report.md, or None while
+    the section still holds the placeholder (or is empty). The section ends at the next '## ' heading or
+    at the noise-floor note, which score() regenerates itself."""
+    if PATTERNS_HEAD not in text:
+        return None
+    body = text.split(PATTERNS_HEAD, 1)[1]
+    body = re.split(r"\n_Noise floor established|\n## ", body, maxsplit=1)[0].strip()
+    return None if not body or "FAILURE_PATTERNS" in body else body
+
+
+def render_report(s, patterns=None):
     floor = s.get("noise_floor") or {}
     out = [f"# Hermes competency report — {s['run_id']}", "",
            f"- Mode: **{s['mode']}** · taker: {s['taker']} · suite v{s['suite_version']}",
@@ -597,7 +677,7 @@ def render_report(s):
         r = s["items"][iid]
         out.append(f"| {iid} {r['title']} | {r['category']} | {r['median']} | {r['scores']} | {r['status']} | "
                    f"{', '.join(r['critical'])} |")
-    out += ["", "## Top failure patterns", "", "<!-- FAILURE_PATTERNS: filled in by Claude from the per-item grades -->", ""]
+    out += ["", PATTERNS_HEAD, "", patterns or PATTERNS_MARKER, ""]
     if s.get("noise_floor_established"):
         out += [f"_Noise floor established from {', '.join(floor['from_runs'])}: total ±{floor['total']}._", ""]
     return "\n".join(out)
