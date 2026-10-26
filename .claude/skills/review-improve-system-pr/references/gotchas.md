@@ -21,6 +21,29 @@
   entry runs whatever the script contains (the file guardrail now flags edits to such scripts —
   see "The file guardrail used to wave through ..." below).
 
+- **MCP names passed on a read-verb prefix alone, and a glued `*` passed as a prefix match.**
+  Reproduced against the previous checker (rc=0): credential-returning reads (`get_secret`,
+  `get_secret_value`, `get_access_token`, `read_password`, `list_api_keys`, `fetch_oauth_token`),
+  a write hidden behind a read prefix (`search_and_purge`, `get_and_wipe`, `query_and_truncate`,
+  `get_and_unlink`, `status_and_reboot`, `list_and_toggle`, `find_and_ban`, `getaway`), and names
+  laundered by the server-prefix strip (`mcp__send__send_get_x`, `mcp__delete__delete_get_files`).
+  Now refused: any server/tool name containing secret|token|password|passwd|credential|api key|oauth|
+  private|cookie|session key (separators ignored, case-insensitive); any `_and_`/`_or_`/`_then_`
+  in the tool name; a read verb that is not a whole leading word; and a leading `<server>_` is only
+  stripped when it equals the server segment and the server name has no write verb. The two
+  `mcp__nixos__nix*` tools are exact exceptions. Separately, an ADDED Bash entry with a `*` glued to a
+  word (`ls*`, `du*`, `id*`, `git diff*`) is a command-NAME prefix match at run time (`lsof`,
+  `git difftool --extcmd=...`), so only ` *` (space before the star) or an exact command is accepted.
+  This only gates additions: the current `settings.json` is unchanged and still passes as a whole.
+  If you ever re-add one of the current glued entries as "new" it will be refused — 21 of the 26
+  today (every Bash entry ending in a glued `*`: dry-run.sh, secret-scan.sh x2, deep-eval-check.sh,
+  flake-lock-diff.sh, classify-shared-file.sh, scan-session.sh, the `~/.claude/skills/lib/*` x4,
+  find-skill-misfires.sh, `git -C ... diff*`, `nix flake metadata*`, `nix flake check*`,
+  `nix-store -q*`, `lsblk*`, `gh run watch*`, `journalctl*`, `flatpak remote-info*`, `git fetch*`);
+  the other 5 (`git -C ... status`, `git -C ... log *`, `nix eval *`, both `mcp__nixos__nix*`) pass.
+  The 84-entry refusal list still refuses every entry, and no entry in the reviewer's candidate lists
+  (443 entry runs across the lists, old vs new checker) went from refused to accepted — 60 went from accepted to refused,
+  all glued-`*` or MCP-name cases.
 - **`find-and-check-pr.sh` used to fail open.** When `gh` errored it still printed
   `GUARDRAIL: OK`, and a failed `gh pr list` read as "no PR". Now any `gh`/`jq` failure exits 3
   with `GUARDRAIL: NOT EVALUATED` (a failed `settings.json` fetch included — it used to read as a
