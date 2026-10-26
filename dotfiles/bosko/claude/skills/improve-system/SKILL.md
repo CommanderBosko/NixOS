@@ -16,12 +16,13 @@ Classify every proposed change before acting:
 - **Low-risk (auto-apply, then report what you did):** purely *additive, reversible, non-destructive* edits to files that already exist —
   - `## Gotchas` entries added by **skill-upgrade**
   - the six standing workflow rules added to `CLAUDE.md` by **claude-rules**
-  - `permissions.allow` additions in `settings.json` from **fewer-permission-prompts**
+  - `permissions.allow` additions in `settings.json` from **fewer-permission-prompts** — *only* when each entry is narrowly scoped and read-only (a concrete command with fixed arguments, a repo/`~/.claude` script path, or a read-only MCP tool). An allow entry is additive in the file but not harmless in effect: it removes a prompt, so it widens what runs unattended. Anything broader is structural (see below), and "it only adds a line" is never the reason to auto-apply.
 - **Structural (always confirm first via the AskUserQuestion tool):** anything that creates files, changes behaviour, deletes/rewrites content, or needs new wiring + a rebuild —
   - a **new skill** proposed by skill-suggestion (new file + `git add` + rebuild; the symlink is auto-generated)
   - a **new custom agent** proposed by agent-suggestion (new `.claude/agents/*.md` file + `git add` + rebuild + an edited call-site skill)
   - skill-audit's "fix it" refactors (script/asset extraction, drift fixes, splits)
   - any `permissions.deny`/`ask` or hook change
+  - any `permissions.allow` entry that is not narrowly scoped and read-only: a wildcard command head or a wildcard over `git`/`gh`/`nix`, anything that can delete, escalate (`sudo`), fetch or publish (`rm`, `curl`, `gh pr merge`, `git push`), a shell or interpreter without a concrete script, a path outside the repo or `~/.claude`, a credential location, or an MCP tool that writes or sends
 
 For every structural item, use the **AskUserQuestion** tool rather than a prose question — present the specific proposed change with options **Approve** (apply it) and **Skip** (leave it alone), one question per item (or a batched multi-question call when several independent structural items are pending at once). When in doubt, treat it as structural and ask via AskUserQuestion.
 
@@ -41,13 +42,16 @@ These three mine the current session, so run them while it's fresh.
 
 4. **claude-rules** — invoke the `claude-rules` skill against this project's `CLAUDE.md`. Adding any missing standing rule is **low-risk** → auto-apply, then report which rules were already present vs added.
 5. **skill-audit** — invoke the `skill-audit` skill. It is report-only by design. Surface its prioritized findings (correctness bugs first). Auto-apply **only** trivially-additive fixes if any; for every structural refactor it recommends, use the **AskUserQuestion** tool (one question per refactor, or batched per item) with options **Approve** (apply the refactor) and **Skip** (leave it as a reported finding) before saying "fix it". Do not silently run its full fix pass.
-6. **fewer-permission-prompts** — invoke the `fewer-permission-prompts` skill. Adding entries to `permissions.allow` is **low-risk** → auto-apply, but **show the exact list added** so the user can object. Never auto-add `deny`/`ask` or hooks — if such a change is ever surfaced as a candidate, treat it as structural and confirm via **AskUserQuestion** (options **Approve** / **Skip**) rather than applying it silently.
+6. **fewer-permission-prompts** — invoke the `fewer-permission-prompts` skill. Classify each proposed `permissions.allow` entry individually — an allow addition is **not** blanket low-risk, because it silences a prompt:
+   - **Narrowly scoped and read-only** (a concrete read-only command with fixed arguments, a repo/`~/.claude` script path, or a read-only MCP tool) → auto-apply, but **show the exact list added** so the user can object.
+   - **Anything else** (wildcard heads, `rm`/`sudo`/`curl`/`gh pr merge`/`git push`-class commands, wildcards over `git`/`gh`/`nix`, interpreters without a concrete script, paths outside the repo or `~/.claude`, credential locations, MCP tools that write or send) → structural: confirm each via **AskUserQuestion** (options **Approve** / **Skip**), and default to **Skip**.
+   When in doubt, ask. The weekly cloud routine's reviewer (`review-improve-system-pr`) is default-deny: it accepts an added entry only if it matches a short read-only allowlist (read-only `git`/`gh`/`nix`/`systemctl`/`flatpak` subcommands, metadata-only inspectors, a concrete `.claude/.../scripts/*.sh` file, or an MCP tool starting with a read verb). Anything else — including harmless-looking `cat *`, `grep *` or `python3 ...` — is refused there, so don't propose or auto-apply it in the routine's PR. Never auto-add `deny`/`ask` or hooks — if such a change is ever surfaced as a candidate, treat it as structural and confirm via **AskUserQuestion** rather than applying it silently.
 
 ## Step 3 — One consolidated report
 
 After all six, print a single summary, not six scattered ones:
 
-- **Applied (low-risk):** gotchas added, rules added, allow-list entries added — each with the file touched.
+- **Applied (low-risk):** gotchas added, rules added, narrowly-scoped read-only allow-list entries added — each with the file touched.
 - **Awaiting your call (structural):** new-skill proposal (with its smoke-test result), new-agent proposal (with its smoke-test result and the call site it would rewire), skill-audit refactors, anything needing a rebuild — listed so the user can approve in one place.
 - **Clean:** the passes that found nothing (say so explicitly — a clean pass is a result).
 
