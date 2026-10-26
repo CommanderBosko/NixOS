@@ -18,12 +18,14 @@
 #   2. Trusted-script edit: a file that .claude/settings.json (at the PR base, or as the PR
 #      head adds to it) runs without a permission prompt — every path mentioned in any
 #      settings string (allow entries, hook commands), with `bash `/`~`/absolute-home forms
-#      normalised to repo-relative paths. A no-space trailing `*` (`foo.sh*`) is a prefix
-#      match at run time, so any file starting with that prefix counts too. This also catches
-#      a PR that ADDS a script together with an allow entry for it.
+#      normalised to repo-relative paths (`$CLAUDE_PROJECT_DIR/`, `$HOME/` and `"$HOME"/`
+#      forms and bare `dotfiles/bosko/claude/...` included). A no-space trailing `*`
+#      (`foo.sh*`) is a prefix match at run time, so any file starting with that prefix counts
+#      too. This also catches a PR that ADDS a script together with an allow entry for it.
 #   3. Shared libs: `.claude/lib/` and the skills `lib/` dirs, sourced by those scripts.
 #   Renames: the old name of a renamed file is checked as well (gh's `files` list only has
-#   the new path; the REST `pulls/N/files` list adds `previous_filename`).
+#   the new path; the REST `pulls/N/files` list adds `previous_filename`). That includes
+#   `.claude/settings.json` itself: renaming it away is a violation, not a pass.
 #
 # One exception to the path rule: `.claude/settings.json` passes when check-settings-diff.sh
 # confirms the PR only adds scoped, non-high-power entries to `permissions.allow`
@@ -43,7 +45,8 @@
 #   1 — no open PR found (normal/expected most weeks)
 #   2 — PR found but a file violates the guardrail (needs manual review)
 #   3 — could not evaluate (gh auth/network/API failure — including failing to fetch
-#       settings.json or the rename list — unreadable or implausible PR data, or the
+#       settings.json or the rename list, or a base settings.json without a
+#       permissions.allow array — unreadable or implausible PR data, or the
 #       settings checker not running) — NOT the same as "no PR": the guardrail was not checked
 set -uo pipefail
 
@@ -119,7 +122,11 @@ fetch_settings() {
 # the PR touches settings.json. Compare at the PR's own base and head commits, not main's
 # tip, which may have moved.
 fetch_settings base "$BASE_OID" || die3 "could not fetch $SETTINGS_PATH at PR base - cannot tell which scripts run without a prompt - guardrail NOT evaluated"
-jq -e . "$TMPD/base.json" > /dev/null 2>&1 || die3 "$SETTINGS_PATH at PR base is not valid JSON - guardrail NOT evaluated"
+jq empty "$TMPD/base.json" > /dev/null 2>&1 || die3 "$SETTINGS_PATH at PR base is not valid JSON - guardrail NOT evaluated"
+# Valid JSON is not enough: `{}`, `[]` or an API error body such as {"message":"Not Found"}
+# would parse and give an empty trusted set, i.e. nothing flagged.
+jq -e '(.permissions.allow | type) == "array"' "$TMPD/base.json" > /dev/null 2>&1 \
+  || die3 "$SETTINGS_PATH at PR base has no permissions.allow array (stripped, replaced, or an API error body?) - cannot tell which scripts run without a prompt - guardrail NOT evaluated"
 
 SETTINGS_CHANGED=0
 grep -qxF -- "$SETTINGS_PATH" <<< "$FILES" && SETTINGS_CHANGED=1
@@ -159,11 +166,18 @@ repo_candidates() {
   local t=$1 h rel=""
   t=${t#./}
   case $t in
-    .claude/*)
+    .claude/*|dotfiles/bosko/claude/*)
       printf '%s\n' "$t"
       return
       ;;
   esac
+  # Hooks run in the project root, so $CLAUDE_PROJECT_DIR/X is the repo path X.
+  for h in '$CLAUDE_PROJECT_DIR' '${CLAUDE_PROJECT_DIR}'; do
+    if [[ "$t" == "$h"/* ]]; then
+      printf '%s\n' "${t#"$h"/}"
+      return
+    fi
+  done
   for h in "$SAFE_HOME" '~' '$HOME' '${HOME}'; do
     if [[ "$t" == "$h"/* ]]; then
       rel=${t#"$h"/}
@@ -186,15 +200,15 @@ repo_candidates() {
 collect_trusted() {
   local entry tok cand
   while IFS=$'\t' read -r entry tok; do
-    tok=${tok//[\'\`]/}   # quotes/backticks are not path characters (the jq split leaves them in)
+    tok=${tok//[\'\`]/}   # single quotes/backticks are not path characters (the jq split leaves them in)
     [ -n "$tok" ] || continue
     while IFS= read -r cand; do
       [ -n "$cand" ] || continue
       [ -n "${TRUST[$cand]+x}" ] || TRUST["$cand"]=$entry
     done < <(repo_candidates "$tok")
   done < <(jq -r '[.. | strings] | unique | .[] | . as $s
-      | (split("[\\s;|&()\"<>=,:]+"; "g") | map(select(length > 0)))[]
-      | [$s, .] | @tsv' "$1")
+      | ($s | gsub("\""; "") | split("[\\s;|&()<>=,:]+"; "g") | map(select(length > 0)))[]
+      | [$s, .] | @tsv' "$1")   # shell quote removal first, so "$HOME"/x.sh reads as $HOME/x.sh
 }
 
 collect_trusted "$TMPD/base.json"
@@ -250,7 +264,9 @@ CHECK_LIST=$FILES
 [ -z "$RENAMED_FROM" ] || CHECK_LIST="${FILES}"$'\n'"${RENAMED_FROM}"
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  [ "$f" = "$SETTINGS_PATH" ] && continue   # judged by check-settings-diff.sh above
+  # judged by check-settings-diff.sh above, but only when the PR's own file list has it; as a
+  # rename source (moved away, so there is no head copy to diff) it is a violation below
+  [ "$f" = "$SETTINGS_PATH" ] && [ "$SETTINGS_CHANGED" -eq 1 ] && continue
   if reason=$(violation_reason "$f"); then
     add_violation "$f" "$reason"
   fi

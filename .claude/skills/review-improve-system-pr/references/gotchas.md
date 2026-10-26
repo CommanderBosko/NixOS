@@ -66,7 +66,18 @@
   exists unchanged (the Step 2 read-through must catch it), and a helper file that an allow-listed
   script calls from the same `scripts/` dir without being named in settings.
   `settings.json` at the PR base is now fetched on every run (it defines the trusted set), so a
-  failed fetch is exit 3 even when the PR does not touch settings.
+  failed fetch is exit 3 even when the PR does not touch settings. Valid JSON is not enough: a
+  base without a `permissions.allow` array (`{}`, `[]`, `null`, an API error body) is exit 3 too,
+  since it would give an empty trusted set and wave through edits to every allow-listed script.
+  Path spellings mapped to the repo: `$CLAUDE_PROJECT_DIR/` (also braced), `$HOME/` / `"$HOME"/`,
+  `~/`, `REVIEW_SAFE_HOME`-rooted, `./`, and bare `.claude/` or `dotfiles/bosko/claude/`. Shell
+  double quotes are removed before the split, so `"$HOME"/x.sh` reads as `$HOME/x.sh`. A spelling
+  not on that list (a different checkout path with no `REVIEW_SAFE_HOME`, an `$XDG_*` variable, a
+  path built by command substitution) is still unmapped, so the Step 2 read-through stays the net.
+- **Renaming `.claude/settings.json` away used to pass.** The old name arrives only via the rename
+  list, and the loop skipped the settings path unconditionally, so a PR that moved it (deleting the
+  allow list and the SessionStart hook) got `GUARDRAIL: OK`. The skip now applies only when the
+  PR's own file list contains it; as a rename source it falls to the boundary rule (exit 2).
 - **Renames hide the old path.** `gh pr view --json files` lists a renamed file only under its new
   name. The script also reads REST `pulls/N/files` and checks each `previous_filename`, so renaming
   a trusted/gate file away is still flagged. The REST field names and the `// empty` filter were
