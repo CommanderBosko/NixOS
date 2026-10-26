@@ -125,7 +125,7 @@ gen() {
 }
 
 headings=('## Current Project State' '## Recent Decisions' '## Next Steps')
-prefixes=('**' '- ' '**')
+prefixes=('**' '- ' '**Session ')
 archives=(project-state-archive.md project-state-decisions-archive.md project-state-next-steps-archive.md)
 
 run_rotate() { (cd "$WORK" && "$ROTATE" "$1" 2>&1); }
@@ -252,6 +252,89 @@ printf '%s' "$(cat "$dir/project-state.md")" > "$dir/ps.noeol" && mv "$dir/ps.no
 run_rotate "$dir" > /dev/null; rc=$?
 check_eq "no trailing newline: exit 0" "0" "$rc"
 check_eq "no trailing newline: last original line survives in the archive" "1" "$(grep -c 'Optional: last item, no blank line after' "$dir/project-state-next-steps-archive.md")"
+
+# --- 6. hardening: fenced code, strict Next Steps units, CRLF --------------------------------------
+# multiset_ok <label> <orig> <live> <archive>... — every non-blank original line is in live or an archive, once each
+multiset_ok() {
+  local label="$1" orig="$2" live="$3" d="$WORK/ms" a; shift 3
+  rm -rf "$d"; mkdir -p "$d"
+  nb_lines < "$orig" | sorted_counts > "$d/c_orig"
+  { nb_lines < "$live" | grep -v '^_Older '; for a in "$@"; do from_unit "$a" "$(case "$a" in *decisions*) echo '- ';; *next-steps*) echo '**Session ';; *) echo '**';; esac)" | nb_lines; done; } | sorted_counts > "$d/c_new"
+  check_cmp "$label: every original line is in live or an archive, exactly once" "$d/c_orig" "$d/c_new"
+}
+
+# 6a. '## ', '- ' and '**' lines inside fenced code blocks are not headings or unit starts
+dir="$WORK/fence"; mkdir -p "$dir"
+gen "$dir/base.md" 8 25 9 tight legacy
+awk '
+  /^- \*\*Decision 24 /               { print; print "```"; print "## Fake heading in a fence"; print "- fake bullet in a fence"; print "```"; next }
+  /^- \*\*Decision 12 /               { print; print "~~~"; print "## Fake heading 2 in a fence"; print "- fake bullet 2 in a fence"; print "~~~"; next }
+  /^\*\*Session 3 next steps:\*\*/    { print; print "```"; print "## Fake heading 3 in a fence"; print "**Session 2 FAKE in fence**"; print "```"; next }
+  /^\*\*2026-01-02 state headline 2/  { print; print "```"; print "## Fake heading 4 in a fence"; print "**fake bold in a fence**"; print "```"; next }
+  { print }
+' "$dir/base.md" > "$dir/project-state.md"
+cp "$dir/project-state.md" "$dir/ORIG.md"
+run_rotate "$dir" > /dev/null; rc=$?
+check_eq "fences: exit 0" "0" "$rc"
+untouched "fences" "$dir/ORIG.md" "$dir/project-state.md"
+multiset_ok "fences" "$dir/ORIG.md" "$dir/project-state.md" "$dir/project-state-archive.md" "$dir/project-state-decisions-archive.md" "$dir/project-state-next-steps-archive.md"
+check_eq "fences: live keeps 10 real decisions (fake bullets in fences are not units)" "10" "$(grep -c '^- \*\*Decision' "$dir/project-state.md")"
+check_eq "fences: archive holds the other 15 decisions" "15" "$(grep -c '^- \*\*Decision' "$dir/project-state-decisions-archive.md")"
+check_eq "fences: live keeps 5 session blocks" "5" "$(grep -c '^\*\*Session [0-9]* next steps' "$dir/project-state.md")"
+check_eq "fences: next-steps archive holds the other 4 (a '## ' in a fence did not stop the scan)" "4" "$(grep -c '^\*\*Session [0-9]* next steps' "$dir/project-state-next-steps-archive.md")"
+check_eq "fences: kept decision's fence stays right under its bullet in the live file" '```' "$(grep -A1 '^- \*\*Decision 24 ' "$dir/project-state.md" | tail -n1)"
+check_eq "fences: archived decision's fence travels with its bullet" '~~~' "$(grep -A1 '^- \*\*Decision 12 ' "$dir/project-state-decisions-archive.md" | tail -n1)"
+check_eq "fences: archived session block's fence travels with it" '```' "$(grep -A1 '^\*\*Session 3 next steps' "$dir/project-state-next-steps-archive.md" | tail -n1)"
+check_eq "fences: archived state block's fence travels with it" '```' "$(grep -A1 '^\*\*2026-01-02 state headline 2' "$dir/project-state-archive.md" | tail -n1)"
+cp "$dir/project-state.md" "$dir/s1"
+run_rotate "$dir" > /dev/null
+check_cmp "fences: second run is a no-op" "$dir/s1" "$dir/project-state.md"
+
+# 6b. an unclosed fence is refused loudly, nothing changes
+dir="$WORK/openfence"; mkdir -p "$dir"
+gen "$dir/base.md" 8 25 9 tight legacy
+awk '/^- \*\*Decision 20 / { print; print "```"; next } { print }' "$dir/base.md" > "$dir/project-state.md"
+cp "$dir/project-state.md" "$dir/ORIG.md"
+out="$(run_rotate "$dir")"; rc=$?
+check_eq "unclosed fence: exit 1" "1" "$rc"
+if printf '%s\n' "$out" | grep -q 'unclosed fenced code block'; then ok "unclosed fence: clear message"; else bad "unclosed fence: message missing" "$out"; fi
+check_cmp "unclosed fence: file untouched" "$dir/ORIG.md" "$dir/project-state.md"
+check_eq "unclosed fence: no archive created" "0" "$(ls "$dir" | grep -c 'archive')"
+
+# 6c. a '**Note:**' line is not a Next Steps unit boundary; Decisions units are top-level '- ' bullets only
+dir="$WORK/notes"; mkdir -p "$dir"
+gen "$dir/base.md" 8 25 9 tight legacy
+awk '
+  /^\*\*Session 4 next steps:\*\*/ { print "**Note:** note after session 5"; print ""; print; next }
+  /^\*\*Session 1 next steps:\*\*/ { print "**Note:** note after session 2"; print ""; print; next }
+  /^- \*\*Decision 19 /            { print "**Note:** note inside decisions, kept"; print; next }
+  /^- \*\*Decision 11 /            { print "**Note:** note inside decisions, archived"; print; next }
+  { print }
+' "$dir/base.md" > "$dir/project-state.md"
+cp "$dir/project-state.md" "$dir/ORIG.md"
+run_rotate "$dir" > /dev/null; rc=$?
+check_eq "notes: exit 0" "0" "$rc"
+untouched "notes" "$dir/ORIG.md" "$dir/project-state.md"
+multiset_ok "notes" "$dir/ORIG.md" "$dir/project-state.md" "$dir/project-state-archive.md" "$dir/project-state-decisions-archive.md" "$dir/project-state-next-steps-archive.md"
+check_eq "notes: live keeps 5 session blocks (the Note is not a 6th unit)" "5" "$(grep -c '^\*\*Session [0-9]* next steps' "$dir/project-state.md")"
+check_eq "notes: Note after the last kept block stays live with it" "1" "$(grep -c 'note after session 5' "$dir/project-state.md")"
+check_eq "notes: Note after an archived block travels to the archive" "1" "$(grep -c 'note after session 2' "$dir/project-state-next-steps-archive.md")"
+check_eq "notes: first archived session block is Session 4 (not the Note)" "1" "$(from_unit "$dir/project-state-next-steps-archive.md" '**Session ' | head -n1 | grep -c 'Session 4 next steps')"
+check_eq "notes: live keeps 10 decisions with a Note line inside (Note is not a unit)" "10" "$(grep -c '^- \*\*Decision' "$dir/project-state.md")"
+check_eq "notes: kept Note stays live" "1" "$(grep -c 'note inside decisions, kept' "$dir/project-state.md")"
+check_eq "notes: archived Note is in the decisions archive" "1" "$(grep -c 'note inside decisions, archived' "$dir/project-state-decisions-archive.md")"
+
+# 6d. CRLF input is rejected with a clear message, not misread as 'no section'
+dir="$WORK/crlf"; mkdir -p "$dir"
+gen "$dir/base.md" 8 25 9 tight legacy
+sed 's/$/\r/' "$dir/base.md" > "$dir/project-state.md"
+cp "$dir/project-state.md" "$dir/ORIG.md"
+out="$(run_rotate "$dir")"; rc=$?
+check_eq "CRLF: exit 1" "1" "$rc"
+if printf '%s\n' "$out" | grep -q 'CRLF'; then ok "CRLF: message names CRLF"; else bad "CRLF: message missing" "$out"; fi
+if printf '%s\n' "$out" | grep -q 'skipping'; then bad "CRLF: still prints the misleading 'skipping' message" "$out"; else ok "CRLF: no misleading 'No section ... skipping'"; fi
+check_cmp "CRLF: file untouched" "$dir/ORIG.md" "$dir/project-state.md"
+check_eq "CRLF: no archive created" "0" "$(ls "$dir" | grep -c 'archive')"
 
 # --- 5. the real file (pre-rotation copy via REAL_STATE, else the repo's) ---------------------------
 REPO_ROOT="$(cd "$SKILL_DIR/../../../../.." 2>/dev/null && pwd || true)"

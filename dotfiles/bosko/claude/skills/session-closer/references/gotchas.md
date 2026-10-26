@@ -77,3 +77,6 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   block N rotates out; restate the carried-over items in the new block instead. The script
   aborts with `INTERNAL ERROR ... Nothing was changed` if its split pieces don't add up to
   the original bytes; that is a bug in the script, never a reason to edit the file by hand.
+  It also refuses (exit 1, nothing changed) a CRLF file or one with an unclosed code fence, and
+  ignores `## `, `- ` and `**` lines inside fenced blocks; in Next Steps only `**Session N`
+  starts a unit, so a `**Note:**` line stays with the block above it.

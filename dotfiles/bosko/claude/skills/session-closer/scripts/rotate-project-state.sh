@@ -7,10 +7,15 @@ set -euo pipefail
 # is rotated into its OWN archive file (most-recent-first, created on first
 # use); the live file keeps only the newest units plus a pointer line:
 #
-#   section                    unit = a line starting with     keep  archive
-#   ## Current Project State   `**`  (bold-headline block)       5   project-state-archive.md
-#   ## Recent Decisions        `- `  (top-level bullet)         10   project-state-decisions-archive.md
-#   ## Next Steps              `**`  (a "Session N" block)        5   project-state-next-steps-archive.md
+#   section                    unit starts at a line beginning   keep  archive
+#   ## Current Project State   `**`          (bold-headline block)   5   project-state-archive.md
+#   ## Recent Decisions        `- `          (top-level bullet)     10   project-state-decisions-archive.md
+#   ## Next Steps              `**Session N` (a session block)       5   project-state-next-steps-archive.md
+#
+# Only the Next Steps style is that strict on purpose: a stray `**Note:** ...`
+# paragraph there is NOT a unit boundary, it travels with the session block above
+# it. Lines inside fenced code blocks (``` or ~~~) are never headings or unit
+# starts, so a `## ` line in a code sample can't end a section scan early.
 #
 # ## Current Goals and ## Known Issues / Tech Debt are deliberately NOT rotated
 # (they are curated in place, not appended to), and neither is the file header.
@@ -58,34 +63,64 @@ if [ ! -f "$active" ]; then
   exit 0
 fi
 
+# Refuse input the line-oriented scan would misread, loudly, before touching anything.
+if grep -q $'\r$' "$active"; then
+  echo "$active has CRLF line endings; this script only handles LF. Convert it (e.g. sed -i 's/\\r\$//' $active) and re-run. Nothing was changed." >&2
+  exit 1
+fi
+
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+
+# awk helpers shared by every scan: fenced-code tracking and the per-section
+# "does this line start a unit?" test. `style` is bold | bullet | session.
+awk_lib='
+function fence_toggle(   c) {
+  if ($0 ~ /^ ? ? ?[`][`][`]/) c = "`"; else if ($0 ~ /^ ? ? ?~~~/) c = "~"; else return
+  if (fence == "") fence = c; else if (fence == c) fence = ""
+}
+function isunit() {
+  if (fence != "") return 0
+  if (style == "bullet")  return index($0, "- ") == 1
+  if (style == "session") return $0 ~ /^\*\*Session [0-9]+/
+  return index($0, "**") == 1
+}
+function isheading() { return fence == "" && $0 ~ /^## / }
+'
+
+# An unclosed code fence would hide every later heading from the scan.
+if ! awk "$awk_lib"'{ fence_toggle() } END { if (fence != "") exit 3 }' "$active"; then
+  echo "$active has an unclosed fenced code block (a line starting with three backticks or tildes with no matching close); the section scan can't be trusted. Fix the fence and re-run. Nothing was changed." >&2
+  exit 1
+fi
 
 is_blank() { # is_blank <line> — true for empty / whitespace-only
   [ -z "${1//[[:space:]]/}" ]
 }
 
-# rotate_section <heading> <unit-prefix> <keep> <archive-file> <archive-title> <noun> <blank-between-units 0|1> <pointer>
+# rotate_section <heading> <unit-style bold|bullet|session> <keep> <archive-file> <archive-title> <noun> <blank-between-units 0|1> <pointer>
 rotate_section() {
-  local heading="$1" prefix="$2" keep="$3" archive_name="$4" title="$5" noun="$6" sep="$7" pointer="$8"
+  local heading="$1" style="$2" keep="$3" archive_name="$4" title="$5" noun="$6" sep="$7" pointer="$8"
   local archive="${root%/}/$archive_name"
   local d="$work/${archive_name%.md}"
   mkdir -p "$d"
 
-  if ! grep -qxF -- "$heading" "$active"; then
+  # Is the heading there (outside any code fence), and how many units follow it
+  # before the next '## ' heading?
+  local counts found total
+  counts="$(awk -v h="$heading" -v style="$style" "$awk_lib"'
+    { fence_toggle() }
+    state == 0 && fence == "" && $0 == h { state = 1; found = 1; next }
+    state == 1 && isheading() { state = 2 }
+    state == 1 && isunit() { n++ }
+    END { print found + 0, n + 0 }
+  ' "$active")"
+  found="${counts% *}"; total="${counts#* }"
+
+  if [ "$found" -eq 0 ]; then
     echo "No '$heading' section in $active; skipping."
     return 0
   fi
-
-  # Count units inside the section (between its heading and the next '## ').
-  local total
-  total="$(awk -v h="$heading" -v pre="$prefix" '
-    state == 0 && $0 == h { state = 1; next }
-    state == 1 && /^## / { state = 2 }
-    state == 1 && index($0, pre) == 1 { n++ }
-    END { print n + 0 }
-  ' "$active")"
-
   if [ "$total" -le "$keep" ]; then
     echo "'$heading': only $total $noun (<= $keep) — no rotation needed."
     return 0
@@ -96,12 +131,13 @@ rotate_section() {
   # section, .tail = from the next '## ' heading on. .range = first/last
   # original line number of the archived units.
   : > "$d/kept"; : > "$d/old"; : > "$d/trail"; : > "$d/tail"
-  awk -v h="$heading" -v pre="$prefix" -v keep="$keep" \
-      -v kept="$d/kept" -v old="$d/old" -v trail="$d/trail" -v tail="$d/tail" -v range="$d/range" '
-    state == 0 { print > kept; if ($0 == h) state = 1; next }
-    state == 1 && /^## / { state = 2 }
+  awk -v h="$heading" -v style="$style" -v keep="$keep" \
+      -v kept="$d/kept" -v old="$d/old" -v trail="$d/trail" -v tail="$d/tail" -v range="$d/range" "$awk_lib"'
+    { fence_toggle() }
+    state == 0 { print > kept; if (fence == "" && $0 == h) state = 1; next }
+    state == 1 && isheading() { state = 2 }
     state == 2 { print > tail; next }
-    index($0, pre) == 1 { n++ }
+    isunit() { n++ }
     n <= keep { print > kept; next }
     /^[ \t]*$/ { held[++nh] = $0; next }          # hold blanks: they only join .old if more content follows
     {
@@ -159,7 +195,7 @@ rotate_section() {
   # --- archive first: an interrupted run must duplicate, never lose ---------
   local first_unit=""
   if [ -f "$archive" ]; then
-    first_unit="$(awk -v pre="$prefix" 'index($0, pre) == 1 { print NR; exit }' "$archive")"
+    first_unit="$(awk -v style="$style" "$awk_lib"'{ fence_toggle() } isunit() { print NR; exit }' "$archive")"
   fi
   if [ -n "$first_unit" ]; then
     # Prepend ahead of the existing units, keeping the archive's own header on
@@ -200,14 +236,14 @@ rotate_section() {
 }
 
 # Bottom-up, so the line numbers each message reports refer to the original file.
-rotate_section '## Next Steps' '**' "$keep_steps" \
+rotate_section '## Next Steps' session "$keep_steps" \
   'project-state-next-steps-archive.md' 'Project State Archive — Next Steps' 'session blocks' 1 \
   '_Older session blocks are in [project-state-next-steps-archive.md](project-state-next-steps-archive.md); a "still stands" note below may refer to one of them._'
 
-rotate_section '## Recent Decisions' '- ' "$keep_decisions" \
+rotate_section '## Recent Decisions' bullet "$keep_decisions" \
   'project-state-decisions-archive.md' 'Project State Archive — Recent Decisions' 'entries' 0 \
   '_Older entries are in [project-state-decisions-archive.md](project-state-decisions-archive.md)._'
 
-rotate_section '## Current Project State' '**' "$keep_state" \
+rotate_section '## Current Project State' bold "$keep_state" \
   'project-state-archive.md' 'Project State Archive' 'blocks' 1 \
   '_Older blocks are in [project-state-archive.md](project-state-archive.md)._'
