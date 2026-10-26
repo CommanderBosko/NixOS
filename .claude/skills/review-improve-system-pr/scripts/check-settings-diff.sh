@@ -34,8 +34,9 @@
 # Residual risks the checker cannot see (a Bash allow rule is a string prefix, so what
 # follows the `*` is unconstrained at run time): `git log|diff|show *` can be invoked with
 # `--output=<file>`; `git fetch*` with `--upload-pack`; `nix eval *` with `--impure`;
-# and a script entry runs whatever that script contains — the PR file guardrail still lets
-# a PR edit `scripts/`, so edited scripts behind existing allow entries need a human look.
+# and a script entry runs whatever that script contains — find-and-check-pr.sh flags a PR that
+# edits (or adds) any script an allow entry or hook names, but an entry for a script that
+# already exists unchanged is only caught by the human diff read-through.
 #
 # Env: REVIEW_SAFE_HOME (default /home/bosko) is the home directory whose NixOS checkout
 # and ~/.claude script paths are trusted (the real settings.json entries use absolute paths).
