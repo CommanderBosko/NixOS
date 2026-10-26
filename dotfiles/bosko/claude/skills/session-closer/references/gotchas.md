@@ -70,3 +70,14 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   with `git log origin/main --grep='chore(session)'` first; if newer, write the docs in a
   `git worktree add --no-track -b <branch> <dir> origin/main` (leaves the user's checked-out
   feature branch alone, and avoids conflicting with its PR on `project-state.md`).
+- **STEP 3's rotation covers three sections, not the whole file** (2026-10-26, NixOS):
+  `rotate-project-state.sh` rotates Current Project State, Recent Decisions and Next Steps,
+  each into its own archive. Current Goals and Known Issues / Tech Debt are never rotated
+  (~34KB and ~41KB on 2026-10-25), so prune them by hand when they bloat. A kept Next Steps
+  block that says "Everything from session N below still stands" points into the archive once
+  block N rotates out; restate the carried-over items in the new block instead. The script
+  aborts with `INTERNAL ERROR ... Nothing was changed` if its split pieces don't add up to
+  the original bytes; that is a bug in the script, never a reason to edit the file by hand.
+  It also refuses (exit 1, nothing changed) a CRLF file or one with an unclosed code fence, and
+  ignores `## `, `- ` and `**` lines inside fenced blocks; in Next Steps only `**Session N`
+  starts a unit, so a `**Note:**` line stays with the block above it.

@@ -102,25 +102,36 @@ decisions, wrong status). Locate or create `project-state.md` at the repo root a
 - **Known Issues / Tech Debt** — problems found but not yet resolved.
 - **Next Steps** — clear, actionable items for next session.
 
-**Rotation — keep the file readable.** The **Current Project State** section gains one
-block per session (a bold headline plus its bullets) and nothing ever removed them, which
-is how `project-state.md` reached ~0.5MB. After updating it, rotate the old blocks out:
+**Rotation — keep the file readable.** Three sections gain one unit per session and nothing
+ever removed them, which is how `project-state.md` reached ~0.5MB, and again ~235KB (Recent
+Decisions alone was ~116KB). After updating the sections, rotate the old units out:
 
 ```bash
 ~/.claude/skills/session-closer/scripts/rotate-project-state.sh <repo-root>
 ```
 
-Same shape as Step 4's rotation script: it keeps the **~5 most recent** blocks of the
-`## Current Project State` section (a block = a line starting with `**` up to the next
-one), moves the older ones into `project-state-archive.md` (most-recent-first, created on
-first use), and inserts a pointer line under the section heading. Only that section is
-touched — Goals, Decisions, Known Issues and Next Steps stay in place. Set `KEEP=<n>` to
-keep a different count and `DRY_RUN=1` to print what would move (line range + bytes)
-without changing anything. It is idempotent (a no-op at ≤5 blocks). Run it **after**
-editing the section, and use the absolute-path form (see Scripts below). If a fact in an
-about-to-be-archived block is still true and still matters, restate it in Goals / Known
-Issues / Decisions first — the archive is for history, not for priming a cold start.
-Stage `project-state-archive.md` in Step 6 if it rotated.
+Same shape as Step 4's rotation script. Each section is rotated into **its own archive**
+(most-recent-first, created on first use), the newest units stay live, and a pointer line
+goes under the section heading:
+
+| Section | A unit is | Kept live | Archive |
+|---|---|---|---|
+| `## Current Project State` | a block: a line starting `**` up to the next one | 5 (`KEEP=<n>`) | `project-state-archive.md` |
+| `## Recent Decisions` | a top-level `- ` bullet plus its continuation lines | 10 (`KEEP_DECISIONS=<n>`), about the last 5 sessions | `project-state-decisions-archive.md` |
+| `## Next Steps` | a `**Session N next steps:**` block | 5 (`KEEP_NEXT_STEPS=<n>`) | `project-state-next-steps-archive.md` |
+
+`## Current Goals` and `## Known Issues / Tech Debt` are never touched by the script: they
+are curated in place, not appended to, so prune them by hand (resolved items out,
+still-true items restated). `DRY_RUN=1` prints what would move (line range + bytes) without
+changing anything. The script is lossless (it aborts before writing if the pieces don't add
+up to the original bytes, and writes the archive before the live file) and idempotent (a
+no-op at or under each keep count). Run it **after** editing the sections, and use the
+absolute-path form (see Scripts below). If a fact in an about-to-be-archived unit is still
+true and still matters, restate it in Goals / Known Issues / Decisions first — the archive
+is for history, not for priming a cold start. Write each new Next Steps block
+self-contained: restate carried-over items instead of "Everything from session N below still
+stands", which dangles once block N rotates out. Stage whichever archive files rotated in
+Step 6.
 
 ---
 
@@ -196,7 +207,7 @@ consent to push, per `git-push`'s Rules — this skill's own job description alr
 GitHub," unlike a bare "push" reaching `git-push` directly.)
 
 1. Stage the docs: `git add project-state.md README.md session-summary.md`
-   (plus `session-summary-archive.md` and/or `project-state-archive.md` if you rotated,
+   (plus `session-summary-archive.md` and/or any `project-state-*archive.md` if you rotated,
    plus any files touched in Step 1).
 2. Commit with `git commit -F -` and a heredoc, never `-m` (it has no body to hold the trailer):
    ```bash
@@ -260,7 +271,7 @@ reminders so you never re-list completed work as pending.
 
 ## Arguments
 
-None required — `<repo-root>` defaults to the current project (cwd) and `<project-dir>` is resolved by `scan-session.sh`. Optional env knobs for `rotate-project-state.sh`: `KEEP=<n>` (blocks to keep) and `DRY_RUN=1` (preview only).
+None required — `<repo-root>` defaults to the current project (cwd) and `<project-dir>` is resolved by `scan-session.sh`. Optional env knobs for `rotate-project-state.sh`: `KEEP=<n>` (Current Project State blocks to keep, default 5), `KEEP_DECISIONS=<n>` (Recent Decisions entries, default 10), `KEEP_NEXT_STEPS=<n>` (Next Steps session blocks, default 5) and `DRY_RUN=1` (preview only).
 
 ## Gotchas
 
@@ -271,7 +282,8 @@ Hit an unexpected script path 404, a stale transcript cutoff, an oversized `proj
 - `scripts/scan-session.sh git-changes <repo-root>` — STEP 1's baseline resolution + diff/status/stat scan.
 - `scripts/scan-session.sh transcript <project-dir>` — STEP 2's transcript-location + user/assistant turn extraction, scoped to every transcript since session-closer's own last run (falls back to just the latest on a first-ever run).
 - `scripts/rotate-session-summary.sh <repo-root>` — STEP 4's rotation.
-- `scripts/rotate-project-state.sh <repo-root>` — STEP 3's rotation of old `## Current Project State` blocks into `project-state-archive.md` (`KEEP=<n>` to change the count, `DRY_RUN=1` to preview).
+- `scripts/rotate-project-state.sh <repo-root>` — STEP 3's rotation of old `## Current Project State` blocks, `## Recent Decisions` entries and `## Next Steps` session blocks into one archive file per section (`KEEP`, `KEEP_DECISIONS`, `KEEP_NEXT_STEPS` to change the counts, `DRY_RUN=1` to preview). Goals and Known Issues are never rotated.
+- `tests/test-rotate-project-state.sh` — regression test for that script, on temp copies only: byte-exact losslessness, Goals/Known Issues untouched, idempotence, multi-round ordering. Run it after editing the script (`REAL_STATE=<path>` also exercises a real pre-rotation file).
 
 - **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
 
