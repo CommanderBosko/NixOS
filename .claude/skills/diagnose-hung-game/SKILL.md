@@ -123,6 +123,8 @@ Gather from the user (or infer from context) before starting:
 - Game install paths and engine (Unreal vs. other) vary per title — don't assume the
   `Saved/Logs` layout from one game carries over to the next; verify live with `find` rather
   than guessing a path from memory.
-- **The script's process lookup must keep filtering out lines containing
+- **The script's process lookups must keep filtering out lines containing
   `diagnose-hung-game.sh`**, or a no-match pattern resolves a bogus PID (its own wrapping
-  shell). Check `references/gotchas.md` for the 2026-08-25 history before editing that lookup.
+  shell). `--proton-chain` also drops kernel threads (`[kworker/…]`, `[oom_reaper]`) so its
+  process-chain listing stays readable. Check `references/gotchas.md` for the history before
+  editing either lookup.

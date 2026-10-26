@@ -79,7 +79,7 @@ Add the new entry to `services.flatpak.packages` in the target file chosen in St
 - Entries are plain strings: `"com.Publisher.AppName"` — NOT attrsets with `appId`/`origin` fields.
 - Each entry is followed by a `#` comment with the friendly app name.
 - Match the indentation of the existing entries: 4 spaces in a host's `environment.nix` (2 for the outer block, 2 more for the list items), 6 in `modules/flatpak.nix` (its list sits inside a `services.flatpak = { … };` block).
-- Insert alphabetically by app ID where possible. If alphabetical order would look out of place, append at the end.
+- Append the new entry at the end of the list. The lists are **not** sorted (`modules/flatpak.nix` is in the order entries were added, not alphabetical by app ID or by comment), so don't try to insert alphabetically and don't reorder existing entries.
 - Do not add a trailing comma after the last entry — Nix list syntax does not use commas.
 
 **Example of correct format (from gaming/environment.nix):**

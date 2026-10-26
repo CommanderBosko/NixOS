@@ -28,7 +28,11 @@
 # Used by resolve-host.sh, check-hosts-json.sh, and the host-touching skill
 # scripts (`grep -rl lib/hosts.sh .claude` for the current list).
 
-HOSTS_JSON="${HOSTS_JSON:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/hosts.json}"
+# `${BASH_SOURCE[0]:-$0}`: SKILL.md lines source this file from the Bash tool's
+# zsh, where BASH_SOURCE is unset (an empty path made HOSTS_JSON resolve to the
+# wrong dir, so alias lookups silently returned nothing). zsh sets $0 to the
+# sourced file's path, so fall back to it.
+HOSTS_JSON="${HOSTS_JSON:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)/hosts.json}"
 
 hosts_jq() {
   jq "$@" "$HOSTS_JSON"

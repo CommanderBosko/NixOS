@@ -16,14 +16,15 @@ Report the verdict of the most recent GitHub Actions `flake check` run for `Comm
    .claude/skills/ci-status/scripts/ci-status.sh [branch|commit-sha|run-id|title-substring]
    ```
 
-   It finds the matching run (newest `flake check` run if no filter), watches it to completion if `in_progress`/`queued` (allow up to 10 minutes — timeout 600000ms; the deep-eval job normally finishes in ~2–3 minutes), prints the run id/branch/title/status, and on failure prints the last 40 lines of the failing step's log. Exit code mirrors the run's own success/failure. If no run matches the filter, it prints the 10 most recent runs instead so you can pick by eye.
+   It finds the matching run (newest `flake check` run if no filter), watches it to completion if `in_progress`/`queued` (allow up to 10 minutes — timeout 600000ms; the deep-eval job normally finishes in ~2–3 minutes), prints the run id/branch/commit SHA/title/status, and on failure prints the last 40 lines of the failing step's log. Exit code mirrors the run's own success/failure (0 = success, 1 = failed/cancelled/no match), except **exit 2 = `gh` itself failed** (auth, network, rate limit) — that says nothing about CI. If no run matches the filter, it prints the 10 most recent runs (with short SHAs) instead so you can pick by eye.
 
-2. **On success:** report the verdict in one or two sentences — run conclusion, which commit it certified. Green means every host's full system derivation evaluated (`flake check` + the per-host deep-eval step), not that anything was built or deployed.
+2. **On success:** report the verdict in one or two sentences — run conclusion, which commit it certified (quote the SHA the script printed on its `Commit:` line). Green means every host's full system derivation evaluated (`flake check` + the per-host deep-eval step), not that anything was built or deployed.
 
 3. **On failure:** the script already printed the failing step's log tail — interpret it. Identify which host failed to evaluate (the deep-eval step groups output per host with `::group::<host>`) and, if the error names a package or option, say which one. Suggest the next move — usually reproducing locally with `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
 
 4. **Edge cases:**
-   - No runs listed → the workflow has never fired since its introduction (2026-07-02); say so.
+   - Script exits **2** / prints `ERROR: 'gh …' failed` → `gh` could not talk to GitHub (expired auth, no network, rate limit). Report that and relay gh's message (usually `gh auth login -h github.com`); do **not** claim CI is red or that the workflow never fired.
+   - Script prints "No runs found for workflow … (gh succeeded; …)" → `gh` worked and the workflow genuinely has no runs (unexpected — it has runs on record since its introduction on 2026-07-02 — so suspect the workflow name/trigger); say so.
    - Run `cancelled` → usually superseded by a newer push (the workflow's concurrency group cancels in-flight runs); check for a newer run and report that one instead.
 
 ## Scripts

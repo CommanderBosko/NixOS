@@ -53,4 +53,10 @@ None — this skill takes no user-supplied arguments.
   privileged, live-system actions; per this repo's standing rule, hand off any switch/apply
   step to the user rather than attempting it via Bash.
 
-See `references/gotchas.md` for the keyword-heuristic caveat, the TUI-output parsing tip, and the no-host-argument limitation.
+- **Working in a git worktree?** The script resolves the flake from its *own* location, so the
+  `/home/bosko/NixOS/...` path above dry-runs the main checkout, not your worktree — run the
+  worktree's own copy (`<worktree>/.claude/skills/nixos-dry-run/scripts/dry-run.sh`). And
+  `git add` any **new** files first: flakes only see git-tracked files, so an untracked file
+  is invisible to the dry-run (it passes or fails as if the file did not exist).
+
+See `references/gotchas.md` for the keyword-heuristic caveat, the TUI-output parsing tip, the no-host-argument limitation, and the worktree/untracked-file details.

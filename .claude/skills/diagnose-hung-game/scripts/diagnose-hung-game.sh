@@ -59,7 +59,13 @@ case "$MODE" in
       JOURNAL_PATTERN="${JOURNAL_PATTERN}|${GAME_NAME}"
     fi
     echo "=== Steam/Proton/reaper/crashpad process chain ==="
-    ps aux | grep -i -E "reaper|proton|steam.exe|steamwebhelper|SteamLaunch|start_protected_game|crashpad" | grep -v grep
+    # Drop noise that matches the keywords but is never part of the chain:
+    #   - grep itself and this script's own invocation line (its command line holds
+    #     "diagnose-hung-game.sh --proton-chain", which self-matches "proton");
+    #   - kernel threads (ps aux shows their command as "[name]" in column 11), e.g.
+    #     "[oom_reaper]" and the many "[kworker/N:M-wg-crypt-proton0]" WireGuard workers.
+    ps aux | grep -i -E "reaper|proton|steam.exe|steamwebhelper|SteamLaunch|start_protected_game|crashpad" \
+      | grep -v -E "grep|diagnose-hung-game\.sh" | awk '$11 !~ /^\[/'
     echo
     echo "=== Journal since $CRASH_TIME ==="
     journalctl --since "$CRASH_TIME" 2>&1 | grep -i -E "$JOURNAL_PATTERN"
