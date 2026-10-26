@@ -256,6 +256,77 @@ t new "delete of a trusted script (listed by gh under its old path) -> 2" 2 ".cl
 FAIL=api_base t new "settings.json untouched but base fetch fails -> 3 (trusted set unknown)" 3 ".claude/skills/a/SKILL.md" \
   "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
 
+echo "== new: renaming settings.json away"
+t new "rename .claude/settings.json away -> 2, old path named" 2 \
+  ".claude/settings.json -> .claude/skills/a/references/settings-old.json" \
+  "PR_RENAMED_FROM:" "GUARDRAIL: VIOLATION" "  .claude/settings.json (" "!GUARDRAIL: OK"
+t new "rename .claude/settings.json away together with a doc edit -> 2, only settings named" 2 \
+  $'.claude/skills/a/SKILL.md\n.claude/settings.json -> .claude/skills/a/references/settings-old.json' \
+  "GUARDRAIL: VIOLATION" "  .claude/settings.json (" "!  .claude/skills/a/SKILL.md ("
+BASE_SETTINGS=$TINY HEAD_SETTINGS=$T/tiny-df.json t regress "settings.json edited in place (not renamed) is still judged by the checker -> 0" 0 \
+  $'.claude/skills/a/SKILL.md\n.claude/settings.json' "GUARDRAIL: OK" "Bash(df -h *)"
+
+echo "== new: the base settings.json must have a permissions.allow array"
+echo '{}' > "$T/b-empty-obj.json"
+echo '[]' > "$T/b-empty-arr.json"
+echo 'null' > "$T/b-null.json"
+echo '{"message":"Not Found"}' > "$T/b-api-error.json"
+echo '{"permissions":{}}' > "$T/b-no-allow.json"
+echo '{"permissions":{"allow":null}}' > "$T/b-allow-null.json"
+echo '{"permissions":{"allow":"Bash(ls *)"}}' > "$T/b-allow-string.json"
+echo '{"permissions":{"allow":[]}}' > "$T/b-allow-empty.json"
+for b in b-empty-obj b-empty-arr b-null b-api-error b-no-allow b-allow-null b-allow-string; do
+  BASE_SETTINGS=$T/$b.json t new "base settings $b, doc-only PR -> 3, never OK" 3 ".claude/skills/a/SKILL.md" \
+    "GUARDRAIL: NOT EVALUATED" "permissions.allow" "!GUARDRAIL: OK"
+done
+BASE_SETTINGS=$T/b-api-error.json t new "stripped base + edit of secret-scan.sh -> 3, not 0" 3 ".claude/skills/secret-scan/scripts/secret-scan.sh" \
+  "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+BASE_SETTINGS=$T/b-empty-obj.json HEAD_SETTINGS=$T/tiny-df.json t new "stripped base with settings.json in the PR -> 3, not judged" 3 \
+  $'.claude/skills/a/SKILL.md\n.claude/settings.json' "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: VIOLATION" "!GUARDRAIL: OK"
+BASE_SETTINGS=$T/b-allow-empty.json t regress "base with an empty allow array is still valid -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+
+echo "== new: other spellings of the repo path in settings strings"
+mk_hook() { jq -nc --arg c "$2" '{permissions:{allow:["Bash(ls *)"]},hooks:{SessionStart:[{hooks:[{type:"command",command:$c}]}]}}' > "$1"; }
+mk_hook "$T/hook-projdir.json" 'bash $CLAUDE_PROJECT_DIR/.claude/skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-projdir-q.json" 'bash "$CLAUDE_PROJECT_DIR"/.claude/skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-projdir-braced-q.json" 'bash "${CLAUDE_PROJECT_DIR}/.claude/skills/foo/scripts/hook.sh"'
+mk_hook "$T/hook-home-q.json" 'bash "$HOME"/.claude/skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-home-braced-q.json" 'bash "${HOME}"/.claude/skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-home-nixos-q.json" 'bash "$HOME/NixOS/.claude/skills/foo/scripts/hook.sh"'
+mk_hook "$T/hook-bare-dotfiles.json" 'bash dotfiles/bosko/claude/skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-dot-slash.json" 'bash ./.claude/skills/foo/scripts/hook.sh'
+BASE_SETTINGS=$T/hook-projdir.json t new '$CLAUDE_PROJECT_DIR/.claude/... hook script edited -> 2' 2 ".claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt" "hook.sh"
+BASE_SETTINGS=$T/hook-projdir-q.json t new '"$CLAUDE_PROJECT_DIR"/.claude/... hook script edited -> 2' 2 ".claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-projdir-braced-q.json t new '"${CLAUDE_PROJECT_DIR}/.claude/..." hook script edited -> 2' 2 ".claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-home-q.json t new '"$HOME"/.claude/... hook script edited (dotfiles copy) -> 2' 2 "dotfiles/bosko/claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-home-braced-q.json t new '"${HOME}"/.claude/... hook script edited (dotfiles copy) -> 2' 2 "dotfiles/bosko/claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-home-nixos-q.json t regress '"$HOME/NixOS/.claude/..." hook script edited -> 2' 2 ".claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-bare-dotfiles.json t new "bare dotfiles/bosko/claude/... hook script edited -> 2" 2 "dotfiles/bosko/claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-dot-slash.json t regress "./.claude/... hook script edited -> 2 (already handled)" 2 ".claude/skills/foo/scripts/hook.sh" \
+  "GUARDRAIL: VIOLATION" "without a permission prompt"
+add_entry "$T/head-evil-projdir.json" 'Bash($CLAUDE_PROJECT_DIR/.claude/skills/x/scripts/evil.sh *)'
+add_entry "$T/head-evil-home-q.json" 'Bash("$HOME"/.claude/skills/x/scripts/evil.sh *)'
+add_entry "$T/head-evil-bare.json" 'Bash(bash dotfiles/bosko/claude/skills/x/scripts/evil.sh *)'
+HEAD_SETTINGS=$T/head-evil-projdir.json t new 'add evil.sh + $CLAUDE_PROJECT_DIR entry -> 2' 2 \
+  $'.claude/skills/x/scripts/evil.sh\n.claude/settings.json' "GUARDRAIL: VIOLATION" "  .claude/skills/x/scripts/evil.sh ("
+HEAD_SETTINGS=$T/head-evil-home-q.json t new 'add evil.sh + "$HOME"/.claude entry (dotfiles path) -> 2' 2 \
+  $'dotfiles/bosko/claude/skills/x/scripts/evil.sh\n.claude/settings.json' "GUARDRAIL: VIOLATION" "  dotfiles/bosko/claude/skills/x/scripts/evil.sh ("
+HEAD_SETTINGS=$T/head-evil-bare.json t new "add evil.sh + bare dotfiles/... entry -> 2" 2 \
+  $'dotfiles/bosko/claude/skills/x/scripts/evil.sh\n.claude/settings.json' "GUARDRAIL: VIOLATION" "  dotfiles/bosko/claude/skills/x/scripts/evil.sh ("
+BASE_SETTINGS=$T/hook-projdir.json t regress "another script of a different skill next to a \$CLAUDE_PROJECT_DIR hook -> 0" 0 \
+  ".claude/skills/bar/scripts/other.sh" "GUARDRAIL: OK"
+BASE_SETTINGS=$T/hook-projdir.json t regress "same skill, non-script file next to a \$CLAUDE_PROJECT_DIR hook -> 0" 0 \
+  ".claude/skills/foo/references/notes.md" "GUARDRAIL: OK"
+BASE_SETTINGS=$T/hook-home-q.json t regress "a bare quoted \$HOME alone maps to nothing, other skill docs stay 0" 0 \
+  $'.claude/skills/a/SKILL.md\ndotfiles/bosko/claude/skills/bar/scripts/other.sh' "GUARDRAIL: OK"
+
 echo "== new: no over-flagging of unrelated skills"
 t new "unrelated skill SKILL.md + references + scripts (real allow list) -> 0" 0 \
   $'.claude/skills/unrelated-skill/SKILL.md\n.claude/skills/unrelated-skill/references/gotchas.md\n.claude/skills/unrelated-skill/scripts/helper.sh\ndotfiles/bosko/claude/skills/another/SKILL.md' \
