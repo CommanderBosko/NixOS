@@ -20,3 +20,18 @@
   (e.g. `natalie-laptop`, `vpn-server`), use `deep-eval-check` (every `.flakeHosts` host) or
   `shared-module-check` (impact of a shared-file edit) instead — this tripped us up
   2026-07-18 trying to dry-run `natalie-laptop` from `gaming`.
+
+- **A git worktree needs its own copy of the script — and new files need `git add`.** Both bit
+  us in three separate sessions.
+  - `scripts/dry-run.sh` derives the flake path from its own location
+    (`FLAKE_PATH = <script dir>/../../..`), and `SKILL.md` points at the main checkout's copy
+    (`/home/bosko/NixOS/.claude/skills/nixos-dry-run/scripts/dry-run.sh`). Invoked that way from
+    inside a worktree it prints `Flake: /home/bosko/NixOS` and evaluates the **main checkout**,
+    not your worktree's edits — so it "passes" without having tested your change. Run the
+    worktree's own copy instead
+    (`<worktree>/.claude/skills/nixos-dry-run/scripts/dry-run.sh`) and check the `Flake:` line
+    it prints at the top is the worktree path.
+  - Flakes only see **git-tracked** files. A brand-new `.nix` file (or skill file) that has not
+    been `git add`ed is invisible to the evaluation, so a dry-run can pass — or fail with a
+    confusing "file not found" on the import — as if the file did not exist. `git add` new files
+    before the dry-run (staging is enough; no commit needed).
