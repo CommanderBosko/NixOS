@@ -1,6 +1,6 @@
 ---
 name: session-closer
-description: Close out a work session — summarize everything done, update project docs, and push to GitHub. Use when the user says "close the session", "close out the session", "end of day", "I'm done for the day", "wrap up the session", or "end the session".
+description: Close out a work session — summarize everything done, update project docs, push to GitHub, and land the close PR when main is protected. Use when the user says "close the session", "close out the session", "end of day", "I'm done for the day", "wrap up the session", or "end the session".
 ---
 
 # Session Closer
@@ -209,8 +209,19 @@ GitHub," unlike a bare "push" reaching `git-push` directly.)
    End the commit message body with a `Co-Authored-By:` trailer using whatever model name the
    harness's own Bash-tool commit-message instructions specify (e.g. "Claude Sonnet 5") — don't
    hardcode a specific model name here, it will drift the next time the underlying model changes.
-3. Push: run the git-push skill's `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` (path pattern per `~/.claude/skills/lib/script-paths.md`; never `--force`, never `--no-verify`). It falls back to a PR branch when the default branch is protected; report that PR URL and that merging is `land-prs`'s job.
+3. Push: run the git-push skill's `/home/bosko/.claude/skills/git-push/scripts/push.sh execute` (path pattern per `~/.claude/skills/lib/script-paths.md`; never `--force`, never `--no-verify`). It falls back to a PR branch when the default branch is protected; note the PR URL it prints for STEP 7.
 4. Confirm the push succeeded and report the final commit hash.
+
+---
+
+## STEP 7 — Land the close PR
+
+Runs last. It applies only when STEP 6's `push.sh execute` fell back to a PR and printed a `…/pull/N` URL. Otherwise skip it and say why in the report: the close pushed straight to the default branch, there was nothing to push, or there is no remote.
+
+1. Invoke the `land-prs` skill with that PR's number (`${url##*/}`), e.g. `land-prs 67`. Always pass the number: bare `land-prs` discovers every open PR in the repo and offers to merge all of them, not just this close.
+2. Let `land-prs` run its own flow, including its AskUserQuestion merge confirmation and CI wait. STEP 6's "no confirmation needed" covers the push only, so don't pre-answer the merge gate.
+3. If `land-prs` stops (red CI, conflict, the user picks Cancel or Stop), leave the PR open and report its URL and the reason. The close commit stays safe on the PR branch. Don't retry, force, or resolve conflicts.
+4. When it lands, local `main` is fast-forwarded and the merged branch is cleaned up by `land-prs`. Report the merge-commit SHA it prints in the close report.
 
 ---
 
@@ -268,4 +279,4 @@ Hit an unexpected script path 404, a stale transcript cutoff, an oversized `proj
 
 - `assets/session-summary-template.md` — the `## Session: [DATE] — [Brief Session Title]` entry template used in STEP 4. Read it, fill its `[...]` placeholders from this session's actual work, and prepend the result to `session-summary.md`.
 - `assets/readme-template.md` — the `README.md` section skeleton used in STEP 5. Read it and use it to fill/refresh the project's `README.md`, preserving existing accurate sections.
-- `assets/close-report-template.md` — the final "Output to the user" report shape used in STEP 6. Read it, fill its `[...]` placeholders from this session's actual work, and print the result.
+- `assets/close-report-template.md` — the final "Output to the user" report shape, printed after STEP 7. Read it, fill its `[...]` placeholders from this session's actual work, and print the result.

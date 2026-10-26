@@ -5,7 +5,8 @@
 📁 Files Changed: [count]
 💾 Commits Pushed: [count]
 📝 Docs Updated: project-state.md, README.md, session-summary.md
-🚀 Pushed to: origin/main ([commit hash])
+🚀 Pushed to: [origin/main | origin/pr/<slug>] ([commit hash])
+🔀 PR: [URL] — [merged ([merge sha]) | left open: [reason] | n/a, pushed direct]
 
 🎯 Next Session Focus:
   - [top 2-3 next steps]
