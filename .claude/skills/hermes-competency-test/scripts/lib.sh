@@ -138,6 +138,31 @@ startup_failure_reason() {
   echo "${line:-no output}"
 }
 
+# taker_crashed <rc> <stream-file>: true if a calibration `claude -p` died instead of finishing, so the
+# repeat measured nothing: a non-zero exit that isn't the timeout (124/137, which is the model being slow
+# and is scored), or a clean exit that wrote no stream at all. Such a repeat is an infrastructure error;
+# grading its empty output would record a genuine 0 for Sonnet.
+taker_crashed() {
+  local rc="$1" stream="$2"
+  if [ "$rc" -ne 0 ]; then
+    [ "$rc" -ne 124 ] && [ "$rc" -ne 137 ]
+    return
+  fi
+  ! grep -q '^{' "$stream" 2>/dev/null
+}
+
+# crash_reason <stderr-file> <stream-file>: one line saying why a taker died. Falls back to the stream's
+# error result event, which is where `claude -p --output-format stream-json` reports API/credit errors.
+crash_reason() {
+  local r
+  r=$(startup_failure_reason "$1")
+  if [ "$r" = "no output" ]; then
+    r=$(jq -r 'select(.type == "result") | .result // empty' "$2" 2>/dev/null | head -n 1)
+    r="${r:-no output}"
+  fi
+  echo "${r:0:200}"
+}
+
 # infra_should_abort <attempted> <errors> <consecutive-errors>: true when the harness, not the model,
 # is failing (3 infrastructure errors in a row, or at least 20% of 10+ attempts).
 infra_should_abort() {

@@ -34,6 +34,13 @@ done
 nix build --no-link nixpkgs#typescript nixpkgs#shellcheck nixpkgs#bubblewrap >/dev/null 2>&1 \
   || problems+=("could not fetch typescript/shellcheck/bubblewrap via nix")
 
+# A run already in progress would share the sandbox and test home. Checked before validation, which
+# writes baseline.json into the key dir that the running run hashes and guards: validating during a run
+# would show up as a critical key-dir change in its repeats.
+if [ -e "$WORK_DIR/.lock" ] && kill -0 "$(cat "$WORK_DIR/.lock" 2>/dev/null)" 2>/dev/null; then
+  problems+=("another run is in progress (pid $(cat "$WORK_DIR/.lock"))")
+fi
+
 # Items drift when the repo or the world changes under them (code-08 patches the committed
 # modules/audio.nix; live items read today's network). Re-validating answer keys catches that.
 if [ ${#problems[@]} -eq 0 ] && [ "${HC_SKIP_VALIDATE:-0}" != 1 ]; then
@@ -41,11 +48,6 @@ if [ ${#problems[@]} -eq 0 ] && [ "${HC_SKIP_VALIDATE:-0}" != 1 ]; then
     problems+=("item validation failed:")
     while IFS= read -r l; do problems+=("  $l"); done < <(grep '^FAIL' <<<"$vout")
   fi
-fi
-
-# A run already in progress would share the sandbox and test home.
-if [ -e "$WORK_DIR/.lock" ] && kill -0 "$(cat "$WORK_DIR/.lock" 2>/dev/null)" 2>/dev/null; then
-  problems+=("another run is in progress (pid $(cat "$WORK_DIR/.lock"))")
 fi
 
 if [ ${#problems[@]} -gt 0 ]; then

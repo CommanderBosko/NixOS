@@ -101,6 +101,13 @@ fi
 [ -f "$RD/pids" ] && xargs -r kill <"$RD/pids" 2>/dev/null
 kill_test_procs
 
+# A calibration taker that crashed measured nothing: record an infrastructure error (excluded from the
+# scores, and counted by run-suite.sh toward its abort threshold) instead of grading its empty output as
+# a genuine 0. Done after teardown so the item's background processes are still cleaned up.
+if [ "$TAKER" = claude ] && taker_crashed "$rc" "$RD/stream.jsonl"; then
+  fail "claude -p crashed (exit $rc): $(crash_reason "$RD/stderr.txt" "$RD/stream.jsonl")"
+fi
+
 # 5. Capture what the agent produced.
 hash_paths "$SANDBOX_DIR" "${PROTECTED[@]}" >"$RD/protected.after"
 guard_hashes after
