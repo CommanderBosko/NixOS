@@ -60,4 +60,11 @@ grep -q $'^DECLINED\t' <<<"$OUT" || fail "near-identical declined candidate not 
 OUT="$("$CHECK" match zzqx "frobnicate quux wibble")"
 [ "$OUT" = "no-overlap" ] || fail "unrelated candidate should still be no-overlap after a decline"
 
+# --- a candidate whose words are all stopwords/too short still gets the same-name check ---
+mkskill "$HOME/.claude/skills" go "Run the thing"
+OUT="$("$CHECK" match go "a to do")"
+grep -q $'^STRONG\t[0-9.]*\tgo\tglobal\tsame-name$' <<<"$OUT" || fail "same-name hit lost when the candidate has no scorable words"
+OUT="$("$CHECK" match nothing-here "a to do")"
+[ "$OUT" = "no-overlap" ] || fail "empty-word candidate with no name hit should be no-overlap"
+
 echo "PASS"

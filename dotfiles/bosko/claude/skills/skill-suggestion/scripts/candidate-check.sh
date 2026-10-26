@@ -98,7 +98,8 @@ want wants then than them they will would should could also only over under abou
       { name[NR] = $1; scope[NR] = $2; text[NR] = tolower($1 " " $3); delete D
         toks($1 " " $3, D); for (w in D) { df[w]++; has[NR, w] = 1 } docs = NR }
       END {
-        if (ctotal == 0) { print "no-overlap"; exit }
+        # No early-out on an empty candidate word set: a same-name or trigger hit must still
+        # surface (wtotal stays 0, so every score is 0 and only those two checks can fire).
         for (w in C) wt[w] = log((docs + 1) / (df[w] + 1)) + 0.1
         for (w in C) wtotal += wt[w]
         for (i = 1; i <= docs; i++) {
