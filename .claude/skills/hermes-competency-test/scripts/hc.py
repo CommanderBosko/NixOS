@@ -21,6 +21,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 HOME = str(Path.home())
 PRIV_DIR = os.environ.get("HC_PRIV_DIR", f"{HOME}/.local/share/hermes-competency")
@@ -85,7 +86,8 @@ def normalize(run_dir, taker):
                 final = ev.get("text")
         else:  # claude stream-json
             msg = ev.get("message") or {}
-            content = msg.get("content") if isinstance(msg.get("content"), list) else []
+            raw_content = msg.get("content")
+            content = raw_content if isinstance(raw_content, list) else []
             if t == "assistant":
                 for c in content:
                     if c.get("type") == "tool_use":
@@ -350,9 +352,11 @@ def _dir_digest(d, budget=12000, files=None):
 def grade(run_dir, item_dir, key_dir, model="sonnet"):
     rd, item, key = Path(run_dir), Path(item_dir), Path(key_dir)
     rubric = load_json(key / "rubric.json")
+    if not isinstance(rubric, dict):
+        raise SystemExit(f"hc grade: no usable rubric at {key / 'rubric.json'}")
     events = load_json(rd / "events.json", [])
     check = load_json(rd / "check.json", {}) or {}
-    detect_out = load_json(rd / "detect.json", {"critical": [], "suspected": [], "void": False})
+    detect_out: dict[str, Any] = load_json(rd / "detect.json", {"critical": [], "suspected": [], "void": False})
     exit_info = load_json(rd / "exit.json", {})
     criteria = rubric["criteria"]
     # Doing nothing must score 0. baseline.json (written by validate-items.sh from the untouched
@@ -442,12 +446,13 @@ def grade(run_dir, item_dir, key_dir, model="sonnet"):
                     data = json.loads(data)
                 mu = env_json.get("modelUsage") or {}
                 result["grader_model"] = next(iter(mu), model)
-                if data:
+                if isinstance(data, dict) and data:
                     break
-            except ValueError:
-                pass
+                data = None  # structured_output that isn't a JSON object is a grader failure
+            except (ValueError, AttributeError, TypeError):
+                data = None
             last_err = (out.stderr or out.stdout)[-300:]
-        if not data:
+        if not isinstance(data, dict) or not data:
             result["error"] = f"grader failed: {last_err}"
         else:
             got = {j["id"]: j for j in data.get("judge", [])}
@@ -541,10 +546,13 @@ def score(run_root, append_history=False):
     # Coverage: anything that makes a number rest on less data than the suite defines. A run with
     # any of these is "partial" and finish-run.sh won't put it in the history without an override.
     warnings = []
-    planned = meta.get("repeats") if isinstance(meta.get("repeats"), int) and meta.get("repeats") > 0 else None
+    planned = meta.get("repeats")
+    planned = planned if isinstance(planned, int) and planned > 0 else None
     # Which items the run was supposed to cover: the manifest's list for full/quick; a custom (--items)
     # run has no list beyond the items it actually started.
-    suite_items = manifest.get({"full": "items", "quick": "quick"}.get(meta.get("mode"), ""), None)
+    mode = meta.get("mode")
+    suite_key = {"full": "items", "quick": "quick"}.get(mode) if isinstance(mode, str) else None
+    suite_items = manifest.get(suite_key) if suite_key else None
     for iid, r in sorted(item_rows.items()):
         if r["status"] != "ok":
             warnings.append(f"{iid}: not scored ({r['status']}: {r['errors']} infrastructure errors, {r['voided']} voided, "
@@ -589,7 +597,8 @@ def score(run_root, append_history=False):
     summary = {"run_id": meta.get("run_id"), "date": meta.get("date"), "mode": meta.get("mode"),
                "taker": meta.get("taker"), "suite_version": manifest.get("version"),
                "hermes_version": meta.get("hermes_version"), "model": meta.get("model"),
-               "grader_model": sorted({load_json(g, {}).get("grader_model") for g in root.glob("items/*/r*/grade.json")} - {None}),
+               "grader_model": sorted(m for m in {load_json(g, {}).get("grader_model") for g in root.glob("items/*/r*/grade.json")}
+                                      if m is not None),
                "hashes": meta.get("hashes"), "supervised_net": supervised,
                "total": total, "categories": cat_rows, "items": item_rows, "delta": delta,
                "noise_floor": floor, "warnings": warnings, "partial": bool(warnings)}

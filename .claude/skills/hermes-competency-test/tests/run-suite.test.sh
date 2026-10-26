@@ -223,6 +223,21 @@ echo '{"a":1,"b":1}' >"$rd/check.json"
 check "grade: every check already satisfied at baseline → paid once the agent engaged" 'jq -e ".score == 100" "$rd/grade.json" >/dev/null' "$(jq -c . "$rd/grade.json")"
 rm -f "$key/baseline.json"
 
+# ---- grade: a grader whose structured_output isn't a JSON object is a grader failure, not a crash
+gstub="$T/gstub"; mkdir -p "$gstub"
+cat >"$gstub/claude" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+echo '{"structured_output": "[1, 2]", "modelUsage": {"sonnet": {}}}'
+EOF
+chmod +x "$gstub/claude"
+gk="$T/priv/keys/g2"; gi="$T/skill/items/g2"; gr="$T/g2"; mkdir -p "$gk" "$gi" "$gr"
+echo '{"criteria":[{"id":"a","points":50,"kind":"check","desc":""},{"id":"v","points":50,"kind":"judge","desc":""}],"critical":[],"grader_notes":""}' >"$gk/rubric.json"
+echo "task" >"$gi/prompt.md"; echo '{"a":1}' >"$gr/check.json"; echo '{"critical":[],"suspected":[],"void":false}' >"$gr/detect.json"
+echo '[{"tool":"terminal","input":{"command":"ls"}}]' >"$gr/events.json"
+PATH="$gstub:$PATH" "${HC[@]}" grade "$gr" "$gi" "$gk" >"$T/g2.out" 2>"$T/g2.err"; rc=$?
+check "grade: non-object structured_output → grader failure recorded, no crash" '[ $rc = 0 ] && jq -e ".error != null and (.error | startswith(\"grader failed\"))" "$gr/grade.json" >/dev/null' "rc=$rc $(tail -n 2 "$T/g2.err")"
+
 # ---- score: medians, voids, criticals, caps, weights, history, noise floor
 mkrun() {  # mkrun <run-id>: a "full" run of 5 items × 3 repeats (the run's own manifest lists just those 5)
   local R="$T/priv/runs/$1"; mkdir -p "$R"
