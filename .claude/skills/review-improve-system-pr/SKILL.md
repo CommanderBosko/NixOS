@@ -16,11 +16,14 @@ recently opened (resolved automatically in Step 1).
 
 ### 1. Find the PR and check the guardrail
 
-Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/`/`references/` subdirectory. The one exception is `.claude/settings.json`, which passes only when the PR purely adds scoped entries to `permissions.allow` (no removals, no deny/ask/hooks edits, no `Bash(*)`-style wildcards — checked by `check-settings-diff.sh`); on a pass the script lists them under `SETTINGS_ALLOW_ADDED:`, so surface those in Step 2.
+Run `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` (repo-root-relative — a bare `scripts/...` path 404s from the actual Bash-tool cwd). It finds the open PR from the routine by head branch (`improve-system/weekly-*` — the routine's PR titles have already drifted once between runs, so the branch name is the only stable match) and checks every changed file against the routine's auto-apply boundary: path under `.claude/skills/` or `dotfiles/bosko/claude/skills/`, and either named `SKILL.md` or under a `scripts/`/`assets/`/`references/` subdirectory. The one exception is `.claude/settings.json`, which passes only when the PR purely adds scoped entries to `permissions.allow` (no removals, no deny/ask/hooks edits, no `Bash(*)`-style wildcards, and no entry that grants a high-power command such as `rm`/`sudo`/`curl`/`gh pr merge`, a wildcard over `git`/`gh`/`nix`, a path outside the repo or `~/.claude`, an interpreter without a concrete repo script, a credential location, or an MCP tool that writes or sends — checked by `check-settings-diff.sh`); on a pass the script lists them under `SETTINGS_ALLOW_ADDED:`, so surface those in Step 2. Even a passing allow entry widens what runs without a prompt, so read each one and say so — "the guardrail passed" is not "these are safe".
+
+The script also prints `PR_HEAD_SHA:` — the exact commit it checked. Keep that SHA; Step 4 pins the merge to it.
 
 Interpret the exit code:
-- **1 (no PR found)** — this is a normal, expected outcome most weeks. Report "nothing to review" and stop here.
-- **2 (guardrail violation)** — a changed file falls outside the boundary (e.g. touches a `.nix` file, or a path outside those two skill dirs). Stop. Do not proceed to merge. Report the PR number and the offending file(s) to the user as needing manual review, and explain why the script flagged it.
+- **1 (no PR found)** — this is a normal, expected outcome most weeks. Report "nothing to review" and stop here. (Only a clean `gh` response gets exit 1; a `gh` failure is exit 3, never "no PR".)
+- **2 (guardrail violation)** — a changed file falls outside the boundary (e.g. touches a `.nix` file, or a path outside those two skill dirs, or a `settings.json` allow entry the second-pass check refused). Stop. Do not proceed to merge. Report the PR number and the offending file(s) to the user as needing manual review, and explain why the script flagged it.
+- **3 (could not evaluate)** — `gh` failed (auth, network, API) or returned data the script would not trust (no files, a file list that may be truncated). The guardrail was **not** checked and no `GUARDRAIL: OK` was printed. Stop. Report the `ERROR:` line verbatim and suggest `gh auth status`; never describe this as "nothing to review" or retry past it by hand.
 - **0 (OK)** — guardrail holds. Continue to step 2.
 
 ### 2. Show the diff
@@ -29,26 +32,44 @@ Run `gh pr diff <number> --repo CommanderBosko/NixOS` and summarize it in plain 
 
 ### 3. Confirm before merging
 
-Gate via **AskUserQuestion**: "Merge this PR" (recommended, once the diff looks sound) vs "Hold off, I'll review manually". Never merge without this explicit checkpoint — these are AI-generated changes to the skill files this user relies on every session, and the guardrail check in step 1 only proves the PR touched the *right files*, not that the *content* is correct.
+Gate via **AskUserQuestion**: "Merge this PR once CI is green" (recommended, once the diff looks sound) vs "Hold off, I'll review manually". Never merge without this explicit checkpoint — these are AI-generated changes to the skill files this user relies on every session, and the guardrail check in step 1 only proves the PR touched the *right files*, not that the *content* is correct. A confirmation covers only the commit you showed (`PR_HEAD_SHA`) and is conditional on CI passing.
 
 - **Hold off** — stop cleanly. Report the PR number and URL for the user to review later themselves.
 - **Merge this PR** — continue to step 4.
 
-### 4. Merge
+### 4. Wait for CI, then merge
 
-Run `gh pr merge <number> --squash --repo CommanderBosko/NixOS` (matches the squash-merge convention already used for this routine's PRs).
+1. **Wait for CI** as its own Bash call with an explicit `timeout: 600000` (the `flake check` deep-eval job normally takes ~2-3 minutes, but the Bash tool's default 120000ms would cut the watch off):
+
+   ```bash
+   gh pr checks <number> --repo CommanderBosko/NixOS --watch --fail-fast
+   ```
+
+   Only exit 0 (every check passed or was skipped) lets you continue. A failed check, "no checks reported", a timeout, or still-pending checks (exit 8) means **stop without merging** — report which check and its link, and leave the PR for the user. Do not retry into a merge and do not offer to merge past a red or missing CI; the user can merge it themselves. (`land-prs` has no CI wait of its own, so this step is the only gate.)
+
+2. **Merge, pinned to the reviewed commit**, using the `PR_HEAD_SHA` from Step 1 (never re-read the head SHA from GitHub here — that would pin to whatever is there now, including a commit pushed after you reviewed):
+
+   ```bash
+   gh pr merge <number> --squash --match-head-commit <PR_HEAD_SHA> --repo CommanderBosko/NixOS
+   ```
+
+   Squash matches the convention already used for this routine's PRs. If GitHub refuses because the head moved, **stop**: the PR changed after the guardrail check and diff review, so re-run from Step 1 instead of retrying without the pin.
+
+3. **Confirm it landed:** `gh pr view <number> --repo CommanderBosko/NixOS --json state,mergeCommit --jq '.state + " " + .mergeCommit.oid[0:7]'` should print `MERGED <sha>`; report anything else as a failure.
 
 Remind the user: for skills under `dotfiles/bosko/claude/skills/` (repo-managed/global scope), the `~/.claude/skills/<name>/` symlink only reflects this merge after `nh os boot /home/bosko/NixOS` **+ reboot** — the repo copy is current immediately, but the live symlinked skill isn't until then. Skills under `.claude/skills/` (project-local) are live immediately.
 
 ### 5. Report
 
-Report: the PR number, files changed, and the outcome — merged / held for manual review (guardrail violation) / held for manual review (user chose to hold off) / nothing to review.
+Report: the PR number, files changed, and the outcome — merged (with the merge SHA) / held for manual review (guardrail violation) / not evaluated (gh failure, exit 3) / held back (CI not green, or the head moved since review) / held for manual review (user chose to hold off) / nothing to review.
 
 ## Scripts
 
-- `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` — finds the open weekly improve-system PR and checks its changed files against the auto-apply guardrail; read-only, exit 0/1/2 as described in Step 1.
-- `.claude/skills/review-improve-system-pr/scripts/check-settings-diff.sh <base.json> <head.json>` — called by the script above; decides whether a `.claude/settings.json` change is purely additive to `permissions.allow`. Pure local check, exit 0 (prints `ADDED:` lines) or 1 (prints `REASON:`).
+- `.claude/skills/review-improve-system-pr/scripts/find-and-check-pr.sh` — finds the open weekly improve-system PR and checks its changed files against the auto-apply guardrail; read-only, exit 0/1/2/3 as described in Step 1, and prints `PR_HEAD_SHA:` for Step 4's merge pin.
+- `.claude/skills/review-improve-system-pr/scripts/check-settings-diff.sh <base.json> <head.json>` — called by the script above; decides whether a `.claude/settings.json` change is purely additive to `permissions.allow` and free of over-broad or high-power entries. Pure local check, exit 0 (prints `ADDED:` lines) or 1 (prints `REASON:`).
 
 ## Gotchas
 
 - Run Step 2's `gh pr diff` without a multi-file pathspec — it accepts at most one path after `--` (see `references/gotchas.md`).
+- Run Step 4's CI watch as its own Bash call with `timeout: 600000`; the default 120000ms ends the watch mid-run, and a timeout is "not green", not "probably fine".
+- `check-settings-diff.sh` is a fail-closed denylist, not a proof of safety. A refusal means "a human reviews this entry"; a pass still needs the Step 2 read-through (see `references/gotchas.md`).
