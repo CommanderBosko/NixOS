@@ -27,3 +27,6 @@ Mode ON). Each entry: what it is, where, and why it's safe.
   (`hosts/vpn-server/configuration.nix`)** — remote deploys SSH in as bosko and run sudo
   non-interactively; a password prompt would stall the batch session. The only NOPASSWD
   host, and SSH there is key-only. See [[feedback_sudo_gated_skill_steps]]. Accepted 2026-10-19.
+- **gaming Hermes `api_key = "local"` (`hosts/gaming/hermes-agent.nix`)** — a non-empty
+  dummy for the localhost-only llama server at `127.0.0.1:8080` (the OpenAI client rejects
+  an empty key); it authenticates nothing and is not a credential. Accepted 2026-10-26.
