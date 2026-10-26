@@ -23,7 +23,7 @@ Report the verdict of the most recent GitHub Actions `flake check` run for `Comm
 3. **On failure:** the script already printed the failing step's log tail — interpret it. Identify which host failed to evaluate (the deep-eval step groups output per host with `::group::<host>`) and, if the error names a package or option, say which one. Suggest the next move — usually reproducing locally with `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
 
 4. **Edge cases:**
-   - Script exits **2** / prints `ERROR: 'gh …' failed` → `gh` could not talk to GitHub (expired auth, no network, rate limit). Report that and relay gh's message (usually `gh auth login -h github.com`); do **not** claim CI is red or that the workflow never fired.
+   - Script exits **2** / prints `ERROR: 'gh …' failed` → `gh` could not talk to GitHub (expired auth, no network, rate limit — including a `gh run watch` that dropped mid-run: the script re-queries the run's conclusion and only treats a real `failure`/`cancelled`/… conclusion as CI red). Report that and relay gh's message (usually `gh auth login -h github.com`); do **not** claim CI is red or that the workflow never fired.
    - Script prints "No runs found for workflow … (gh succeeded; …)" → `gh` worked and the workflow genuinely has no runs (unexpected — it has runs on record since its introduction on 2026-07-02 — so suspect the workflow name/trigger); say so.
    - Run `cancelled` → usually superseded by a newer push (the workflow's concurrency group cancels in-flight runs); check for a newer run and report that one instead.
 

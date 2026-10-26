@@ -68,8 +68,35 @@ echo "==> Run $RUN_ID — $BRANCH @ ${SHA:0:7} — $TITLE (status: $STATUS)"
 echo "Commit: $SHA"
 
 if [ "$STATUS" = "in_progress" ] || [ "$STATUS" = "queued" ]; then
-  gh run watch "$RUN_ID" --repo "$REPO" --exit-status --interval 20
+  # stderr is captured (watch's progress goes to stdout) so a gh/network error can be
+  # told apart from a genuinely red run: `--exit-status` makes watch exit non-zero for
+  # BOTH a failed run and a dropped connection / expired auth.
+  gh run watch "$RUN_ID" --repo "$REPO" --exit-status --interval 20 2>"$GH_ERR"
   EXIT_CODE=$?
+  if [ "$EXIT_CODE" -ne 0 ]; then
+    WATCH_EXIT=$EXIT_CODE
+    # Ask GitHub for the run's real conclusion; only that decides "CI is red".
+    # Appending (>>) keeps the watch error text alongside any follow-up error.
+    CONCLUSION=$(gh run view "$RUN_ID" --repo "$REPO" --json conclusion --jq '.conclusion // ""' 2>>"$GH_ERR")
+    GH_STATUS=$?
+    [ "$GH_STATUS" -ne 0 ] && gh_failed "'gh run watch' (then 'gh run view')" "$WATCH_EXIT"
+    case "$CONCLUSION" in
+      "")
+        echo "ERROR: 'gh run watch' exited $WATCH_EXIT but run $RUN_ID has no conclusion yet — the watch was interrupted, not the run." >&2
+        gh_failed "'gh run watch'" "$WATCH_EXIT"
+        ;;
+      success)
+        echo "Note: 'gh run watch' exited $WATCH_EXIT but the run's conclusion is success."
+        EXIT_CODE=0
+        ;;
+      *)
+        # A real CI failure (failure/cancelled/timed_out/…); show any watch stderr too.
+        [ -s "$GH_ERR" ] && cat "$GH_ERR" >&2
+        echo "Conclusion: $CONCLUSION"
+        EXIT_CODE=1
+        ;;
+    esac
+  fi
 else
   CONCLUSION=$(gh run view "$RUN_ID" --repo "$REPO" --json conclusion --jq '.conclusion' 2>"$GH_ERR")
   GH_STATUS=$?

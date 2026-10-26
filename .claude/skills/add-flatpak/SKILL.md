@@ -104,7 +104,7 @@ block as the template:
 Don't add `services.flatpak.enable` or anything else — `modules/flatpak.nix` already enables
 Flatpak on every desktop host; the host block only adds entries to the merged list.
 
-Use the Edit tool to insert the new line (or block) in the correct position. Do not rewrite the whole file — make a minimal, targeted edit.
+Use the Edit tool to append the new line at the end of the list (or add the new block as described above). Do not rewrite the whole file — make a minimal, targeted edit.
 
 ## Step 5 — Remind the user of next steps
 
