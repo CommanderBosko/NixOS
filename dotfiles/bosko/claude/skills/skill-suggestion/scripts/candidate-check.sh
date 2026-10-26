@@ -7,18 +7,27 @@
 # Usage:
 #   candidate-check.sh match <name> <goal> [trigger-phrase ...]
 #     Scores the candidate against every skill under ~/.claude/skills,
-#     ./.claude/skills and ./dotfiles/*/claude/skills (de-duplicated by skill name),
-#     plus the declined list. Prints one TSV line per hit, strongest first:
+#     ./.claude/skills and ./dotfiles/*/claude/skills (relative to the current directory;
+#     de-duplicated by skill name, first copy wins in that order), plus every declined
+#     candidate. Read-only. Prints one TSV line per hit, strongest first:
 #       <STRONG|PARTIAL|DECLINED>  <score>  <name>  <scope>  <reason>
-#     or the single line `no-overlap` if nothing clears the PARTIAL bar.
+#     or the single line `no-overlap` if nothing clears the PARTIAL bar. Exit 0 either way
+#     (a missing state file just means nothing has been declined yet); non-zero is a real error.
 #       STRONG   same name, a trigger phrase already in a skill's description, or
 #                >= 50% of the candidate's rarity-weighted words already covered
 #       PARTIAL  >= 30% covered -- extend/upgrade that skill instead of a new one
-#       DECLINED the user skipped a near-identical candidate before
+#       DECLINED the candidate hits a declined entry: same name, a trigger phrase (>= 6
+#                chars) inside the entry's name+goal, or >= 30% of its words covered. A
+#                declined entry is never reported as STRONG or PARTIAL; the scope column
+#                reads `declined` and the name column is the declined candidate's name.
 #   candidate-check.sh decline <name> <goal>
-#     Records a declined candidate so later runs stop re-proposing it.
+#     Appends ONE line to the state file: <date> TAB <project dir basename> TAB <name> TAB
+#     <goal> (tabs/newlines in name and goal flattened to spaces). Only name and goal are
+#     kept, never trigger phrases or steps. There is no expiry and no per-project
+#     scoping: later `match` runs in any project compare against it. To revive a declined
+#     candidate, delete its line from the state file.
 #   candidate-check.sh declined
-#     Lists the declined candidates (date, project, name, goal).
+#     Lists the declined candidates (date, project, name, goal), or `(none)`.
 #
 # State file: ${SKILL_SUGGESTION_STATE:-$HOME/.claude/state/skill-suggestion-declined.tsv}
 # (override only exists so the script can be tested against a throwaway file).
@@ -33,15 +42,21 @@ clean() { printf '%s' "$1" | tr '\t\r\n' '   '; }
 # Prints "<name>\t<scope>\t<description>" for every installed skill, first copy of a
 # name wins (global ~/.claude/skills, then project-local, then repo-owned dotfiles).
 list_skills() {
-  local base scope f name desc
-  for base in "$HOME/.claude/skills:global" ".claude/skills:project" dotfiles/*/claude/skills:repo; do
-    scope="${base##*:}"; base="${base%:*}"
+  local entry scope base f name desc d
+  local -a roots=("global:$HOME/.claude/skills" "project:.claude/skills")
+  # The repo tier needs a real glob: it has to expand as its own word, not inside a
+  # "scope:path" string (a quoted or suffixed glob never matches and the tier goes dead).
+  for d in dotfiles/*/claude/skills; do
+    if [ -d "$d" ]; then roots+=("repo:$d"); fi
+  done
+  for entry in "${roots[@]}"; do
+    scope="${entry%%:*}"; base="${entry#*:}"
     [ -d "$base" ] || continue
     for f in "$base"/*/SKILL.md; do
       [ -f "$f" ] || continue
       name="$(awk 'NR>1&&$0=="---"{exit} /^name:/{sub(/^name:[ ]*/,""); print; exit}' "$f")"
       desc="$(awk 'NR>1&&$0=="---"{exit} /^description:/{sub(/^description:[ ]*/,""); print; exit}' "$f")"
-      [ -n "$name" ] && printf '%s\t%s\t%s\n' "$name" "$scope" "$(clean "$desc")"
+      if [ -n "$name" ]; then printf '%s\t%s\t%s\n' "$name" "$scope" "$(clean "$desc")"; fi
     done
   done | awk -F'\t' '!seen[$1]++'
 }
@@ -54,7 +69,11 @@ case "$CMD" in
     CAND_TRIGGERS="$(printf '%s\n' "$@")"
     {
       list_skills
-      [ -f "$STATE" ] && awk -F'\t' 'NF>=4{printf "%s\tdeclined\t%s\n", $3, $4}' "$STATE"
+      # `if`, not `[ -f ] && awk`: a missing state file must leave the group's status 0, or
+      # pipefail turns "nothing declined yet" into a non-zero exit from the whole pipeline.
+      if [ -f "$STATE" ]; then
+        awk -F'\t' 'NF>=4{printf "%s\tdeclined\t%s\n", $3, $4}' "$STATE"
+      fi
     } | awk -F'\t' -v cname="$CAND_NAME" -v cgoal="$CAND_GOAL" -v ctrig="$CAND_TRIGGERS" '
       function toks(s, out,   n, i, w, parts) {
         s = tolower(s); gsub(/[^a-z0-9]+/, " ", s)

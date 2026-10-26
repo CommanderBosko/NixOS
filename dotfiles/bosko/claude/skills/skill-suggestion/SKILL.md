@@ -42,10 +42,10 @@ Then check each ranked candidate against what already exists. A duplicate of an 
 <skill-base-dir>/scripts/candidate-check.sh match <name> "<goal>" "<trigger 1>" "<trigger 2>" ...
 ```
 
-It prints `STRONG` / `PARTIAL` / `DECLINED` lines (strongest first) or `no-overlap`:
+It prints `STRONG` / `PARTIAL` / `DECLINED` lines (strongest first) or `no-overlap`, and exits 0 either way (including when nothing has ever been declined). Non-zero means a real script error, not "no match":
 - **STRONG** — drop the candidate and read the named skill. If the candidate is really a missing edge case in it, hand that to `skill-upgrade` as a Gotcha instead. Mention it in one line ("already covered by X").
 - **PARTIAL** — read the named skill. Keep the candidate only if it's a genuinely different workflow; otherwise propose extending that skill rather than a new one.
-- **DECLINED** — drop it; just count it in the step 4 summary.
+- **DECLINED** — the candidate matches an entry on the declined list (what that list holds is defined in step 4). The named entry is a candidate the user already said no to, not an installed skill. Drop it and just count it in the step 4 summary. It is never reported as STRONG or PARTIAL.
 - **no-overlap** — carry on.
 
 The match is keyword-based: a hit means *go read that skill*, not a verdict, and a miss doesn't prove the roster lacks the workflow — skim the skill list yourself if the candidate feels familiar. If every candidate gets dropped, say so plainly and stop.
@@ -60,7 +60,12 @@ Present each candidate to the user, concisely, most valuable first:
 
 Use the **AskUserQuestion** tool to ask which to proceed with (multi-select if there's more than one candidate), with options **Build it as proposed** (hand off to `new-skill` as-is), **Let me tweak it first** (gather the requested changes, then proceed), and **Skip it** (don't build anything) — applied per candidate the user selects. Don't ask this in free-form prose.
 
-Right after the answer, record every candidate that was **Skip it**-ed or left unselected so later runs don't re-propose it: `<skill-base-dir>/scripts/candidate-check.sh decline <name> "<goal>"`. Don't record **Let me tweak it first** candidates.
+Right after the answer, record each declined candidate with `<skill-base-dir>/scripts/candidate-check.sh decline <name> "<goal>"`, so later runs stop re-proposing it:
+- **Record** a candidate only if it was put to the user in this step and they picked **Skip it** for it, or they didn't select it at all (an unselected candidate counts as skipped).
+- **Don't record** a candidate that got **Build it as proposed** or **Let me tweak it first** (a tweak request is a yes to the workflow, even if the tweaked version is later dropped). Don't record one that step 3 already dropped as STRONG, PARTIAL or DECLINED, because the user never saw it. And don't record anything if the question was dismissed without an answer, since no answer is not a decision.
+- **What is stored:** one tab-separated line appended to `~/.claude/state/skill-suggestion-declined.tsv`: the date, the project directory name, the candidate name, and the goal you passed. Nothing else is kept, so trigger phrases and steps are not part of the match later. The file is shared across all projects and entries never expire.
+- **What a later `match` does with it:** the entry is scored like an installed skill whose name is the stored name and whose description is the stored goal. The same keyword rules as for an installed skill apply: same name, a trigger phrase found in the stored name and goal, or enough shared words. Any hit on it prints as `DECLINED` (see step 3), never as STRONG or PARTIAL. `match` only reads the file and never changes or removes an entry.
+- **Reviving a declined candidate:** `candidate-check.sh declined` lists the entries. Delete the entry's line from the file to make it proposable again. There is no `undecline` command.
 
 ### 5. Build them
 

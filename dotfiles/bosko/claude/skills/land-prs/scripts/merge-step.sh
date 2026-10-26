@@ -3,8 +3,12 @@
 # Every confirmation gate stays in SKILL.md; this script never asks and never loops over a chain.
 # Usage:
 #   merge-step.sh wait N [SECONDS]      — poll N's CI checks every 10s until all have finished (default
-#                                         cap 540s, under the 10-minute Bash limit). Exit 0 all passed
-#                                         (or none reported after a 60s grace), 1 one failed, 3 cap hit
+#                                         cap 540s). Call it with the Bash tool's `timeout: 600000`: a
+#                                         wait runs 2-3 minutes or more and the 120000 ms default would
+#                                         kill it mid-poll; keep SECONDS <= 540 so it ends inside the
+#                                         10-minute tool maximum. Exit 0 all passed (or no check ever
+#                                         appeared, after a 60s grace), 1 one failed, 3 cap hit with
+#                                         checks still pending, 4 `gh` kept failing so the state is unknown
 #   merge-step.sh merge N               — gh pr merge N --merge (no --delete-branch), then print
 #                                         "<state> <sha7>"; exit 1 unless the state is MERGED
 #   merge-step.sh retarget N            — gh pr edit N --base main, wait 3s, then run `check N`
@@ -15,7 +19,9 @@
 #   merge-step.sh prune                 — git fetch -q --prune && git branch -a
 # PR numbers accept "#N". Branch arguments may not be "main" or start with "-".
 # Exit: 0 ok; 1 a step didn't reach its expected result (see output); 2 usage error;
-#       3 `wait` hit its cap with checks still pending.
+#       3 `wait` hit its cap with checks still pending;
+#       4 `wait` could not read the checks: 5 consecutive `gh` failures, or the cap hit while the
+#         latest query was failing. Never reported as "pending" (3), because the state is unknown.
 set -euo pipefail
 
 usage() {
@@ -23,8 +29,10 @@ usage() {
   exit 2
 }
 
-POLL_SECS=10
-NO_CHECKS_GRACE_SECS=60
+# The two env overrides exist only so the tests can run `wait` in seconds, not minutes.
+POLL_SECS="${MERGE_STEP_POLL_SECS:-10}"
+NO_CHECKS_GRACE_SECS="${MERGE_STEP_NO_CHECKS_GRACE_SECS:-60}"
+MAX_QUERY_FAILURES=5   # consecutive failed `gh` queries before `wait` gives up (exit 4)
 
 # stdin: `gh pr view --json statusCheckRollup`. Prints "pass", "none", "pending <names>" or "fail <names>".
 # A CheckRun is pending until COMPLETED; a StatusContext is pending while PENDING/EXPECTED.
@@ -79,9 +87,14 @@ case "$MODE" in
     [[ "$limit" =~ ^[0-9]+$ ]] || usage
     start="$SECONDS"
     last=""
+    seen_checks=0   # 1 once any check has been observed in the rollup
+    failures=0      # consecutive failed (or empty-output) gh queries
     while :; do
-      if ! state="$(gh pr view "$n" --json statusCheckRollup | rollup_state)"; then
+      if state="$(gh pr view "$n" --json statusCheckRollup | rollup_state)" && [ -n "$state" ]; then
+        failures=0
+      else
         state="error"
+        failures=$((failures + 1))
       fi
       elapsed=$((SECONDS - start))
       case "$state" in
@@ -94,20 +107,36 @@ case "$MODE" in
           exit 1
           ;;
         none)
-          if [ "$elapsed" -ge "$NO_CHECKS_GRACE_SECS" ]; then
+          if [ "$seen_checks" -eq 1 ]; then
+            # Checks were seen earlier, so an empty rollup is a blip (a re-run, a stale API
+            # read), not "this repo has no checks". Never treat it as done.
+            msg="check rollup went empty after checks were seen, re-checking"
+          elif [ "$elapsed" -ge "$NO_CHECKS_GRACE_SECS" ]; then
             echo "no checks reported after ${elapsed}s, nothing to wait for"
             exit 0
+          else
+            msg="no checks reported yet"
           fi
-          msg="no checks reported yet"
           ;;
-        pending*) msg="waiting on: ${state#pending }" ;;
-        *) msg="gh query failed, retrying" ;;
+        pending*)
+          seen_checks=1
+          msg="waiting on: ${state#pending }"
+          ;;
+        *) msg="gh query failed (${failures}/${MAX_QUERY_FAILURES}), retrying" ;;
       esac
       if [ "$msg" != "$last" ]; then
         echo "[${elapsed}s] $msg"
         last="$msg"
       fi
+      if [ "$state" = error ] && [ "$failures" -ge "$MAX_QUERY_FAILURES" ]; then
+        echo "#$n: gh query failed ${failures} times in a row, CI state unknown" >&2
+        exit 4
+      fi
       if [ "$elapsed" -ge "$limit" ]; then
+        if [ "$state" = error ]; then
+          echo "#$n: cap hit after ${elapsed}s while the latest gh query was failing, CI state unknown" >&2
+          exit 4
+        fi
         echo "#$n: still not finished after ${elapsed}s ($msg)" >&2
         exit 3
       fi
