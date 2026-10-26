@@ -291,10 +291,10 @@ _Older session blocks are in [project-state-next-steps-archive.md](project-state
 1. ~~`land-prs` PR #47 and PR #48~~ — **DONE session 138** (`3c16bbe`, `cdc8b87`); then pull + rebuild laptop and natalie-laptop (`rebuild-host`), sign in to Proton once per user, set Auto connect = `Fastest`.
 2. On gaming with Proton connected: confirm `resolvectl`/`/etc/resolv.conf` still reach the pi-hole through Tailscale and `tailscale status` stays healthy; confirm Vesktop still loads after the next rebuild (restart it first).
 3. Ask what the phone's Proton app shows if the no-connectivity problem recurs.
-4. Everything from sessions 135–136 below still stands.
+4. Everything from session 136 below still stands; it now restates session 135's open items (the 135 block itself is in the archive).
 
 **Session 136 next steps:**
 1. ~~`land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`)~~ — **DONE session 138**; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
 2. After gaming is rebuilt (PR #48 landed and live on gaming as of gen 468, session 138), try `rebuild-host natalie-laptop` for real; it replaces the alias.
-3. Everything from session 135 below still stands (competency-test calibration the week of 10-26, `/fleet-rollout` laptop + natalie-laptop).
+3. Session 135's open items, restated here because that block is now in `project-state-next-steps-archive.md` (its `land-prs` of #44 is done): `/hermes-competency-test calibrate` the week of 10-26, then `full` twice after `llm-on`; `/fleet-rollout` laptop + natalie-laptop (whole backlog incl. the 10-18 flake bump), then uninstall Superpowers/Ponytail there if present. Optional: the Hermes toolset-pruning decision; ask Hermes to list the inbox (last 10-19 checklist item); delete `~/.hermes/backups/mnemosyne-fix-20261020/` and the competency-test leftovers (see Known Issues); `/improve-memory` to shrink `MEMORY.md`.
 
