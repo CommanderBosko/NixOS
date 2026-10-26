@@ -24,8 +24,9 @@
 #   0 — PR found, guardrail holds, safe to show diff and offer merge
 #   1 — no open PR found (normal/expected most weeks)
 #   2 — PR found but a file violates the guardrail (needs manual review)
-#   3 — could not evaluate (gh auth/network/API failure, unreadable or implausible
-#       PR data) — NOT the same as "no PR": the guardrail was not checked
+#   3 — could not evaluate (gh auth/network/API failure — including failing to fetch
+#       settings.json — unreadable or implausible PR data, or the settings checker
+#       not running) — NOT the same as "no PR": the guardrail was not checked
 set -uo pipefail
 
 REPO="CommanderBosko/NixOS"
@@ -45,7 +46,7 @@ die3() {
 # (PR #4: "chore(skills): weekly improve-system sweep — ..."; PR #6:
 # "improve-system weekly sweep — ..."). The head branch is the one thing
 # that has stayed stable across every real PR the routine has opened.
-PR_JSON=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,title,headRefName,url,body \
+PR_JSON=$(gh pr list --repo "$REPO" --state open --limit 1000 --json number,title,headRefName,url,body \
   --jq '[.[] | select(.headRefName | startswith("improve-system/weekly-"))][0] // empty') \
   || die3 "gh pr list failed (auth/network?) - cannot tell whether a PR exists. Try: gh auth status"
 
@@ -91,7 +92,7 @@ check_settings() {
       "repos/$REPO/contents/$SETTINGS_PATH?ref=$oid" > "$tmp/$side.json" 2> /dev/null; then
       SETTINGS_REASON="could not fetch $SETTINGS_PATH at PR $side"
       rm -rf "$tmp"
-      return 1
+      return 3
     fi
   done
   out=$("$SCRIPT_DIR/check-settings-diff.sh" "$tmp/base.json" "$tmp/head.json")
@@ -99,9 +100,13 @@ check_settings() {
   rm -rf "$tmp"
   if [ $rc -eq 0 ]; then
     SETTINGS_ADDED=$out
-  else
+  elif [ $rc -eq 1 ]; then
     SETTINGS_REASON=${out#REASON: }
-    [ -n "$SETTINGS_REASON" ] || SETTINGS_REASON="check-settings-diff.sh exited $rc with no output"
+    [ -n "$SETTINGS_REASON" ] || SETTINGS_REASON="check-settings-diff.sh refused with no reason"
+  else
+    # 126/127/etc: the checker itself did not run properly — that is "not evaluated", not "refused"
+    SETTINGS_REASON="check-settings-diff.sh exited $rc ($out)"
+    return 3
   fi
   return $rc
 }
@@ -110,7 +115,10 @@ VIOLATIONS=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   if [ "$f" = "$SETTINGS_PATH" ]; then
-    check_settings && continue
+    check_settings
+    src=$?
+    [ "$src" -eq 0 ] && continue
+    [ "$src" -eq 3 ] && die3 "$SETTINGS_REASON - guardrail NOT evaluated"
     VIOLATIONS="${VIOLATIONS}${f} (${SETTINGS_REASON})"$'\n'
     continue
   fi
