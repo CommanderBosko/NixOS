@@ -1,3 +1,29 @@
+## Session: 2026-10-21 (session 136) — Proton VPN via Hermes, `rebuild-host`
+
+**Focus**: Install Proton VPN on the three desktops (Hermes drafts, Claude reviews), then generalize the rebuild alias.
+
+### What changed (and why)
+- **PR #47, `modules/proton-vpn.nix`:** installs the Proton VPN GUI on gaming, laptop and natalie-laptop via `desktopModules`. Hermes wrote it in its sandbox clone with the commit/push steps forbidden in the prompt; Claude cut its duplicated comments and ran the 4-host deep-eval. gnome-keyring is already on for all three, which the client needs.
+- **CLI added, then reverted:** `proton-vpn-cli` co-installs cleanly, but Proton says not to run both at once. The user preferred the GUI, so it was reverted with a revert commit (no force-push).
+- **PR #48, `rebuild-host <host>`:** the `rebuild-natalie-laptop` alias became a function like `cleanup-host`/`reboot-host`, so any desktop can be built here and staged for next boot.
+
+### Decisions
+- Hermes writes drafts only in the sandbox clone and never commits; Claude reviews and lands them via PR.
+- GUI only; the CLI stays out.
+
+### Issues / surprises
+- A branch cut from `origin/main` tracks `main`, so `push.sh execute`'s plain `git push` failed and `| tail` hid it; pushed with `-u origin <branch>`.
+- Untested: pi-hole DNS and Tailscale behavior while Proton is connected.
+
+### Next session
+- Merge #47 and #48, rebuild, then test Proton + pi-hole + Tailscale on gaming.
+
+**Commits**: `de4ffdc..c3c2cca` (4 commits on two PR branches, unmerged at close)
+
+Secret-scan: clean (tree + 1,892 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-20 (session 135) — Hermes hardening, protected main, competency test
 
 **Focus**: Close-only. 12 conversations since the 10-19 close hardened Hermes on gaming, protected `main`, and built a Hermes test suite.

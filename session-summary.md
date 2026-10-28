@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-27 (session 141) — improve-system PRs #67–#75, Hermes baseline and calibrate
+
+**Focus**: Close out eight conversations since the 10-25 close: a `/improve-system` run that became nine merged PRs (mostly hardening the weekly PR review gate), the first valid Hermes competency baseline, and a half-finished calibrate.
+
+### What changed (and why)
+- **`/improve-system` via `manager` → PRs #67–#75 (all merged 2026-10-26):** Manager Training Mode is ON and a background subagent can't ask, so `manager` analysed and stopped; after the user approved its plan, six worktree agents built the PRs and independent reviewers found real bugs in most of them (fixed before merge). Landed: skill-suggestion dedup, `land-prs` CI wait and head pinning, `session-closer` STEP 7 plus rotation of Recent Decisions and Next Steps (`project-state.md` 240 → 105 KB), `git-push --pr` opt-in, small skill fixes, seven Hermes scorer fixes.
+- **`review-improve-system-pr` gate rewritten default-deny (#70, #74, #75):** the checker let `Bash(rm *)`, `sudo *`, `curl *` and a Gmail send through, and a longer denylist still had ~13 bypasses. An added entry now passes only as an exact short read-only form; edits to the gate, `improve-system`, or scripts named by settings.json exit 2 for a human; fetch failures exit 3; `ci-gate.sh` pins the merge to the reviewed SHA.
+- **Hermes competency test:** first valid baseline 53.8 (93/93 repeats, five of seven categories "don't delegate"), but calibrate had never run, so it is provisional. Calibrate hit the Claude session limit three times; split in two, code + net scored 99.4 (items fair), the other 16 items still need a re-run. `hc.py normalize` crashed on a Claude `permission_denied` event; fixed (`c6c8ee1`).
+- **Pin check ×2:** the `nixpkgs` pin stays (vendor-reset #575192 open; mcp-nixos fixed on master but not in `nixos-unstable`; pinchflat still flagged).
+
+### Decisions
+- Default-deny over a longer denylist; merge #70/#74 on green CI before their reviews returned (reviews became the next PRs); `--pr` opt-in so a close can't open PRs unasked; hold the 1800 s timeout change until calibrate ends so it lands as one version bump.
+
+### Issues / surprises
+- `claude -p` reported the usage limit as "workspace not trusted", hiding the real cause; mid-run attribution reminders flipped three agent commits to a Haiku trailer (amended before merge); agent worktrees block plain `git` (used `/run/current-system/sw/bin/git`).
+- `project-state.md` Known Issues still had a "no rotation" bullet and a "never run live" `land-prs` bullet; both rewritten.
+
+### Next session
+- Re-run calibrate chunk 2, fix items under 90, bump the suite once, then a 2nd full baseline; `/fleet-rollout` laptop + natalie-laptop + vpn-server; decide gaming's disk.
+
+**Commits**: `92557e0..fe25633` (~30 commits, 9 of them PR merges) plus `c6c8ee1`
+
+Secret-scan: clean (tree + 1,967 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-25 (session 140) — flake bump pinned back, monitoring and a repaired Hermes test
 
 **Focus**: Close out 16 conversations since the 10-24 close: a flake bump that broke gaming's build and was undone by pinning nixpkgs, Prometheus monitoring for Hermes, and a Hermes competency run that was invalid because of a harness race.
@@ -109,32 +135,6 @@ Secret-scan: clean (tree + 1,901 commits, all `secrets/*.yaml` encrypted).
 **Commits**: `e3fa102..4461aaf` (2 commits on PR #47's branch, unmerged at close)
 
 Secret-scan: clean (tree + 1,896 commits, all `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-21 (session 136) — Proton VPN via Hermes, `rebuild-host`
-
-**Focus**: Install Proton VPN on the three desktops (Hermes drafts, Claude reviews), then generalize the rebuild alias.
-
-### What changed (and why)
-- **PR #47, `modules/proton-vpn.nix`:** installs the Proton VPN GUI on gaming, laptop and natalie-laptop via `desktopModules`. Hermes wrote it in its sandbox clone with the commit/push steps forbidden in the prompt; Claude cut its duplicated comments and ran the 4-host deep-eval. gnome-keyring is already on for all three, which the client needs.
-- **CLI added, then reverted:** `proton-vpn-cli` co-installs cleanly, but Proton says not to run both at once. The user preferred the GUI, so it was reverted with a revert commit (no force-push).
-- **PR #48, `rebuild-host <host>`:** the `rebuild-natalie-laptop` alias became a function like `cleanup-host`/`reboot-host`, so any desktop can be built here and staged for next boot.
-
-### Decisions
-- Hermes writes drafts only in the sandbox clone and never commits; Claude reviews and lands them via PR.
-- GUI only; the CLI stays out.
-
-### Issues / surprises
-- A branch cut from `origin/main` tracks `main`, so `push.sh execute`'s plain `git push` failed and `| tail` hid it; pushed with `-u origin <branch>`.
-- Untested: pi-hole DNS and Tailscale behavior while Proton is connected.
-
-### Next session
-- Merge #47 and #48, rebuild, then test Proton + pi-hole + Tailscale on gaming.
-
-**Commits**: `de4ffdc..c3c2cca` (4 commits on two PR branches, unmerged at close)
-
-Secret-scan: clean (tree + 1,892 commits, all `secrets/*.yaml` encrypted).
 
 ---
 
