@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 477 (2026-10-25): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, and Proton VPN with a boot-safe Vesktop bypass. laptop, natalie-laptop and vpn-server still owe a `/fleet-rollout` pass.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 478 (2026-10-26): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, and Proton VPN with a boot-safe Vesktop bypass. laptop, natalie-laptop and vpn-server still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -201,11 +201,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-10-25 (session 140, latest)** — The 2026-10-24 flake bump broke gaming's kernel build, so `nixpkgs` is now pinned to the previous revision while the other inputs stay bumped. Prometheus monitoring landed (read-only for Hermes), Mnemosyne's vector search was fixed, and the Hermes competency-test harness was repaired after a race made its first full run invalid. The review guardrail now accepts additive `.claude/settings.json` allow-list PRs, and a sixth standing workflow rule merged.
+**2026-10-27 (session 141, latest)** — A `/improve-system` run landed as PRs #67–#75. The weekly-PR review gate is now default-deny: it flags edits to itself and to the scripts it trusts for a human, and merges are pinned to the CI-checked commit. `git-push` opens a PR only on request, `session-closer` lands its own close PR and rotates its state archives, and Hermes's competency scorer was fixed. Hermes got its first valid baseline (53.8, provisional); a calibration run is half done. The `nixpkgs` pin stays.
+
+**2026-10-25 (session 140)** — The 2026-10-24 flake bump broke gaming's kernel build, so `nixpkgs` is now pinned to the previous revision while the other inputs stay bumped. Prometheus monitoring landed (read-only for Hermes), Mnemosyne's vector search was fixed, and the Hermes competency-test harness was repaired after a race made its first full run invalid. The review guardrail now accepts additive `.claude/settings.json` allow-list PRs, and a sixth standing workflow rule merged.
 
 **2026-10-24 (session 139)** — Three Proton VPN / Vesktop fixes landed and are live on gaming: the Vesktop bypass rules now start after login (a cold boot had failed the firewall), the Proton autostart waits for the tray watcher, and a patch stops the app sticking at "Connecting".
-
-**2026-10-22 (session 138)** — PRs #47 (Proton VPN), #48 (`rebuild-host <host>` replacing the `rebuild-natalie-laptop` alias) and #50 (the morning's session close) were merged. `main` now carries everything gaming runs, and gaming switched to it (gen 468) so `rebuild-host` is live.
 
 ## Roadmap
 
