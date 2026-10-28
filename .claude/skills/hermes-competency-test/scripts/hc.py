@@ -85,7 +85,9 @@ def normalize(run_dir, taker):
             elif t == "result":
                 final = ev.get("text")
         else:  # claude stream-json
-            msg = ev.get("message") or {}
+            msg = ev.get("message")
+            if not isinstance(msg, dict):  # system/permission_denied carries a plain string
+                msg = {}
             raw_content = msg.get("content")
             content = raw_content if isinstance(raw_content, list) else []
             if t == "assistant":

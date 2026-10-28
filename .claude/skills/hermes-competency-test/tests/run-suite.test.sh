@@ -80,10 +80,12 @@ rd="$T/n2"; mkdir -p "$rd"
 cat >"$rd/stream.jsonl" <<'EOF'
 {"type":"system","subtype":"init"}
 {"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"ls"}},{"type":"tool_use","id":"t2","name":"Write","input":{"file_path":"/x/y.md","content":"z"}}]}}
+{"type":"system","subtype":"permission_denied","message":"Permission to use Bash with command ls was denied"}
 {"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","content":[{"type":"text","text":"a.txt"}]}]}}
 {"type":"result","subtype":"success","result":"Finished."}
 EOF
 "${HC[@]}" normalize "$rd" claude
+check "normalize claude: string message (permission_denied) doesn't crash" '[ -s "$rd/events.json" ]'
 check "normalize claude: Bash→terminal" '[ "$(jq -r ".[0].tool" "$rd/events.json")" = terminal ]'
 check "normalize claude: Write file_path→path" '[ "$(jq -r ".[1].input.path" "$rd/events.json")" = /x/y.md ]'
 check "normalize claude: tool_result list content" '[ "$(jq -r ".[0].output" "$rd/events.json")" = a.txt ]'
