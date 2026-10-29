@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-10-29 (session 142) — Vesktop bypass by group, powershell, pin check, device debloats
+
+**Focus**: Close seven conversations since the 10-27 close: Vesktop lost its Proton bypass again, `powershell` was added, the `nixpkgs` pin was re-checked, and three non-repo devices were debloated.
+
+### What changed (and why)
+- **Vesktop bypass rebuilt around a `novpn` group (PR #78, open, CI green, live on gaming gen 481):** Electron 43 moves itself into its own `app-vesktop-<pid>.scope` right after launch, which emptied `app-novpn.slice`, so Vesktop went back through Proton and Discord answered 403 to the exit IP. Vesktop now starts via `sg novpn` and the fwmark rules match `-m owner --gid-owner novpn`, which children inherit; the slice, the uid-1000 pin and the cgroup boot wait are gone. Verified: all processes in group `novpn`, `sg` curl 200 vs 403 on the VPN path, the user saw messages load.
+- **`powershell` for both users (PR #77, open, CI green):** in `modules/development.nix`; 4-host deep-eval PASS, gaming dry-run = `powershell` only. Not live now: gen 481 came from the Vesktop branch.
+- **Pin check:** keep the `nixpkgs` pin. mcp-nixos is fixed in `nixos-unstable` `31ecbaca`; vendor-reset (#575192) and pinchflat are not.
+- **Outside the repo (memory only):** CleanYourTV debloat of the TCL TV (33 packages, new launcher, remote buttons remapped), DumbTV debloat of the Fire TV Stick (42 packages, Tailscale starts at boot via always-on VPN), Galaxy Tab A7 (27 packages, over USB). PHP2Shell check: nothing reachable.
+
+### Decisions
+- Group match over a manual cgroup move or an Electron-switch hunt: the self-scoping makes any cgroup match unreliable, and the group removes the boot race too. `powershell` in the shared dev module, not per user. Use Tailscale IPs, never LAN addresses (user rule, 10-28).
+
+### Issues / surprises
+- gaming now runs a build ahead of `main` (Vesktop fix) and behind it (no `pwsh`): a rebuild from `main` drops the Vesktop fix until #78 merges.
+- The TCL TV blocks Tailscale at boot (`TclAppBoot`), and the Tab A7's wireless-debugging ports change on every reboot, so USB was the reliable route.
+- This close ran from `main` with the working tree switched off the #78 branch, so the checkout no longer holds the fix either.
+
+### Next session
+- `land-prs 78 77`, then `rebuild-switch` on gaming and restart Vesktop; Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` laptop + natalie-laptop + vpn-server; gaming disk; hand-test the Fire Stick and the tablet; `apt upgrade` the pi-hole.
+
+**Commits**: `cf05091` (merge of the 10-27 close) on `main`; `155d091` (PR #77) and `277f5a9` (PR #78) on their own unmerged branches
+
+Secret-scan: clean (tree + 1,971 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-27 (session 141) — improve-system PRs #67–#75, Hermes baseline and calibrate
 
 **Focus**: Close out eight conversations since the 10-25 close: a `/improve-system` run that became nine merged PRs (mostly hardening the weekly PR review gate), the first valid Hermes competency baseline, and a half-finished calibrate.
@@ -108,33 +135,6 @@ Secret-scan: clean (tree + 1,911 commits, all `secrets/*.yaml` encrypted).
 **Commits**: `cdc8b87..360300a` (3 merge commits; the underlying work is in sessions 136-137)
 
 Secret-scan: clean (tree + 1,901 commits, all `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-22 (session 137) — Proton autostart, Vesktop bypass, qBittorrent leak
-
-**Focus**: Make Proton VPN usable day to day on gaming: start at login, keep Discord working, and stop torrent traffic leaking.
-
-### What changed (and why)
-- **Autostart (`e3fa102`):** a system-wide XDG autostart entry runs `protonvpn-app --start-minimized` for every user on the three desktops. Hermes drafted it, Claude reviewed and deep-evaled it. After a reboot the app started in the tray and auto-connected.
-- **Vesktop outside the tunnel (`4461aaf`, `hosts/gaming/vesktop-direct.nix`):** Discord's edge returns 403 / code 40333 to browser-style API requests from Proton exit IPs (two exits tested), so no messages loaded. Vesktop now runs in `app-novpn.slice`; its packets get a fwmark routed out the LAN with masquerade, replies are exempted from the strict rpfilter, and its IPv6 is rejected. Verified live on gen 467: Discord API 200 from the slice, everything else still on Proton.
-- **qBittorrent leak (outside the repo):** it listened on every interface and its log recorded the home IP. Bound it to `proton0` in its config; sockets and log now show only Proton addresses, and with the VPN down it sends nothing.
-- **Advice only:** port forwarding, Moderate NAT and IPv6 left at defaults; custom DNS can't be declarative and is probably moot because DNS goes Tailscale → pi-hole. Proton Drive stays on hold (no official Linux client; `proton-cli` is community). `MEMORY.md` trimmed from 20 KB to 16.4 KB.
-
-### Decisions
-- Bypass Vesktop with a narrow per-cgroup route rather than loosening `checkReversePath` host-wide; the price is that Discord sees the home IP.
-- Autostart for every user, not just bosko.
-
-### Issues / surprises
-- This close ran on `feat/proton-vpn`, whose history lacks the 10-21 close (it merged to `main` as PR #49), so `scan-session.sh git-changes` picked the 10-20 close as baseline. The docs were written in a worktree off `origin/main` instead so they don't conflict with PR #47.
-- Phone connectivity under Proton is unresolved; DNS and Tailscale behavior with the tunnel up is still untested.
-
-### Next session
-- `land-prs` #47 (CI was still running) and #48, rebuild laptop and natalie-laptop, test pi-hole DNS + Tailscale with Proton connected.
-
-**Commits**: `e3fa102..4461aaf` (2 commits on PR #47's branch, unmerged at close)
-
-Secret-scan: clean (tree + 1,896 commits, all `secrets/*.yaml` encrypted).
 
 ---
 

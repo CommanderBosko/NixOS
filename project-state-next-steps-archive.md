@@ -2,6 +2,12 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 137 next steps:**
+1. ~~`land-prs` PR #47 and PR #48~~ — **DONE session 138** (`3c16bbe`, `cdc8b87`); then pull + rebuild laptop and natalie-laptop (`rebuild-host`), sign in to Proton once per user, set Auto connect = `Fastest`.
+2. On gaming with Proton connected: confirm `resolvectl`/`/etc/resolv.conf` still reach the pi-hole through Tailscale and `tailscale status` stays healthy; confirm Vesktop still loads after the next rebuild (restart it first).
+3. Ask what the phone's Proton app shows if the no-connectivity problem recurs.
+4. Session 136's list and session 135's open items are restated in the session 141 block above (their blocks are in the archive).
+
 **Session 136 next steps:**
 1. ~~`land-prs` PR #47 (Proton VPN) and PR #48 (`rebuild-host`)~~ — **DONE session 138**; then rebuild each desktop and, on gaming, connect Proton VPN and check `resolvectl`/`/etc/resolv.conf` (pi-hole DNS leak?) and `tailscale status`.
 2. After gaming is rebuilt (PR #48 landed and live on gaming as of gen 468, session 138), try `rebuild-host natalie-laptop` for real; it replaces the alias.
