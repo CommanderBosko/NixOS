@@ -17,6 +17,7 @@
     nixfmt
     nodejs
     pnpm
+    powershell
     python3
   ];
 }
