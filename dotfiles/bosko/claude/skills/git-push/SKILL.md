@@ -11,6 +11,12 @@ open one against the default branch — the branch-off / commit / push / `gh pr 
 step — but only when you pass `--pr` to `push.sh execute` (opt-in; a plain `execute` just pushes and
 never calls `gh`). This skill only ever opens PRs; it never merges one.
 
+## Arguments
+
+Inputs the user may supply in their own phrasing, not required:
+- A custom PR title (step 4's "Other" option, or stated directly) — passed as `--title "<text>"`.
+- A base branch for a stacked PR, when the user says the branch builds on another one — passed as `--base <branch>`.
+
 ## Steps
 
 The status gathering, the push, and the PR creation are all mechanical (fixed git/gh commands, no

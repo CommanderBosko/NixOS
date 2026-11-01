@@ -54,7 +54,7 @@ Then add a brief diagnosis below the raw output:
 
 - Working directory: `/home/bosko/NixOS`
 - This is a read-only, safe-to-run-anytime operation.
-- `nix flake check` evaluates all `nixosConfigurations` outputs — this shallowly checks every host listed in `.claude/hosts.json`'s `.flakeHosts` (read the file, don't hardcode the list).
+- `nix flake check` evaluates all `nixosConfigurations` outputs directly from the flake — this shallowly checks every host in that output (kept in sync with `.claude/hosts.json`'s `.flakeHosts` by CI's `check-hosts-json.sh`, but not read from it directly).
 - This skill does NOT apply changes; it only validates.
 
 ## Gotchas
