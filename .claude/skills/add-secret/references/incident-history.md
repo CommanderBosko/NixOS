@@ -3,9 +3,9 @@
 Full postmortem detail behind the condensed Gotchas in SKILL.md. Not needed for normal
 operation — read only when investigating a regression that looks similar to one of these.
 
-- **Inline-plaintext-argument / full-plaintext-print bug (pre-v0.3.0).** `modules/sops.nix`'s
-  own comment states the convention explicitly ("the secret value itself is added by the user
-  directly, never by an agent"). The skill's original implementation violated it in two
+- **Inline-plaintext-argument / full-plaintext-print bug (pre-v0.3.0).** This skill's own
+  convention states explicitly that the secret value itself is added by the user directly,
+  never by an agent. The skill's original implementation violated it in two
   places: `sops-secret.sh set` took the value as an inline argument the agent would run
   directly, and `verify-secret.sh` printed the *entire* decrypted file (every secret in it,
   not just the one being checked) to the transcript. Both were fixed as of v0.3.0
