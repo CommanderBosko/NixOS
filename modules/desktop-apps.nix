@@ -21,6 +21,7 @@
 
   # System packages
   environment.systemPackages = with pkgs; [
+    aria2
     brave
     cava
     chromium
