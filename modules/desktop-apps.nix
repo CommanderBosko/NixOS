@@ -41,6 +41,7 @@
     thunar
     thunar-volman # Auto-mount + notification on removable-media insertion for Thunar
     tty-clock
+    unrar # RAR backend for xarchiver; p7zip can't open RAR5/RAR7 (unfree, allowUnfree is on)
     vesktop
     vlc
     xarchiver
