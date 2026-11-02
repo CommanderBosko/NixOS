@@ -2,6 +2,12 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 138 next steps:**
+1. ~~On gaming, run `rebuild-switch`~~ — **DONE: gen 468 switched 2026-10-22 08:54, `rebuild-host` confirmed present.** Restart Vesktop if it hasn't been restarted since (only new connections use the bypass).
+2. `rebuild-host natalie-laptop` from gaming for its first real run (it builds from gaming's checkout, so natalie-laptop needs no pull first); laptop was unreachable over SSH, so it still needs `git pull` + rebuild when it is on.
+3. Delete the remote `chore/session-close-20261022` branch if it is still listed (`git push origin --delete`).
+4. Items 2-4 of the session 137 steps below (pi-hole DNS and Tailscale with Proton up, the phone question) still stand.
+
 **Session 137 next steps:**
 1. ~~`land-prs` PR #47 and PR #48~~ — **DONE session 138** (`3c16bbe`, `cdc8b87`); then pull + rebuild laptop and natalie-laptop (`rebuild-host`), sign in to Proton once per user, set Auto connect = `Fastest`.
 2. On gaming with Proton connected: confirm `resolvectl`/`/etc/resolv.conf` still reach the pi-hole through Tailscale and `tailscale status` stays healthy; confirm Vesktop still loads after the next rebuild (restart it first).
