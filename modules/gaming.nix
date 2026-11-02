@@ -91,7 +91,12 @@
   # binder support (built into linux-zen here). After the first rebuild run
   # `sudo waydroid init` once; on the current NVIDIA card it falls back to
   # software rendering (full GPU acceleration needs the AMD swap).
-  virtualisation.waydroid.enable = true;
+  # waydroid-nftables: linux-zen ships no legacy ip_tables module, so the
+  # default package's waydroid-net.sh (legacy iptables) fails on every start.
+  virtualisation.waydroid = {
+    enable = true;
+    package = pkgs.waydroid-nftables;
+  };
 
   # Gaming packages
   environment.systemPackages = with pkgs; [
