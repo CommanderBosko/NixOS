@@ -2,6 +2,7 @@
 
 Older `Recent Decisions` entries rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+- **Hermes competency scoring pays nothing for doing nothing (2026-10-25, session 140)** — improvement over the untouched fixture is what scores, and the suite major version was bumped to 2.0.0 for the scale change; the invalid first run never reached history, so nothing was lost. Credit-for-inaction was a scoring choice, so Claude asked rather than changing it silently.
 - **Hermes stays read-only on monitoring (2026-10-24, session 140)** — through `hermes-monitor` only (GET to loopback); widening waits on a full competency run where Network reaches "alone".
 - **Vesktop rules start after login in their own service (2026-10-23, session 139)** — chosen over `|| true` on the firewall rules (the bypass would stay dead after every boot) and over a gid match (needs a new group and a different launcher). The slice is a login-time user unit so the cgroup exists first and outlives Vesktop. **Superseded 2026-10-29 by the group match (first bullet above):** Electron 43 re-scopes itself out of the slice.
 - **Patch `proton-vpn-api-core` instead of adding a watchdog (2026-10-24, session 139)** — the stall is a missed signal inside the app, so a small package patch fixes the cause; a watchdog service would only restart the app after the fact. The user kept the stuck app alive as evidence before the diagnosis; the stall was not Proton's fault.
