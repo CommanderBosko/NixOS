@@ -88,9 +88,17 @@
 
   # Waydroid — Android in a container for mobile games. The nixpkgs module
   # also enables LXC, trusts waydroid0 in the firewall, and asserts kernel
-  # binder support (built into linux-zen here). After the first rebuild run
-  # `sudo waydroid init` once; on the current NVIDIA card it falls back to
-  # software rendering (full GPU acceleration needs the AMD swap).
+  # binder support (built into linux-zen here). On the current NVIDIA card it
+  # falls back to software rendering (full GPU acceleration needs the AMD swap).
+  #
+  # One-time imperative setup (images are downloaded at runtime, not by Nix):
+  #   sudo waydroid init -s GAPPS -f     # GAPPS image = Google Play Store
+  #   # Play needs the device registered: in `sudo waydroid shell`, read the
+  #   # android_id from gservices.db, register it at
+  #   # https://www.google.com/android/uncertified, wait 10-20 min, restart
+  #   # the session. To re-init: waydroid session stop; sudo systemctl stop
+  #   # waydroid-container; init; start waydroid-container.
+  #
   # waydroid-nftables: linux-zen ships no legacy ip_tables module, so the
   # default package's waydroid-net.sh (legacy iptables) fails on every start.
   virtualisation.waydroid = {
