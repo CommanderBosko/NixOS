@@ -86,6 +86,13 @@
     };
   };
 
+  # Waydroid — Android in a container for mobile games. The nixpkgs module
+  # also enables LXC, trusts waydroid0 in the firewall, and asserts kernel
+  # binder support (built into linux-zen here). After the first rebuild run
+  # `sudo waydroid init` once; on the current NVIDIA card it falls back to
+  # software rendering (full GPU acceleration needs the AMD swap).
+  virtualisation.waydroid.enable = true;
+
   # Gaming packages
   environment.systemPackages = with pkgs; [
     faugus-launcher
