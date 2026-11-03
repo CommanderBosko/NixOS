@@ -3,11 +3,10 @@
 # For each host: current generation, NixOS version, failed units, uptime,
 # whether a generation is staged (profile vs current system differ), and whether
 # a reboot is pending (booted vs current system kernel/initrd differ).
-# Then WireGuard handshake freshness, read from vpn-server (passwordless sudo).
-# Safe: read-only. No sudo on the desktops (all probes are unprivileged).
+# Safe: read-only. No sudo anywhere (all probes are unprivileged).
 #
-# Host list, SSH targets, and the WG peer->host map are read from the single
-# source of truth at .claude/hosts.json — do not re-hardcode them here.
+# Host list and SSH targets are read from the single source of truth at
+# .claude/hosts.json — do not re-hardcode them here.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -18,7 +17,6 @@ declare -A SSH_TARGET
 while IFS=$'\t' read -r name ssh; do
   SSH_TARGET[$name]="$ssh"
 done < <(hosts_flake_ssh_pairs)
-VPN_SSH="$(hosts_ssh vpn-server)"
 SELF="$(hostname)"
 
 # Unprivileged probe run on each host; emits one pipe-delimited line.
@@ -60,27 +58,3 @@ for h in "${HOSTS[@]}"; do
     printf '  %-16s %s\n' "$h" "$out"
   fi
 done
-
-echo
-# The tunnel is out of the flake while vpn-server is Oracle-disabled (modules/vpn.nix
-# commented out of desktopModules), so there are no handshakes to read.
-if ! "$REPO/.claude/lib/wg-tunnel-in-flake.sh" "$REPO/flake.nix"; then
-  echo "==> WireGuard: skipped (not in flake)"
-  exit 0
-fi
-echo "==> WireGuard handshakes (from vpn-server)"
-raw=$(ssh -o BatchMode=yes -o ConnectTimeout=8 "$VPN_SSH" 'sudo wg show wg0 latest-handshakes' 2>/dev/null)
-if [ -z "${raw:-}" ]; then
-  echo "  vpn-server unreachable"
-else
-  now=$(date +%s)
-  while read -r peer hs; do
-    [ -z "$peer" ] && continue
-    n=$(hosts_vpn_peer_name "$peer")
-    if [ "${hs:-0}" -gt 0 ]; then
-      printf "  %-16s %ss ago\n" "$n" "$((now - hs))"
-    else
-      printf "  %-16s never\n" "$n"
-    fi
-  done <<<"$raw"
-fi

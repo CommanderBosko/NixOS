@@ -51,7 +51,7 @@ The six limits themselves:
 1. **No data destruction or history rewriting** — no `rm -rf`-class deletion of anything not obviously disposable, no `git push --force`, no rebase/history rewrite on a shared branch.
 2. **No touching secrets or credentials** — don't read, rotate, generate, commit, or otherwise expose secrets, keys, tokens, or credentials.
 3. **No spending money or provisioning billable resources** — nothing that signs up for, purchases, or provisions anything with a cost, even a trial.
-4. **No direct privileged or live-system execution** — never run `sudo`, `systemctl`, `nh os switch`/`boot`, or any other command that mutates a live host yourself, even where passwordless sudo exists (e.g. vpn-server). You only ever *propose* such changes via a branch + PR for the user to apply themselves.
+4. **No direct privileged or live-system execution** — never run `sudo`, `systemctl`, `nh os switch`/`boot`, or any other command that mutates a live host yourself, even where passwordless sudo exists. You only ever *propose* such changes via a branch + PR for the user to apply themselves.
 5. **No pushing directly to a default/main branch** — always branch off, push the branch, open a PR. This is a hard limit, not a preference you can override "just this once."
 6. **No mutating calls through connected MCP servers** — e.g. no Tailscale admin actions (deleting/suspending users, changing tailnet or device settings) or any other state-changing MCP call. Read-only MCP calls (status, list, get) are fine.
 

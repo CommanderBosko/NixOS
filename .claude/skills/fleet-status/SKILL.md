@@ -1,15 +1,14 @@
 ---
 name: fleet-status
-description: Triggers when the user says "fleet status", "host status", "check all hosts", "are all hosts healthy", "status of every machine", "health check", or "sweep the hosts". Runs a read-only health sweep across every flakeHost in .claude/hosts.json and reports generation, failed units, reboot-pending, and VPN handshakes.
+description: Triggers when the user says "fleet status", "host status", "check all hosts", "are all hosts healthy", "status of every machine", "health check", or "sweep the hosts". Runs a read-only health sweep across every flakeHost in .claude/hosts.json and reports generation, failed units, staged generations, and reboot-pending.
 model: haiku
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Fleet Status
 
 A one-shot, read-only health sweep of every flakeHost in `.claude/hosts.json`
-(`.flakeHosts`). Answers "is everything healthy right now?" in a single call. Safe — all per-host probes are unprivileged; the only `sudo` is `wg show` on
-vpn-server, which is passwordless there.
+(`.flakeHosts`). Answers "is everything healthy right now?" in a single call. Safe — all per-host probes are unprivileged; no `sudo` is used.
 
 ## Arguments
 
@@ -27,18 +26,14 @@ None — this skill takes no user-supplied arguments.
      staged, e.g. via `nh os boot`, but not yet activated/rebooted), else `no`
    - **reboot** — `YES` if `/run/booted-system`'s kernel or initrd differs from
      `/run/current-system`'s (a switch changed them; only a reboot activates them), else `no`
-   - Then **WireGuard handshakes** for each client, read from vpn-server. While `modules/vpn.nix`
-     is out of the flake (`.claude/lib/wg-tunnel-in-flake.sh` exits 1), the section is replaced
-     by `WireGuard: skipped (not in flake)` and nothing is read from vpn-server.
 
 2. Present a clean table, then a short interpretation. Example:
 
    ```
-   Host             Gen   Failed   Staged   Reboot   Uptime      WG handshake
-   gaming           834   none     no       no       2d 4h 1m    41s ago
-   laptop           512   none     YES      no       0d 6h 12m   33s ago
-   natalie-laptop   389   none     no       YES      1d 2h 0m    18s ago
-   vpn-server       77    none     no       no       29d 1h 5m   —
+   Host             Gen   Failed   Staged   Reboot   Uptime
+   gaming           834   none     no       no       2d 4h 1m
+   laptop           512   none     YES      no       0d 6h 12m
+   natalie-laptop   389   none     no       YES      1d 2h 0m
    ```
 
 3. **Flag anything that needs attention**, in priority order:
@@ -47,8 +42,6 @@ None — this skill takes no user-supplied arguments.
      `nh os switch` for non-boot changes) will activate it.
    - **reboot YES** → the host is running a kernel/initrd it didn't boot with; a reboot is
      needed for those to take effect.
-   - **Stale/missing WG handshake** (> ~3 min, or `never`) → that client's tunnel is down;
-     suggest the `vpn-status` skill or checking `wg-quick-wg0` on that host.
    - **UNREACHABLE host** → powered off or off-network; just report it, don't treat it as a
      failure of the sweep.
 
@@ -57,12 +50,11 @@ None — this skill takes no user-supplied arguments.
 ## Notes
 
 - Read-only and side-effect-free; safe to run anytime.
-- Host reachability depends on the LAN (`local: true` hosts in `.claude/hosts.json`) and the
-  internet (`local: false`, i.e. vpn-server). Desktops are often powered off —
-  `UNREACHABLE` is normal, not an error.
-- The WireGuard peer→host mapping is read from `.claude/hosts.json` `.vpn.peers` (a
-  `publicKey → hostname` map). If a peer is added or rekeyed, update it there — not in the
-  script, which consumes `hosts.json` as the source of truth.
+- Host reachability depends on the LAN (`local: true` hosts in `.claude/hosts.json`).
+  Desktops are often powered off — `UNREACHABLE` is normal, not an error.
+- The host list and SSH targets come from `.claude/hosts.json` (`.flakeHosts`, `.hosts.<name>.ssh`).
+  If a host is added or dropped, update it there — not in the script, which consumes
+  `hosts.json` as the source of truth.
 
 ## Script
 

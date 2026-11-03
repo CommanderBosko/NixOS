@@ -12,9 +12,6 @@
     #   nix flake lock --update-input nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
 
-    # Stable nixpkgs — used by vpn-server for stability
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
-
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
@@ -34,17 +31,11 @@
     # Nix-Flatpaks
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
 
-    # Disko — declarative disk partitioning (used by vpn-server / nixos-anywhere)
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # FinanceGuru — personal finance desktop app
     financeguru.url = "github:CommanderBosko/FinanceGuru";
 
     # sops-nix — encrypted secrets committed in-repo (login password hashes,
-    # WireGuard private keys). Lets the repo be public without leaking secrets.
+    # API tokens, service secrets). Lets the repo be public without leaking secrets.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -71,16 +62,17 @@
     };
   };
 
-  outputs = { disko, home-manager, nix-flatpak, nixpkgs, nixpkgs-stable, self, ... }@inputs:
+  outputs = { home-manager, nix-flatpak, nixpkgs, self, ... }@inputs:
   let
     # Host/network facts shared with the Claude tooling (.claude/hosts.json is
-    # the single source of truth for IPs and WireGuard addresses); modules take
+    # the single source of truth for IPs and Tailscale addresses); modules take
     # it as the `hostsData` argument instead of hardcoding addresses.
     hostsData = builtins.fromJSON (builtins.readFile ./.claude/hosts.json);
 
-    # Modules shared by all systems, headless vpn-server included. Anything
-    # that only makes sense on a desktop (bootloader/kernel, fonts, flatpak…)
-    # lives in desktopModules so vpn-server doesn't have to override it.
+    # Modules shared by all systems, including any future headless host.
+    # Anything that only makes sense on a desktop (bootloader/kernel, fonts,
+    # flatpak…) lives in desktopModules so a headless host doesn't have to
+    # override it.
     # system.stateVersion is per-host (frozen at each machine's install time).
     commonModules = [
       "${self}/modules/claude-code.nix"
@@ -99,7 +91,7 @@
       home-manager.nixosModules.home-manager
       nix-flatpak.nixosModules.nix-flatpak
       "${self}/modules/audio.nix"
-      # GRUB + zen kernel (x86 desktops); vpn-server owns its own boot config
+      # GRUB + zen kernel (x86 desktops); a headless host would own its own boot config
       "${self}/modules/bootloader.nix"
       "${self}/modules/claude-mcp.nix"
       "${self}/modules/desktop-apps.nix"
@@ -118,13 +110,6 @@
       "${self}/modules/tailscale.nix"
       # Proton VPN GUI client; sign-in is manual per host (see the module)
       "${self}/modules/proton-vpn.nix"
-      # WireGuard client to vpn-server temporarily pulled from the fleet —
-      # Oracle admin-disabled that instance 2026-08-18 (see
-      # project_vpn_server_oracle_disabled memory), so the tunnel has no
-      # working endpoint. Tailscale (modules/tailscale.nix, per-host) is the
-      # mesh stopgap in the meantime. Re-add this line once vpn-server is
-      # back; modules/vpn.nix itself is untouched.
-      # "${self}/modules/vpn.nix"
     ];
 
     # Build a host. Sets networking.hostName from the attribute name and
@@ -187,17 +172,12 @@
       });
 
     # Smoke-eval targets for modules no host imports right now: amd.nix (staged
-    # for the gaming GPU swap) and vpn.nix (WireGuard client, out while
-    # vpn-server is down). Same idea as deSmoke — they'd otherwise rot silently
-    # across nixpkgs bumps; CI forces each one (eval-only, no builds).
+    # for the gaming GPU swap). Same idea as deSmoke — it would otherwise rot
+    # silently across nixpkgs bumps; CI forces each one (eval-only, no builds).
     lib.moduleSmoke = {
       amd = mkSystem {
         name = "gaming";
         modules = gamingModules { gpu = "${self}/modules/amd.nix"; };
-      };
-      vpn = mkSystem {
-        name = "gaming";
-        modules = gamingModules { extra = [ "${self}/modules/vpn.nix" ]; };
       };
     };
 
@@ -227,19 +207,6 @@
           "${self}/modules/nvidia.nix"
           "${self}/modules/qbittorrent.nix"
           "${self}/modules/shared-folder-client.nix"
-        ];
-      };
-
-      # VPN Server (Oracle Cloud ARM) — pinned to nixos-25.11 for stability
-      vpn-server = mkSystem {
-        name = "vpn-server";
-        system = "aarch64-linux";
-        nixpkgs = nixpkgs-stable;
-        modules = commonModules ++ [
-          disko.nixosModules.disko
-          "${self}/hosts/vpn-server/hardware-configuration.nix"
-          "${self}/hosts/vpn-server/disko.nix"
-          "${self}/hosts/vpn-server/configuration.nix"
         ];
       };
     };

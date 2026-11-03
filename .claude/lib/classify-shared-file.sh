@@ -20,7 +20,7 @@
 #       by (b) or (c) — one level only (e.g. modules/dms-shell.nix, imported by
 #       modules/desktop-environments/niri.nix).
 # Comment lines in flake.nix and in importers are ignored, so a comment naming
-# a path (e.g. the commented-out vpn.nix line) doesn't count as wiring it in.
+# a path (e.g. a commented-out module line) doesn't count as wiring it in.
 # Anything else is LOCAL — host-specific, no cross-host impact.
 #
 # Usage: classify-shared-file.sh <file-path> [flake.nix path]

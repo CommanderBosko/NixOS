@@ -15,7 +15,7 @@ configuration as a whole examined.
 
 ## Arguments
 
-- **scope** (optional) — narrows the audit to one host or area (e.g. "audit the server", "check
+- **scope** (optional) — narrows the audit to one host or area (e.g. "audit gaming", "check
   the security module") instead of the whole flake. Parse it from the user's request if given; if
   omitted, default to the entire flake (see Step 0).
 
@@ -29,7 +29,7 @@ configuration as a whole examined.
 ## Step 0 — Establish scope
 
 Confirm what to audit. Default to the entire flake. If the user named a host or area
-(e.g. "audit the server", "check the security module"), narrow to that.
+(e.g. "audit gaming", "check the security module"), narrow to that.
 
 Read these first to ground the audit:
 
@@ -63,7 +63,7 @@ Walk the config looking for genuine security regressions. Focus areas, in rough 
    Report anything silently disabled or overridden.
 3. **Network exposure** — `networking.firewall` disabled or wide-open `allowedTCP/UDPPorts`,
    services bound to `0.0.0.0` that needn't be, SSH `PermitRootLogin`/`PasswordAuthentication`
-   loosened. vpn-server (public-facing) is the highest-stakes here.
+   loosened. Anything reachable beyond the LAN/tailnet is the highest-stakes here.
 4. **Trust & privilege** — unexpected `nix.settings.trusted-users`, `security.sudo` wheel rules
    loosened, auto-login enabled on any host.
 5. **Untrusted inputs / substituters** — unreviewed `nix.settings.substituters` or
@@ -79,7 +79,7 @@ Look for real bugs, not style:
 - Dead imports, references to files that don't exist, or modules added to git but not imported.
 - Per-host drift: a hardening or fix applied to one host but missed on the others that should have
   it (compare the flake hosts' — `.flakeHosts` in `.claude/hosts.json` — config files, using each
-  host's `envFile`; vpn-server's is `configuration.nix`, not `environment.nix`).
+  host's `envFile`).
 - Typos in option paths that Nix won't catch until eval.
 
 To catch eval-level errors objectively, run the flake check. This is slow, so it's run

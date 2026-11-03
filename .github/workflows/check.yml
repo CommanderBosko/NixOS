@@ -47,9 +47,8 @@ jobs:
         run: nix flake check
 
       # The real gate: force the FULL system derivation of every host in
-      # nixosConfigurations. Eval-only, no builds; cross-arch is fine —
-      # evaluating the aarch64 vpn-server needs no aarch64 builder. sops
-      # secrets stay encrypted; eval never decrypts them.
+      # nixosConfigurations. Eval-only, no builds. sops secrets stay
+      # encrypted; eval never decrypts them.
       - name: deep-evaluate every host
         run: bash .claude/lib/deep-eval.sh
 
@@ -77,8 +76,8 @@ jobs:
       - name: deep-evaluate laptop with each DE module
         run: bash .claude/lib/deep-eval.sh --set lib.deSmoke
 
-      # Modules no host imports right now (amd.nix, vpn.nix) — evaluated so they
-      # can't rot silently while unused.
+      # Modules no host imports right now (amd.nix) — evaluated so they can't
+      # rot silently while unused.
       - name: deep-evaluate unused modules
         run: bash .claude/lib/deep-eval.sh --set lib.moduleSmoke
 

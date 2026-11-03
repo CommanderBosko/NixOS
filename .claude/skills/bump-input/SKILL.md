@@ -30,7 +30,7 @@ the shared helper's `--names` mode (also used by `/pin-input`):
 - If they didn't name one, ask which to bump via the **AskUserQuestion tool**. The live list has about 12 names but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`nixpkgs` if it is in the list, then `home-manager`, `dms`, `sops-nix`, where present), and list every other live name in the question text so the user can type one via **Other**.
 - If the named input isn't in the list, say so and show the available names — do not guess.
 
-Note: inputs with `inputs.nixpkgs.follows = "nixpkgs"` (e.g. `home-manager`, `disko`) track `nixpkgs`'s revision. Bumping `nixpkgs` moves what those inputs see; bumping a follower on its own only moves that follower's own sources. Mention this when the user bumps `nixpkgs`.
+Note: inputs with `inputs.nixpkgs.follows = "nixpkgs"` (e.g. `home-manager`, `sops-nix`) track `nixpkgs`'s revision. Bumping `nixpkgs` moves what those inputs see; bumping a follower on its own only moves that follower's own sources. Mention this when the user bumps `nixpkgs`.
 
 ## Step 2 — Snapshot the baseline
 
@@ -95,7 +95,7 @@ Do not run either automatically.
 - Never edit `flake.nix` — only `flake.lock` changes.
 - Do not auto-commit, `git add`, or auto-rebuild — suggest, don't invoke.
 - No `Co-Authored-By` trailer here — that belongs only in commit messages.
-- When bumping `nixpkgs`, note the inputs with `inputs.nixpkgs.follows` in `flake.nix` (grep it; currently home-manager, disko, sops-nix — verify) — they move with it.
+- When bumping `nixpkgs`, note the inputs with `inputs.nixpkgs.follows` in `flake.nix` (grep it; currently home-manager, sops-nix — verify) — they move with it.
 
 ## Gotchas
 

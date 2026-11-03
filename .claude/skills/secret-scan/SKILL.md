@@ -27,8 +27,8 @@ None.
 - **`.claude/skills/secret-scan/`** (this skill's own directory) is excluded from pattern
   matching because its docs and patterns legitimately contain example secret strings. Other
   skill files, including scripts, are scanned.
-- **Intentional non-secrets are not flagged:** the WireGuard endpoint IP (`.vpn.endpoint`
-  in `.claude/hosts.json`) and all SSH/WireGuard *public* keys are public by nature.
+- **Intentional non-secrets are not flagged:** all SSH, age and WireGuard *public* keys are
+  public by nature.
 
 ## Instructions
 

@@ -1,8 +1,7 @@
-{ config, pkgs, hostsData, ... }:
+{ config, pkgs, ... }:
 
 let
   hostName = config.networking.hostName;
-  vpnServer = hostsData.hosts.vpn-server.ip;
 in
 {
   # Configure shell programs
@@ -60,25 +59,6 @@ in
           echo ""
           nix flake update --flake ~/NixOS/.
         '';
-
-        # vpn-server management aliases (address comes from .claude/hosts.json).
-        # vpn-on/vpn-off live in vpn.nix beside the wg0 unit they control.
-        vpn-dry-run = ''
-          echo ""
-          echo "Attempting a dry-run on vpn-server"
-          echo ""
-          nixos-rebuild dry-activate --flake /home/bosko/NixOS#vpn-server --target-host bosko@${vpnServer} --build-host bosko@${vpnServer} --use-remote-sudo
-        '';
-        vpn-logs   = "ssh bosko@${vpnServer} 'sudo journalctl -u wg-quick-wg0 -n 50 --no-pager'";
-        vpn-rebuild = ''
-          echo ""
-          echo "Rebuilding vpn-server"
-          echo ""
-          nixos-rebuild switch --flake /home/bosko/NixOS#vpn-server --target-host bosko@${vpnServer} --build-host bosko@${vpnServer} --use-remote-sudo
-        '';
-        vpn-ssh    = "ssh bosko@${vpnServer}";
-        vpn-status = "ssh bosko@${vpnServer} 'sudo wg show'";
-        vpn-watch  = "watch -n 5 ssh bosko@${vpnServer} sudo wg show";
       };
 
       # Source Home Manager session variables (sessionPath, sessionVariables) for

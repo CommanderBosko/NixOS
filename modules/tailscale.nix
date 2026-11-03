@@ -1,17 +1,14 @@
 { ... }:
 
 {
-  # Tailscale mesh VPN — stopgap while the WireGuard hub (modules/vpn.nix,
-  # vpn-server) is down. Oracle Cloud administratively disabled the
-  # vpn-server instance 2026-08-18 (blanket block on all instance actions,
-  # concurrent Always-Free A1 quota cut from 4/24 to 2/12 — Support ticket
-  # filed, no ETA). See project_tailscale_evaluation memory for the original
-  # draft this was pulled forward from.
+  # Tailscale mesh VPN — the fleet's device-to-device network. It began
+  # 2026-08-18 as a stopgap when Oracle Cloud disabled the WireGuard hub
+  # (vpn-server, retired 2026-11-03). See project_tailscale_evaluation memory
+  # for the original draft this was pulled forward from.
   #
-  # Mesh-only: no exit-node/subnet-routing configured, so this does NOT
-  # reproduce wg0's full-tunnel egress-IP-masking behavior — it only
-  # restores device-to-device connectivity. wg0 (modules/vpn.nix) is left
-  # entirely untouched; the two overlay networks coexist independently.
+  # Mesh-only: no exit-node/subnet-routing configured, so it connects the
+  # fleet's own devices but does not mask egress IP — that is the Proton VPN
+  # client's job (modules/proton-vpn.nix).
   #
   # First-time auth is manual on every host: after rebuild, run
   # `sudo tailscale up` and follow the printed login URL. Expanded from

@@ -27,14 +27,6 @@
 { pkgs, ... }:
 
 let
-  # rtk isn't in nixpkgs-25.11 (stable) yet, only unstable — vpn-server pins
-  # stable, so guard on attribute existence rather than hardcoding it and
-  # breaking that host's eval. Picks itself up automatically once a future
-  # stable point-release backports the package. Used both for the package and
-  # for the PreToolUse hook below (the hook must only exist where the binary
-  # does, or `claude` would hit "command not found" on every Bash call).
-  hasRtk = pkgs ? rtk;
-
   # jq inspects the Bash command and denies the fork bomb pattern
   # `name(){ ... | ... & }; name`. Pinned to the store path so it resolves
   # regardless of the user's PATH. Backslashes are doubled for jq string escaping.
@@ -125,18 +117,16 @@ let
             }
           ];
         }
-      ]
-      ++ pkgs.lib.optional hasRtk {
-        matcher = "Bash";
-        hooks = [
-          {
-            type = "command";
-            command = "rtk hook claude";
-            statusMessage = "Routing through rtk";
-          }
-        ];
-      }
-      ++ [
+        {
+          matcher = "Bash";
+          hooks = [
+            {
+              type = "command";
+              command = "rtk hook claude";
+              statusMessage = "Routing through rtk";
+            }
+          ];
+        }
         {
           matcher = "AskUserQuestion|ExitPlanMode";
           hooks = [ bossHook ];
@@ -165,5 +155,5 @@ in
   # outright. This skips rtk's own test suite so the package still builds;
   # REMOVE this override once nixpkgs ships an rtk revision whose tests
   # pass cleanly (i.e. `nh os boot --dry` builds rtk without doCheck=false).
-  ++ pkgs.lib.optional hasRtk (pkgs.rtk.overrideAttrs (_: { doCheck = false; })); # Claude Code token-optimizing Bash proxy (hook above)
+  ++ [ (pkgs.rtk.overrideAttrs (_: { doCheck = false; })) ]; # Claude Code token-optimizing Bash proxy (hook above)
 }

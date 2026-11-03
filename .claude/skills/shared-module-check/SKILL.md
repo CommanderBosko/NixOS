@@ -1,6 +1,6 @@
 ---
 name: shared-module-check
-description: Use this skill when the user asks "did this break other hosts", "check shared module impact", "does this break vpn-server too", "cross-host check", or "verify this commonModules change". Forces a full 4-host deep-eval sweep after editing a file shared across hosts, since a local dry-run silently verifies nothing about the other hosts.
+description: Use this skill when the user asks "did this break other hosts", "check shared module impact", "does this break the laptop too", "cross-host check", or "verify this commonModules change". Forces a full all-hosts deep-eval sweep after editing a file shared across hosts, since a local dry-run silently verifies nothing about the other hosts.
 ---
 
 # Shared Module Check
@@ -50,15 +50,15 @@ Same convention as `deep-eval-check`: PASS with the `.drv` path, or FAIL with th
 
 ### 5. On any FAIL, check for a channel/arch availability gap first
 
-Before assuming something else broke: `vpn-server` pins `nixpkgs-25.11` (stable) on `aarch64-linux`, while the three desktop hosts track `nixpkgs-unstable` on `x86_64-linux`. A package or option that only exists on unstable will break `vpn-server` specifically, and nowhere else.
+All three hosts currently track the same `nixpkgs-unstable` on `x86_64-linux`, so a failure on one host that the others pass is normally a host-specific module or option problem, not an availability gap. A gap only exists if some host is on a different channel or architecture again (the original case, from when a stable-channel `aarch64-linux` host was in the fleet, is in `references/incidents.md`): a package or option that only exists on the newer channel breaks that host specifically, and nowhere else.
 
-If the error is `undefined variable '<pkg>'` (or similarly, a missing attribute) on `vpn-server` alone while the desktop hosts pass — this is almost certainly the availability gap, not a real bug. The fix: gate the reference on the package's actual existence rather than hardcoding it:
+If the error is `undefined variable '<pkg>'` (or similarly, a missing attribute) on a single host that sits on a different channel or architecture from the passing hosts — this is almost certainly the availability gap, not a real bug. The fix: gate the reference on the package's actual existence rather than hardcoding it:
 
 ```nix
 pkgs.lib.optional (pkgs ? <attrName>) pkgs.<attrName>
 ```
 
-This self-heals once a future stable point-release backports the package — no manual re-edit needed. Cite `modules/claude-code.nix`'s `rtk` guard as the precedent (history: `references/incidents.md`). If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
+This self-heals once the package lands on the older channel — no manual re-edit needed. The former `rtk` guard in `modules/claude-code.nix` was the precedent (removed 2026-11-03 with the stable-channel host; history: `references/incidents.md`). If a hook or config elsewhere *uses* the gated package (e.g. a script that shells out to it), gate that reference too, the same way — an ungated caller will fail at runtime even if the package reference itself is fixed.
 
 If the failure isn't an availability gap (a real syntax error, a genuinely broken option, an assertion failure), diagnose it normally — don't force the availability-gap explanation onto an unrelated bug.
 
@@ -80,7 +80,7 @@ Tell the user:
 ## Key facts
 
 - Read-only through Step 4 — evaluation only, never builds or activates. Step 5's fix (if needed) is the only step that edits files.
-- This is the shared-file counterpart to `de-smoke-check` (unwired DE modules) and the mandatory pre-`fleet-rollout` gate that `deep-eval-check` already documents — this skill just adds the trigger discipline of *always* reaching for the 4-host sweep specifically when a shared file changed, instead of leaving that judgment call to memory.
+- This is the shared-file counterpart to `de-smoke-check` (unwired DE modules) and the mandatory pre-`fleet-rollout` gate that `deep-eval-check` already documents — this skill just adds the trigger discipline of *always* reaching for the all-hosts sweep specifically when a shared file changed, instead of leaving that judgment call to memory.
 - Working directory: `/home/bosko/NixOS`.
 
 ## Gotchas

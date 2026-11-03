@@ -45,4 +45,4 @@ Once the machine has booted and `/etc/ssh/ssh_host_ed25519_key` exists:
 
 4. `git add .sops.yaml secrets/common.yaml` (plus `secrets/desktop.yaml` for a desktop host), then rebuild the host. Password login now works.
 
-If the host will also **join the VPN** (imports `vpn.nix`), it additionally needs its WireGuard private key encrypted in `secrets/hosts/<hostname>.yaml` (encrypted to admin + this host). Add a matching `creation_rule` in `.sops.yaml` and use the **`add-secret`** skill (or follow the `new-peer` flow) — `vpn.nix` reads `config.sops.secrets."wg-private-key".path`.
+Any further per-host secrets (anything beyond the shared `common.yaml`/`desktop.yaml` ones) get their own `creation_rule` in `.sops.yaml` — use the **`add-secret`** skill.

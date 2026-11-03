@@ -85,8 +85,8 @@ in
 
   # Declaratively reconcile Auto Mode (permissions.defaultMode + the autoMode
   # policy block) in ~/.claude/settings.json, so every host running this
-  # config (gaming, laptop, natalie-laptop — vpn-server has no home-manager
-  # bosko user) starts up with the same Auto Mode ruleset instead of needing
+  # config (gaming, laptop, natalie-laptop) starts up with the same Auto Mode
+  # ruleset instead of needing
   # a manual `/auto-mode-setup` pass per machine. Full-reconcile (like
   # claudeMcpServers in mcp.nix), not additive like claudeAllowList: autoMode is
   # canonical repo policy, so a divergent value gets overwritten back to this.

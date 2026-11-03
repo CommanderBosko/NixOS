@@ -1,6 +1,6 @@
 ---
 name: add-package
-description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/vpn-server", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
+description: Triggers when user says "add a package", "install a package", "add X to my system", "add X to gaming/laptop/natalie-laptop", "add package", or "install X". Interactively adds a package to the correct location in the repo — either a host's system packages or a user's Home Manager packages — then reminds the user to dry-run and commit.
 model: haiku
 version: 0.2.0
 ---
@@ -25,14 +25,14 @@ Ask the user the following questions. You may batch them into a single message. 
 
 1. **Package name** — The `pkgs.*` attribute name (e.g. `ripgrep`, `kdePackages.kcalc`). If the user gave a plain English name, confirm the nixpkgs attribute before proceeding — you can reason from your knowledge of nixpkgs or ask the user to verify with `nix search nixpkgs <name>`.
 
-2. **Which host(s)** — One or more of the `.flakeHosts` in `.claude/hosts.json`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with `multiSelect: true` and one option per flake host (`.flakeHosts` in `hosts.json`, enumerated live) rather than free-form prose. Selecting every host means `all`. The flake has four hosts, which is exactly the tool's option limit; if the list ever grows, offer the first four and name the rest in the question text so the user can type one via **Other**. If the user already named a host in their request, skip the question.
+2. **Which host(s)** — One or more of the `.flakeHosts` in `.claude/hosts.json`, or `all` (meaning every host). If the user said "my system" or gave no host, assume their current machine context if obvious; otherwise present this pick via the **AskUserQuestion tool** with `multiSelect: true` and one option per flake host (`.flakeHosts` in `hosts.json`, enumerated live) rather than free-form prose. Selecting every host means `all`. The flake has three hosts, which fits the tool's four-option limit; if the list ever grows past four, offer the first four and name the rest in the question text so the user can type one via **Other**. If the user already named a host in their request, skip the question.
 
 3. **System-level or user-level** — One of:
    - **System** — goes in `environment.systemPackages` in the host's `environment.nix`. Available to all users on that host.
-   - **User (bosko)** — goes in `users.users.bosko.packages` in `modules/users.nix` (bosko's block has no `packages` attribute yet — Step 4 creates it). Personal package for bosko only, applies on all hosts — vpn-server included, since `users.nix` is in `commonModules`.
+   - **User (bosko)** — goes in `users.users.bosko.packages` in `modules/users.nix` (bosko's block has no `packages` attribute yet — Step 4 creates it). Personal package for bosko only, applies on all hosts, since `users.nix` is in `commonModules`.
    - **Home Manager (shared)** — goes in `home.packages` in `dotfiles/common/configs/home.nix` (that file currently has no `home.packages` block — add one). Managed by HM; applies to both `bosko` and `natty` on all desktop hosts.
 
-   Note: non-desktop hosts (`"desktop": false` in `.claude/hosts.json`, e.g. `vpn-server`) do not run Home Manager — only the **system** option applies to them.
+   Note: a non-desktop host (`"desktop": false` in `.claude/hosts.json`; none exist today) would not run Home Manager — only the **system** option applies to it.
 
    If the user did not already indicate the tier in their request, present this pick via the **AskUserQuestion tool** with these three options (**System**, **User (bosko)**, **Home Manager (shared)**) rather than free-form prose. If the chosen host is a non-desktop host, only **System** applies — skip the question and use System. If the user already specified the tier, skip the question.
 
@@ -42,7 +42,7 @@ Based on the answers from Step 1, resolve the exact file path and the list to mo
 
 | Destination | File |
 |---|---|
-| System packages — any host | the host's `envFile` in `.claude/hosts.json` → `environment.systemPackages` (desktops: `hosts/<host>/environment.nix`; vpn-server: `hosts/vpn-server/configuration.nix`) |
+| System packages — any host | the host's `envFile` in `.claude/hosts.json` → `environment.systemPackages` (`hosts/<host>/environment.nix`) |
 | User packages — bosko | `modules/users.nix` → `users.users.bosko.packages` (attribute not present yet — create it) |
 | HM packages — shared | `dotfiles/common/configs/home.nix` → `home.packages` (block not present yet — create it) |
 
@@ -116,7 +116,7 @@ Do not rebuild. Do not stage files. Leave both of those to the user's own workfl
 
 - Never use `git add` — leave staging entirely to the `/git-commit` skill.
 - Never run `nh os boot` or `nixos-rebuild` — leave that to the user.
-- Non-desktop hosts (`"desktop": false`, e.g. `vpn-server`) are headless; never suggest HM or user packages for them.
+- A non-desktop host (`"desktop": false`; none exist today) would be headless; never suggest HM or user packages for it.
 - Check each target host's architecture (`.hosts.<host>.arch` in `.claude/hosts.json`) — for a non-`x86_64-linux` host, only offer packages that are likely available for that architecture.
 - `natty` has their own entry in `users.users.natty` in `modules/users.nix` (wheel access, personal `packages` list) alongside the HM shared list (`home.nix`) — both destinations are valid for `natty`.
 - If the package name is ambiguous (e.g. `discord` vs `vesktop`), note the distinction briefly.

@@ -4,7 +4,7 @@
 # flake's real nixosConfigurations.
 #
 # hosts.json is the source of truth the host-touching skills read (ssh-host,
-# fleet-status, fleet-rollout, remote-rebuild, ...). If a host is added to or
+# fleet-status, fleet-rollout, ...). If a host is added to or
 # dropped from flake.nix without updating it, those skills silently act on the
 # wrong fleet. This compares, as sorted sets:
 #

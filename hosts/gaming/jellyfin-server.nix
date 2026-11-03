@@ -5,7 +5,7 @@
 # Storage:  the spare Samsung SSD 870 EVO 1TB (/dev/sda) is wiped and reformatted
 #           ext4, mounted at /mnt/media, pinned by UUID (see the fileSystems block
 #           below — filled in AFTER the one-time GParted format).
-# Access:   LAN (enp4s0) + WireGuard (wg0) only. No public/internet-facing ports.
+# Access:   LAN (enp4s0) + Tailscale (tailscale0) only. No public/internet-facing ports.
 # Transcode: NVIDIA NVENC on the RTX 3070 — the jellyfin user is added to the
 #           render/video groups so jellyfin-ffmpeg can reach /dev/nvidia*.
 #           (The actual NVENC toggle lives in the Jellyfin web dashboard:
@@ -31,21 +31,18 @@
   users.users.bosko.extraGroups = [ "media" ];
   users.users.natty.extraGroups = [ "media" ];
 
-  # Firewall — Jellyfin reachable only on the LAN, WireGuard, and Tailscale
-  # interfaces.
+  # Firewall — Jellyfin reachable only on the LAN and Tailscale interfaces.
   #   8096/tcp  — Jellyfin HTTP web UI / API
   #   1900/udp  — DLNA/SSDP discovery (lets Chromecast/Roku/TVs find the server)
   #   7359/udp  — Jellyfin client auto-discovery on the LAN
   # tailscale0 gets 8096/tcp only — DLNA/SSDP discovery is LAN broadcast/multicast
   # and doesn't traverse Tailscale; remote clients reach the server by IP/hostname
-  # directly. wg0 stays even though modules/vpn.nix is currently out of the flake
-  # (Oracle outage) so it's ready the moment that tunnel comes back.
+  # directly.
   networking.firewall.interfaces = {
     enp4s0 = {
       allowedTCPPorts = [ 8096 ];
       allowedUDPPorts = [ 1900 7359 ];
     };
-    wg0.allowedTCPPorts = [ 8096 ];
     tailscale0.allowedTCPPorts = [ 8096 ];
   };
 

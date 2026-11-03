@@ -26,7 +26,7 @@ If the user has not already provided both pieces of information, ask them in a s
 jq -r '.hosts | to_entries[] | select(.value.desktop==true) | .key' /home/bosko/NixOS/.claude/hosts.json
 ```
 
-If the user did not already name a host, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per desktop host) rather than free-form prose; skip the question if the user already supplied the host. (Headless hosts like `vpn-server` have no DE — reject them with a clear explanation.)
+If the user did not already name a host, present this pick via the **AskUserQuestion tool**, populating its options from the live enumeration above (one option per desktop host) rather than free-form prose; skip the question if the user already supplied the host. (Reject any non-desktop host with a clear explanation — headless hosts have no DE.)
 
 2. **Target DE** — Which desktop environment to switch to?
 
@@ -71,7 +71,7 @@ This parses `flake.nix`, scopes strictly to the named host's own `mkSystem { ...
   Current:  "${self}/modules/desktop-environments/<current>.nix"   (<line>)
   Proposed: "${self}/modules/desktop-environments/<target>.nix"
   ```
-- **Exit 0 with a `shared-helper:` line** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which the `gaming` host and the `lib.moduleSmoke.{amd,vpn}` smoke-eval targets (not hosts) all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
+- **Exit 0 with a `shared-helper:` line** — the host (gaming) has no DE line of its own; it comes from a shared module-list helper in `flake.nix` (`gamingModules`), which the `gaming` host and the `lib.moduleSmoke.*` smoke-eval targets (not hosts) all use. Editing that line switches **all** of them. Say so, and in Step 5 make the `Proceed` option name every affected variant (use `AskUserQuestion`'s description) so the user approves the blast radius, not just one host.
 - **Exit 1** — no DE module found for that host (e.g. a headless host slipped through, or the host block wasn't found). Stop and explain what the script reported; ask the user to verify.
 - **Exit 2** — ambiguous: more than one DE module import found in the host's block (stderr lists all candidates with their `flake.nix` lines). Do **not** guess which one is "current" — show the candidates and ask the user which line to replace.
 
@@ -124,7 +124,7 @@ Then remind them of the next steps:
 
 ## Key constraints
 
-- **Only desktop hosts** — those with `"desktop": true` in `.claude/hosts.json` (enumerate live, per Step 1 — don't hardcode the roster). Reject headless hosts (`vpn-server`).
+- **Only desktop hosts** — those with `"desktop": true` in `.claude/hosts.json` (enumerate live, per Step 1 — don't hardcode the roster). Reject any non-desktop host.
 - **One line changed** — only the DE import line for the target host. Nothing else.
 - **Confirm before editing** — never edit `flake.nix` without explicit user approval.
 - **Do not stage or commit** — that is the `/git-commit` skill's job.
