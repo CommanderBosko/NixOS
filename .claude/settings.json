@@ -26,7 +26,12 @@
       "Bash(~/.claude/skills/skill-upgrade/scripts/find-skill-misfires.sh*)",
       "Bash(~/.claude/skills/lib/scope-since-last-run.sh*)",
       "mcp__nixos__nix",
-      "mcp__nixos__nix_versions"
+      "mcp__nixos__nix_versions",
+      "Bash(systemctl is-active *)",
+      "Bash(systemctl status *)",
+      "Bash(systemctl list-units *)",
+      "Bash(/home/bosko/.claude/skills/land-prs/scripts/pr-chain.sh *)",
+      "mcp__tailscale__tailscale_list_devices"
     ]
   },
   "hooks": {
