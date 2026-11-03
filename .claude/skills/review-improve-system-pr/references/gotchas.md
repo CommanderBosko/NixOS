@@ -88,3 +88,17 @@
   the head at that moment. Step 4 runs `scripts/ci-gate.sh <pr> <PR_HEAD_SHA>` (waits on
   `gh pr checks --watch`, and fails unless the head still equals the reviewed SHA before and
   after), then passes `--match-head-commit <PR_HEAD_SHA>` (the SHA the guardrail script printed).
+
+- **What the 2026-11-03 hardening covers, and what it still does not.** An independent review of #75
+  found 8 gaps; `find-and-check-pr.sh` now also checks the git trees (symlinks, submodules and
+  mode changes under `.claude/` and `dotfiles/bosko/claude/`), the settings at the base branch's
+  current tip, SKILL.md frontmatter (`allowed-tools` / `hooks` / `mcp` and gate-name shadowing),
+  the REST file list and PR head against the first read, and it prints PR body lines with a `| `
+  prefix. Still not covered: a `` !`cmd` `` preprocessing line in a SKILL.md body (whether Claude
+  Code runs it on load was not verified, and a plain regex false-positives on docs that mention
+  `` `!` ``); escaped spaces in a settings path; and the old accepted limits (an allow entry for a
+  script the PR does not touch, `*`-rule argument risks). When this script changes, run
+  `find-and-check-pr.test.sh` and also point it at an older copy (with its sibling
+  `check-settings-diff.sh`): the `[new]` cases must fail there and the `[regress]` ones must not.
+- **Test stub pitfall:** inside the stub `gh`, `${*#...}` trims each positional argument
+  separately, so join the arguments into a string first (`all="$*"`). It cost two debugging runs.
