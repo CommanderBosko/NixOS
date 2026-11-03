@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for four hosts. Shared system modules l
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 484 (2026-11-02): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container; PRs #83 and #86, Play Store registration still pending). laptop, natalie-laptop and vpn-server still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
+Active development; `system.stateVersion` `25.11`. Four hosts — `gaming`, `laptop`, `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) and `vpn-server` (headless `aarch64-linux`, on `nixos-25.11`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 484 (2026-11-02, config-equivalent to `main`): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container with libndk ARM translation; PRs #83, #86, #88; Play Store registration and game tests pending). laptop, natalie-laptop and vpn-server still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
 
 **The WireGuard full-tunnel VPN is down and out of the flake** (since 2026-08-18: Oracle Cloud administratively disabled the vpn-server instance, no ETA); a Tailscale mesh is the interim stopgap — see the [VPN](#vpn) section.
 
@@ -201,11 +201,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-11-02 (session 144, latest)** — The open package PRs were merged: `aria2` (resumable downloads), `unrar` (so xarchiver can open RAR5/RAR7) and Waydroid. Waydroid first failed to start because linux-zen has no legacy iptables module, so gaming now selects the `waydroid-nftables` package (PR #86); the session starts and Android is reachable. Its Play Store still needs a one-time Google device registration, documented in `modules/gaming.nix`.
+**2026-11-03 (session 145, latest)** — Waydroid gained ARM translation (libndk) so ARM-only games such as Wild Rift can install; the steps are documented in `modules/gaming.nix`. The review gate for the weekly improve-system PR was hardened against eight bypass gaps (symlinks, frontmatter, path spellings) with 191 tests, and the local skills sweep landed with a new `android-debloat` skill (PRs #89, #90).
+
+**2026-11-02 (session 144)** — The open package PRs were merged: `aria2` (resumable downloads), `unrar` (so xarchiver can open RAR5/RAR7) and Waydroid. Waydroid first failed to start because linux-zen has no legacy iptables module, so gaming now selects the `waydroid-nftables` package (PR #86); the session starts and Android is reachable. Its Play Store still needs a one-time Google device registration, documented in `modules/gaming.nix`.
 
 **2026-11-02 (session 143)** — Waydroid was added to the gaming host so Android games can run in a container (PR #83). It uses software rendering on the current NVIDIA card; GPU rendering comes with the planned AMD swap. Games that check Play Integrity won't run, and many ARM-only games need an extra translation layer.
-
-**2026-10-29 (session 142)** — Vesktop stopped loading messages because Electron 43 moves itself out of the cgroup the Proton bypass matched; the bypass now matches a `novpn` group instead (PR #78, live on gaming). `powershell` was added for both users (PR #77, live on gaming). The `nixpkgs` pin stays: mcp-nixos is fixed upstream, vendor-reset under linux-zen and pinchflat are not. Three tailnet devices were debloated over ADB, outside this repo.
 
 ## Roadmap
 

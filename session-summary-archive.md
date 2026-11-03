@@ -1,3 +1,31 @@
+## Session: 2026-10-25 (session 140) — flake bump pinned back, monitoring and a repaired Hermes test
+
+**Focus**: Close out 16 conversations since the 10-24 close: a flake bump that broke gaming's build and was undone by pinning nixpkgs, Prometheus monitoring for Hermes, and a Hermes competency run that was invalid because of a harness race.
+
+### What changed (and why)
+- **nixpkgs pinned to `fe132422` (PRs #56, #58):** the 10-24 bump marked mcp-nixos and pinchflat unusable and broke gaming's zen kernel modules (`vendor-reset.ko.cer`), which PR CI can't see because it only evaluates. One pin replaced three per-package workarounds. Pinchflat-ngx (PR #57) was closed unmerged, branch kept; DB backed up first.
+- **Mnemosyne vector search:** its native libs were built against a newer glibc than Hermes's Python; the plugin now builds from Hermes's own nixpkgs. Verified live (write-time embedding, recall, forget).
+- **Prometheus monitoring (PR #59):** read-only for Hermes via `hermes-monitor`; it caught a real disk alert. Root was 98% full; deleting the 38 GB League prefix left 63 GB free.
+- **Hermes competency harness (PR #63):** 42 of 90 repeats of the first full run died to a gateway-drain race and were graded 0. Fixed the race, added retries, an abort rule and a real preflight, then made doing nothing score 0 (suite 2.0.0). No baseline yet.
+- **Guardrail fix (PRs #64, #62, #65):** the weekly sweep PR tripped the settings.json guardrail a third time, so the guardrail now accepts additive allow-list entries; sweep and a numbering fix landed. Status line got a Hermes progress bar plus a 30 s refresh (PR #60). PR #55 (sixth rule) merged.
+
+### Decisions
+- Pin nixpkgs rather than keep stacking overlays; fix the guardrail rather than waive the PR; keep Hermes read-only until Network reaches "alone".
+
+### Issues / surprises
+- Eval-only CI let a broken kernel build through; run `nixos-dry-run` on gaming before merging nixpkgs bumps.
+- The first full test run cost 2h17m of GPU before anyone noticed; the harness now aborts after 3 consecutive infra errors.
+- The agent's `rm -rf` cleanups were denied; the user ran them.
+
+### Next session
+- First valid `/hermes-competency-test full`; decide the Steam library / disk; rebuild laptops for node exporters; lift the pin when upstream settles.
+
+**Commits**: `fb2005e..74a8f5d` (~25 commits, ~11 of them PR merges)
+
+Secret-scan: clean (tree + 1,934 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-24 (session 139) — Proton/Vesktop boot and stall fixes, sixth rule
 
 **Focus**: Close out four conversations: three fixes that make Proton VPN and the Vesktop bypass survive a cold boot, plus a new standing rule (PR #55).

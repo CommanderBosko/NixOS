@@ -2,6 +2,14 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 140 next steps:**
+1. `/hermes-competency-test full` (needs `llm-on`; the preflight runs first) for the first valid baseline; `calibrate` first if tokens allow. Check the progress bar in the status line.
+2. Decide the gaming disk: move the Steam library to `/mnt/media` or uninstall games (63 GB free; `DiskAlmostFull` fires below ~92 GB).
+3. `/fleet-rollout` (or `rebuild-host`) laptop + natalie-laptop so their node exporters answer; then Alertmanager → Discord if wanted (`add-secret`).
+4. Small fixes: `hermes-monitor --help` exit 0; the three unapplied #62 findings; delete the competency-test leftovers listed in Known Issues.
+5. When ready to lift the nixpkgs pin, follow the Current Goals checklist (zen/vendor-reset, mcp-nixos, pinchflat-ngx with a fresh DB backup).
+6. Items 2-4 of session 139 below still stand (watch Proton over several boots, `~/projects` `CLAUDE.md` resync, session 138's list).
+
 **Session 139 next steps:**
 1. ~~`land-prs` PR #55, then rebuild~~ — **DONE session 140:** #55 merged (`cca0ebd`) and the live global `CLAUDE.md` carries six rules.
 2. Over the next several gaming boots, confirm Proton never sticks at "Connecting" (proves `4274364`); if it does, enable the app's debug logging before restarting it.
