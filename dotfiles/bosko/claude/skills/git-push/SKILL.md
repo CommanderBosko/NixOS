@@ -109,23 +109,8 @@ the PR title confirmation need judgment and stay here.
 
 ## Gotchas
 
-- **A branch cut from `origin/main` tracks `main`.** `git checkout -b X origin/main` (no `--no-track`)
-  leaves `X` with upstream `origin/main`, so a bare `git push` refuses ("upstream branch ... does not
-  match the name of your current branch") and `status` used to die on `origin/X..HEAD`. `push.sh` now
-  detects any origin upstream whose name differs from the branch, prints a `note:`, and pushes with
-  `git push -u origin <branch>` (which also fixes the upstream). Prefer creating branches with
-  `git checkout -b X --no-track origin/main`, and don't pipe `execute` through `tail` — it hides errors.
-  (The default branch is never retargeted — it keeps its old behavior exactly.)
-- **The `pull/new/<branch>` link is not a pending PR.** After a push, git prints
-  `https://github.com/<owner>/<repo>/pull/new/<branch>` as a convenience. It only opens GitHub's
-  "new pull request" form for that branch. Nothing is waiting for review, and no PR exists until
-  someone opens and submits that form. Don't report it as an open PR or as a reminder to review. When
-  `execute --pr` opened the PR, report that PR URL instead.
 - **Why `--pr` is opt-in.** `session-closer` (and any other caller) runs `push.sh execute` with no
   flags and treats any printed `…/pull/N` URL as a PR to hand to `land-prs`. A default-on PR would
   open PRs unconfirmed and feed them into a merge flow, so only the confirmed flow above passes `--pr`.
-- **Existing-PR check matches the head branch, any base, any state.** A stacked child PR that targets
-  its parent is found and not duplicated, and a branch whose PR was squash-merged isn't re-opened by a
-  repeat `--pr` run with nothing new to push. A *new* PR still targets the default branch unless
-  `--base` says otherwise.
+- **More gotchas live in `references/gotchas.md`:** new branches tracking `origin/main` (and the `git switch --no-track -c` flag order), the `pull/new/<branch>` link not being a PR, and how the existing-PR check matches. Load it when a push or `--pr` run behaves unexpectedly.
 - **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.

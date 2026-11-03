@@ -16,4 +16,6 @@
 
 **Commits**: `[oldest]..[newest]` ([n] commits)
 
+Secret-scan: [pending - STEP 5B replaces this line with the result]
+
 ---
