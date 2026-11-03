@@ -47,6 +47,10 @@ case "$1 $2" in
     ;;
   api*)
     case "$*" in
+      "api repos/CommanderBosko/NixOS --jq"*)
+        [ "$FAIL" = defbranch ] && { echo "HTTP 502" >&2; exit 1; }
+        printf '%s\n' "${DEFAULT_BRANCH:-main}"
+        ;;
       *"/pulls/"*"/files"*)
         [ "$FAIL" = rest ] && { echo "HTTP 502" >&2; exit 1; }
         emit "$FX/rest.json"
@@ -109,8 +113,8 @@ fx_setup() {
   fi
   local parsed
   parsed='($s | split("\n") | map(select(length > 0)) | map(split(" -> ") | {old: (if length == 2 then .[0] else null end), p: .[-1]}))'
-  jq -nc --arg s "$spec" --arg b "$BASE_OID" --arg h "$HEAD_OID" \
-    "$parsed"' as $f | {files: ($f | map({path: .p, additions: 1, deletions: 0, changeType: "MODIFIED"})), baseRefOid: $b, baseRefName: "main", headRefOid: $h}' > "$FX/view.json"
+  jq -nc --arg s "$spec" --arg b "$BASE_OID" --arg h "$HEAD_OID" --arg n "${BASE_REF_NAME:-main}" \
+    "$parsed"' as $f | {files: ($f | map({path: .p, additions: 1, deletions: 0, changeType: "MODIFIED"})), baseRefOid: $b, baseRefName: $n, headRefOid: $h}' > "$FX/view.json"
   jq -nc --arg s "$spec" \
     "$parsed"' as $f | $f | map({filename: .p, status: (if .old then "renamed" else "modified" end), previous_filename: .old})' > "$FX/rest.json"
   [ -z "${REST_OVERRIDE:-}" ] || printf '%s' "$REST_OVERRIDE" > "$FX/rest.json"
@@ -137,7 +141,7 @@ t() {
   local tag=$1 name=$2 want=$3 spec=$4 p ok=1 why="" out rc
   shift 4
   fx_setup "$spec"
-  out=$(PATH="$BIN:$PATH" FX="$FX" FAIL="${FAIL:-}" BASE_OID="$BASE_OID" HEAD_OID="$HEAD_OID" TIP_OID="$TIP_OID" "$TARGET" 2>&1)
+  out=$(PATH="$BIN:$PATH" FX="$FX" FAIL="${FAIL:-}" BASE_OID="$BASE_OID" HEAD_OID="$HEAD_OID" TIP_OID="$TIP_OID" DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}" "$TARGET" 2>&1)
   rc=$?
   [ "$rc" -eq "$want" ] || { ok=0; why="rc=$rc, wanted $want"; }
   for p in "$@"; do
@@ -488,6 +492,63 @@ BASE_SETTINGS=$T/b-two-good-docs.json t new "base settings with two valid docume
   "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
 TIP_SETTINGS=$T/b-two-docs.json t new "tip settings with two JSON documents -> 3" 3 ".claude/skills/a/SKILL.md" \
   "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+
+# ======================================================================================
+# Round 2: gaps found by the independent re-review of the hardened gate (2026-11-03).
+# ======================================================================================
+echo "== new (round 2, HIGH): SKILL.md frontmatter spellings that a line regex missed"
+yfm() { fm "y$1" .claude/skills/a/SKILL.md "$2"; }
+BLOBDIR=$(yfm quoted $'---\nname: a\n"allowed-tools": Bash\n---\nbody\n') t new "quoted key \"allowed-tools\": -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter" "!GUARDRAIL: OK"
+BLOBDIR=$(yfm squoted $'---\nname: a\n\'hooks\': x\n---\n') t new "single-quoted key 'hooks': -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm indented $'---\n  name: a\n  allowed-tools: Bash\n---\n') t new "the whole mapping indented -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm flow $'---\n{name: a, allowed-tools: "Bash"}\n---\n') t new "flow mapping -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm explicit $'---\nname: a\n? allowed-tools\n: Bash\n---\n') t new "explicit key '? allowed-tools' -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm bom $'\xEF\xBB\xBF---\nname: a\n"allowed-tools": Bash\n---\n') t new "leading UTF-8 BOM before the frontmatter -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm snake $'---\nname: a\nallowed_tools: Bash\n---\n') t new "unlisted key allowed_tools -> 2 (anything off the allowlist is a human's call)" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm anchor $'---\nname: a\n<<: *base\n---\n') t new "YAML merge key -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm unclosed $'---\nname: a\nhooks: x\nno closing delimiter\n') t regress "frontmatter that never closes -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(yfm real $'---\nname: a\ndescription: A multi-word description, with a colon: inside.\nmodel: haiku\nversion: 0.2.0\n---\nbody\n') t regress "the real key set (name, description, model, version) -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+BLOBDIR=$(yfm cont $'---\nname: a\ndescription: a long description that\n  continues on an indented line\n  and another\n---\nbody\n') t regress "an indented continuation of a description -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+BLOBDIR=$(yfm comment $'---\n# a comment\nname: a\n\ndescription: d\n---\n') t regress "comments and blank lines inside the frontmatter -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+
+echo "== new (round 2, LOW): the name check no longer depends on exact quoting"
+for v in 'review-improve-system-pr   ' 'review-improve-system-pr # note' '"improve-system" # note' '&x improve-system' '!!str improve-system' '>-'; do
+  case $v in '>-') body=$'---\nname: >-\n  improve-system\n---\n' ;; *) body=$'---\nname: '"$v"$'\n---\n' ;; esac
+  BLOBDIR=$(fm "n$RANDOM" .claude/skills/other/SKILL.md "$body") t new "name: '$v' -> 2" 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "shadow"
+done
+BLOBDIR=$(fm ndup .claude/skills/other/SKILL.md $'---\nname: fine\nname: improve-system\n---\n') t new "a second name: line naming the gate -> 2" 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "shadow"
+
+echo "== new (round 2, LOW): a malformed but valid-JSON git tree must exit 3"
+HEAD_TREE_JQ='.tree = [5] + .tree' t new "head tree with a non-object entry -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+HEAD_TREE_JQ='.tree = []' t new "empty head tree -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+HEAD_TREE_JQ='.tree |= map(del(.mode))' t new "head tree entries without a mode -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+HEAD_TREE_JQ='.tree |= map(.mode = null)' t new "head tree entries with a null mode -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+BASE_TREE_JQ='.tree |= map(.path = 7)' t new "base tree entries with a non-string path -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+BASE_TREE_JQ='.tree |= map(select(.path != ".claude/settings.json"))' t new "base tree without .claude/settings.json (implausible) -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+
+echo "== new (round 2, LOW): more spellings of a repo path in base settings strings"
+mk_hook "$T/hook-cd-slash.json" 'cd /home/bosko/NixOS/.claude/skills/foo/scripts/ && ./hook.sh'
+mk_hook "$T/hook-cd-claude.json" 'cd /home/bosko/NixOS/.claude && bash skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-cd-rel.json" 'cd .claude && ./skills/foo/scripts/hook.sh'
+mk_hook "$T/hook-brace-late.json" 'for f in /home/bosko/NixOS/.claude/skills/foo/scripts/{a,hook}.sh; do bash $f; done'
+mk_hook "$T/hook-dotdot.json" 'bash /home/bosko/NixOS/.claude/skills/foo/scripts/../scripts/hook.sh'
+mk_hook "$T/hook-dotdot2.json" 'bash /home/bosko/NixOS/.claude/skills/bar/../foo/scripts/hook.sh'
+for h in cd-slash cd-claude cd-rel brace-late dotdot dotdot2; do
+  BASE_SETTINGS=$T/hook-$h.json t new "settings string spelled '$h' still maps to the repo path -> 2" 2 ".claude/skills/foo/scripts/hook.sh" \
+    "GUARDRAIL: VIOLATION" "without a permission prompt"
+done
+BASE_SETTINGS=$T/hook-cd-claude.json t regress "a relative script token does not flag a differently named script -> 0" 0 ".claude/skills/foo/scripts/other.sh" "GUARDRAIL: OK"
+
+echo "== new (round 2, LOW): symlink roots are exactly the documented ones"
+HEAD_TREE_JQ='.tree += [{"path":"dotfiles/common/x","mode":"120000","type":"blob","sha":"b"}]' t new "a symlink under dotfiles/common (outside the roots) -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+HEAD_TREE_JQ='.tree += [{"path":"dotfiles/bosko/other","mode":"120000","type":"blob","sha":"b"}]' t new "a symlink under dotfiles/bosko but not claude -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+HEAD_TREE_JQ='.tree += [{"path":"dotfiles/bosko","mode":"120000","type":"blob","sha":"b"}]' t regress "dotfiles/bosko itself a symlink -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "  dotfiles/bosko ("
+HEAD_TREE_JQ='.tree += [{"path":"dotfiles","mode":"120000","type":"blob","sha":"b"}]' t regress "dotfiles itself a symlink -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "  dotfiles ("
+
+echo "== new (round 2, LOW): the PR must target the default branch"
+BASE_REF_NAME=feature/x t new "PR targeting a non-default branch -> 2, reason names it" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "default branch" "!GUARDRAIL: OK"
+FAIL=defbranch t new "default branch cannot be read -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+DEFAULT_BRANCH=trunk BASE_REF_NAME=trunk t regress "a repo whose default branch is trunk, PR into trunk -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
 
 echo
 echo "== summary: regress ${PASS_regress} pass / ${FAIL_regress} fail;  new ${PASS_new} pass / ${FAIL_new} fail"

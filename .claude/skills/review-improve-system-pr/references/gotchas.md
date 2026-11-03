@@ -89,16 +89,35 @@
   `gh pr checks --watch`, and fails unless the head still equals the reviewed SHA before and
   after), then passes `--match-head-commit <PR_HEAD_SHA>` (the SHA the guardrail script printed).
 
-- **What the 2026-11-03 hardening covers, and what it still does not.** An independent review of #75
-  found 8 gaps; `find-and-check-pr.sh` now also checks the git trees (symlinks, submodules and
-  mode changes under `.claude/` and `dotfiles/bosko/claude/`), the settings at the base branch's
-  current tip, SKILL.md frontmatter (`allowed-tools` / `hooks` / `mcp` and gate-name shadowing),
-  the REST file list and PR head against the first read, and it prints PR body lines with a `| `
-  prefix. Still not covered: a `` !`cmd` `` preprocessing line in a SKILL.md body (whether Claude
-  Code runs it on load was not verified, and a plain regex false-positives on docs that mention
-  `` `!` ``); escaped spaces in a settings path; and the old accepted limits (an allow entry for a
-  script the PR does not touch, `*`-rule argument risks). When this script changes, run
-  `find-and-check-pr.test.sh` and also point it at an older copy (with its sibling
-  `check-settings-diff.sh`): the `[new]` cases must fail there and the `[regress]` ones must not.
+- **What the 2026-11-03 hardening covers, and what it still does not.** Two independent adversarial
+  reviews (of #75, then of the hardened gate) drove `find-and-check-pr.sh` to also check the git
+  trees (symlinks, submodules and mode changes under `.claude/` and `dotfiles/bosko/claude/`,
+  with a malformed or empty tree exiting 3), the settings at the base branch's current tip, the
+  SKILL.md frontmatter (an allowlist of plain keys, not a search for the bad ones), the REST file
+  list and PR head against the first read, and the default-branch target, and to print PR body
+  lines with a `| ` prefix. Still not covered:
+  - **Base-tip time of check.** The tip's `settings.json` is read once, in `find-and-check-pr.sh`;
+    `ci-gate.sh` rechecks only the head SHA, and its wait can run 570 s. If main gains an allow
+    entry for a script the PR edits inside that window, the merge lands unflagged. A fix needs
+    `PR_BASE_TIP:` printed here and rechecked there (exit 4), plus a test harness `ci-gate.sh`
+    does not have.
+  - A `` !`cmd` `` preprocessing line in a SKILL.md body: whether Claude Code runs it on load was
+    not verified, and a plain regex false-positives on docs that mention `` `!` ``.
+  - Escaped spaces in a settings path; a brace list whose first elements are unmapped (`{a,hook}.sh`
+    maps `hook.sh` only through the any-directory `*.sh` fallback).
+  - The old accepted limits: an allow entry for a script the PR does not touch, `*`-rule argument
+    risks (`git log --output`, `git fetch --upload-pack`, `nix eval --impure`).
+  - **What an exit 0 means on this host.** The gate models the project's `.claude/settings.json`.
+    `~/.claude/settings.json` here (managed by `dotfiles/bosko/claude-hm/settings.nix`) already
+    allows `Bash(*)` and `Skill`, so any script a merged PR adds can run unprompted in the user's own
+    sessions regardless of the project allowlist. `GUARDRAIL: OK` therefore means "inside the
+    boundary and nothing already trusted was edited", not "no new unprompted code"; the Step 2
+    read-through is the real content check.
+  - A SKILL.md that merely mentions improve-system in its description is flagged too (exit 2);
+    that is deliberate over-flagging. A file name with a backslash makes the REST and `gh` file sets
+    differ, so such a PR exits 3 and can never pass.
+  When this script changes, run `find-and-check-pr.test.sh` and also point it at an older copy
+  (with its sibling `check-settings-diff.sh`): the `[new]` cases must fail there and the
+  `[regress]` ones must not.
 - **Test stub pitfall:** inside the stub `gh`, `${*#...}` trims each positional argument
   separately, so join the arguments into a string first (`all="$*"`). It cost two debugging runs.

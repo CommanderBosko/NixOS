@@ -122,6 +122,8 @@ jq -e '[.files[].path | test("[\u0001-\u001f\u007f]")] | any | not' <<< "$VIEW_J
 [[ "$BASE_OID" =~ ^[0-9a-f]{40}$ ]] || die3 "unexpected base commit from gh: '$BASE_OID'"
 [[ "$HEAD_OID" =~ ^[0-9a-f]{40}$ ]] || die3 "unexpected head commit from gh: '$HEAD_OID'"
 [[ "$BASE_REF" =~ ^[A-Za-z0-9._/-]+$ && "$BASE_REF" != null ]] || die3 "unexpected base branch name from gh: '$BASE_REF'"
+DEFAULT_BRANCH=$(gh api "repos/$REPO" --jq .default_branch) || die3 "could not read the default branch of $REPO - guardrail NOT evaluated"
+[[ "$DEFAULT_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || die3 "unexpected default branch from gh: '$DEFAULT_BRANCH'"
 TITLE=${TITLE//[[:cntrl:]]/}
 URL=${URL//[[:cntrl:]]/}
 
@@ -184,9 +186,18 @@ fetch_tree() { gh api "repos/$REPO/git/trees/$2?recursive=1" > "$TMPD/$1-tree.js
 fetch_tree head "$HEAD_OID" || die3 "could not read the head git tree - symlinks and file modes cannot be checked - guardrail NOT evaluated"
 fetch_tree base "$BASE_OID" || die3 "could not read the base git tree - file modes cannot be checked - guardrail NOT evaluated"
 for side in head base; do
-  jq -e '(.truncated == false) and ((.tree | type) == "array")' "$TMPD/$side-tree.json" > /dev/null 2>&1 \
-    || die3 "the $side git tree is truncated or malformed - symlinks and file modes cannot be checked - guardrail NOT evaluated"
+  # Valid JSON is not enough: an empty tree, entries without a string mode/path or a non-object
+  # entry would make the symlink and mode checks silently see nothing.
+  jq -e '(.truncated == false) and ((.tree | type) == "array") and ((.tree | length) > 0)
+         and all(.tree[]; ((.mode | type) == "string") and ((.path | type) == "string"))' "$TMPD/$side-tree.json" > /dev/null 2>&1 \
+    || die3 "the $side git tree is truncated, empty or malformed - symlinks and file modes cannot be checked - guardrail NOT evaluated"
+  jq -r '.tree[] | [.mode, .path] | @tsv' "$TMPD/$side-tree.json" > "$TMPD/$side-modes.tsv" \
+    || die3 "could not list the $side git tree - guardrail NOT evaluated"
 done
+jq -e 'any(.tree[]; .path == ".claude/settings.json")' "$TMPD/base-tree.json" > /dev/null 2>&1 \
+  || die3 "the base git tree has no $SETTINGS_PATH although it was fetched - implausible tree - guardrail NOT evaluated"
+jq -r '.tree[] | select(.mode == "120000" or .mode == "160000") | [.mode, .path] | @tsv' "$TMPD/head-tree.json" \
+  | LC_ALL=C sort -t$'\t' -k2 > "$TMPD/links.tsv" || die3 "could not list symlinks in the head git tree - guardrail NOT evaluated"
 
 SETTINGS_CHANGED=0
 grep -qxF -- "$SETTINGS_PATH" <<< "$FILES" && SETTINGS_CHANGED=1
@@ -231,6 +242,12 @@ repo_candidates() {
   while [[ "$n" == */./* ]]; do n=${n//\/.\//\/}; done
   n=${n#./}
   n=${n//[\{\}]/}
+  # `x/../` pairs cancel (bounded: a path of only `..` segments stays as it is)
+  local i=0
+  while [ "$i" -lt 20 ] && [[ "$n" =~ ^(.*/)?([^/]+)/\.\./(.*)$ ]] && [ "${BASH_REMATCH[2]}" != .. ]; do
+    n="${BASH_REMATCH[1]}${BASH_REMATCH[3]}"
+    i=$((i + 1))
+  done
   if [ "$n" != "$t" ]; then
     repo_candidates "$n"
     return
@@ -271,24 +288,37 @@ repo_candidates() {
     *dotfiles/bosko/claude/*) printf '%s\n' "dotfiles/bosko/claude/${t#*dotfiles/bosko/claude/}" ;;
   esac
   case $t in
-    *.claude/*) r=${t#*.claude/}; printf '%s\n' ".claude/$r" "dotfiles/bosko/claude/$r" ;;
+    *.claude/*) r=${t#*.claude/}; printf '%s\n' ".claude/$r" "dotfiles/bosko/claude/$r"; return ;;
   esac
+  # A relative script path with no recognisable root (`cd .claude && ./skills/x/scripts/y.sh`,
+  # a brace-list leftover like `y.sh`): match it under any directory.
+  if [[ "$t" =~ ^[A-Za-z0-9._/-]+\.(sh|py)\*?$ ]]; then
+    printf '%s\n' "*/${t#/}"
+  fi
 }
 
 # collect_trusted FILE — add FILE's path-like tokens to TRUST
 collect_trusted() {
-  local entry tok cand
+  local entry tok cand isdir
   while IFS=$'\t' read -r entry tok; do
     tok=${tok//[\'\`]/}   # single quotes/backticks are not path characters (the jq split leaves them in)
     [ -n "$tok" ] || continue
     while IFS= read -r cand; do
       [ -n "$cand" ] || continue
+      isdir=0
+      [[ "$cand" == */ ]] && { isdir=1; cand=${cand%/}; }
+      [ -n "$cand" ] || continue
       [ -n "${TRUST[$cand]+x}" ] || TRUST["$cand"]=$entry
-      # A directory with no dot in its last component (`cd .../scripts && ./x.sh`) trusts what is under it.
-      case ${cand##*/} in
-        *.*|*\**|"") ;;
-        *) [ -n "${TRUST["$cand/*"]+x}" ] || TRUST["$cand/*"]=$entry ;;
-      esac
+      # A directory token (`cd .../scripts && ./x.sh`: a trailing slash, or no dot in its last
+      # component) trusts what is under it.
+      if [ "$isdir" -eq 1 ]; then
+        [ -n "${TRUST["$cand/*"]+x}" ] || TRUST["$cand/*"]=$entry
+      else
+        case ${cand##*/} in
+          *.*|*\**|"") ;;
+          *) [ -n "${TRUST["$cand/*"]+x}" ] || TRUST["$cand/*"]=$entry ;;
+        esac
+      fi
     done < <(repo_candidates "$tok")
   done < <(jq -r '[.. | strings] | unique | .[] | . as $s
       | ($s | gsub("\""; "") | split("[\\s;|&()<>=,:]+"; "g") | map(select(length > 0)))[]
@@ -351,33 +381,47 @@ CHECK_LIST=$FILES
 
 # ---- Git tree checks: symlinks/submodules in the trust roots, and mode changes ----
 declare -A HMODE=() BMODE=()
-while IFS=$'\t' read -r m p; do HMODE["$p"]=$m; done < <(jq -r '.tree[] | [.mode, .path] | @tsv' "$TMPD/head-tree.json")
-while IFS=$'\t' read -r m p; do BMODE["$p"]=$m; done < <(jq -r '.tree[] | [.mode, .path] | @tsv' "$TMPD/base-tree.json")
-TRUST_ROOT_RE='^(\.claude|dotfiles(/bosko(/claude)?)?)(/|$)'
+while IFS=$'\t' read -r m p; do HMODE["$p"]=$m; done < "$TMPD/head-modes.tsv"
+while IFS=$'\t' read -r m p; do BMODE["$p"]=$m; done < "$TMPD/base-modes.tsv"
+# exactly the trust roots and their parent directories (a symlinked parent redirects everything below it)
+TRUST_ROOT_RE='^(\.claude(/|$)|dotfiles$|dotfiles/bosko$|dotfiles/bosko/claude(/|$))'
 while IFS=$'\t' read -r m p; do
   [[ "$p" =~ $TRUST_ROOT_RE ]] || continue
   kind=symlink; [ "$m" = 160000 ] && kind=submodule
   add_violation "$p" "is a $kind (mode $m) inside the trust boundary - the contents API follows links, so a linked settings.json or script would be judged by its target while Claude Code runs the link; human review required"
-done < <(jq -r '.tree[] | select(.mode == "120000" or .mode == "160000") | [.mode, .path] | @tsv' "$TMPD/head-tree.json" | LC_ALL=C sort -t$'\t' -k2)
+done < "$TMPD/links.tsv"
+[ "$BASE_REF" = "$DEFAULT_BRANCH" ] || add_violation "PR #$NUMBER" "targets $BASE_REF, not the default branch $DEFAULT_BRANCH - the trust set was read from that branch's settings.json; human review required"
 
 # ---- SKILL.md frontmatter (read at the PR head) ----
 check_skill_frontmatter() {
-  local f=$1 blob fm name
+  local f=$1 blob fm bad
   if ! [[ "$f" =~ ^[A-Za-z0-9._/+-]+$ ]]; then
     add_violation "$f" "SKILL.md path has unusual characters - its frontmatter cannot be read safely; human review required"
     return
   fi
   blob=$(gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/$f?ref=$HEAD_OID") \
     || die3 "could not read $f at PR head - its frontmatter was NOT checked - guardrail NOT evaluated"
-  fm=$(tr -d '\r' <<< "$blob" | awk 'NR == 1 { if ($0 !~ /^---[[:space:]]*$/) exit; inside = 1; next } inside && /^---[[:space:]]*$/ { exit } inside { print }')
-  if grep -qiE '^(allowed-tools|hooks|mcp)[[:space:]]*:' <<< "$fm"; then
-    add_violation "$f" "SKILL.md frontmatter sets allowed-tools, hooks or mcp - they widen what a skill can run without touching settings.json; human review required"
+  # The frontmatter block as Claude Code would read it: after an optional BOM, a first line of
+  # `---`, up to the next line that is only `---`. Mine can only be a superset of its block.
+  fm=$(tr -d '\r' <<< "$blob" | LC_ALL=C sed '1s/^\xEF\xBB\xBF//' \
+    | awk 'NR == 1 { if ($0 !~ /^---[[:space:]]*$/) exit; inside = 1; next } inside && /^---[[:space:]]*$/ { closed = 1; exit } inside { print } END { if (inside && !closed) print "@@UNCLOSED@@" }')
+  # An allowlist, not a search for the bad keys: allowed-tools, hooks and mcp have many YAML
+  # spellings (quoted keys, flow mappings, `? key`, an indented block, merge keys). Every
+  # column-0 line must be a known plain key; an indented line is only a continuation of one.
+  bad=$(awk '
+    /^[[:space:]]*$/ { next }
+    /^#/ { next }
+    /^[[:space:]]/ { if (!seen) { print "an indented line before any key: " $0; exit } ; next }
+    /^(name|description|model|version|argument-hint):([[:space:]]|$)/ { seen = 1; next }
+    { print "a line outside the known keys: " $0; exit }
+  ' <<< "$fm")
+  if [ -n "$bad" ] || grep -qx '@@UNCLOSED@@' <<< "$fm"; then
+    add_violation "$f" "SKILL.md frontmatter is not just the known plain keys (name, description, model, version, argument-hint) - ${bad:-it never closes}; allowed-tools, hooks and mcp widen what a skill can run without touching settings.json and have many YAML spellings, so anything unfamiliar goes to a human"
   fi
-  name=$(grep -iE '^name[[:space:]]*:' <<< "$fm" | head -n 1 | sed -E "s/^[^:]*:[[:space:]]*//; s/^[\"']//; s/[\"'][[:space:]]*\$//" | tr 'A-Z' 'a-z')
-  case $name in
-    review-improve-system-pr|improve-system)
-      add_violation "$f" "SKILL.md names itself '$name' - a skill with the gate's (or improve-system's) name could shadow it; human review required" ;;
-  esac
+  # a name that is, or contains, the gate's or improve-system's (any quoting, comment, tag or folded form)
+  if grep -qiE 'improve-system' <<< "$fm"; then
+    add_violation "$f" "SKILL.md frontmatter mentions improve-system / review-improve-system-pr - a skill with that name could shadow the gate or improve-system; human review required"
+  fi
 }
 
 while IFS= read -r f; do
