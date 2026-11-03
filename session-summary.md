@@ -4,6 +4,32 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-03 (session 145) — libndk, gate hardening, PRs landed
+
+**Focus**: Close four conversations since the 11-02 close: Waydroid ARM translation, the local `/improve-system` run, review-gate hardening, and merging the open PRs.
+
+### What changed (and why)
+- **Waydroid libndk (PR #88, `df50822`):** League Wild Rift showed "won't work for your device" because the image is x86_64; libndk (AMD CPU) was installed with `waydroid_script` by the user, abilist now has arm64. Documented as a comment in `modules/gaming.nix`; imperative on purpose.
+- **PR #89 (`78c9638`):** local `/improve-system` via `manager` — misfire-scan fix, gotchas, niri validator, 5 allow entries, new `android-debloat` skill.
+- **PR #90 (`13934b0`):** `find-and-check-pr.sh` gate hardened against 8 review gaps, tests first, 3 review rounds, 191/191 tests.
+- **Merge:** #89 then #90 merged on "merge anything that looks good", remote branches deleted; a GitHub 503 was a false alarm.
+
+### Decisions
+- libndk not libhoudini; keep imperative. Gate fix in its own PR.
+
+### Issues / surprises
+- Transcript scan saw only this conversation (counts the close's own invocation as the last run); earlier ones were mined by hand.
+- Not verified: Wild Rift install/login. Base-tip race in `ci-gate.sh` remains.
+
+### Next session
+- Try Wild Rift; rebuild gaming for global skill edits; Hermes calibrate; `/fleet-rollout`.
+
+**Commits**: `6e2d88b..13934b0` (PRs #88, #89, #90)
+
+Secret-scan: clean (tree + 2,008 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-02 (session 144) — Landing the package PRs, Waydroid start fix
 
 **Focus**: Close two conversations since the 08:07 close: merge the open package PRs and prune branches, then get Waydroid to actually start on gaming.
@@ -106,34 +132,6 @@ Secret-scan: clean (tree + 1,971 commits, all 6 `secrets/*.yaml` encrypted).
 **Commits**: `92557e0..fe25633` (~30 commits, 9 of them PR merges) plus `c6c8ee1`
 
 Secret-scan: clean (tree + 1,967 commits, all `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-25 (session 140) — flake bump pinned back, monitoring and a repaired Hermes test
-
-**Focus**: Close out 16 conversations since the 10-24 close: a flake bump that broke gaming's build and was undone by pinning nixpkgs, Prometheus monitoring for Hermes, and a Hermes competency run that was invalid because of a harness race.
-
-### What changed (and why)
-- **nixpkgs pinned to `fe132422` (PRs #56, #58):** the 10-24 bump marked mcp-nixos and pinchflat unusable and broke gaming's zen kernel modules (`vendor-reset.ko.cer`), which PR CI can't see because it only evaluates. One pin replaced three per-package workarounds. Pinchflat-ngx (PR #57) was closed unmerged, branch kept; DB backed up first.
-- **Mnemosyne vector search:** its native libs were built against a newer glibc than Hermes's Python; the plugin now builds from Hermes's own nixpkgs. Verified live (write-time embedding, recall, forget).
-- **Prometheus monitoring (PR #59):** read-only for Hermes via `hermes-monitor`; it caught a real disk alert. Root was 98% full; deleting the 38 GB League prefix left 63 GB free.
-- **Hermes competency harness (PR #63):** 42 of 90 repeats of the first full run died to a gateway-drain race and were graded 0. Fixed the race, added retries, an abort rule and a real preflight, then made doing nothing score 0 (suite 2.0.0). No baseline yet.
-- **Guardrail fix (PRs #64, #62, #65):** the weekly sweep PR tripped the settings.json guardrail a third time, so the guardrail now accepts additive allow-list entries; sweep and a numbering fix landed. Status line got a Hermes progress bar plus a 30 s refresh (PR #60). PR #55 (sixth rule) merged.
-
-### Decisions
-- Pin nixpkgs rather than keep stacking overlays; fix the guardrail rather than waive the PR; keep Hermes read-only until Network reaches "alone".
-
-### Issues / surprises
-- Eval-only CI let a broken kernel build through; run `nixos-dry-run` on gaming before merging nixpkgs bumps.
-- The first full test run cost 2h17m of GPU before anyone noticed; the harness now aborts after 3 consecutive infra errors.
-- The agent's `rm -rf` cleanups were denied; the user ran them.
-
-### Next session
-- First valid `/hermes-competency-test full`; decide the Steam library / disk; rebuild laptops for node exporters; lift the pin when upstream settles.
-
-**Commits**: `fb2005e..74a8f5d` (~25 commits, ~11 of them PR merges)
-
-Secret-scan: clean (tree + 1,934 commits, all `secrets/*.yaml` encrypted).
 
 ---
 
