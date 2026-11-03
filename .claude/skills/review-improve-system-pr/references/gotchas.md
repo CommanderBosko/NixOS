@@ -89,11 +89,11 @@
   `gh pr checks --watch`, and fails unless the head still equals the reviewed SHA before and
   after), then passes `--match-head-commit <PR_HEAD_SHA>` (the SHA the guardrail script printed).
 
-- **What the 2026-11-03 hardening covers, and what it still does not.** Two independent adversarial
-  reviews (of #75, then of the hardened gate) drove `find-and-check-pr.sh` to also check the git
+- **What the 2026-11-02 hardening covers, and what it still does not.** Three independent adversarial
+  reviews (of #75, then twice of the hardened gate) drove `find-and-check-pr.sh` to also check the git
   trees (symlinks, submodules and mode changes under `.claude/` and `dotfiles/bosko/claude/`,
   with a malformed or empty tree exiting 3), the settings at the base branch's current tip, the
-  SKILL.md frontmatter (an allowlist of plain keys, not a search for the bad ones), the REST file
+  SKILL.md frontmatter (an allowlist of plain keys with a plain-token `name`, not a search for the bad ones; checked against an emulation of Claude Code's parser), the REST file
   list and PR head against the first read, and the default-branch target, and to print PR body
   lines with a `| ` prefix. Still not covered:
   - **Base-tip time of check.** The tip's `settings.json` is read once, in `find-and-check-pr.sh`;
@@ -113,6 +113,8 @@
     sessions regardless of the project allowlist. `GUARDRAIL: OK` therefore means "inside the
     boundary and nothing already trusted was edited", not "no new unprompted code"; the Step 2
     read-through is the real content check.
+  - A bare directory token in a settings string (`Read(~/.claude/skills/**)`, `.claude/`) trusts
+    everything beneath it, so every weekly PR would exit 2; not in today's `settings.json`.
   - A SKILL.md that merely mentions improve-system in its description is flagged too (exit 2);
     that is deliberate over-flagging. A file name with a backslash makes the REST and `gh` file sets
     differ, so such a PR exits 3 and can never pass.

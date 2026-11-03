@@ -98,6 +98,14 @@ case "$1 $2" in
 esac
 STUB
 chmod +x "$BIN/gh"
+REAL_AWK=$(command -v awk)
+cat > "$BIN/awk" << AWKSTUB
+#!/usr/bin/env bash
+# delegates to the real awk, except that FAIL=awk_fm / awk_bad makes one of the two frontmatter programs crash
+case "\$FAIL:\$*" in awk_fm:*inside*|awk_bad:*seen*) exit 2 ;; esac
+exec $REAL_AWK "\$@"
+AWKSTUB
+chmod +x "$BIN/awk"
 
 # fx_setup SPEC — build the fixtures for one PR. SPEC is a newline-separated changed-file
 # list; a line "old -> new" is a rename (gh's `files` lists only `new`; the REST list adds
@@ -549,6 +557,36 @@ echo "== new (round 2, LOW): the PR must target the default branch"
 BASE_REF_NAME=feature/x t new "PR targeting a non-default branch -> 2, reason names it" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "default branch" "!GUARDRAIL: OK"
 FAIL=defbranch t new "default branch cannot be read -> 3" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
 DEFAULT_BRANCH=trunk BASE_REF_NAME=trunk t regress "a repo whose default branch is trunk, PR into trunk -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+
+# ======================================================================================
+# Round 3: findings of the focused re-review of the round-2 code.
+# ======================================================================================
+echo "== new (round 3, HIGH): Claude's opener accepts Unicode spaces the gate's did not"
+BLOBDIR=$(fm nbsp .claude/skills/a/SKILL.md $'---\xC2\xA0\nname: a\nallowed-tools: Bash(rm *)\n---\nbody\n') t new "opener '---' + U+00A0 (NBSP) -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter" "!GUARDRAIL: OK"
+BLOBDIR=$(fm nnbsp .claude/skills/a/SKILL.md $'---\xE2\x80\xAF\nname: a\nhooks: x\n---\nbody\n') t new "opener '---' + U+202F -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm zwnbsp .claude/skills/a/SKILL.md $'---\xEF\xBB\xBF\nname: a\nmcp: x\n---\nbody\n') t new "opener '---' + U+FEFF -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm hashopen .claude/skills/a/SKILL.md $'--- # a comment\nname: a\ndescription: d\n---\nbody\n') t regress "'--- # comment' opener with only known keys -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+
+echo "== new (round 3, MEDIUM): the name value must be a plain token"
+BLOBDIR=$(fm nesc .claude/skills/other/SKILL.md $'---\nname: "improve\\x2Dsystem"\ndescription: d\n---\n') t new 'name: "improve\x2Dsystem" (YAML escape) -> 2' 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm nq .claude/skills/other/SKILL.md $'---\nname: "a-plain-name"\ndescription: d\n---\n') t new 'a quoted name value -> 2 (only plain tokens are vouched for)' 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm nbrk .claude/skills/other/SKILL.md $'---\nname: "improve-\\\n  system"\ndescription: d\n---\n') t new 'name: "improve-\<newline>  system" (escaped line break) -> 2' 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm ncont .claude/skills/other/SKILL.md $'---\nname: plain\n  continued-on-an-indented-line\ndescription: d\n---\n') t new 'an indented line directly after name -> 2' 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm ncomment .claude/skills/other/SKILL.md $'---\nname: plain # why\ndescription: d\n---\n') t new 'a trailing comment on name -> 2' 2 ".claude/skills/other/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm nplain .claude/skills/other/SKILL.md $'---\nname: some-plain_name.v2\ndescription: "a quoted description is fine"\n---\n') t regress 'a plain name token with a quoted description -> 0' 0 ".claude/skills/other/SKILL.md" "GUARDRAIL: OK"
+
+echo "== new (round 3, LOW): a lone CR is a line break; a crashed extraction is not 'no frontmatter'"
+BLOBDIR=$(fm cr .claude/skills/a/SKILL.md $'---\nname: a\rallowed-tools: Bash\n---\nbody\n') t new "lone CR splitting a key onto its own line -> 2" 2 ".claude/skills/a/SKILL.md" "GUARDRAIL: VIOLATION" "frontmatter"
+BLOBDIR=$(fm crlf2 .claude/skills/a/SKILL.md $'---\r\nname: a\r\ndescription: d\r\n---\r\nbody\r\n') t regress "plain CRLF frontmatter with known keys -> 0" 0 ".claude/skills/a/SKILL.md" "GUARDRAIL: OK"
+FAIL=awk_fm t new "the frontmatter extraction crashes -> 3, not accepted" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+FAIL=awk_bad t new "the allowlist check crashes -> 3, not accepted" 3 ".claude/skills/a/SKILL.md" "GUARDRAIL: NOT EVALUATED" "!GUARDRAIL: OK"
+
+echo "== new (round 3, LOW): stacked and leading '..' in settings strings"
+mk_hook "$T/hook-dd-stack.json" 'bash /home/bosko/NixOS/.claude/skills/x/scripts/../../y/scripts/z.sh'
+mk_hook "$T/hook-dd-lead.json" 'cd /home/bosko/NixOS/.claude/skills/foo/scripts && ../lib/x.sh'
+BASE_SETTINGS=$T/hook-dd-stack.json t new "stacked '../..' maps to the repo path -> 2" 2 ".claude/skills/y/scripts/z.sh" "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-dd-lead.json t new "a leading '../' after a cd still matches by tail -> 2" 2 ".claude/skills/foo/lib/x.sh" "GUARDRAIL: VIOLATION" "without a permission prompt"
+BASE_SETTINGS=$T/hook-dd-stack.json t regress "stacked '..' does not flag the skipped-over directory's other scripts -> 0" 0 ".claude/skills/x/scripts/other.sh" "GUARDRAIL: OK"
 
 echo
 echo "== summary: regress ${PASS_regress} pass / ${FAIL_regress} fail;  new ${PASS_new} pass / ${FAIL_new} fail"

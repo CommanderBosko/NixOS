@@ -31,10 +31,12 @@
 #   linked settings.json or script would be judged by its target while Claude Code runs the
 #   link), whether or not the PR touches it; and any changed path whose file mode differs
 #   between base and head.
-#   5. SKILL.md frontmatter: a changed SKILL.md whose frontmatter sets `allowed-tools`,
-#   `hooks` or `mcp` (they widen what a skill runs without touching settings.json), or whose
-#   `name:` is review-improve-system-pr or improve-system (a same-named skill could shadow the
-#   gate's). The gate directories themselves are matched case-insensitively.
+#   5. SKILL.md frontmatter: a changed SKILL.md passes only if every column-0 line of its
+#   frontmatter is a plain name/description/model/version/argument-hint key (`name` a plain
+#   token), indented lines only continue a key (never `name`), the block closes, and nothing in
+#   it mentions improve-system (so a gate-named skill cannot shadow the gate). It is an
+#   allowlist because allowed-tools/hooks/mcp (which widen what a skill runs without touching
+#   settings.json) have many YAML spellings. The gate directories are matched case-insensitively.
 #
 # Trust set: the settings strings are read at the PR's merge-base AND at the current tip of
 # the base branch (an entry added to main after the PR branched still counts), plus the head
@@ -232,22 +234,33 @@ fi
 # TRUST maps a repo-relative path or glob pattern -> the settings string that references it.
 declare -A TRUST=()
 
+# normalize_path TOKEN - drop empty and `.` segments (`//`, `/./`, a leading `./`) and cancel
+# `x/..` pairs one segment at a time, leaving leading `..` segments and a leading or trailing `/`.
+normalize_path() {
+  local p=$1 lead="" trail="" seg out=() segs=()
+  [[ "$p" == */* ]] || { printf '%s' "$p"; return; }
+  [[ "$p" == /* ]] && lead=/
+  [[ "$p" == */ ]] && trail=/
+  IFS=/ read -ra segs <<< "$p"
+  for seg in "${segs[@]}"; do
+    case $seg in
+      ""|.) continue ;;
+      ..) if [ "${#out[@]}" -gt 0 ] && [ "${out[${#out[@]}-1]}" != .. ]; then unset "out[${#out[@]}-1]"; continue; fi ;;
+    esac
+    out+=("$seg")
+  done
+  [ "${#out[@]}" -gt 0 ] || { printf '%s' "$p"; return; }
+  local IFS=/
+  printf '%s' "$lead${out[*]}$trail"
+}
+
 # repo_candidates TOKEN - print the repo-relative path(s) a settings token can refer to
 repo_candidates() {
   local t=$1 n h rel="" r printed=0
   # `//`, `/./`, a leading `./` and brace-list braces name the same file but defeat every
   # prefix test below, so normalise first and map the normalised token instead.
-  n=$t
-  while [[ "$n" == *//* ]]; do n=${n//\/\//\/}; done
-  while [[ "$n" == */./* ]]; do n=${n//\/.\//\/}; done
-  n=${n#./}
+  n=$(normalize_path "$t")
   n=${n//[\{\}]/}
-  # `x/../` pairs cancel (bounded: a path of only `..` segments stays as it is)
-  local i=0
-  while [ "$i" -lt 20 ] && [[ "$n" =~ ^(.*/)?([^/]+)/\.\./(.*)$ ]] && [ "${BASH_REMATCH[2]}" != .. ]; do
-    n="${BASH_REMATCH[1]}${BASH_REMATCH[3]}"
-    i=$((i + 1))
-  done
   if [ "$n" != "$t" ]; then
     repo_candidates "$n"
     return
@@ -291,9 +304,12 @@ repo_candidates() {
     *.claude/*) r=${t#*.claude/}; printf '%s\n' ".claude/$r" "dotfiles/bosko/claude/$r"; return ;;
   esac
   # A relative script path with no recognisable root (`cd .claude && ./skills/x/scripts/y.sh`,
-  # a brace-list leftover like `y.sh`): match it under any directory.
+  # a brace-list leftover like `y.sh`): match it under any directory. Leading `../` segments
+  # (the script sits next to the directory we cd'd into) are dropped from the tail.
   if [[ "$t" =~ ^[A-Za-z0-9._/-]+\.(sh|py)\*?$ ]]; then
-    printf '%s\n' "*/${t#/}"
+    r=${t#/}
+    while [[ "$r" == ../* ]]; do r=${r#../}; done
+    printf '%s\n' "*/$r"
   fi
 }
 
@@ -401,20 +417,31 @@ check_skill_frontmatter() {
   fi
   blob=$(gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/$f?ref=$HEAD_OID") \
     || die3 "could not read $f at PR head - its frontmatter was NOT checked - guardrail NOT evaluated"
-  # The frontmatter block as Claude Code would read it: after an optional BOM, a first line of
-  # `---`, up to the next line that is only `---`. Mine can only be a superset of its block.
-  fm=$(tr -d '\r' <<< "$blob" | LC_ALL=C sed '1s/^\xEF\xBB\xBF//' \
-    | awk 'NR == 1 { if ($0 !~ /^---[[:space:]]*$/) exit; inside = 1; next } inside && /^---[[:space:]]*$/ { closed = 1; exit } inside { print } END { if (inside && !closed) print "@@UNCLOSED@@" }')
+  # The frontmatter block as Claude Code would read it. Its regex is /^---\s*\n([\s\S]*?)---\s*\n?/
+  # after one BOM is stripped; JS \s also matches NBSP, U+202F and U+FEFF, which awk's
+  # [[:space:]] does not, so the opener here is just a line starting with `---` (over-flagging
+  # `--- # c` and `----` is the safe direction). The block runs to the next line that is only
+  # `---`; because Claude closes at the first `---` anywhere, mine can only be a superset of its
+  # block. A lone CR is a YAML line break, so CR becomes LF (CRLF then just adds blank lines).
+  fm=$(tr '\r' '\n' <<< "$blob" | LC_ALL=C sed '1s/^\xEF\xBB\xBF//' \
+    | awk 'NR == 1 { if ($0 !~ /^---/) exit; inside = 1; next } inside && /^---[[:space:]]*$/ { closed = 1; exit } inside { print } END { if (inside && !closed) print "@@UNCLOSED@@" }') \
+    || die3 "could not extract the frontmatter of $f - guardrail NOT evaluated"
   # An allowlist, not a search for the bad keys: allowed-tools, hooks and mcp have many YAML
   # spellings (quoted keys, flow mappings, `? key`, an indented block, merge keys). Every
-  # column-0 line must be a known plain key; an indented line is only a continuation of one.
+  # column-0 line must be a known plain key; an indented line is only a continuation of one,
+  # never of `name`, and `name` must be a plain token (no quotes, escapes, comment or tag, which
+  # could spell a gate name that a text search would not see).
   bad=$(awk '
     /^[[:space:]]*$/ { next }
     /^#/ { next }
-    /^[[:space:]]/ { if (!seen) { print "an indented line before any key: " $0; exit } ; next }
-    /^(name|description|model|version|argument-hint):([[:space:]]|$)/ { seen = 1; next }
+    /^[[:space:]]/ { if (!seen) { print "an indented line before any key: " $0; exit }
+                     if (last == "name") { print "an indented continuation of name: " $0; exit }
+                     next }
+    /^name:/ { if ($0 !~ /^name:[[:space:]]+[A-Za-z0-9._-]+[[:space:]]*$/) { print "a name that is not a plain token: " $0; exit }
+               seen = 1; last = "name"; next }
+    /^(description|model|version|argument-hint):([[:space:]]|$)/ { seen = 1; last = "other"; next }
     { print "a line outside the known keys: " $0; exit }
-  ' <<< "$fm")
+  ' <<< "$fm") || die3 "could not check the frontmatter of $f - guardrail NOT evaluated"
   if [ -n "$bad" ] || grep -qx '@@UNCLOSED@@' <<< "$fm"; then
     add_violation "$f" "SKILL.md frontmatter is not just the known plain keys (name, description, model, version, argument-hint) - ${bad:-it never closes}; allowed-tools, hooks and mcp widen what a skill can run without touching settings.json and have many YAML spellings, so anything unfamiliar goes to a human"
   fi
