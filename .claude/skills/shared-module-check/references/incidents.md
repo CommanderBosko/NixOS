@@ -30,8 +30,8 @@ just array membership.
 
 ## `rtk` guard precedent (Step 5)
 
-The `pkgs ? <attrName>` guard Step 5 suggests has a concrete precedent:
-`modules/claude-code.nix`'s `rtk` guard — cite this file as the concrete example when
-suggesting the fix. It was originally fixed 2026-07-18 in `modules/users.nix` (the `rtk`
-reference that broke `vpn-server`'s evaluation, described above) and relocated to
-`modules/claude-code.nix` by the 2026-09 module-colocation refactor.
+The `pkgs ? <attrName>` guard Step 5 suggests has a concrete precedent: the `rtk` guard.
+It was originally fixed 2026-07-18 in `modules/users.nix` (the `rtk` reference that broke
+`vpn-server`'s evaluation, described above), relocated to `modules/claude-code.nix` by the
+2026-09 module-colocation refactor, and removed 2026-11-03 when the stable-channel
+`vpn-server` host was retired (no host lacks `pkgs.rtk` any more).

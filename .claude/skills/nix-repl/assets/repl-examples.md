@@ -21,4 +21,4 @@ Example queries for <host> follow below (grouped by host applicability).
 - `builtins.attrNames cfg.services.flatpak` — flatpak status
 
 ## Headless hosts
-- `cfg.networking.wg-quick.interfaces.wg0` — WireGuard interface config (the VPN server's wg0)
+- `cfg.services.openssh.settings` — sshd settings (the way in to a headless host)

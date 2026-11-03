@@ -4,10 +4,6 @@
   # Frozen at this machine's install-time NixOS release — never bump on upgrades
   system.stateVersion = "25.11";
 
-  # Enable aarch64 emulation so this machine can build for vpn-server (Oracle ARM)
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-  nix.settings.extra-platforms = [ "aarch64-linux" ];
-
   # This board's BIOS (ASRock X570 Phantom Gaming 4, P3.40) reports zeroed
   # CPPC frequency tables, so amd_pstate fails to probe every boot and spams
   # the kernel log (falls back to acpi-cpufreq anyway). Skip the failed probe.

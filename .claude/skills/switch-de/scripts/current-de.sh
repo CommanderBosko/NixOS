@@ -10,7 +10,7 @@
 # helper (e.g. gaming -> gamingModules), the helper's definition is searched
 # instead and a "shared-helper:" line is printed — editing that line changes
 # EVERY config built from the helper (gamingModules: the gaming host plus the
-# lib.moduleSmoke.{amd,vpn} smoke-eval targets, which aren't hosts).
+# lib.moduleSmoke.* smoke-eval targets, which aren't hosts).
 #
 # Output on exit 0 (stdout, one "key: value" per line):
 #   current:       <module name>

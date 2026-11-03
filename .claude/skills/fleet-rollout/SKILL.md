@@ -1,6 +1,6 @@
 ---
 name: fleet-rollout
-description: Deploy a config change across all four NixOS hosts one at a time — dry-run gate, switch live, full health sweep — advancing only when each host is green. Self-orchestrating loop. Use when the user says "/fleet-rollout", "run fleet-rollout", "roll out across the fleet", or "stage this change to all hosts".
+description: Deploy a config change across all three NixOS hosts one at a time — dry-run gate, switch live, full health sweep — advancing only when each host is green. Self-orchestrating loop. Use when the user says "/fleet-rollout", "run fleet-rollout", "roll out across the fleet", or "stage this change to all hosts".
 ---
 
 # Fleet Rollout — Loop
@@ -25,9 +25,8 @@ description: Deploy a config change across all four NixOS hosts one at a time �
 > running systems, ON is strongly recommended. Only run OFF when you've already vetted the
 > change and accept unattended activation across the whole fleet.
 >
-> **Step 5 always pauses for the user on every host except `vpn-server`, regardless of
-> Training Mode** — budget for that pause even on unattended/`/loop`-scheduled runs (why:
-> `references/vpn-server-switch.md`).
+> **Step 5 always pauses for the user on every host, regardless of Training Mode** — budget
+> for that pause even on unattended/`/loop`-scheduled runs (why: see Gotchas).
 
 ## Arguments
 
@@ -48,23 +47,19 @@ before it reaches the next.
 ## Overall done-rule
 
 Every host in scope is on the **new generation** (matching the current flake), reports
-**zero failed systemd units**, has **no reboot-pending kernel/initrd mismatch**, and
-`vpn-server` shows a **fresh WireGuard handshake** (< 3 min) — but only while the tunnel is in
-the flake (`.claude/lib/wg-tunnel-in-flake.sh` exits 0; while `modules/vpn.nix` is commented out,
-the handshake check is skipped, not failed). If any host fails, the run
-is blocked at that host and the rest are NOT touched.
+**zero failed systemd units**, and has **no reboot-pending kernel/initrd mismatch**. If any
+host fails, the run is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to shared infrastructure goes first, so a bad change is caught before it reaches something harder to recover (like the VPN server). Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true` — list them with `jq -r '.hosts|to_entries[]|select(.value.desktop)|.key' /home/bosko/NixOS/.claude/hosts.json`) first and headless hosts (`desktop: false`, e.g. `vpn-server`) last.
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to day-to-day use goes first, so a bad change is caught before it reaches the machine that is hardest to recover. Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true` — list them with `jq -r '.hosts|to_entries[]|select(.value.desktop)|.key' /home/bosko/NixOS/.claude/hosts.json`) first and any headless hosts (`desktop: false`) last.
 
-If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `vpn-server` imports, or a desktop-environment/GPU change that's meaningless on the headless server — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
+If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `gaming` imports, or a GPU-driver change that only applies to one host — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
 
 The host this loop runs on is the **local** host — deploy it with `nh os switch`. All
-other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`,
-**except `vpn-server`**, which is deployed via the `remote-rebuild` skill's `boot` + reboot
-method instead (Step 5). Only `vpn-server` can be deployed unattended; Step 5 hands every
-desktop host off to the user. Resolve which is local with `hostname` at run start.
+other hosts are **remote** — deploy over SSH with `nixos-rebuild switch --target-host`.
+Step 5 hands every host's switch off to the user (none has passwordless sudo). Resolve which
+is local with `hostname` at run start.
 
 ## Steps
 
@@ -97,7 +92,7 @@ current host passes its health sweep.**
    - Local host: invoke `nixos-dry-run` (`nh os boot /home/bosko/NixOS --dry`).
    - Remote host: `nixos-rebuild dry-activate --flake /home/bosko/NixOS#<host> --target-host <ssh-target>`,
      where `<ssh-target>` is `$(source /home/bosko/NixOS/.claude/lib/hosts.sh && hosts_ssh <host>)`
-     (e.g. vpn-server's target is `bosko@<ip>`, not the bare host name).
+     (e.g. `bosko@laptop`, not the bare host name).
    - Done-rule: dry-run evaluates clean and prints the would-be changes with no errors.
      If it errors, stop at this host — do NOT switch.
 
@@ -105,7 +100,7 @@ current host passes its health sweep.**
    **Never run a desktop host's switch via Bash** (`desktop: true` in `.claude/hosts.json`,
    local host included) — none has a NOPASSWD sudo rule, so it fails with "a terminal is
    required to read the password." Hand off instead; this pause applies even in Training
-   Mode OFF (background: `references/vpn-server-switch.md`):
+   Mode OFF (see Gotchas):
    - Local host: print `nh os switch /home/bosko/NixOS` and ask the user to run it
      in their own separate terminal. Don't suggest the `!` prefix: it gives sudo no TTY,
      so the password prompt fails ("a terminal is required to read the password").
@@ -113,24 +108,16 @@ current host passes its health sweep.**
    - Remote desktop host: print
      `nixos-rebuild switch --flake /home/bosko/NixOS#<host> --target-host <ssh-target>` and
      hand it off the same way.
-   - `vpn-server` only: Claude CAN run this step itself (passwordless sudo), but never
-     with `switch` — invoke the `remote-rebuild` skill, which deploys via
-     `nixos-rebuild boot` + a clean reboot.
-   - Done-rule: for handed-off hosts, the user confirms the command completed and
-     reports the new generation; for `vpn-server`, `remote-rebuild` completes exit 0
-     and reports the new generation activated.
+   - Done-rule: the user confirms the command completed and reports the new generation.
 
 6. **Per host — FULL HEALTH SWEEP.** Delegate to the **`fleet-status` skill** (which runs
    `.claude/skills/fleet-status/scripts/fleet-status.sh`) rather than re-spelling the probe
-   here — it already collects generation/`staged`, failed units, and WireGuard handshakes
+   here — it already collects generation/`staged`, failed units, and reboot-pending
    for every host from `hosts.json`. Run it, then read **the row for the host just switched**
    and check:
    - New generation matches the current flake, and `staged` is `no` (the built generation is
      the running one — not staged-but-not-activated).
    - `failed` is `none` (no failed systemd units).
-   - For `vpn-server` only, and only while `.claude/lib/wg-tunnel-in-flake.sh` exits 0: its
-     WireGuard handshake is fresh (< 3 min old). When the tunnel is out of the flake, the sweep
-     prints `WireGuard: skipped (not in flake)` and that check is not applied.
    - Done-rule: all of the above pass for that host's row. If any fail, **stop the whole loop**
      at this host, record it, and surface the `rollback` skill as the remediation (do not
      auto-rollback). Advance to the next host only on full green.
@@ -145,8 +132,6 @@ hosts in scope (not just the last one touched):
 - Each host's `/run/current-system` derivation matches the current flake build.
 - `systemctl --failed` empty on every host (sweep via `fleet-status` or `ssh ... --failed`).
 - No host reports reboot-pending.
-- `vpn-server` WireGuard handshake is fresh — only if `.claude/lib/wg-tunnel-in-flake.sh` exits 0;
-  otherwise the sweep reports the WireGuard section as skipped and this check is not applicable.
 If any check fails, the run is NOT done — record it in the Memory file and stop.
 
 ## End-of-run: write two files (ALWAYS)
@@ -173,17 +158,16 @@ exactly which host and step failed and whether a rollback is recommended.
 
 ## Gotchas
 
-- **A Step 5 hand-off is the expected path, not a block** — no desktop host has NOPASSWD
-  sudo; don't "fix" it by running the switch directly via Bash.
-- **Never `nixos-rebuild switch --target-host vpn-server`** — always the `remote-rebuild`
-  skill's `boot` + reboot (`switch` drops SSH mid-activation and leaves NAT half-applied).
-
-Read `references/vpn-server-switch.md` for the full why behind both before working around
-either.
+- **A Step 5 hand-off is the expected path, not a block** — no flake host has NOPASSWD
+  sudo (the local host included), so `nh os switch` / `nixos-rebuild switch --target-host`
+  run via the Bash tool fail with "a terminal is required to read the password" (same failure
+  mode documented in the `rollback` and `nixos-gc` skills). Don't "fix" it by running the
+  switch directly or by suggesting the `!` prefix. Step 5 therefore stops and hands the
+  command to the user **regardless of Training Mode**, the same way the mandatory commit
+  gate in `flake-update-verify` can't be skipped by OFF mode — budget for that pause even
+  on unattended/`/loop`-scheduled runs.
 
 ## Files
 
 - `assets/output-template.md` — shape of `output-<today>.md` (End-of-run).
 - `assets/memory-template.md` — shape of `memory-<today>.md` (End-of-run).
-- `references/vpn-server-switch.md` — NOPASSWD hand-off and vpn-server `switch` background
-  (Step 5, Gotchas).

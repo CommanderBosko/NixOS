@@ -1,7 +1,7 @@
 { ... }:
 
 {
-  # SSH server hardening shared by every host, headless vpn-server included:
+  # SSH server hardening shared by every host (commonModules):
   # key-only login, no root. Port 22 is opened by services.openssh.openFirewall
   # (default true). Per-host extras stay in host files — e.g.
   # desktop-networking.nix pins AllowUsers.

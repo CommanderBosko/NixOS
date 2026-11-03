@@ -2,7 +2,7 @@
 # secret-scan.sh — read-only scan for leaked secrets in the working tree and git history.
 # Tuned for this repo: secrets/ holds sops-ENCRYPTED files (expected), and this skill's own
 # directory holds docs/patterns that mention secret patterns (excluded to avoid self-matches).
-# Intentional non-secrets (endpoint IP, SSH/WG *public* keys) are NOT flagged.
+# Intentional non-secrets (SSH/age/WG *public* keys) are NOT flagged.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)" || exit 1
 

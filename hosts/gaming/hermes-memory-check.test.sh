@@ -189,7 +189,7 @@ if [[ ${HERMES_MEMORY_CHECK_LIVE:-0} == 1 ]]; then
   # Wrong detail or speculation: fixing or rejecting are both fine.
   live_case 'modify|block' '{"target":"user","action":"add","content":"MCP servers configured: mcp-nixos and mcp-tailscale."}'
   live_case 'modify|block' '{"target":"memory","action":"add","content":"tailscale MCP tools available: list_devices (online/offline status), tailscale_get_device (detailed info), tailscale_status (API health check)"}'
-  live_case 'modify|block' '{"target":"user","action":"add","content":"User uses a NixOS flake config with four hosts: gaming, laptop, natalie-laptop, vpn-server. One of them may be offline."}'
+  live_case 'modify|block' '{"target":"user","action":"add","content":"User uses a NixOS flake config with three hosts: gaming, laptop, natalie-laptop. One of them may be offline."}'
   # Valid durable facts: must pass.
   live_case allow '{"target":"memory","action":"add","content":"mcp__nixos__nix_versions returns version history across all channels and cannot filter by channel; use mcp__nixos__nix with its channel argument for a specific channel."}'
   live_case allow '{"target":"memory","action":"add","content":"python3 is 3.14 here but pip is not installed and PEP 668 is enforced; use a venv or uv for Python packages."}'

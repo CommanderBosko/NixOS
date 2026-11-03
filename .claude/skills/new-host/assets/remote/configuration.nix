@@ -1,6 +1,6 @@
 # Remote hosts declare their own bootloader: modules/bootloader.nix (GRUB + zen
 # kernel) is desktop-only, so nothing is inherited from commonModules. The
-# systemd-boot block below suits aarch64/EFI hosts (e.g. Oracle ARM); for an
+# systemd-boot block below suits aarch64/EFI hosts (e.g. cloud ARM VMs); for an
 # x86_64 BIOS host use GRUB instead.
 { pkgs, ... }:
 

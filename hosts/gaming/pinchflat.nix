@@ -6,7 +6,7 @@
 # Storage: writes into /mnt/media/YouTube on the shared media SSD (see
 #          jellyfin-server.nix), sharing the same "media" group so Jellyfin's
 #          scanner can read what Pinchflat downloads.
-# Access:  LAN (enp4s0) + WireGuard (wg0) only, same scoping as Jellyfin.
+# Access:  LAN (enp4s0) only — no Tailscale or other interface is opened.
 # Setup:   channels/media profiles/output templates aren't declarative in the
 #          nixpkgs module — configure those once through the web UI at
 #          http://gaming:8945 after the first rebuild (use the built-in
@@ -32,39 +32,5 @@
 
   networking.firewall.interfaces = {
     enp4s0.allowedTCPPorts = [ 8945 ];
-    wg0.allowedTCPPorts = [ 8945 ];
   };
-
-  # modules/vpn.nix routes ALL of gaming's egress through the Oracle Cloud
-  # VPS by design (full tunnel). YouTube flags that datacenter IP as bot
-  # traffic ("Sign in to confirm you're not a bot"), breaking Pinchflat's
-  # yt-dlp downloads. Exempt only Pinchflat's UID from the tunnel via a
-  # policy-routing rule so its traffic exits via the normal LAN gateway
-  # instead, while the rest of the host stays fully tunneled.
-  #
-  # Commented out along with modules/vpn.nix (flake.nix) while vpn-server is
-  # down (Oracle admin-disabled, 2026-08-18) — there's no wg0 tunnel to
-  # split-exempt from right now. Re-add alongside the flake.nix import once
-  # vpn-server is back.
-  # networking.wg-quick.interfaces.wg0 = {
-  #   postUp = ''
-  #     PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
-  #     ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
-  #     ${pkgs.iproute2}/bin/ip rule add uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100
-  #   '';
-  #   postDown = ''
-  #     PINCHFLAT_UID="$(${pkgs.coreutils}/bin/id -u pinchflat)"
-  #     ${pkgs.iproute2}/bin/ip rule del uidrange "$PINCHFLAT_UID-$PINCHFLAT_UID" lookup main pref 100 2>/dev/null || true
-  #   '';
-  # };
-
-  # The UID exception above makes pinchflat's return traffic arrive on
-  # enp4s0 while the global default route still points at wg0. NixOS's
-  # firewall does its own strict reverse-path check independent of the
-  # rp_filter sysctl (already loose) and drops that as spoofed, hanging
-  # every connection in SYN-SENT forever. Same asymmetric-routing fix
-  # already applied on vpn-server (hosts/vpn-server/wireguard.nix)
-  # for the same reason. Commented out with the block above — nothing to
-  # route asymmetrically without the wg0 tunnel.
-  # networking.firewall.checkReversePath = "loose";
 }

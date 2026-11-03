@@ -22,7 +22,7 @@ Ask the user the following (batch into one message if both are unknown). Do not 
 
 1. **App** — The app name or Flathub app ID (e.g. `com.spotify.Client`). If the user gave a name but no app ID, note that the Flathub app ID is required and suggest they check [flathub.org](https://flathub.org) to find it. The format is always `com.Publisher.AppName` or similar reverse-domain style.
 
-2. **Host(s)** — Which host(s) to add it to. Valid desktop hosts are those with `"desktop": true` in `.claude/hosts.json`. If the user did not already name a host in their request, present this pick via the **AskUserQuestion tool** with one option per desktop host plus an `All desktop hosts` option, rather than asking in free-form prose. If the user already supplied the host, skip the question. If the user names a non-desktop host (`vpn-server`), stop and explain that headless hosts do not support Flatpak — do not proceed for those hosts.
+2. **Host(s)** — Which host(s) to add it to. Valid desktop hosts are those with `"desktop": true` in `.claude/hosts.json`. If the user did not already name a host in their request, present this pick via the **AskUserQuestion tool** with one option per desktop host plus an `All desktop hosts` option, rather than asking in free-form prose. If the user already supplied the host, skip the question. If the user names a host that is not in that desktop list (e.g. a headless host, should one ever be added), stop and explain that only desktop hosts support Flatpak — do not proceed for that host.
 
 ## Step 2 — Check the shared list, pick the placement, read the target list
 
@@ -119,7 +119,7 @@ Do not stage or commit — that is handled by the `/git-commit` skill.
 
 ## Key constraints
 
-- Only the `"desktop": true` hosts in `.claude/hosts.json` support Flatpak. Warn and stop if the user requests a headless host (`vpn-server`).
+- Only the `"desktop": true` hosts in `.claude/hosts.json` support Flatpak. Warn and stop if the user requests a host outside that list (e.g. a headless host, should one ever be added).
 - The entry format is a bare string with an inline comment — never an attrset.
 - 2-space indentation throughout the file; list entries match the existing entries' indentation (4 spaces in a host's `environment.nix`, 6 in `modules/flatpak.nix`).
 - Always check `modules/flatpak.nix` before adding a host-only entry — an app in the shared list is already on every desktop host.

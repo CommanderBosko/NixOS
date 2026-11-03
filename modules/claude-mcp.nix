@@ -1,8 +1,8 @@
 # bosko's Claude Code MCP servers (registered in ~/.claude.json by
 # dotfiles/bosko/claude-hm/mcp.nix) and the secrets behind them. Desktop-only:
-# the headless vpn-server has no Home Manager and never needs the Tailscale API
+# a headless host would have no Home Manager and never need the Tailscale API
 # credentials or the Discord webhook, so those secrets live in
-# secrets/desktop.yaml, which is not encrypted to vpn-server's key.
+# secrets/desktop.yaml, which is encrypted only to the desktop hosts.
 { pkgs, ... }:
 
 {

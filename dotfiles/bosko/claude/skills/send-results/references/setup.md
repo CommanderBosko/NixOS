@@ -29,7 +29,7 @@ only).
      owner = "bosko";
    };
    ```
-   `secrets/desktop.yaml` is encrypted to the desktop hosts only (not vpn-server), and
+   `secrets/desktop.yaml` is encrypted to the desktop hosts only, and
    `claude-mcp.nix` is in `desktopModules`, so run the `shared-module-check` skill after
    editing it, not just a single-host dry-run.
 4. **Rebuild** whichever host(s) should be able to send Discord notifications (at minimum

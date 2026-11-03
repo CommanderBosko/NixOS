@@ -13,7 +13,7 @@ Fetch journald output for a named service (the last 50 lines by default), either
 
 Parse from the user's request:
 
-- **`<service>`** (required) — the journald unit / service name, e.g. `sddm`, `wg-quick-wg0`, `nginx`, `bluetooth`. If absent, ask in Step 1.
+- **`<service>`** (required) — the journald unit / service name, e.g. `sddm`, `tailscaled`, `nginx`, `bluetooth`. If absent, ask in Step 1.
 - **`<host>`** (optional) — one of the flake hosts listed in `.claude/hosts.json`'s `.flakeHosts` (read the file, don't hardcode the list). Default: the **local/current box** (no SSH). Remote targets are resolved from `.claude/hosts.json`.
 - **Line count** (optional) — e.g. "last 200 lines" → `-n 200`. Default 50.
 - **Follow** (optional) — e.g. "follow", "tail -f", "watch live" → `-f`. Follows for a bounded window (60s default, `--for SECONDS` to change) and then stops on its own.
@@ -22,7 +22,7 @@ Parse from the user's request:
 
 If the user provided a service name (e.g. `/journal sddm`) use it directly. Otherwise ask:
 
-> Which service do you want to check logs for? (e.g. `sddm`, `wg-quick-wg0`, `nginx`, `bluetooth`)
+> Which service do you want to check logs for? (e.g. `sddm`, `tailscaled`, `nginx`, `bluetooth`)
 
 If the user mentioned a host from `.flakeHosts`, use that host. Otherwise default to **local** (the machine the user is on).
 
@@ -54,13 +54,7 @@ After showing logs, present the follow-up choice via the **AskUserQuestion tool*
 
 - Default host: local (wherever Claude Code is running — the gaming host in normal use).
 - `--no-pager` is mandatory to get plain text output without interactive paging.
-- NixOS's `networking.wg-quick.interfaces.wg0` generates a plain named unit, `wg-quick-wg0` — not an `@`-style template unit.
-- vpn-server is a NixOS host — log in as `bosko` (not `ubuntu`).
-- Each `~/.ssh/config` alias (from `dotfiles/common/configs/ssh.nix`) dials the host's stable `tailscaleIp` — LAN IPs are DHCP and drift, so use hostnames, not raw IPs. vpn-server has no `tailscaleIp`, so it gets no alias (see Gotchas).
-
-## Gotchas
-
-- **`vpn-server` has no `~/.ssh/config` alias** — always reach it through `scripts/journal.sh` (or the raw IP in `.claude/hosts.json`), never a bare `ssh vpn-server`. Details: `references/gotchas.md`.
+- Each `~/.ssh/config` alias (from `dotfiles/common/configs/ssh.nix`) dials the host's stable `tailscaleIp` — LAN IPs are DHCP and drift, so use hostnames, not raw IPs.
 
 ## Scripts
 

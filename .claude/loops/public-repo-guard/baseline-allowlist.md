@@ -22,11 +22,14 @@ Mode ON). Each entry: what it is, where, and why it's safe.
   guard exists *because* it's public. Public-ness itself is not a finding.
 - **vpn-server `security.auditd.enable = lib.mkForce false`
   (`hosts/vpn-server/configuration.nix`)** — the Oracle Cloud ARM kernel doesn't support
-  the audit subsystem, so auditd would fail on every boot. Accepted 2026-10-19.
+  the audit subsystem, so auditd would fail on every boot. Accepted 2026-10-19. The host
+  was retired and the file deleted 2026-11-03; entry kept because git history still
+  contains it, which a history scan will still flag.
 - **vpn-server `security.sudo.wheelNeedsPassword = false`
   (`hosts/vpn-server/configuration.nix`)** — remote deploys SSH in as bosko and run sudo
   non-interactively; a password prompt would stall the batch session. The only NOPASSWD
-  host, and SSH there is key-only. See [[feedback_sudo_gated_skill_steps]]. Accepted 2026-10-19.
+  host, and SSH there is key-only. See [[feedback_sudo_gated_skill_steps]]. Accepted
+  2026-10-19. File deleted 2026-11-03 with the host; entry kept for the same history reason.
 - **gaming Hermes `api_key = "local"` (`hosts/gaming/hermes-agent.nix`)** — a non-empty
   dummy for the localhost-only llama server at `127.0.0.1:8080` (the OpenAI client rejects
   an empty key); it authenticates nothing and is not a credential. Accepted 2026-10-26.

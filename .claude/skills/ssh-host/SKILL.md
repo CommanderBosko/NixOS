@@ -1,6 +1,6 @@
 ---
 name: ssh-host
-description: Use this skill when the user wants to "ssh into a host", "connect to gaming/laptop/server/vpn-server", "ssh to a machine", or "open a shell on X". Resolves short host names to the correct SSH command and runs it.
+description: Use this skill when the user wants to "ssh into a host", "connect to gaming/laptop/natalie-laptop", "ssh to a machine", or "open a shell on X". Resolves short host names to the correct SSH command and runs it.
 model: haiku
 version: 0.2.0
 ---
@@ -30,7 +30,7 @@ bash /home/bosko/NixOS/.claude/lib/resolve-host.sh <name>
 
 It maps an alias to its host (each host's `.aliases` array in `hosts.json`) and looks up the SSH target there. On success (exit 0) it prints just the resolved SSH target — use it directly in Step 3. On failure (exit 1, no name given or not found) it prints the full host table (key, ssh, ip, notes) instead.
 
-If no host was named, or the resolver failed, present the pick via the **AskUserQuestion tool**, populating its options from the table the script just printed rather than asking in free-form prose. Skip the question if the user already named a host in their request. The table has up to six rows but the tool takes at most 4 options, so offer the four flake hosts (`gaming`, `laptop`, `natalie-laptop`, `vpn-server`, read live from `.flakeHosts` in `hosts.json`), recommended first, and list any other table rows (e.g. `pi-hole`, `famdash`) in the question text so the user can type one via **Other**.
+If no host was named, or the resolver failed, present the pick via the **AskUserQuestion tool**, populating its options from the table the script just printed rather than asking in free-form prose. Skip the question if the user already named a host in their request. The table has up to five rows but the tool takes at most 4 options, so offer the three flake hosts (`gaming`, `laptop`, `natalie-laptop`, read live from `.flakeHosts` in `hosts.json`), recommended first, plus `pi-hole`, and list any remaining table rows (e.g. `famdash`) in the question text so the user can type one via **Other**.
 
 ## Step 2 — Show the command
 
@@ -67,7 +67,6 @@ For a one-shot command, report its output and exit status (or the error if the c
 
 - The desktop flake hosts (gaming, laptop, natalie-laptop) have `AllowUsers bosko` from `modules/desktop-networking.nix` (natalie-laptop also allows `natty`). pi-hole and famdash are local but not flake hosts — their SSH users come from `hosts.json` (famdash is `natty@`).
 - All hosts have password auth disabled — key auth only.
-- vpn-server is a NixOS host: log in as `bosko` (the Oracle `ubuntu` cloud-init user no longer accepts the key). `bosko` has passwordless sudo there.
 - Hosts with a `tailscaleIp` (incl. pi-hole, famdash) get `~/.ssh/config` aliases dialling that stable Tailscale IP, generated from `.claude/hosts.json` by `dotfiles/common/configs/ssh.nix`; the LAN `.hosts.<name>.ip` is DHCP-drifting reference only.
 
 ## Scripts

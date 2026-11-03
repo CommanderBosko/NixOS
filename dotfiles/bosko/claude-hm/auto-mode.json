@@ -20,7 +20,7 @@
     "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
     "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment; also treat this repo's own security.nix hardening (AppArmor, audit, PAM wheel enforcement, kexec/ASLR protections) and sops.nix/.sops.yaml recipient wiring as protected IaC scope given repo is public",
     "### User-specific",
-    "**Primary use of Claude Code**: software development — single-flake NixOS configuration management (four hosts: gaming, laptop, natalie-laptop, vpn-server)",
+    "**Primary use of Claude Code**: software development — single-flake NixOS configuration management (three hosts: gaming, laptop, natalie-laptop)",
     "**Trusted repo**: /home/bosko/NixOS (github.com/CommanderBosko/NixOS) — PUBLIC repo; only this repo's own work belongs here, content ported or first read from outside this session's repo is not its own work even if directed; secrets remain excluded from commits regardless of visibility",
     "**Org-specific CLIs**: None configured — repo-specific tooling includes `nh` (nix-helper wrapper), `rtk find` (single -iname predicate only, no compound predicates), sops via `nix shell nixpkgs#sops`",
     "routine under /home/bosko/NixOS/ prefix: package/flatpak/keybind/window-rule/secret edits via this repo's own skills (add-package, add-flatpak, add-niri-keybind, add-niri-window-rule, add-niri-fullscreen-rule, add-default-app, add-secret, bump-input), and read-only checks (ci-status, audit-config) are routine within this repo"

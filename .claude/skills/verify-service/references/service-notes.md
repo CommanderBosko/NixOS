@@ -4,7 +4,7 @@ Service-specific expectations behind the generic Step 2 rules in SKILL.md.
 
 ## Ports
 
-- **Jellyfin** binds `0.0.0.0:8096` but is only reachable on `enp4s0` (LAN) + `tailscale0` (`wg0` is also allowed but its module is currently pulled) — the firewall scopes access per-interface, so the `0.0.0.0` bind is **fine**. Note this rather than flagging it.
+- **Jellyfin** binds `0.0.0.0:8096` but is only reachable on `enp4s0` (LAN) + `tailscale0` — the firewall scopes access per-interface, so the `0.0.0.0` bind is **fine**. Note this rather than flagging it.
 - **qBittorrent** — the *GUI app* has no Web UI daemon, so there is **no listening socket by design**. Say "no listening port expected", not a FAIL.
 
 ## Mount and data-dir layout

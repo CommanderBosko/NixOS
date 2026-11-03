@@ -1,6 +1,6 @@
 # Desktop dev environment: language toolchains + Nix LSP/formatter, and Godot 4
-# (Mono/C#) for the Legions project. Desktop-only — the headless vpn-server
-# doesn't get these.
+# (Mono/C#) for the Legions project. Desktop-only (desktopModules, not
+# commonModules).
 { pkgs, ... }:
 
 {

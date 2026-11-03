@@ -2,7 +2,7 @@
 name: new-host
 description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
 model: haiku
-version: 0.4.0
+version: 0.5.0
 ---
 
 # New NixOS Host Scaffolder
@@ -29,7 +29,7 @@ Ask the user the following questions. Batch them into a single message. Do not p
 2. **Host type** — One of:
    - `desktop` — Uses `desktopModules`. Has a display manager, a DE, flatpaks, Home Manager. Follows the gaming/laptop/natalie-laptop pattern.
    - `server` — Headless, uses `commonModules` only. No DE, no flatpaks, no Home Manager. Follows the server pattern.
-   - `remote` — Headless, uses `commonModules`, may be a different architecture (e.g. ARM). Uses a single `configuration.nix` rather than separate `environment.nix` + `networking.nix`. Follows the vpn-server pattern.
+   - `remote` — Headless, uses `commonModules`, may be a different architecture (e.g. ARM). Uses a single `configuration.nix` rather than separate `environment.nix` + `networking.nix`. No host currently in the flake uses this pattern — `assets/remote/configuration.nix` is the template.
 
    If the user did not already state the host type, present this pick via the **AskUserQuestion tool** with three options (`desktop`, `server`, `remote`) rather than free-form prose; skip the question if the user already supplied it.
 
@@ -59,7 +59,7 @@ Based on host type:
   - `/home/bosko/NixOS/hosts/<hostname>/hardware-configuration.nix`
   - `/home/bosko/NixOS/hosts/<hostname>/configuration.nix`
 
-  If the new remote host also wants declarative disk partitioning (nixos-anywhere-style installs — the way vpn-server is set up), additionally create `/home/bosko/NixOS/hosts/<hostname>/disko.nix`, modeled on `hosts/vpn-server/disko.nix` (the real example — disk device, partition sizes, and labels are host-specific, so write real values rather than a generic template). Wiring it into the flake also needs `disko.nixosModules.disko` added to the host's module list — see Step 6's flake-entry template, which has this commented out by default.
+  If the new remote host also wants declarative disk partitioning (nixos-anywhere-style installs), additionally create `/home/bosko/NixOS/hosts/<hostname>/disko.nix` (disk device, partition sizes, and labels are host-specific, so write real values — see the disko project's examples for the format; there is no in-repo example). Wiring it into the flake also needs a `disko` flake input (add it to `flake.nix`'s `inputs` and `outputs` arguments if it isn't there) and `disko.nixosModules.disko` added to the host's module list — see Step 6's flake-entry template, which has this commented out by default.
 
 ## Step 3 — Generate the files from the asset templates
 
@@ -91,7 +91,7 @@ Substitutions when filling a template:
 
 Per-type notes (preserve these — they encode real decisions):
 - **desktop `environment.nix`:** keep `environment.systemPackages` minimal (add real packages later); leave `services.flatpak.packages` an empty list. Do NOT add aarch64 emulation (`boot.binfmt.emulatedSystems`) unless the user asks — that's gaming-specific. Drop the `displayManager.autoLogin` block if the user does not want auto-login.
-- **desktop `networking.nix`:** do NOT add `wg-quick.interfaces.wg0.address` — `modules/vpn.nix` derives it from the host's `vpnIp` in `.claude/hosts.json` once the host joins the VPN. Leave the template's comment saying so.
+- **desktop `networking.nix`:** host-specific networking only — the shared NetworkManager/DNS/firewall/chrony/SSH config lives in `modules/desktop-networking.nix`, so the template is intentionally near-empty. Leave its comment saying so.
 - **remote `configuration.nix`:** the `boot.loader` block declares the bootloader (systemd-boot suits aarch64/EFI). `modules/bootloader.nix` is desktop-only, so a remote host inherits none — for an `x86_64` BIOS remote host swap in `boot.loader.grub` instead.
 
 The templates follow the repo's Nix conventions exactly (see "Key conventions to preserve" below); don't restyle them.
@@ -123,10 +123,10 @@ Show the user the exact `nixosConfigurations.<hostname>` block to add to `flake.
 Fill placeholders:
 - Replace `<hostname>` (and the `# <Hostname — …>` comment) throughout.
 - **desktop:** replace `<de>` with the chosen DE module name; include/uncomment the GPU import lines per the user's Step 1 GPU answer — leave them commented if `none`, uncomment the relevant one(s) otherwise.
-- **remote:** the remote template is for `aarch64-linux`. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
+- **remote:** the remote template is for `aarch64-linux`, with an optional (commented-out) `nixpkgs = nixpkgs-stable;` pin that needs a `nixpkgs-stable` flake input. For an `x86_64` remote host, use the **server** entry instead (inherit `system`, no `specialArgs` override).
 - **remote (disko):** if Step 2 created a `disko.nix` for this host, uncomment the `disko.nixosModules.disko` line and the `"${self}/hosts/<hostname>/disko.nix"` line in the template; otherwise leave both commented out (or drop them) when filling the entry.
 
-Also tell the user to register the host in `.claude/hosts.json` — it is the single source of truth that `modules/vpn.nix` (`hostsData.hosts.<name>.vpnIp`), fleet-status, fleet-rollout, journal, nix-repl, new-module, and ssh-host all enumerate from. Add the hostname to `.flakeHosts` and a `.hosts.<hostname>` entry (`ssh`, `ip`, `local`, `flakeHost: true`, `desktop`, `envFile`, `arch`; `vpnIp` only if it will join the VPN; optional `aliases` for short names `resolve-host.sh` should accept), then run `/home/bosko/NixOS/.claude/lib/check-hosts-json.sh` to confirm it agrees with the flake's real `nixosConfigurations`. Don't edit `hosts.json` automatically unless the user asks — same rule as `flake.nix`.
+Also tell the user to register the host in `.claude/hosts.json` — it is the single source of truth that fleet-status, fleet-rollout, journal, nix-repl, new-module, and ssh-host all enumerate from. Add the hostname to `.flakeHosts` and a `.hosts.<hostname>` entry (`ssh`, `ip`, `local`, `flakeHost: true`, `desktop`, `envFile`, `arch`; `tailscaleIp` once it joins the Tailscale mesh; optional `aliases` for short names `resolve-host.sh` should accept), then run `/home/bosko/NixOS/.claude/lib/check-hosts-json.sh` to confirm it agrees with the flake's real `nixosConfigurations`. Don't edit `hosts.json` automatically unless the user asks — same rule as `flake.nix`.
 
 ## Step 7 — Remind the user about hardware-configuration.nix
 
@@ -165,7 +165,7 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 - `{ ... }:` when the module uses no named arguments. `{ pkgs, ... }:` when it references `pkgs.*`. `{ lib, pkgs, ... }:` when it also calls `lib.*`.
 - Bootloader and kernel choice (`modules/bootloader.nix`) are desktop-only, so remote hosts declare their own `boot.loader` in `configuration.nix` with no `lib.mkForce` overrides.
 - Don't add config a shared module already owns to host files (AppArmor/audit/PAM/ASLR/kexec in `security.nix`, sops-nix setup and login secrets in `sops.nix`, PipeWire in `audio.nix`) — see `.claude/skills/new-module/references/module-conventions.md`.
-- Do NOT add `modules/gaming.nix` or `virtualisation.nix` to the new host entry unless the user explicitly asks. `gaming.nix` is optional and only gaming imports it; `virtualisation.nix` is host-specific (it lives in `hosts/gaming/`, not `modules/`). Don't add `modules/vpn.nix` per host either — it's the shared WireGuard client and belongs in `desktopModules` (commented out there while vpn-server is down; see the comment in `flake.nix`).
+- Do NOT add `modules/gaming.nix` or `virtualisation.nix` to the new host entry unless the user explicitly asks. `gaming.nix` is optional and only gaming imports it; `virtualisation.nix` is host-specific (it lives in `hosts/gaming/`, not `modules/`).
 
 ## Script
 

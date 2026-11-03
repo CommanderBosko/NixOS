@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
 # hosts.sh — Shared lookups against .claude/hosts.json (the single source of
-# truth for host SSH targets, IPs, VPN peer identities). SOURCE this file; do
-# not execute it:
+# truth for host SSH targets and IPs). SOURCE this file; do not execute it:
 #
 #   source "$(dirname "${BASH_SOURCE[0]}")/hosts.sh"      # from a .claude/lib script
 #   source "$REPO/.claude/lib/hosts.sh"                   # from a skill script (REPO = repo root)
@@ -18,9 +17,6 @@
 #   hosts_ssh <name>            SSH target for one host; empty output if unknown
 #   hosts_table                 key<TAB>ssh<TAB>ip<TAB>notes for every host
 #   hosts_flake_ssh_pairs       name<TAB>ssh for every host with flakeHost=true
-#   hosts_vpn_ips               every vpnIp in use (one per line)
-#   hosts_vpn_peer_name <key>   WireGuard public key -> host name (or the key
-#                               itself if it is not a known peer)
 #
 # Callers keep their own `set -uo pipefail`; nothing here changes shell options.
 # Requires jq.
@@ -59,12 +55,4 @@ hosts_table() {
 
 hosts_flake_ssh_pairs() {
   hosts_jq -r '.hosts | to_entries[] | select(.value.flakeHost) | "\(.key)\t\(.value.ssh)"'
-}
-
-hosts_vpn_ips() {
-  hosts_jq -r '.hosts | to_entries[] | select(.value.vpnIp) | .value.vpnIp'
-}
-
-hosts_vpn_peer_name() {
-  hosts_jq -r --arg pk "${1:-}" '.vpn.peers[$pk] // $pk'
 }

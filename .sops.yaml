@@ -6,12 +6,13 @@
 #   decrypt the secrets encrypted to it at activation time.
 #
 # secrets/common.yaml       -> all hosts: login password hashes
-# secrets/desktop.yaml      -> desktop hosts only (not vpn-server):
-#                              tailscale-mcp-env and discord-webhook-url (both
-#                              file-owned by bosko once decrypted)
-# secrets/hosts/<host>.yaml -> that host only: its WireGuard private key
-#                              (gaming.yaml also holds pinchflat-env and
-#                              jellyfin-api-key)
+# secrets/desktop.yaml      -> desktop hosts: tailscale-mcp-env and
+#                              discord-webhook-url (both file-owned by bosko
+#                              once decrypted)
+# secrets/hosts/<host>.yaml -> that host only. Only gaming has one today
+#                              (pinchflat-env, jellyfin-api-key and its other
+#                              gaming-only secrets); add a rule below for a new
+#                              per-host file.
 #
 # Each secret's sopsFile is set where it is declared — grep for `sops.secrets`
 # to see the live wiring. (jellyfin-api-key is stored but not wired into any
@@ -21,7 +22,6 @@ keys:
   - &gaming         age1zqugny5n026jh6q82m85dulc3wuwleysq76qecarf4dchcq4l9vs545sxx
   - &laptop         age1q0jxkfmwgq5acv5u22u9ka2h0kl2raqjtny2z0y8dzy4s630cvrqn6awy9
   - &natalie-laptop age1ryfsw95jndacymzv92w98mnavktagqxl2uyff76v5xvrr00fj97sn68el4
-  - &vpn-server     age1mzg5wqvlw9ndlgwpf6g6f67x9wzv59vn2cjdkxckxfqmaygpsqusvvyewk
 
 creation_rules:
   - path_regex: secrets/common\.yaml$
@@ -31,7 +31,6 @@ creation_rules:
           - *gaming
           - *laptop
           - *natalie-laptop
-          - *vpn-server
 
   - path_regex: secrets/desktop\.yaml$
     key_groups:
@@ -44,15 +43,3 @@ creation_rules:
   - path_regex: secrets/hosts/gaming\.yaml$
     key_groups:
       - age: [*admin, *gaming]
-
-  - path_regex: secrets/hosts/laptop\.yaml$
-    key_groups:
-      - age: [*admin, *laptop]
-
-  - path_regex: secrets/hosts/natalie-laptop\.yaml$
-    key_groups:
-      - age: [*admin, *natalie-laptop]
-
-  - path_regex: secrets/hosts/vpn-server\.yaml$
-    key_groups:
-      - age: [*admin, *vpn-server]

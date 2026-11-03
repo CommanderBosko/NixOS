@@ -15,5 +15,5 @@ Read-only orientation for local agents (Hermes). Claude Code reads `CLAUDE.md`.
 - `system.stateVersion` is frozen at install time, never bump it.
 
 ## Layout
-- `flake.nix` composes four hosts: `gaming`, `laptop`, `natalie-laptop`, `vpn-server`.
+- `flake.nix` composes three hosts: `gaming`, `laptop`, `natalie-laptop`.
 - `modules/` shared system modules, `dotfiles/` Home Manager, `hosts/<name>/` per-host files.
