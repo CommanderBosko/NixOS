@@ -4,6 +4,33 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-02 (session 144) — Landing the package PRs, Waydroid start fix
+
+**Focus**: Close two conversations since the 08:07 close: merge the open package PRs and prune branches, then get Waydroid to actually start on gaming.
+
+### What changed (and why)
+- **PRs merged (all small, `evaluate all hosts` green):** #81 `aria2` (`8bfe545`), #83 Waydroid (`ccc8428`), and #85 `unrar` (`eafc290`; the branch had never been pushed, so it went out as a new PR). Six merged `worktree-agent-*` branches deleted; version branches `1.0`-`3.4`/`4.1.3`/`4.2`/`4.2.1` and `fix/pinchflat-ngx` kept on purpose.
+- **Waydroid wouldn't start (PR #86, `bf2abda`):** after the rebuild, `waydroid-net.sh` failed with `ip_tables not found`: linux-zen has no legacy `ip_tables` module and `networking.nftables.enable` is false on gaming, so the nixpkgs module kept the iptables-based default package. `virtualisation.waydroid.package = pkgs.waydroid-nftables` fixes it. After the user's `nh os switch` (gen 484, 18:03) the session reached "Android is ready", the `waydroid0` bridge came up and the host pings Android.
+- **Research:** ten source reviewers on Waydroid-on-NixOS config; nothing more is needed in Nix. `wl-clipboard` was already on gaming. Saved as memory `reference_waydroid_nixos_research`.
+- **GAPPS setup (`b9d5152`):** the image was VANILLA. The imperative steps (`waydroid init -s GAPPS -f`, register the `android_id` with Google) are recorded as a comment in `modules/gaming.nix`.
+
+### Decisions
+- Select the nftables package explicitly, not `networking.nftables.enable = true`, which would move the iptables firewall that the Vesktop Proton bypass uses. Keep the image and Google registration imperative (documented, not a oneshot unit).
+
+### Issues / surprises
+- gaming's gen 484 came from PR #86's branch; until #86 merges, a rebuild from `main` brings the broken package back. The user asked to land #86 right after this close.
+- Not verified: outbound internet from inside Android, any game, the Play Store (Google registration was still pending when the conversation ended).
+- The transcript scan only saw this (post-`/clear`) conversation because it counted the close's own first invocation as the "last run"; the two earlier conversations were mined by hand.
+
+### Next session
+- Finish Waydroid (Play sign-in, internet, one game); Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` for laptop, natalie-laptop (now also `aria2`, `unrar`) and vpn-server; gaming disk.
+
+**Commits**: `40e0146..b9d5152` (9 commits: the three package merges, #83, and #86's two commits)
+
+Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-02 (session 143) — Waydroid on gaming
 
 **Focus**: Find the best way to play Android games on NixOS, then add it to gaming on its own branch.
@@ -107,33 +134,6 @@ Secret-scan: clean (tree + 1,967 commits, all `secrets/*.yaml` encrypted).
 **Commits**: `fb2005e..74a8f5d` (~25 commits, ~11 of them PR merges)
 
 Secret-scan: clean (tree + 1,934 commits, all `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-24 (session 139) — Proton/Vesktop boot and stall fixes, sixth rule
-
-**Focus**: Close out four conversations: three fixes that make Proton VPN and the Vesktop bypass survive a cold boot, plus a new standing rule (PR #55).
-
-### What changed (and why)
-- **Firewall no longer dies at boot (`d926620`, PR #52):** Vesktop's cgroup rule ran before `user@1000` created `app-novpn.slice`, so `firewall.service` failed on two cold boots and gaming ran with no firewall until a manual restart. The rules now live in `vesktop-direct.service`, ordered after login, with the slice as a login-time user unit. Verified on the 16:03 cold boot.
-- **Proton tray icon (`741a092`, PR #53):** the app checked once for the tray watcher and lost the race with DMS/quickshell; the autostart now waits (≤30 s) for it. Verified after the 08:01 boot.
-- **Proton stuck at "Connecting" (`4274364`, PR #54):** api-core 5.2.5 missed NM's activation signal when WireGuard came up first; patched to start the local agent if already activated. Live on gen 472, not yet proven (intermittent).
-- **Sixth standing rule (`2a44c82`, PR #55, open):** "Read Everything Before Editing". A "Supervisor, Not Builder" rule was added and removed in the same conversation.
-
-### Decisions
-- Late-start rules service over `|| true` or a gid match; a package patch over a watchdog; Supervisor dropped as overhead.
-
-### Issues / surprises
-- The boot-order bug hid because gen 467 was switched live with the slice already present.
-- Hermes's tray-wait draft did not evaluate on the first try; no token saving on small Nix edits.
-- The live `~/.claude` still has the seven-rule version until PR #55 merges and a host rebuilds.
-
-### Next session
-- Land #55 and rebuild; watch Proton over several boots; carry-overs from 138.
-
-**Commits**: `2c9c8ed..2a44c82` (9 commits, 4 of them merges)
-
-Secret-scan: clean (tree + 1,911 commits, all `secrets/*.yaml` encrypted).
 
 ---
 

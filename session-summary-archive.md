@@ -1,3 +1,30 @@
+## Session: 2026-10-24 (session 139) — Proton/Vesktop boot and stall fixes, sixth rule
+
+**Focus**: Close out four conversations: three fixes that make Proton VPN and the Vesktop bypass survive a cold boot, plus a new standing rule (PR #55).
+
+### What changed (and why)
+- **Firewall no longer dies at boot (`d926620`, PR #52):** Vesktop's cgroup rule ran before `user@1000` created `app-novpn.slice`, so `firewall.service` failed on two cold boots and gaming ran with no firewall until a manual restart. The rules now live in `vesktop-direct.service`, ordered after login, with the slice as a login-time user unit. Verified on the 16:03 cold boot.
+- **Proton tray icon (`741a092`, PR #53):** the app checked once for the tray watcher and lost the race with DMS/quickshell; the autostart now waits (≤30 s) for it. Verified after the 08:01 boot.
+- **Proton stuck at "Connecting" (`4274364`, PR #54):** api-core 5.2.5 missed NM's activation signal when WireGuard came up first; patched to start the local agent if already activated. Live on gen 472, not yet proven (intermittent).
+- **Sixth standing rule (`2a44c82`, PR #55, open):** "Read Everything Before Editing". A "Supervisor, Not Builder" rule was added and removed in the same conversation.
+
+### Decisions
+- Late-start rules service over `|| true` or a gid match; a package patch over a watchdog; Supervisor dropped as overhead.
+
+### Issues / surprises
+- The boot-order bug hid because gen 467 was switched live with the slice already present.
+- Hermes's tray-wait draft did not evaluate on the first try; no token saving on small Nix edits.
+- The live `~/.claude` still has the seven-rule version until PR #55 merges and a host rebuilds.
+
+### Next session
+- Land #55 and rebuild; watch Proton over several boots; carry-overs from 138.
+
+**Commits**: `2c9c8ed..2a44c82` (9 commits, 4 of them merges)
+
+Secret-scan: clean (tree + 1,911 commits, all `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-22 (session 138) — land the Proton VPN and rebuild-host PRs
 
 **Focus**: Make `rebuild-host` real: the user still saw `rebuild-natalie-laptop` because its replacement was sitting in an unmerged PR.

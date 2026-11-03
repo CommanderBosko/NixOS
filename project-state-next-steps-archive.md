@@ -2,6 +2,12 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 139 next steps:**
+1. ~~`land-prs` PR #55, then rebuild~~ — **DONE session 140:** #55 merged (`cca0ebd`) and the live global `CLAUDE.md` carries six rules.
+2. Over the next several gaming boots, confirm Proton never sticks at "Connecting" (proves `4274364`); if it does, enable the app's debug logging before restarting it.
+3. Decide whether to commit the `~/projects` `CLAUDE.md` resync in the 6 git repos.
+4. Session 138's list (first `rebuild-host natalie-laptop`, laptop pull + rebuild, pi-hole DNS and Tailscale with Proton up, the phone question) is carried in the newer blocks above; `/hermes-competency-test` after the 10-25 token reset.
+
 **Session 138 next steps:**
 1. ~~On gaming, run `rebuild-switch`~~ — **DONE: gen 468 switched 2026-10-22 08:54, `rebuild-host` confirmed present.** Restart Vesktop if it hasn't been restarted since (only new connections use the bypass).
 2. `rebuild-host natalie-laptop` from gaming for its first real run (it builds from gaming's checkout, so natalie-laptop needs no pull first); laptop was unreachable over SSH, so it still needs `git pull` + rebuild when it is on.
