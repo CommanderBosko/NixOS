@@ -26,6 +26,20 @@
 #   Renames: the old name of a renamed file is checked as well (gh's `files` list only has
 #   the new path; the REST `pulls/N/files` list adds `previous_filename`). That includes
 #   `.claude/settings.json` itself: renaming it away is a violation, not a pass.
+#   4. Symlinks and submodules: any mode-120000 or mode-160000 entry in the head git tree at
+#   or under `.claude/` or `dotfiles/bosko/claude/` (the contents API follows symlinks, so a
+#   linked settings.json or script would be judged by its target while Claude Code runs the
+#   link), whether or not the PR touches it; and any changed path whose file mode differs
+#   between base and head.
+#   5. SKILL.md frontmatter: a changed SKILL.md whose frontmatter sets `allowed-tools`,
+#   `hooks` or `mcp` (they widen what a skill runs without touching settings.json), or whose
+#   `name:` is review-improve-system-pr or improve-system (a same-named skill could shadow the
+#   gate's). The gate directories themselves are matched case-insensitively.
+#
+# Trust set: the settings strings are read at the PR's merge-base AND at the current tip of
+# the base branch (an entry added to main after the PR branched still counts), plus the head
+# settings when the PR changes them. Every settings file must be exactly one JSON document with
+# a permissions.allow array.
 #
 # One exception to the path rule: `.claude/settings.json` passes when check-settings-diff.sh
 # confirms the PR only adds scoped, non-high-power entries to `permissions.allow`
@@ -33,7 +47,12 @@
 #
 # The file list, the settings.json comparison and the printed PR_HEAD_SHA all come from
 # ONE `gh pr view` snapshot, so the SHA the caller pins its merge to is exactly the
-# commit that was checked.
+# commit that was checked. The REST file list (renames) and the PR's current head SHA are
+# cross-checked against that snapshot; any disagreement exits 3 rather than guessing.
+#
+# Output: every line the caller should act on starts at column 0 (PR_HEAD_SHA:, GUARDRAIL:,
+# OFFENDING_FILES:). The PR body is attacker-controlled text, so each of its lines is printed
+# with a `| ` prefix and carriage returns removed: nothing in it can pose as one of those lines.
 #
 # Fails closed: any gh/jq failure exits 3 and never prints `GUARDRAIL: OK`.
 #
@@ -45,9 +64,11 @@
 #   1 — no open PR found (normal/expected most weeks)
 #   2 — PR found but a file violates the guardrail (needs manual review)
 #   3 — could not evaluate (gh auth/network/API failure — including failing to fetch
-#       settings.json or the rename list, or a base settings.json without a
-#       permissions.allow array — unreadable or implausible PR data, or the
-#       settings checker not running) — NOT the same as "no PR": the guardrail was not checked
+#       settings.json (base, tip or head), the git trees, a SKILL.md or the rename list, a
+#       truncated tree, a settings.json that is not exactly one document with a
+#       permissions.allow array, a REST file list or PR head that disagrees with the
+#       snapshot, a file name with control characters — unreadable or implausible PR data,
+#       or the settings checker not running) — NOT the same as "no PR": the guardrail was not checked
 set -uo pipefail
 
 REPO="CommanderBosko/NixOS"
@@ -83,25 +104,42 @@ URL=$(jq -r '.url' <<< "$PR_JSON") || die3 "could not parse PR url"
 BODY=$(jq -r '.body' <<< "$PR_JSON") || die3 "could not parse PR body"
 
 # One snapshot: changed files + the exact base/head commits they belong to.
-VIEW_JSON=$(gh pr view "$NUMBER" --repo "$REPO" --json files,baseRefOid,headRefOid) \
+VIEW_JSON=$(gh pr view "$NUMBER" --repo "$REPO" --json files,baseRefOid,baseRefName,headRefOid) \
   || die3 "could not read PR #$NUMBER files/commits (auth/network?) - guardrail NOT evaluated"
 FILES=$(jq -r '.files[].path' <<< "$VIEW_JSON") || die3 "could not parse PR #$NUMBER file list"
 FILE_COUNT=$(jq -r '.files | length' <<< "$VIEW_JSON") || die3 "could not count PR #$NUMBER files"
 BASE_OID=$(jq -r '.baseRefOid' <<< "$VIEW_JSON") || die3 "could not parse PR #$NUMBER base commit"
+BASE_REF=$(jq -r '.baseRefName' <<< "$VIEW_JSON") || die3 "could not parse PR #$NUMBER base branch"
 HEAD_OID=$(jq -r '.headRefOid' <<< "$VIEW_JSON") || die3 "could not parse PR #$NUMBER head commit"
 
 [ -n "$FILES" ] || die3 "PR #$NUMBER reports no changed files"
+# A file name with a newline or other control character could print a line that looks like
+# one of ours, so refuse to list it at all.
+jq -e '[.files[].path | test("[\u0001-\u001f\u007f]")] | any | not' <<< "$VIEW_JSON" > /dev/null \
+  || die3 "PR #$NUMBER has a changed file name with control characters - cannot be listed safely, review manually"
 # gh caps the files it returns; a list that hits the cap may be truncated, so do not trust it.
 [ "$FILE_COUNT" -lt 100 ] || die3 "PR #$NUMBER lists $FILE_COUNT changed files - the list may be truncated, review manually"
 [[ "$BASE_OID" =~ ^[0-9a-f]{40}$ ]] || die3 "unexpected base commit from gh: '$BASE_OID'"
 [[ "$HEAD_OID" =~ ^[0-9a-f]{40}$ ]] || die3 "unexpected head commit from gh: '$HEAD_OID'"
+[[ "$BASE_REF" =~ ^[A-Za-z0-9._/-]+$ && "$BASE_REF" != null ]] || die3 "unexpected base branch name from gh: '$BASE_REF'"
+TITLE=${TITLE//[[:cntrl:]]/}
+URL=${URL//[[:cntrl:]]/}
 
 # A renamed file shows up in `files` under its NEW path only, so a rename OUT of a trusted
 # or gate path would be invisible. The REST file list carries `previous_filename`
 # (null unless renamed); fold those old names into the set of paths that get checked.
-RENAMED_FROM=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/files?per_page=100" \
-  --jq '.[] | .previous_filename // empty') \
+REST_TSV=$(gh api --paginate "repos/$REPO/pulls/$NUMBER/files?per_page=100" \
+  --jq '.[] | [.filename, (.previous_filename // "")] | @tsv') \
   || die3 "could not read PR #$NUMBER rename list (auth/network?) - guardrail NOT evaluated"
+# The two lists come from separate calls. An empty, partial or shifted REST answer would hide a
+# rename out of a trusted path, so the file sets must be identical.
+[ "$(cut -f1 <<< "$REST_TSV" | LC_ALL=C sort)" = "$(LC_ALL=C sort <<< "$FILES")" ] \
+  || die3 "PR #$NUMBER: the REST file list does not match gh's (empty, partial or changed between calls?) - guardrail NOT evaluated"
+RENAMED_FROM=$(awk -F'\t' '$2 != "" { print $2 }' <<< "$REST_TSV")
+PULL_HEAD=$(gh api "repos/$REPO/pulls/$NUMBER" --jq .head.sha) \
+  || die3 "could not re-read PR #$NUMBER head commit - guardrail NOT evaluated"
+[ "$PULL_HEAD" = "$HEAD_OID" ] \
+  || die3 "PR #$NUMBER head moved from $HEAD_OID to $PULL_HEAD between reads - guardrail NOT evaluated"
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SETTINGS_PATH=".claude/settings.json"
@@ -118,15 +156,37 @@ fetch_settings() {
     "repos/$REPO/contents/$SETTINGS_PATH?ref=$2" > "$TMPD/$1.json" 2> /dev/null
 }
 
+# check_settings_file FILE LABEL - FILE must be exactly one JSON document holding a
+# permissions.allow array. Valid JSON is not enough: `{}`, `[]` or an API error body such as
+# {"message":"Not Found"} would parse and give an empty trusted set (nothing flagged), and
+# `jq -e` alone judges only the LAST of several documents.
+check_settings_file() {
+  jq empty "$1" > /dev/null 2>&1 || die3 "$SETTINGS_PATH at $2 is not valid JSON - guardrail NOT evaluated"
+  jq -es 'length == 1 and ((.[0].permissions.allow | type) == "array")' "$1" > /dev/null 2>&1 \
+    || die3 "$SETTINGS_PATH at $2 is not exactly one JSON document with a permissions.allow array (stripped, replaced, doubled, or an API error body?) - cannot tell which scripts run without a prompt - guardrail NOT evaluated"
+}
+
 # The base copy is always needed (it defines which scripts run unprompted), not only when
-# the PR touches settings.json. Compare at the PR's own base and head commits, not main's
-# tip, which may have moved.
+# the PR touches settings.json. It is read at the PR's merge-base AND at the current tip of
+# the base branch: main may have gained an allow entry or hook for an existing script since
+# the PR branched, and editing that script must still be flagged.
 fetch_settings base "$BASE_OID" || die3 "could not fetch $SETTINGS_PATH at PR base - cannot tell which scripts run without a prompt - guardrail NOT evaluated"
-jq empty "$TMPD/base.json" > /dev/null 2>&1 || die3 "$SETTINGS_PATH at PR base is not valid JSON - guardrail NOT evaluated"
-# Valid JSON is not enough: `{}`, `[]` or an API error body such as {"message":"Not Found"}
-# would parse and give an empty trusted set, i.e. nothing flagged.
-jq -e '(.permissions.allow | type) == "array"' "$TMPD/base.json" > /dev/null 2>&1 \
-  || die3 "$SETTINGS_PATH at PR base has no permissions.allow array (stripped, replaced, or an API error body?) - cannot tell which scripts run without a prompt - guardrail NOT evaluated"
+check_settings_file "$TMPD/base.json" "PR base"
+TIP_OID=$(gh api "repos/$REPO/commits/$BASE_REF" --jq .sha) \
+  || die3 "could not resolve the tip of $BASE_REF - cannot read the current trust set - guardrail NOT evaluated"
+[[ "$TIP_OID" =~ ^[0-9a-f]{40}$ ]] || die3 "unexpected tip commit for $BASE_REF from gh: '$TIP_OID'"
+fetch_settings tip "$TIP_OID" || die3 "could not fetch $SETTINGS_PATH at the tip of $BASE_REF - guardrail NOT evaluated"
+check_settings_file "$TMPD/tip.json" "the tip of $BASE_REF"
+
+# Git trees (recursive) at both commits: symlinks, submodules and file modes are invisible to
+# the file list and to the contents API, which follows links.
+fetch_tree() { gh api "repos/$REPO/git/trees/$2?recursive=1" > "$TMPD/$1-tree.json" 2> /dev/null; }
+fetch_tree head "$HEAD_OID" || die3 "could not read the head git tree - symlinks and file modes cannot be checked - guardrail NOT evaluated"
+fetch_tree base "$BASE_OID" || die3 "could not read the base git tree - file modes cannot be checked - guardrail NOT evaluated"
+for side in head base; do
+  jq -e '(.truncated == false) and ((.tree | type) == "array")' "$TMPD/$side-tree.json" > /dev/null 2>&1 \
+    || die3 "the $side git tree is truncated or malformed - symlinks and file modes cannot be checked - guardrail NOT evaluated"
+done
 
 SETTINGS_CHANGED=0
 grep -qxF -- "$SETTINGS_PATH" <<< "$FILES" && SETTINGS_CHANGED=1
@@ -161,10 +221,20 @@ fi
 # TRUST maps a repo-relative path or glob pattern -> the settings string that references it.
 declare -A TRUST=()
 
-# repo_candidates TOKEN — print the repo-relative path(s) a settings token can refer to
+# repo_candidates TOKEN - print the repo-relative path(s) a settings token can refer to
 repo_candidates() {
-  local t=$1 h rel=""
-  t=${t#./}
+  local t=$1 n h rel="" r printed=0
+  # `//`, `/./`, a leading `./` and brace-list braces name the same file but defeat every
+  # prefix test below, so normalise first and map the normalised token instead.
+  n=$t
+  while [[ "$n" == *//* ]]; do n=${n//\/\//\/}; done
+  while [[ "$n" == */./* ]]; do n=${n//\/.\//\/}; done
+  n=${n#./}
+  n=${n//[\{\}]/}
+  if [ "$n" != "$t" ]; then
+    repo_candidates "$n"
+    return
+  fi
   case $t in
     .claude/*|dotfiles/bosko/claude/*)
       printf '%s\n' "$t"
@@ -187,12 +257,21 @@ repo_candidates() {
   if [ -z "$rel" ] && [[ "$t" =~ ^/(home/[^/]+|root)/(.+)$ ]]; then
     rel=${BASH_REMATCH[2]}
   fi
-  [ -n "$rel" ] || return 0
   case $rel in
-    NixOS/*) printf '%s\n' "${rel#NixOS/}" ;;
+    NixOS/*) printf '%s\n' "${rel#NixOS/}"; printed=1 ;;
     # ~/.claude is Home Manager's link of dotfiles/bosko/claude; the project's own .claude/
     # is listed too so an ambiguous reading still gets flagged (over-flagging is the safe side).
-    .claude/*) printf '%s\n' "dotfiles/bosko/claude/${rel#.claude/}" ".claude/${rel#.claude/}" ;;
+    .claude/*) printf '%s\n' "dotfiles/bosko/claude/${rel#.claude/}" ".claude/${rel#.claude/}"; printed=1 ;;
+  esac
+  [ "$printed" -eq 0 ] || return 0
+  # Fallback for every other spelling (`${CLAUDE_PROJECT_DIR:-.}/...`, `$(git rev-parse
+  # --show-toplevel)/...`, an unfamiliar root): whatever follows a `.claude/` or
+  # `dotfiles/bosko/claude/` substring is a candidate. Over-flagging is the safe side.
+  case $t in
+    *dotfiles/bosko/claude/*) printf '%s\n' "dotfiles/bosko/claude/${t#*dotfiles/bosko/claude/}" ;;
+  esac
+  case $t in
+    *.claude/*) r=${t#*.claude/}; printf '%s\n' ".claude/$r" "dotfiles/bosko/claude/$r" ;;
   esac
 }
 
@@ -205,6 +284,11 @@ collect_trusted() {
     while IFS= read -r cand; do
       [ -n "$cand" ] || continue
       [ -n "${TRUST[$cand]+x}" ] || TRUST["$cand"]=$entry
+      # A directory with no dot in its last component (`cd .../scripts && ./x.sh`) trusts what is under it.
+      case ${cand##*/} in
+        *.*|*\**|"") ;;
+        *) [ -n "${TRUST["$cand/*"]+x}" ] || TRUST["$cand/*"]=$entry ;;
+      esac
     done < <(repo_candidates "$tok")
   done < <(jq -r '[.. | strings] | unique | .[] | . as $s
       | ($s | gsub("\""; "") | split("[\\s;|&()<>=,:]+"; "g") | map(select(length > 0)))[]
@@ -212,6 +296,7 @@ collect_trusted() {
 }
 
 collect_trusted "$TMPD/base.json"
+collect_trusted "$TMPD/tip.json"
 [ "$HEAD_OK" -eq 1 ] && collect_trusted "$TMPD/head.json"
 
 # trust_match FILE — print the settings string that runs FILE unprompted; return 1 if none
@@ -238,8 +323,9 @@ BOUNDARY_RE='^(\.claude|dotfiles/bosko/claude)/skills/[^/]+/(SKILL\.md|(scripts|
 
 # violation_reason FILE — print why FILE needs a human and return 0, or return 1 if it is fine
 violation_reason() {
-  local f=$1 hit
-  if [[ "$f" =~ $GATE_DENY_RE ]]; then
+  local f=$1 fl=${1,,} hit
+  # the gate directories are matched case-insensitively (a differently-cased copy must not slip past)
+  if [[ "$fl" =~ $GATE_DENY_RE ]]; then
     echo "part of the review gate or the improve-system skill that defines its boundary - a PR this gate approves must not be able to loosen it; human review required"
     return 0
   fi
@@ -247,7 +333,7 @@ violation_reason() {
     echo "a script settings.json lets run without a permission prompt, via entry: $hit - a human must read what it now executes"
     return 0
   fi
-  if [[ "$f" =~ $SHARED_LIB_RE ]]; then
+  if [[ "$fl" =~ $SHARED_LIB_RE ]]; then
     echo "shared helper sourced by the allow-listed scripts - a human must read what it now executes"
     return 0
   fi
@@ -262,8 +348,48 @@ violation_reason() {
 # matched `.claude/skills/x/NOTSKILL.md` and arbitrarily nested paths.
 CHECK_LIST=$FILES
 [ -z "$RENAMED_FROM" ] || CHECK_LIST="${FILES}"$'\n'"${RENAMED_FROM}"
+
+# ---- Git tree checks: symlinks/submodules in the trust roots, and mode changes ----
+declare -A HMODE=() BMODE=()
+while IFS=$'\t' read -r m p; do HMODE["$p"]=$m; done < <(jq -r '.tree[] | [.mode, .path] | @tsv' "$TMPD/head-tree.json")
+while IFS=$'\t' read -r m p; do BMODE["$p"]=$m; done < <(jq -r '.tree[] | [.mode, .path] | @tsv' "$TMPD/base-tree.json")
+TRUST_ROOT_RE='^(\.claude|dotfiles(/bosko(/claude)?)?)(/|$)'
+while IFS=$'\t' read -r m p; do
+  [[ "$p" =~ $TRUST_ROOT_RE ]] || continue
+  kind=symlink; [ "$m" = 160000 ] && kind=submodule
+  add_violation "$p" "is a $kind (mode $m) inside the trust boundary - the contents API follows links, so a linked settings.json or script would be judged by its target while Claude Code runs the link; human review required"
+done < <(jq -r '.tree[] | select(.mode == "120000" or .mode == "160000") | [.mode, .path] | @tsv' "$TMPD/head-tree.json" | LC_ALL=C sort -t$'\t' -k2)
+
+# ---- SKILL.md frontmatter (read at the PR head) ----
+check_skill_frontmatter() {
+  local f=$1 blob fm name
+  if ! [[ "$f" =~ ^[A-Za-z0-9._/+-]+$ ]]; then
+    add_violation "$f" "SKILL.md path has unusual characters - its frontmatter cannot be read safely; human review required"
+    return
+  fi
+  blob=$(gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/$f?ref=$HEAD_OID") \
+    || die3 "could not read $f at PR head - its frontmatter was NOT checked - guardrail NOT evaluated"
+  fm=$(tr -d '\r' <<< "$blob" | awk 'NR == 1 { if ($0 !~ /^---[[:space:]]*$/) exit; inside = 1; next } inside && /^---[[:space:]]*$/ { exit } inside { print }')
+  if grep -qiE '^(allowed-tools|hooks|mcp)[[:space:]]*:' <<< "$fm"; then
+    add_violation "$f" "SKILL.md frontmatter sets allowed-tools, hooks or mcp - they widen what a skill can run without touching settings.json; human review required"
+  fi
+  name=$(grep -iE '^name[[:space:]]*:' <<< "$fm" | head -n 1 | sed -E "s/^[^:]*:[[:space:]]*//; s/^[\"']//; s/[\"'][[:space:]]*\$//" | tr 'A-Z' 'a-z')
+  case $name in
+    review-improve-system-pr|improve-system)
+      add_violation "$f" "SKILL.md names itself '$name' - a skill with the gate's (or improve-system's) name could shadow it; human review required" ;;
+  esac
+}
+
 while IFS= read -r f; do
   [ -z "$f" ] && continue
+  # a changed path whose file mode differs between base and head (executable bit, symlink <-> file)
+  if [ -n "${HMODE["$f"]+x}" ] && [ -n "${BMODE["$f"]+x}" ] && [ "${HMODE["$f"]}" != "${BMODE["$f"]}" ]; then
+    add_violation "$f" "file mode changed (${BMODE["$f"]} -> ${HMODE["$f"]}) - an executable bit or symlink change is not visible in the diff; human review required"
+  fi
+  # a changed SKILL.md that still exists at head (the gate's own dirs are flagged below anyway)
+  if [ "${f##*/}" = SKILL.md ] && [ -n "${HMODE["$f"]+x}" ] && ! [[ "${f,,}" =~ $GATE_DENY_RE ]]; then
+    check_skill_frontmatter "$f"
+  fi
   # judged by check-settings-diff.sh above, but only when the PR's own file list has it; as a
   # rename source (moved away, so there is no head copy to diff) it is a violation below
   [ "$f" = "$SETTINGS_PATH" ] && [ "$SETTINGS_CHANGED" -eq 1 ] && continue
@@ -287,7 +413,9 @@ if [ -n "$SETTINGS_ADDED" ]; then
   echo "$SETTINGS_ADDED" | sed 's/^ADDED: /  /'
 fi
 echo "PR_BODY:"
-echo "$BODY"
+# The body is attacker-controlled: prefix every line and drop carriage returns so none of it
+# can pose as a PR_HEAD_SHA:/GUARDRAIL: line.
+printf '%s\n' "$BODY" | tr -d '\r' | sed 's/^/| /'
 
 if [ -n "$VIOLATIONS" ]; then
   echo "GUARDRAIL: VIOLATION"
