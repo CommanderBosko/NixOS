@@ -12,6 +12,15 @@
 #                     that time instead of an arbitrary recent-N window --
 #                     pass skill-upgrade's own last-invocation timestamp here
 #                     to review "since I last ran" rather than a fixed count.
+#
+# Output: one `skill=<name> [stale_turns=N] tool=... input=... err=...` line
+# per tool error. The skill attribution is "the last skill invoked before this
+# error", so it can outlive the skill's real work: `stale_turns=N` counts the
+# user-typed prompts since that invocation (absent when 0). A hit with
+# stale_turns>=1 may belong to unrelated work after the skill finished --
+# check the tool/input before blaming the skill. `/clear` resets the
+# attribution to None; slash commands that are not skills (e.g. /compact,
+# /model) are ignored rather than recorded as the active skill.
 
 set -euo pipefail
 
@@ -38,9 +47,17 @@ if [ -z "$FILES" ]; then
   exit 1
 fi
 
+# Names of real skills (global + this project's), so a typed slash command is only
+# attributed when it is actually a skill. Built-ins like /clear and /compact are not.
+ROSTER=""
+for d in "$HOME"/.claude/skills/*/ "$PROJECT_DIR"/.claude/skills/*/; do
+  [ -d "$d" ] && ROSTER+="$(basename "$d")"$'\n'
+done
+export MISFIRE_SKILL_ROSTER="$ROSTER"
+
 cd "$TRANSCRIPT_DIR"
 python3 - "$FILES" <<'PYEOF'
-import json, re, sys
+import json, os, re, sys
 
 files = sys.argv[1].split("\n")
 # A user-typed slash command (e.g. `/skill-audit`) is injected by Claude Code
@@ -51,6 +68,26 @@ files = sys.argv[1].split("\n")
 # already-fixed detection, generalized to capture whichever skill name
 # matched rather than checking against one fixed name.
 slash_re = re.compile(r"<command-name>/([a-zA-Z0-9_-]+)</command-name>")
+roster = set(filter(None, os.environ.get("MISFIRE_SKILL_ROSTER", "").split("\n")))
+
+
+def is_user_prompt(obj, content):
+    """A genuine user-typed prompt: not a tool result, slash-command wrapper or system reminder."""
+    if obj.get("type") != "user" or obj.get("isMeta"):
+        return False
+    if isinstance(content, str):
+        text = content.lstrip()
+        return bool(text) and not text.startswith(("<command-", "<local-command", "<system-reminder"))
+    if isinstance(content, list):
+        if any(isinstance(c, dict) and c.get("type") == "tool_result" for c in content):
+            return False
+        for c in content:
+            if isinstance(c, dict) and c.get("type") == "text":
+                text = (c.get("text") or "").lstrip()
+                if text and not text.startswith("<system-reminder"):
+                    return True
+    return False
+
 
 for fn in files:
     fn = fn.strip()
@@ -58,6 +95,8 @@ for fn in files:
         continue
     tool_uses = {}
     current_skill = None
+    user_turns = 0   # genuine user prompts seen so far in this transcript
+    skill_turn = 0   # value of user_turns when current_skill was set
     hits = []
     try:
         with open(fn) as f:
@@ -70,10 +109,17 @@ for fn in files:
                 except (ValueError, json.JSONDecodeError):
                     continue
                 content = obj.get("message", {}).get("content")
+                if is_user_prompt(obj, content):
+                    user_turns += 1
                 if isinstance(content, str):
                     m = slash_re.search(content)
                     if m:
-                        current_skill = m.group(1)
+                        name = m.group(1)
+                        if name == "clear":
+                            current_skill = None  # context wiped; nothing is active
+                        elif name in roster:
+                            current_skill, skill_turn = name, user_turns
+                        # any other name is a built-in command, not a skill: ignore it
                     continue
                 if not isinstance(content, list):
                     continue
@@ -84,16 +130,18 @@ for fn in files:
                         tool_uses[c.get("id")] = (c.get("name"), c.get("input"))
                         if c.get("name") == "Skill":
                             current_skill = c.get("input", {}).get("skill")
+                            skill_turn = user_turns
                     elif c.get("type") == "tool_result" and c.get("is_error"):
                         name, inp = tool_uses.get(c.get("tool_use_id"), ("?", {}))
                         err = c.get("content")
                         if isinstance(err, list):
                             err = " ".join(str(x.get("text", "")) for x in err if isinstance(x, dict))
-                        hits.append((current_skill, name, str(inp)[:150], str(err)[:200]))
+                        hits.append((current_skill, user_turns - skill_turn, name, str(inp)[:150], str(err)[:200]))
     except OSError:
         continue
     if hits:
         print(f"=== {fn} ===")
-        for skill_ctx, tool, inp, err in hits:
-            print(f"  skill={skill_ctx} tool={tool} input={inp} err={err}")
+        for skill_ctx, stale, tool, inp, err in hits:
+            stale_s = f" stale_turns={stale}" if skill_ctx is not None and stale > 0 else ""
+            print(f"  skill={skill_ctx}{stale_s} tool={tool} input={inp} err={err}")
 PYEOF

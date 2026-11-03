@@ -58,6 +58,12 @@ inside `users.users.bosko`, in the same position as natty's (after `openssh.auth
 exist for each host's `arch` (`.hosts.<host>.arch` in `.claude/hosts.json`); if it doesn't,
 say so and suggest the System or HM tier instead.
 
+**The HM path also needs `pkgs` in `home.nix`'s arguments.** `dotfiles/common/configs/home.nix` opens
+with `{ config, ... }:` and never mentions `pkgs`, so a bare `home.packages = with pkgs; [ ... ];`
+fails evaluation with `undefined variable 'pkgs'`. When creating the block, change the header to
+`{ config, pkgs, ... }:` in the same edit (Home Manager passes `pkgs` to every module, so nothing else
+needs wiring) and show that header change to the user in Step 3 alongside the new block.
+
 If the user said "all hosts", the package must be added to each flake host's `envFile` individually. Consider whether a shared location would be more appropriate and mention it.
 
 All paths above are relative to `/home/bosko/NixOS`.
@@ -71,7 +77,7 @@ Read the target file(s). Show the user:
 
 State clearly where the package will be inserted. Do not write anything yet.
 
-If the `home.nix` file does not yet have a `home.packages` block, show the block that will be added. Likewise, if bosko's block in `modules/users.nix` has no `packages` attribute, show the attribute that will be added.
+If the `home.nix` file does not yet have a `home.packages` block, show the block that will be added, plus the `{ config, pkgs, ... }:` header change that gives it `pkgs` (see Step 2). Likewise, if bosko's block in `modules/users.nix` has no `packages` attribute, show the attribute that will be added.
 
 Ask the user to confirm via the **AskUserQuestion tool**, with one option `Confirm` (make the edit) and one option `Cancel` (make no change), rather than free-form prose. Do not proceed to Step 4 until the user selects `Confirm`.
 

@@ -1,0 +1,36 @@
+# Packages the android-debloat scripts refuse to disable, whatever a community list says.
+# One entry per line: an exact package name, or a glob ending in * . Comments start with #.
+# Extend it when a device teaches us something; keep the reason next to the entry.
+
+# Core Android - disabling these bricks or boot-loops a device
+android
+com.android.systemui
+com.android.settings
+com.android.phone
+com.android.shell
+com.android.providers.settings
+com.android.providers.contacts
+com.android.providers.telephony
+com.android.inputmethod.latin
+com.android.tv.settings
+
+# Google services and the Play Store (updates, sign-in, push; Play can also re-enable Google apps)
+com.google.android.gms
+com.google.android.gsf
+com.android.vending
+
+# Tailscale: the user's rule is that every device is reached on its tailnet address
+com.tailscale.ipn
+
+# Samsung core (from the Tab A7 keep list, 2026-10-28)
+com.sec.android.app.launcher
+com.samsung.android.providers.telephony
+com.samsung.android.knox.containercore
+com.sec.android.inputmethod
+com.sec.android.desktopmode.uiservice
+com.sec.android.app.desktoplauncher
+com.samsung.desktopsystemui
+com.samsung.android.knox.containerdesktop
+
+# Fire OS home (DumbTV never-disable.txt; CleanYourTV also protects it on Fire OS)
+com.amazon.tv.launcher

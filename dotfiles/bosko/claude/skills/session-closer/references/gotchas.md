@@ -81,3 +81,9 @@ Load this when a step fails unexpectedly: a script 404s, the transcript cutoff l
   It also refuses (exit 1, nothing changed) a CRLF file or one with an unclosed code fence, and
   ignores `## `, `- ` and `**` lines inside fenced blocks; in Next Steps only `**Session N`
   starts a unit, so a `**Note:**` line stays with the block above it.
+- **zsh does not word-split an unquoted scalar** (observed 2026-11-02, NixOS): the close-worktree
+  step copied the doc set with `F="README.md project-state.md ..."; for f in $F; do cp $f $WT/$f; done`,
+  and under zsh `$F` stayed one word, so `cp` died with `cannot stat 'README.md project-state.md ...'`
+  (exit 1) before the worktree held any docs. Spell the file list out in the loop
+  (`for f in README.md project-state.md ...; do`) or use an array (`F=(README.md ...)` and `"${F[@]}"`),
+  and check each `cp` landed before restoring the main checkout with `git checkout -- <files>`.

@@ -59,7 +59,9 @@ Show the user the exact new/changed block and confirm via the **AskUserQuestion*
 
 ## Step 4 — Verify
 
-Run the `nixos-dry-run` skill to confirm the config still evaluates cleanly after the edit.
+First syntax-check the KDL: `bash /home/bosko/NixOS/.claude/lib/validate-niri-config.sh <host>` (the host whose overlay you edited, or this machine's hostname for the shared config). It is the only check that parses the file: a plain `niri validate -c` on the repo file fails on the unresolved `include` lines, and `nixos-dry-run` never parses the KDL, because Home Manager only `source`s it. Exit 0 means valid; exit 1 prints niri's error, so fix it before going on; exit 3 means `niri` is not installed here, so say that the KDL was not checked.
+
+Then run the `nixos-dry-run` skill to confirm the config still evaluates cleanly after the edit.
 
 ## Step 5 — Flag app-availability and behaviour caveats
 

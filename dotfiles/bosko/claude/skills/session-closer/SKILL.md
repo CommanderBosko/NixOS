@@ -196,7 +196,7 @@ preserving existing accurate sections rather than blanking them.
 
 ## STEP 5B — Secret-scan everything committed since the last close
 
-Before staging anything, run a public-safety pass over every file committed since the last close (same scope as STEP 1's baseline, not just the README). If `<repo-root>/.claude/skills/secret-scan/SKILL.md` exists, invoke `secret-scan` (no arguments; it covers the whole tree + history); if absent, ask via AskUserQuestion whether to create one or do a manual pass. Full branching and remediation rules: `~/.claude/skills/session-closer/references/secret-scan-step.md` — read it now. Note any finding or redaction in the session summary.
+Before staging anything, run a public-safety pass over every file committed since the last close (same scope as STEP 1's baseline, not just the README). If `<repo-root>/.claude/skills/secret-scan/SKILL.md` exists, invoke `secret-scan` (no arguments; it covers the whole tree + history); if absent, ask via AskUserQuestion whether to create one or do a manual pass. Full branching and remediation rules: `~/.claude/skills/session-closer/references/secret-scan-step.md` — read it now. Note any finding or redaction in the session summary: the new entry already carries a `Secret-scan: [pending ...]` line from the template, so replace that line in place with the result (for example `Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).`). Do not add a second differently-worded line (it was patched in by hand with `sed` after the fact in most closes because the template had no slot for it).
 
 ---
 
