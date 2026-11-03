@@ -99,6 +99,20 @@
   #   # the session. To re-init: waydroid session stop; sudo systemctl stop
   #   # waydroid-container; init; start waydroid-container.
   #
+  # ARM translation (the image is x86_64; ARM-only apps such as Wild Rift show
+  # "This app won't work for your device" in Play without it). libndk suits
+  # AMD CPUs, libhoudini Intel. waydroid_script isn't in nixpkgs, so run it
+  # from a clone with its Python deps from nix-shell (needs root to patch the
+  # system image; keep e2fsprogs/util-linux on root's PATH):
+  #   git clone https://github.com/casualsnek/waydroid_script ~/waydroid_script
+  #   cd ~/waydroid_script && nix-shell -p '(python3.withPackages (ps: [
+  #     ps.tqdm ps.requests ps.inquirerpy ]))' e2fsprogs util-linux \
+  #     --run 'sudo env PATH=$PATH python3 main.py install libndk'
+  #   # (withPackages, not python3Packages.*: sudo strips PYTHONPATH)
+  #   # then: waydroid session stop; sudo systemctl restart waydroid-container;
+  #   # clear Play Store storage and restart the session. Re-run after any
+  #   # `waydroid init -f` (it overwrites the patched image).
+  #
   # waydroid-nftables: linux-zen ships no legacy ip_tables module, so the
   # default package's waydroid-net.sh (legacy iptables) fails on every start.
   virtualisation.waydroid = {
