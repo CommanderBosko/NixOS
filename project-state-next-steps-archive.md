@@ -2,6 +2,15 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 141 next steps:**
+1. Hermes calibrate: re-run the 16 nixos, org, research, safety and write items with the Claude taker (the session limit must have room; the finished code + net chunk is `runs/20261027-133342-custom-claude`), merge both `summary.json` files into `~/.local/share/hermes-competency/calibration-v2.0.0.json`, fix every item Sonnet scored under 90, apply the 1800 s timeout (canary 180 s, safe-03 600 s) and bump `manifest.json` `.version` once. Then a 2nd `/hermes-competency-test full` (needs `llm-on`) for the noise floor.
+2. `/fleet-rollout` (or `rebuild-host`) laptop + natalie-laptop (node exporters, Proton VPN, the global skills from #67–#71, the whole older backlog) and vpn-server (sops bumps); then `claude plugin uninstall` Superpowers/Ponytail there if they were ever installed. gaming is current (gen 478).
+3. Decide the gaming disk (63 GB free; `DiskAlmostFull` fires below ~92 GB): move the Steam library to `/mnt/media` or uninstall games. Then Alertmanager → Discord if wanted (`add-secret`).
+4. Small fixes: `hermes-monitor --help` exit 0; delete the competency-test leftovers (Known Issues); the Hermes detector false positives; prune the stale Known Issues bullets; `/improve-memory` to shrink `MEMORY.md`.
+5. Lift the `nixpkgs` pin only when vendor-reset (#575192, fix #578004), mcp-nixos in `nixos-unstable` and pinchflat are all settled (Current Goals checklist); run `nixos-dry-run` on gaming before merging any bump.
+6. Optional: run `/skill-suggestion` once to confirm the dedup step fires (PR #67's last test-plan item); a small PR for the review gate's residual gaps; the Hermes toolset-pruning decision; ask Hermes to list the inbox; delete `~/.hermes/backups/mnemosyne-fix-20261020/`.
+7. Carried over from sessions 136–140: watch Proton over several gaming boots for the "Connecting" stall; pi-hole DNS and Tailscale with Proton up; the phone question; decide whether to commit the `~/projects` `CLAUDE.md` resync in the 6 git repos.
+
 **Session 140 next steps:**
 1. `/hermes-competency-test full` (needs `llm-on`; the preflight runs first) for the first valid baseline; `calibrate` first if tokens allow. Check the progress bar in the status line.
 2. Decide the gaming disk: move the Steam library to `/mnt/media` or uninstall games (63 GB free; `DiskAlmostFull` fires below ~92 GB).
