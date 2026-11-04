@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for three hosts. Shared system modules 
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Three hosts — `gaming`, `laptop` and `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 485 (2026-11-03 07:52, one step behind `main`: the vpn-server retirement is not rebuilt onto it yet): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container with libndk ARM translation; PRs #83, #86, #88; Play Store registration and game tests pending). laptop and natalie-laptop still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
+Active development; `system.stateVersion` `25.11`. Three hosts — `gaming`, `laptop` and `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 487 (2026-11-03 22:29, current with `main`; booted onto gen 485 with the same kernel): the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container with libndk ARM translation; PRs #83, #86, #88; Play Store registration and game tests pending). laptop and natalie-laptop still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
 
 **The `vpn-server` host and its WireGuard full-tunnel VPN were retired 2026-11-03** (Oracle Cloud administratively disabled the instance on 2026-08-18 and it was never restored). The Tailscale mesh connects the fleet and the Proton VPN client masks egress — see the [VPN](#vpn) section.
 
@@ -189,11 +189,11 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-11-03 (session 146, latest)** — The `vpn-server` host and its WireGuard hub were removed from the flake (PR #92) after Oracle Cloud disabled the instance in August and it never returned. The Tailscale mesh and the Proton VPN client now cover fleet access and egress masking; the host, its client module, the WireGuard keys and the skills that managed them are deleted (git history keeps them).
+**2026-11-03 (session 147, latest)** — The `send-results` skill now publishes its report as a Claude Doc through the Claude Docs connector instead of a hand-written HTML page, then posts the link to Discord (PR #94). It reports and stops if the connector is missing, rather than falling back to HTML. gaming is rebuilt onto it and onto the `vpn-server` removal.
+
+**2026-11-03 (session 146)** — The `vpn-server` host and its WireGuard hub were removed from the flake (PR #92) after Oracle Cloud disabled the instance in August and it never returned. The Tailscale mesh and the Proton VPN client now cover fleet access and egress masking; the host, its client module, the WireGuard keys and the skills that managed them are deleted (git history keeps them).
 
 **2026-11-03 (session 145)** — Waydroid gained ARM translation (libndk) so ARM-only games such as Wild Rift can install; the steps are documented in `modules/gaming.nix`. The review gate for the weekly improve-system PR was hardened against eight bypass gaps (symlinks, frontmatter, path spellings) with 191 tests, and the local skills sweep landed with a new `android-debloat` skill (PRs #89, #90).
-
-**2026-11-02 (session 144)** — The open package PRs were merged: `aria2` (resumable downloads), `unrar` (so xarchiver can open RAR5/RAR7) and Waydroid. Waydroid first failed to start because linux-zen has no legacy iptables module, so gaming now selects the `waydroid-nftables` package (PR #86); the session starts and Android is reachable. Its Play Store still needs a one-time Google device registration, documented in `modules/gaming.nix`.
 
 ## Roadmap
 

@@ -1,3 +1,29 @@
+## Session: 2026-10-29 (session 142) — Vesktop bypass by group, powershell, pin check, device debloats
+
+**Focus**: Close seven conversations since the 10-27 close: Vesktop lost its Proton bypass again, `powershell` was added, the `nixpkgs` pin was re-checked, and three non-repo devices were debloated.
+
+### What changed (and why)
+- **Vesktop bypass rebuilt around a `novpn` group (PR #78, merged `865686b`, live on gaming gen 481):** Electron 43 moves itself into its own `app-vesktop-<pid>.scope` right after launch, which emptied `app-novpn.slice`, so Vesktop went back through Proton and Discord answered 403 to the exit IP. Vesktop now starts via `sg novpn` and the fwmark rules match `-m owner --gid-owner novpn`, which children inherit; the slice, the uid-1000 pin and the cgroup boot wait are gone. Verified: all processes in group `novpn`, `sg` curl 200 vs 403 on the VPN path, the user saw messages load.
+- **`powershell` for both users (PR #77, merged `4e19b88`):** in `modules/development.nix`; 4-host deep-eval PASS, gaming dry-run = `powershell` only. Not live yet: gen 481 came from the Vesktop branch.
+- **Pin check:** keep the `nixpkgs` pin. mcp-nixos is fixed in `nixos-unstable` `31ecbaca`; vendor-reset (#575192) and pinchflat are not.
+- **Outside the repo (memory only):** CleanYourTV debloat of the TCL TV (33 packages, new launcher, remote buttons remapped), DumbTV debloat of the Fire TV Stick (42 packages, Tailscale starts at boot via always-on VPN), Galaxy Tab A7 (27 packages, over USB). PHP2Shell check: nothing reachable.
+
+### Decisions
+- Group match over a manual cgroup move or an Electron-switch hunt: the self-scoping makes any cgroup match unreliable, and the group removes the boot race too. `powershell` in the shared dev module, not per user. Use Tailscale IPs, never LAN addresses (user rule, 10-28).
+
+### Issues / surprises
+- gaming's gen 481 was built from the unmerged Vesktop branch (fix, but no `pwsh`); both PRs were merged at the end of this close, so the next rebuild from `main` brings both.
+- The TCL TV blocks Tailscale at boot (`TclAppBoot`), and the Tab A7's wireless-debugging ports change on every reboot, so USB was the reliable route.
+
+### Next session
+- `rebuild-switch` on gaming from `main` and restart Vesktop; Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` laptop + natalie-laptop + vpn-server; gaming disk; hand-test the Fire Stick and the tablet; `apt upgrade` the pi-hole.
+
+**Commits**: `cf05091` (merge of the 10-27 close) on `main`; `277f5a9` (PR #78, merged `865686b`) and `155d091` (PR #77, merged `4e19b88`)
+
+Secret-scan: clean (tree + 1,971 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-27 (session 141) — improve-system PRs #67–#75, Hermes baseline and calibrate
 
 **Focus**: Close out eight conversations since the 10-25 close: a `/improve-system` run that became nine merged PRs (mostly hardening the weekly PR review gate), the first valid Hermes competency baseline, and a half-finished calibrate.

@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-03 (session 147) — send-results publishes a Claude Doc
+
+**Focus**: Close the conversation that moved `/send-results` from HTML artifact pages to Claude Docs (PR #94). Its transcript was not in this close's scan, so this is written from the commit message, the memory notes and live checks on gaming.
+
+### What changed (and why)
+- **PR #94 (`4bd25b5`, merged `23a990b`):** `send-results` now creates the report as a Claude Doc through the Claude Docs connector and posts the doc link to Discord. The user's rule is that documents go in Claude Docs, not hand-written HTML pages, so `wrap-html.sh`, `wrapper-template.html` and the `artifact-design` step are deleted; `improve-system`'s caveat and the `why-artifact-not-file-link` note say Doc now.
+- **Live-tested the same day:** doc created, Discord answered HTTP 204, the user confirmed.
+- **This close:** gaming's current system is gen 487 (22:29, after #94) and its booted system is gen 485 with the same kernel, so the vpn-server retirement from session 146 is live there (`wg0` gone, `tailscaled` active). The docs had it as "not live"; fixed.
+
+### Decisions
+- No HTML fallback: if the Docs tools are missing or the create is refused, the skill reports and stops, because falling back would break the rule the change enforces.
+
+### Issues / surprises
+- The weekly cloud `/improve-system` routine and `/dream` also call `send-results`; whether their environment has the Docs connector is untested.
+- Still on the user: revoke the OCI API key, terminate the instance or tenancy, delete `~/.oci` (`config` and `oci_api_key.pem` are still there).
+
+### Next session
+- Oracle cleanup; check Pinchflat without wg0; watch the next scheduled `send-results` call; finish Waydroid; `/fleet-rollout` laptop and natalie-laptop.
+
+**Commits**: `8589ebe..23a990b` (PR #94, 1 commit)
+
+Secret-scan: clean (tree + 2,016 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-03 (session 146) — vpn-server retired
 
 **Focus**: Close the conversation that retired the dead `vpn-server` host and WireGuard hub (PR #92). Its transcript was not in this close's scan, so this is written from the commit message, the diff and the Recent Decisions entry that PR wrote.
@@ -106,32 +131,6 @@ Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).
 **Commits**: `1f5888b` (PR #83); the baseline range `4793bc7..1f5888b` also holds the cloud routine's PR #82 (weekly improve-system skill-doc fixes) and the 10-29 merges, none from this session.
 
 Secret-scan: clean (tree + 1,982 commits, all 6 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-10-29 (session 142) — Vesktop bypass by group, powershell, pin check, device debloats
-
-**Focus**: Close seven conversations since the 10-27 close: Vesktop lost its Proton bypass again, `powershell` was added, the `nixpkgs` pin was re-checked, and three non-repo devices were debloated.
-
-### What changed (and why)
-- **Vesktop bypass rebuilt around a `novpn` group (PR #78, merged `865686b`, live on gaming gen 481):** Electron 43 moves itself into its own `app-vesktop-<pid>.scope` right after launch, which emptied `app-novpn.slice`, so Vesktop went back through Proton and Discord answered 403 to the exit IP. Vesktop now starts via `sg novpn` and the fwmark rules match `-m owner --gid-owner novpn`, which children inherit; the slice, the uid-1000 pin and the cgroup boot wait are gone. Verified: all processes in group `novpn`, `sg` curl 200 vs 403 on the VPN path, the user saw messages load.
-- **`powershell` for both users (PR #77, merged `4e19b88`):** in `modules/development.nix`; 4-host deep-eval PASS, gaming dry-run = `powershell` only. Not live yet: gen 481 came from the Vesktop branch.
-- **Pin check:** keep the `nixpkgs` pin. mcp-nixos is fixed in `nixos-unstable` `31ecbaca`; vendor-reset (#575192) and pinchflat are not.
-- **Outside the repo (memory only):** CleanYourTV debloat of the TCL TV (33 packages, new launcher, remote buttons remapped), DumbTV debloat of the Fire TV Stick (42 packages, Tailscale starts at boot via always-on VPN), Galaxy Tab A7 (27 packages, over USB). PHP2Shell check: nothing reachable.
-
-### Decisions
-- Group match over a manual cgroup move or an Electron-switch hunt: the self-scoping makes any cgroup match unreliable, and the group removes the boot race too. `powershell` in the shared dev module, not per user. Use Tailscale IPs, never LAN addresses (user rule, 10-28).
-
-### Issues / surprises
-- gaming's gen 481 was built from the unmerged Vesktop branch (fix, but no `pwsh`); both PRs were merged at the end of this close, so the next rebuild from `main` brings both.
-- The TCL TV blocks Tailscale at boot (`TclAppBoot`), and the Tab A7's wireless-debugging ports change on every reboot, so USB was the reliable route.
-
-### Next session
-- `rebuild-switch` on gaming from `main` and restart Vesktop; Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` laptop + natalie-laptop + vpn-server; gaming disk; hand-test the Fire Stick and the tablet; `apt upgrade` the pi-hole.
-
-**Commits**: `cf05091` (merge of the 10-27 close) on `main`; `277f5a9` (PR #78, merged `865686b`) and `155d091` (PR #77, merged `4e19b88`)
-
-Secret-scan: clean (tree + 1,971 commits, all 6 `secrets/*.yaml` encrypted).
 
 ---
 
