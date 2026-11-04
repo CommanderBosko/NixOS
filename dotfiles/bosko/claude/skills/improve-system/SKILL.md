@@ -83,7 +83,7 @@ Optional focus argument in the user's phrasing — e.g. "improve-system, skills 
 - **Don't reimplement the sub-skills.** This is an orchestrator; invoke each via the Skill tool. If you find yourself writing audit logic or drafting gotchas by hand, you've drifted out of bucket.
 - **Auto-apply is additive only, and repo-managed edits aren't live until a rebuild + reboot** — see Operating mode and Step 4; never report a hardened global skill as "active now."
 - **This skill is itself repo-managed.** `claude-hm/files.nix` links it automatically, but it needs a rebuild before its `~/.claude/skills/improve-system` symlink reflects any edit.
-- **`send-results` publishes the report as a Claude Artifact, which leaves the local machine.** Same trade-off `send-results` itself documents — the consolidated report (skill names, file paths, proposed changes) becomes a shareable `https://` link, starting private but cacheable once shared. That's expected for this step, not a bug; don't route Step 5 through anything else to avoid it.
+- **`send-results` publishes the report as a Claude Doc, which leaves the local machine.** Same trade-off `send-results` itself documents — the consolidated report (skill names, file paths, proposed changes) becomes a shareable `https://` link, starting private but cacheable once shared. That's expected for this step, not a bug; don't route Step 5 through anything else to avoid it.
 - Run looks anomalous (skipped Discord report, invalid `settings.json` written, closed without Step 5)? Check `references/gotchas.md` for three known failure modes first.
 
 ## Scripts
