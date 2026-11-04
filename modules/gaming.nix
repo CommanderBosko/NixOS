@@ -120,6 +120,16 @@
     package = pkgs.waydroid-nftables;
   };
 
+  # waydroid-container ships with no ExecStop, so on shutdown systemd SIGTERMs
+  # the whole unit cgroup at once, racing waydroid's own stop handler. On
+  # 2026-11-04 the handler's `lxc-info` lost that race ("Couldn't get LXC
+  # status. Assuming STOPPED"), so it skipped `lxc-stop -k` and unmounted the
+  # images under a still-FROZEN container; the final unmount stage then hung
+  # and the next boot had to recover root's journal. Stopping the container
+  # first, in ExecStop, makes that deterministic. The leading "-" ignores a
+  # non-zero exit when the container isn't running.
+  systemd.services.waydroid-container.serviceConfig.ExecStop = "-${pkgs.lxc}/bin/lxc-stop -P /var/lib/waydroid/lxc -n waydroid -k";
+
   # Gaming packages
   environment.systemPackages = with pkgs; [
     faugus-launcher
