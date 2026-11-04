@@ -9,6 +9,13 @@ gap, so no payload formatting works around it. The user chose to fix this by pub
 reported file as a Claude Artifact and linking to *that* instead -- a real `https://` URL
 Discord does auto-link, and one that opens from any device, not just this machine.
 
+**2026-11-03 update:** the published thing is now a Claude Doc (created through the Claude
+Docs connector), not a hand-written HTML `<pre>` page. The user's standing rule is that
+documents go in Claude Docs; a doc renders the markdown reports natively and is editable and
+commentable. A doc is still an artifact with an `https://claude.ai/artifact/...` link, so
+everything below applies unchanged. The old `wrap-html.sh` + `wrapper-template.html` were
+removed.
+
 **Trade-off, accepted knowingly**: this means the file's content leaves the local machine --
 it's published (starts private, but shareable, and may be cached/indexed once shared). Don't
 send anything through this skill you wouldn't want published. This is a real behavior

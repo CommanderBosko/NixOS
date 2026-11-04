@@ -6,7 +6,7 @@
 #
 # Usage: post-discord.sh <url> <summary...>
 #   url       any link -- send-results builds this by publishing the
-#             reported file as a Claude Artifact first (see SKILL.md; a
+#             reported file as a Claude Doc first (see SKILL.md; a
 #             prior version of this script built a file:// link directly,
 #             but Discord never renders that scheme as clickable, on any
 #             device -- confirmed 2026-09-04, not fixable via payload
