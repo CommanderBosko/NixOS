@@ -203,6 +203,7 @@
           "${self}/hosts/natalie-laptop/hardware-configuration.nix"
           "${self}/hosts/natalie-laptop/environment.nix"
           "${self}/hosts/natalie-laptop/networking.nix"
+          "${self}/hosts/natalie-laptop/virtualisation.nix"
           "${self}/modules/desktop-environments/niri.nix"
           "${self}/modules/nvidia.nix"
           "${self}/modules/qbittorrent.nix"
