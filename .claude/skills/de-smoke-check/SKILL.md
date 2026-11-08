@@ -28,12 +28,13 @@ Resolve which DE module to check, in this order:
    ```bash
    .claude/skills/de-smoke-check/scripts/de-smoke-check.sh
    ```
-   Then ask which one to check via the **AskUserQuestion tool** — don't ask in free-form prose
-   (matches `bump-input`'s equivalent ambiguous-input pick-one). Offer at most 4 options: the
-   likeliest unwired modules, recommended first — `omarchy` (recommended), `hyprland`, `plasma`,
-   `gnome`. Name the remaining modules in the question text so the user can pick one via "Other":
-   `budgie`, `cinnamon`, `cosmic`, `mate`, `pantheon`, `wayfire`, `xfce` (and `niri`, which is
-   wired into the desktop hosts — prefer `nixos-dry-run` for it).
+   With no argument it prints every available `lib.deSmoke` module name live (the `--list`
+   fallback) — build the AskUserQuestion options from that live output rather than a fixed
+   list, since the module roster changes as DE modules are added or removed. Offer at most 4
+   options, `omarchy` recommended first if it's present, and name the rest in the question text
+   so the user can pick one via "Other". Exclude `niri` from the options — it's wired into the
+   desktop hosts, so prefer `nixos-dry-run` for it. Then ask via the **AskUserQuestion tool** —
+   don't ask in free-form prose (matches `bump-input`'s equivalent ambiguous-input pick-one).
 
 ## Step 2 — Deep-evaluate the module's build graph
 
