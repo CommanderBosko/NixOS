@@ -4,7 +4,7 @@ Bosko's single-flake NixOS configuration for three hosts. Shared system modules 
 
 ## Current Status
 
-Active development; `system.stateVersion` `25.11`. Three hosts — `gaming`, `laptop` and `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 492 (2026-11-09 08:36, current with `main` and booted): the herdr agent multiplexer, the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container with libndk ARM translation; PRs #83, #86, #88; Play Store registration and game tests pending). laptop and natalie-laptop still owe a `/fleet-rollout` pass. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
+Active development; `system.stateVersion` `25.11`. Three hosts — `gaming`, `laptop` and `natalie-laptop` (desktops, all on niri, tracking `nixos-unstable`) — with CI deep-evaluating every host on each push. `main` is ruleset-protected (changes land only through PRs with green CI). **`nixpkgs` is temporarily pinned** to `fe132422` (2026-10-15) because the 2026-10-24 bump broke gaming's kernel modules, mcp-nixos and pinchflat; the other inputs stay bumped. gaming runs gen 494 (switched 2026-11-09 15:17; booted gen 492): the herdr agent multiplexer, the local Hermes Agent stack with Mnemosyne memory, read-only Prometheus monitoring, Proton VPN with a group-based Vesktop bypass, and Waydroid (Android games in a container with libndk ARM translation; PRs #83, #86, #88; Play Store registration and game tests pending). A `/fleet-rollout` pass on 2026-11-09 brought laptop (gen 207) and natalie-laptop (gen 111) current, both rebooted with no failed units; the skill now stages for boot by default. Hermes has a first competency baseline (53.8, provisional until a calibration run finishes), so it stays read-only on the monitoring stack.
 
 **The `vpn-server` host and its WireGuard full-tunnel VPN were retired 2026-11-03** (Oracle Cloud administratively disabled the instance on 2026-08-18 and it was never restored). The Tailscale mesh connects the fleet and the Proton VPN client masks egress — see the [VPN](#vpn) section.
 
@@ -190,15 +190,16 @@ Jellyfin's firewall (`hosts/gaming/jellyfin-server.nix`) also opens 8096/tcp on 
 
 _The last few sessions only — older history lives in `session-summary.md` / `session-summary-archive.md` and the commit history._
 
-**2026-11-09 (session 148, latest)** — The herdr terminal agent multiplexer is now on every desktop host (PR #101), alongside a Waydroid shutdown-hang fix (#96), the `wowup-cf` addon manager on gaming (#97) and the VirtualBox host re-added on natalie-laptop (#98). gaming is rebuilt and rebooted onto all of it; laptop and natalie-laptop still owe a rollout.
+**2026-11-09 (session 149, latest)** — A `/fleet-rollout` pass brought all three hosts current (gaming gen 494, laptop gen 207, natalie-laptop gen 111), clearing the laptops' long rebuild backlog. The skill now stages for boot by default and reboots each remote host (PR #104). Hermes gained the wowaudit MCP server (#103, browser login still owed) and the herdr plugin (#105, live after gaming's next switch).
+
+**2026-11-09 (session 148)** — The herdr terminal agent multiplexer is now on every desktop host (PR #101), alongside a Waydroid shutdown-hang fix (#96), the `wowup-cf` addon manager on gaming (#97) and the VirtualBox host re-added on natalie-laptop (#98). gaming is rebuilt and rebooted onto all of it; laptop and natalie-laptop still owe a rollout.
 
 **2026-11-03 (session 147)** — The `send-results` skill now publishes its report as a Claude Doc through the Claude Docs connector instead of a hand-written HTML page, then posts the link to Discord (PR #94). It reports and stops if the connector is missing, rather than falling back to HTML. gaming is rebuilt onto it and onto the `vpn-server` removal.
 
-**2026-11-03 (session 146)** — The `vpn-server` host and its WireGuard hub were removed from the flake (PR #92) after Oracle Cloud disabled the instance in August and it never returned. The Tailscale mesh and the Proton VPN client now cover fleet access and egress masking; the host, its client module, the WireGuard keys and the skills that managed them are deleted (git history keeps them).
-
 ## Roadmap
 
-- Roll the backlog out with `/fleet-rollout`: laptop (offline; owes everything since mid-September — managed Claude Code policy, FinanceGuru, package consolidation, the OnlyOffice font fix, the static Canon printer queue, and every flake bump since PR #29) and natalie-laptop (gen 96, owes everything since 2026-10-12, including the 2026-10-18 flake bump); remove the hand-maintained `~/.ssh/config` on each host afterward
+- Verify the laptops after the 2026-11-09 rollout (node exporters, Canon printing, tailscale MCP, pi-hole DNS, VirtualBox on natalie-laptop, Proton sign-in), then retire the hand-maintained `~/.ssh/config` on each host if it is still there
+- Bring Hermes's herdr plugin live (`nh os switch` on gaming) and finish the one-time wowaudit MCP browser login
 - Interface-scope Avahi mDNS: replace `openFirewall = true` in `printing.nix` with per-interface rules restricting UDP 5353 to the LAN interface
 - AMD card swap on gaming: remove `nvidia.nix` from gaming's module list when card is physically replaced
 - Re-add `server` host via `/new-host` skill when physical hardware is available
