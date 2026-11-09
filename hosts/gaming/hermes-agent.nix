@@ -171,10 +171,14 @@ in
         '')
         (pkgs.runCommand "ponytail" { } "ln -s ${inputs.ponytail} $out")
       ];
+      # herdr-agent-state is installed imperatively by `herdr integration
+      # install hermes` (~/.hermes/plugins/herdr-agent-state); it only needs
+      # enabling here so herdr panes can see Hermes's lifecycle state.
       settings.plugins.enabled = [
         "superpowers"
         "ponytail"
         "mnemosyne"
+        "herdr-agent-state"
       ];
       # Long-term memory backend. Data stays in ~/.hermes/mnemosyne/data,
       # outside the store, so rebuilds never touch it.
