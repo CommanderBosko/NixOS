@@ -9,6 +9,10 @@ version: 0.2.0
 
 Detect modified/untracked `.nix` files and run the repo's formatter over them. Keeps the repo consistently formatted before committing.
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Step 1 — Run the format script
 
 ```bash

@@ -9,6 +9,10 @@ version: 0.2.0
 
 Show what changed between the current active NixOS generation and the previous one by comparing store closures.
 
+## Arguments
+
+None — this skill takes no user-supplied arguments.
+
 ## Step 1 — Run the diff script
 
 ```bash
