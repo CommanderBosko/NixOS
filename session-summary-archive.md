@@ -1,3 +1,29 @@
+## Session: 2026-11-02 (session 143) — Waydroid on gaming
+
+**Focus**: Find the best way to play Android games on NixOS, then add it to gaming on its own branch.
+
+### What changed (and why)
+- **Waydroid enabled on gaming (`1f5888b`, PR #83, open):** one line in `modules/gaming.nix`, `virtualisation.waydroid.enable = true;`. Waydroid runs Android in a container on the host kernel, so it is near-native speed; the nixpkgs module handles LXC, the `waydroid0` firewall trust and the kernel binder check (built into linux-zen). A dry-run on the earlier working tree was clean (adds `waydroid` 1.6.3, `lxc`, `waydroid-container.service`, no kernel change). The commit on its own branch was not dry-run again; PR CI deep-evals every host.
+- **Limits recorded:** software rendering on the RTX 3070 (GPU rendering after the AMD swap), no Play Integrity games, Play Store needs the `android_id` registered with Google, ARM-only games need `waydroid_script` (imperative).
+- **Close:** state docs written in a worktree off `origin/main` so the close PR is docs-only and doesn't wait on PR #83.
+
+### Decisions
+- Waydroid over the Android Studio emulator, scrcpy, Genymotion and redroid; on gaming only; cut from `origin/main` rather than stacked on `feat/desktop-add-unrar`, so the unrar, aria2 and Waydroid PRs stay independent.
+
+### Issues / surprises
+- gaming's gen 482 contains `aria2` (PR #81, unmerged) but the Waydroid branch doesn't, so rebuilding from that branch would drop it; merge #81 and #83, then rebuild from `main`.
+- The dry-run diff also listed `unrar` added and `aria2` removed; both came from other branches' state, not from this edit.
+- Not applied: gaming is still on gen 482 with no Waydroid.
+
+### Next session
+- Land #81 and #83, rebuild gaming from `main`, then `sudo waydroid init` and a first run under niri; push the unrar branch if wanted; Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` for laptop, natalie-laptop and vpn-server; gaming disk.
+
+**Commits**: `1f5888b` (PR #83); the baseline range `4793bc7..1f5888b` also holds the cloud routine's PR #82 (weekly improve-system skill-doc fixes) and the 10-29 merges, none from this session.
+
+Secret-scan: clean (tree + 1,982 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-10-29 (session 142) — Vesktop bypass by group, powershell, pin check, device debloats
 
 **Focus**: Close seven conversations since the 10-27 close: Vesktop lost its Proton bypass again, `powershell` was added, the `nixpkgs` pin was re-checked, and three non-repo devices were debloated.

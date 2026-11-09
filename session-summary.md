@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-09 (session 148) — herdr Q&A for the boss session
+
+**Focus**: Answer what herdr is and whether this session can talk to it, then close. The only conversation in this close's scan; it changed no repo files.
+
+### What changed (and why)
+- **Nothing in the repo from this conversation.** PRs #96-#101 landed since the 11-03 close in other conversations whose transcripts were not scanned, so those are recorded from commit messages and live checks: herdr on every desktop host (#101), a Waydroid `ExecStop` so shutdown stops hanging (#96), `wowup-cf` on gaming (#97), the VirtualBox host re-added on natalie-laptop (#98), and the weekly `/improve-system` skill-doc sweep (#100).
+- **herdr answered over its socket, read-only:** this session is pane `w2:p1` and the `herdr pane|agent` CLI works from inside it. The boss session then asked what herdr overlaps with: both list sessions, read output and send input, but herdr works per pane over its own socket while boss uses the `cc-socks` sockets and kitty remote control. Nothing was sent to any pane.
+- **Live state:** gaming's current and booted system are both gen 492 (2026-11-09 08:36/08:37), which carries herdr 0.9.5, `wowup-cf` and the Waydroid fix. laptop and natalie-laptop still owe a rebuild.
+
+### Decisions
+- None made here. Recorded PR #101's: herdr stays a plain `systemPackages` entry with config and the Claude hook imperative, because upstream has no NixOS or Home Manager module and a Nix install must not self-update.
+
+### Issues / surprises
+- `home.activation.trimClaudeSettings` deletes the whole `.hooks` key from `~/.claude/settings.json` on every rebuild, which would remove herdr's `SessionStart` hook. Inferred from the script, not observed yet.
+- The first `scan-session.sh transcript` call failed ("no transcript directory") because I passed the `~/.claude/projects/...` path; it takes the repo path (`/home/bosko/NixOS`).
+
+### Next session
+- Decide how herdr's hook survives `trimClaudeSettings`; `/fleet-rollout` laptop and natalie-laptop; Oracle cleanup; watch the next `send-results` run; finish Waydroid and confirm a clean shutdown.
+
+**Commits**: `0661e4d..b5f09c4` (11 commits, none from this conversation)
+
+Secret-scan: clean (tree + 2,028 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-03 (session 147) — send-results publishes a Claude Doc
 
 **Focus**: Close the conversation that moved `/send-results` from HTML artifact pages to Claude Docs (PR #94). Its transcript was not in this close's scan, so this is written from the commit message, the memory notes and live checks on gaming.
@@ -105,32 +130,6 @@ Secret-scan: clean (tree + 2,008 commits, all 6 `secrets/*.yaml` encrypted).
 **Commits**: `40e0146..b9d5152` (9 commits: the three package merges, #83, and #86's two commits)
 
 Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-02 (session 143) — Waydroid on gaming
-
-**Focus**: Find the best way to play Android games on NixOS, then add it to gaming on its own branch.
-
-### What changed (and why)
-- **Waydroid enabled on gaming (`1f5888b`, PR #83, open):** one line in `modules/gaming.nix`, `virtualisation.waydroid.enable = true;`. Waydroid runs Android in a container on the host kernel, so it is near-native speed; the nixpkgs module handles LXC, the `waydroid0` firewall trust and the kernel binder check (built into linux-zen). A dry-run on the earlier working tree was clean (adds `waydroid` 1.6.3, `lxc`, `waydroid-container.service`, no kernel change). The commit on its own branch was not dry-run again; PR CI deep-evals every host.
-- **Limits recorded:** software rendering on the RTX 3070 (GPU rendering after the AMD swap), no Play Integrity games, Play Store needs the `android_id` registered with Google, ARM-only games need `waydroid_script` (imperative).
-- **Close:** state docs written in a worktree off `origin/main` so the close PR is docs-only and doesn't wait on PR #83.
-
-### Decisions
-- Waydroid over the Android Studio emulator, scrcpy, Genymotion and redroid; on gaming only; cut from `origin/main` rather than stacked on `feat/desktop-add-unrar`, so the unrar, aria2 and Waydroid PRs stay independent.
-
-### Issues / surprises
-- gaming's gen 482 contains `aria2` (PR #81, unmerged) but the Waydroid branch doesn't, so rebuilding from that branch would drop it; merge #81 and #83, then rebuild from `main`.
-- The dry-run diff also listed `unrar` added and `aria2` removed; both came from other branches' state, not from this edit.
-- Not applied: gaming is still on gen 482 with no Waydroid.
-
-### Next session
-- Land #81 and #83, rebuild gaming from `main`, then `sudo waydroid init` and a first run under niri; push the unrar branch if wanted; Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` for laptop, natalie-laptop and vpn-server; gaming disk.
-
-**Commits**: `1f5888b` (PR #83); the baseline range `4793bc7..1f5888b` also holds the cloud routine's PR #82 (weekly improve-system skill-doc fixes) and the 10-29 merges, none from this session.
-
-Secret-scan: clean (tree + 1,982 commits, all 6 `secrets/*.yaml` encrypted).
 
 ---
 
