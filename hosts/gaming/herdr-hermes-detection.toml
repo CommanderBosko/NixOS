@@ -1,0 +1,145 @@
+# Local herdr detection manifest for Hermes Agent (screen-detected: herdr reads
+# the pane's bottom lines; Hermes's herdr plugin only reports session identity).
+#
+# Why it exists: herdr's upstream manifest (2026.07.24.1, copied verbatim below
+# the two tui_* rules) looks for an OSC title (⏳ / ✓ / ⚠) and the text
+# "ctrl+c to interrupt" / "msg=interrupt" / "ctrl+c cancel" to detect `working`.
+# This Hermes build sets no terminal title and draws neither string, so every
+# pane fell through to `default_known_agent_idle_fallback` and showed idle.
+# While a turn runs, Hermes draws instead:
+#   ── ⠴ ( •_•)>⌐■-■ ruminating... · 8s ──────────
+#   ☤ ❯ type to redirect this turn · Tab queues it for after
+#
+# A local file replaces the upstream manifest entirely (herdr checks
+# ~/.config/herdr/agent-detection/<agent>.toml first), so upstream fixes to
+# hermes.toml are ignored while this file exists. After a herdr bump, diff it
+# against ~/.local/state/herdr/agent-detection/remote/hermes.toml and drop this
+# override once upstream detects the current Hermes UI.
+#
+# Verify a pane with: herdr agent explain <pane>
+id = "hermes"
+version = "2026.07.24.1"
+min_engine_version = 2
+updated_at = "2026-07-24T19:12:54Z"
+aliases = ["hermes-agent"]
+
+# --- local additions -------------------------------------------------------
+# Priority 850 sits below the blocked rules (900): an approval or question
+# panel wins over any working text still on screen.
+
+[[rules]]
+id = "tui_redirect_hint_working"
+state = "working"
+priority = 850
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+contains = ["type to redirect this turn"]
+
+[[rules]]
+id = "tui_spinner_header_working"
+state = "working"
+priority = 850
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+any = [
+  { line_regex = ['^─+ [\u{2800}-\u{28ff}] .+ · \d+s ─'] },
+]
+
+# --- upstream 2026.07.24.1 (unchanged) -------------------------------------
+
+[[rules]]
+id = "osc_title_blocked"
+state = "blocked"
+priority = 1100
+region = "osc_title"
+visible_blocker = true
+regex = ['^⚠[\u{fe0e}\u{fe0f}]?(?:\s|$)']
+
+[[rules]]
+id = "osc_title_working"
+state = "working"
+priority = 1050
+region = "osc_title"
+visible_working = true
+regex = ['^⏳[\u{fe0e}\u{fe0f}]?(?:\s|$)']
+
+[[rules]]
+id = "dangerous_command_approval"
+state = "blocked"
+priority = 900
+region = "bottom_non_empty_lines(14)"
+visible_blocker = true
+any = [
+  { contains = ["dangerous"] },
+  { contains = ["approval"] },
+  { contains = ["allow once", "deny"] },
+  { line_regex = ['(?i)^\s*[▸>]?\s*1\.\s*allow'] },
+]
+all = [
+  { any = [{ contains = ["enter confirm"] }, { contains = ["enter to confirm"] }, { contains = ["↑/↓ to select"] }, { contains = ["show full command"] }] },
+]
+
+[[rules]]
+id = "clarification_prompt"
+state = "blocked"
+priority = 900
+region = "bottom_non_empty_lines(14)"
+visible_blocker = true
+any = [
+  { contains = ["hermes needs your"] },
+  { line_regex = ['^\s*ask\s+\S'] },
+  { contains = ["type your answer"] },
+]
+all = [
+  { any = [{ contains = ["enter confirm"] }, { contains = ["enter to confirm"] }, { contains = ["enter send"] }, { contains = ["press enter"] }, { contains = ["↑/↓ select"] }, { contains = ["↑/↓ to select"] }, { contains = ["other (type"] }] },
+]
+
+[[rules]]
+id = "credential_prompt"
+state = "blocked"
+priority = 900
+region = "bottom_non_empty_lines(14)"
+visible_blocker = true
+any = [
+  { contains = ["sudo password"] },
+  { contains = ["skill setup"] },
+  { contains = ["🔑", "for "] },
+]
+
+[[rules]]
+id = "confirmation_prompt"
+state = "blocked"
+priority = 900
+region = "bottom_non_empty_lines(14)"
+visible_blocker = true
+all = [
+  { any = [{ contains = ["approve once", "cancel"] }, { contains = ["start a new session", "keep going"] }] },
+  { any = [{ contains = ["enter to confirm"] }, { contains = ["enter confirm"] }, { contains = ["type 1/2/3"] }, { contains = ["y/n quick"] }] },
+]
+
+[[rules]]
+id = "interrupt_status_working"
+state = "working"
+priority = 950
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+any = [
+  { contains = ["msg=interrupt"] },
+  { contains = ["ctrl+c to interrupt"] },
+]
+
+[[rules]]
+id = "classic_cancel_working"
+state = "working"
+priority = 500
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+contains = ["ctrl+c cancel"]
+
+[[rules]]
+id = "osc_title_idle"
+state = "idle"
+priority = 100
+region = "osc_title"
+visible_idle = true
+regex = ['^✓[\u{fe0e}\u{fe0f}]?(?:\s|$)']

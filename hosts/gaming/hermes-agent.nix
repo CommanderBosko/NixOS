@@ -65,6 +65,12 @@ in
 
     programs.hermes-agent.enable = true;
 
+    # herdr reads Hermes's state off the screen, and its upstream manifest
+    # predates this Hermes's working UI (panes stayed idle). This local copy
+    # adds the missing working rules; see the file's header for why and when
+    # to drop it.
+    xdg.configFile."herdr/agent-detection/hermes.toml".source = ./herdr-hermes-detection.toml;
+
     services.hermes-agent = {
       enable = true;
 
@@ -198,7 +204,9 @@ in
       ];
       # herdr-agent-state is installed imperatively by `herdr integration
       # install hermes` (~/.hermes/plugins/herdr-agent-state); it only needs
-      # enabling here so herdr panes can see Hermes's lifecycle state.
+      # enabling here. It reports the session id so herdr can resume the pane
+      # after a restart; it does NOT drive the working/idle/blocked icons
+      # (herdr detects those from the screen, see herdr-hermes-detection.toml).
       settings.plugins.enabled = [
         "superpowers"
         "ponytail"
