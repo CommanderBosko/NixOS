@@ -100,6 +100,7 @@
       "${self}/modules/emulation.nix"
       "${self}/modules/flatpak.nix"
       "${self}/modules/fonts.nix"
+      "${self}/modules/herdr.nix"
       "${self}/modules/home-manager.nix"
       "${self}/modules/jellyfin-client.nix"
       # Host metrics for gaming's Prometheus; tailscale0 only
