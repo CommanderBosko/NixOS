@@ -1,3 +1,30 @@
+## Session: 2026-11-02 (session 144) — Landing the package PRs, Waydroid start fix
+
+**Focus**: Close two conversations since the 08:07 close: merge the open package PRs and prune branches, then get Waydroid to actually start on gaming.
+
+### What changed (and why)
+- **PRs merged (all small, `evaluate all hosts` green):** #81 `aria2` (`8bfe545`), #83 Waydroid (`ccc8428`), and #85 `unrar` (`eafc290`; the branch had never been pushed, so it went out as a new PR). Six merged `worktree-agent-*` branches deleted; version branches `1.0`-`3.4`/`4.1.3`/`4.2`/`4.2.1` and `fix/pinchflat-ngx` kept on purpose.
+- **Waydroid wouldn't start (PR #86, `bf2abda`):** after the rebuild, `waydroid-net.sh` failed with `ip_tables not found`: linux-zen has no legacy `ip_tables` module and `networking.nftables.enable` is false on gaming, so the nixpkgs module kept the iptables-based default package. `virtualisation.waydroid.package = pkgs.waydroid-nftables` fixes it. After the user's `nh os switch` (gen 484, 18:03) the session reached "Android is ready", the `waydroid0` bridge came up and the host pings Android.
+- **Research:** ten source reviewers on Waydroid-on-NixOS config; nothing more is needed in Nix. `wl-clipboard` was already on gaming. Saved as memory `reference_waydroid_nixos_research`.
+- **GAPPS setup (`b9d5152`):** the image was VANILLA. The imperative steps (`waydroid init -s GAPPS -f`, register the `android_id` with Google) are recorded as a comment in `modules/gaming.nix`.
+
+### Decisions
+- Select the nftables package explicitly, not `networking.nftables.enable = true`, which would move the iptables firewall that the Vesktop Proton bypass uses. Keep the image and Google registration imperative (documented, not a oneshot unit).
+
+### Issues / surprises
+- gaming's gen 484 came from PR #86's branch; until #86 merges, a rebuild from `main` brings the broken package back. The user asked to land #86 right after this close.
+- Not verified: outbound internet from inside Android, any game, the Play Store (Google registration was still pending when the conversation ended).
+- The transcript scan only saw this (post-`/clear`) conversation because it counted the close's own first invocation as the "last run"; the two earlier conversations were mined by hand.
+
+### Next session
+- Finish Waydroid (Play sign-in, internet, one game); Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` for laptop, natalie-laptop (now also `aria2`, `unrar`) and vpn-server; gaming disk.
+
+**Commits**: `40e0146..b9d5152` (9 commits: the three package merges, #83, and #86's two commits)
+
+Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-02 (session 143) — Waydroid on gaming
 
 **Focus**: Find the best way to play Android games on NixOS, then add it to gaming on its own branch.

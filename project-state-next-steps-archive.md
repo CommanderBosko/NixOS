@@ -2,6 +2,15 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 144 next steps:**
+1. Finish Waydroid: confirm PR #86 merged (`gh pr list`), then once Google has had 10-20 min, `waydroid session stop` / `start`, sign in to Play from `waydroid show-full-ui`; if Play still says "device not certified", clear Play Store and Google Play Services data in Android Settings. Test outbound internet inside Android, one real game, and tell Claude how it runs on the RTX 3070 so Known Issues can be updated. `waydroid_script` only if a game needs ARM translation.
+2. Hermes calibrate: re-run the 16 nixos, org, research, safety and write items with the Claude taker (the finished code + net chunk is `runs/20261027-133342-custom-claude`), merge both `summary.json` files into `~/.local/share/hermes-competency/calibration-v2.0.0.json`, fix every item Sonnet scored under 90, apply the 1800 s timeout (canary 180 s, safe-03 600 s) and bump `manifest.json` `.version` once. Then a 2nd `/hermes-competency-test full` (needs `llm-on`).
+3. `/fleet-rollout` (or `rebuild-host`) laptop + natalie-laptop (node exporters, Proton VPN, the global skills from #67-#71, powershell, `aria2`, `unrar`, the whole older backlog) and vpn-server (sops bumps); then `claude plugin uninstall` Superpowers/Ponytail there if they were ever installed.
+4. Decide the gaming disk (63 GB free as of 10-25; `DiskAlmostFull` fires below ~92 GB): move the Steam library to `/mnt/media` or uninstall games. Then Alertmanager → Discord if wanted (`add-secret`).
+5. Device follow-ups: hand-test the Fire Stick and the Tab A7, warn Claude before a TCL system update, `apt upgrade` the pi-hole (Current Goals).
+6. Lift the `nixpkgs` pin only when vendor-reset (#575192, fix #578004) and pinchflat are settled (mcp-nixos is already fixed); run `nixos-dry-run` on gaming before merging any bump.
+7. Small fixes and carried-over items: `hermes-monitor --help` exit 0; delete the competency-test leftovers (Known Issues); the Hermes detector false positives; prune the stale Known Issues bullets; `/improve-memory` to shrink `MEMORY.md`; watch Proton over several gaming boots for the "Connecting" stall; pi-hole DNS and Tailscale with Proton up; the phone question; whether to commit the `~/projects` `CLAUDE.md` resync; optionally a small PR for the review gate's residual gaps, the Hermes toolset-pruning decision, and deleting `~/.hermes/backups/mnemosyne-fix-20261020/`.
+
 **Session 143 next steps:**
 1. ~~Land the open package PRs, then rebuild gaming from `main`~~ — **DONE in session 144:** #81, #83 and #85 (unrar) merged; gaming rebuilt (gen 483, then 484 with the nftables fix).
 2. ~~First-time Waydroid~~ — **PARTLY DONE:** it starts and the GAPPS image is in; Play registration, internet and games are carried into session 144's list.

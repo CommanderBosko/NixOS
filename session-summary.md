@@ -4,6 +4,38 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-09 (session 149) — fleet rollout, boot-mode skill, Hermes wowaudit + herdr plugin
+
+**Focus**: Close out six conversations: a first `/fleet-rollout` pass over all three hosts, the skill rewrite it motivated, two Hermes config PRs, laptop herdr machines, and a Wispr Flow research note.
+
+### What changed (and why)
+- **`/fleet-rollout` ran on all three hosts** (Training Mode ON): gaming gen 494, laptop gen 207, natalie-laptop gen 111, all rebooted or switched with zero failed units. It cleared the laptops' long rebuild backlog, so about 40 "owes a rebuild" bullets in `project-state.md` were pruned as false.
+- **Remote `dry-activate` is unusable** for `bosko` (polkit denies the `systemd-run` activation), so the remote gate became a local build plus `nix copy`; remote hand-offs need `--elevate sudo --ask-elevate-password`. PR #104 (`0a8ea8e`) folded both into the skill and made boot the default (switch opt-in), with a new Step 5b to reboot remotes and gaming last.
+- **Hermes:** PR #103 registers the wowaudit OAuth MCP server (login still owed, no `~/.hermes/mcp-tokens/` yet); PR #105 enables the `herdr-agent-state` plugin, which is not live until gaming's next switch (gen 494 predates it).
+- **herdr:** laptop and natalie-laptop were added as saved machines (`laptop`, `natalie-laptop`), both over Tailscale IPs, in herdr's own state. The user asked for the `laptop` label; I picked `natalie-laptop` myself.
+- Wispr Flow research saved to memory: no Linux client; `handy`, `whisrs`, `voxtype` exist in nixpkgs, none tried.
+
+### Decisions
+- Boot is the fleet-rollout default because a switch hand-off got run as `boot` anyway, and rebooting gaming ends the Claude session, so gaming goes last.
+- Hermes plugin enablement lives in Nix, installation stays imperative (`herdr integration install hermes`), the same split as PR #101.
+- #104 and #105 were landed without `land-prs`'s order prompt because the user said to land both once green; both merged cleanly (`9c410b0`, `8086ff8`).
+
+### Issues / surprises
+- `trimClaudeSettings` did strip herdr's Claude hook: `~/.claude/settings.json` has no `hooks` key after gen 493/494, while `herdr integration status` still says `current` (it only checks the script file).
+- laptop's `srv-shared.mount` failed right after boot (race against gaming's share) and cleared on its own.
+- The first fleet-rollout sweep of laptop failed twice: the user ran `boot` instead of switch, then the mount race. Neither was a config fault.
+- `hermes mcp list` prints "install out of sync (node: not installed or outdated)"; not diagnosed.
+- The wowaudit-MCP and the #105 plugin conversations were not in this scan; they are recorded from commits and live checks.
+
+### Next session
+- `nh os switch` on gaming for #105, then `hermes mcp login wowaudit --flow browser`; fix the herdr hook strip; verify the laptops; Oracle cleanup; Waydroid; watch the next `send-results` run.
+
+**Commits**: `8e6fe8e..8086ff8` (7 commits)
+
+Secret-scan: clean (tree + 2,036 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-09 (session 148) — herdr Q&A for the boss session
 
 **Focus**: Answer what herdr is and whether this session can talk to it, then close. The only conversation in this close's scan; it changed no repo files.
@@ -103,33 +135,6 @@ Secret-scan: clean (tree + 2,012 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `6e2d88b..13934b0` (PRs #88, #89, #90)
 
 Secret-scan: clean (tree + 2,008 commits, all 6 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-02 (session 144) — Landing the package PRs, Waydroid start fix
-
-**Focus**: Close two conversations since the 08:07 close: merge the open package PRs and prune branches, then get Waydroid to actually start on gaming.
-
-### What changed (and why)
-- **PRs merged (all small, `evaluate all hosts` green):** #81 `aria2` (`8bfe545`), #83 Waydroid (`ccc8428`), and #85 `unrar` (`eafc290`; the branch had never been pushed, so it went out as a new PR). Six merged `worktree-agent-*` branches deleted; version branches `1.0`-`3.4`/`4.1.3`/`4.2`/`4.2.1` and `fix/pinchflat-ngx` kept on purpose.
-- **Waydroid wouldn't start (PR #86, `bf2abda`):** after the rebuild, `waydroid-net.sh` failed with `ip_tables not found`: linux-zen has no legacy `ip_tables` module and `networking.nftables.enable` is false on gaming, so the nixpkgs module kept the iptables-based default package. `virtualisation.waydroid.package = pkgs.waydroid-nftables` fixes it. After the user's `nh os switch` (gen 484, 18:03) the session reached "Android is ready", the `waydroid0` bridge came up and the host pings Android.
-- **Research:** ten source reviewers on Waydroid-on-NixOS config; nothing more is needed in Nix. `wl-clipboard` was already on gaming. Saved as memory `reference_waydroid_nixos_research`.
-- **GAPPS setup (`b9d5152`):** the image was VANILLA. The imperative steps (`waydroid init -s GAPPS -f`, register the `android_id` with Google) are recorded as a comment in `modules/gaming.nix`.
-
-### Decisions
-- Select the nftables package explicitly, not `networking.nftables.enable = true`, which would move the iptables firewall that the Vesktop Proton bypass uses. Keep the image and Google registration imperative (documented, not a oneshot unit).
-
-### Issues / surprises
-- gaming's gen 484 came from PR #86's branch; until #86 merges, a rebuild from `main` brings the broken package back. The user asked to land #86 right after this close.
-- Not verified: outbound internet from inside Android, any game, the Play Store (Google registration was still pending when the conversation ended).
-- The transcript scan only saw this (post-`/clear`) conversation because it counted the close's own first invocation as the "last run"; the two earlier conversations were mined by hand.
-
-### Next session
-- Finish Waydroid (Play sign-in, internet, one game); Hermes calibrate chunk 2 and a 2nd baseline; `/fleet-rollout` for laptop, natalie-laptop (now also `aria2`, `unrar`) and vpn-server; gaming disk.
-
-**Commits**: `40e0146..b9d5152` (9 commits: the three package merges, #83, and #86's two commits)
-
-Secret-scan: clean (tree + 1,989 commits, all 6 `secrets/*.yaml` encrypted).
 
 ---
 
