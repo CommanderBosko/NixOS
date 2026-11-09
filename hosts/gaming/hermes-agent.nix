@@ -97,6 +97,17 @@ in
             "tailscale_preview_acl"
           ];
         };
+        # Remote server (https://wowaudit.com/mcp): OAuth 2.1 PKCE with dynamic
+        # client registration, so no API key or sops secret. The browser login
+        # is a one-time imperative step, `hermes mcp login wowaudit --flow
+        # browser` (no device flow: wowaudit only offers authorization_code).
+        # Tokens land in ~/.hermes/mcp-tokens/, outside the store, so rebuilds
+        # keep them. Tool schemas are unseen until login: once logged in, check
+        # their size against the 64K context and add tools.include if needed.
+        wowaudit = {
+          url = "https://wowaudit.com/mcp";
+          auth = "oauth";
+        };
       };
       # Untrusted: any write-capable call still asks for approval first.
       settings.mcp_servers.tailscale.trust = "untrusted";
