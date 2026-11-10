@@ -1,3 +1,29 @@
+## Session: 2026-11-03 (session 145) — libndk, gate hardening, PRs landed
+
+**Focus**: Close four conversations since the 11-02 close: Waydroid ARM translation, the local `/improve-system` run, review-gate hardening, and merging the open PRs.
+
+### What changed (and why)
+- **Waydroid libndk (PR #88, `df50822`):** League Wild Rift showed "won't work for your device" because the image is x86_64; libndk (AMD CPU) was installed with `waydroid_script` by the user, abilist now has arm64. Documented as a comment in `modules/gaming.nix`; imperative on purpose.
+- **PR #89 (`78c9638`):** local `/improve-system` via `manager` — misfire-scan fix, gotchas, niri validator, 5 allow entries, new `android-debloat` skill.
+- **PR #90 (`13934b0`):** `find-and-check-pr.sh` gate hardened against 8 review gaps, tests first, 3 review rounds, 191/191 tests.
+- **Merge:** #89 then #90 merged on "merge anything that looks good", remote branches deleted; a GitHub 503 was a false alarm.
+
+### Decisions
+- libndk not libhoudini; keep imperative. Gate fix in its own PR.
+
+### Issues / surprises
+- Transcript scan saw only this conversation (counts the close's own invocation as the last run); earlier ones were mined by hand.
+- Not verified: Wild Rift install/login. Base-tip race in `ci-gate.sh` remains.
+
+### Next session
+- Try Wild Rift; rebuild gaming for global skill edits; Hermes calibrate; `/fleet-rollout`.
+
+**Commits**: `6e2d88b..13934b0` (PRs #88, #89, #90)
+
+Secret-scan: clean (tree + 2,008 commits, all 6 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-02 (session 144) — Landing the package PRs, Waydroid start fix
 
 **Focus**: Close two conversations since the 08:07 close: merge the open package PRs and prune branches, then get Waydroid to actually start on gaming.
