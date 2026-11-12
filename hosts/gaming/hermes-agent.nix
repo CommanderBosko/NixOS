@@ -103,42 +103,6 @@ in
             "tailscale_preview_acl"
           ];
         };
-        # Remote server (https://wowaudit.com/mcp): OAuth 2.1 PKCE with dynamic
-        # client registration, so no API key or sops secret. The browser login
-        # is a one-time imperative step, `hermes mcp login wowaudit --flow
-        # browser` (no device flow: wowaudit only offers authorization_code).
-        # Tokens land in ~/.hermes/mcp-tokens/, outside the store, so rebuilds
-        # keep them. The login grants scope=read only, so the 18 write tools
-        # (set_*, save_*, create_*, update_*, add_*, remove_*, link_*, sync_*,
-        # auto_setup) would be rejected anyway; the 21 read tools below keep
-        # the schemas small against the 64K context.
-        wowaudit = {
-          url = "https://wowaudit.com/mcp";
-          auth = "oauth";
-          tools.include = [
-            "get_my_context"
-            "get_character"
-            "team_audit"
-            "list_audit_fields"
-            "find_recipe_crafters"
-            "list_my_events"
-            "list_events"
-            "get_event"
-            "event_insights"
-            "get_event_changelog"
-            "list_event_schedules"
-            "list_applications"
-            "get_applications"
-            "list_roster"
-            "list_notification_templates"
-            "list_seasons"
-            "list_instances"
-            "list_encounter_items"
-            "trinket_status"
-            "wishlist_upgrades"
-            "loot_history"
-          ];
-        };
       };
       # Untrusted: any write-capable call still asks for approval first.
       settings.mcp_servers.tailscale.trust = "untrusted";
