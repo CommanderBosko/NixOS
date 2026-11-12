@@ -142,6 +142,5 @@
     r2modman
     vkbasalt
     vulkan-tools
-    wowup-cf # WoW addon manager for WoW Forever (Lutris prefix); unfree AppImage, covered by allowUnfree in nix.nix
   ];
 }
