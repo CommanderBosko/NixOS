@@ -27,10 +27,16 @@
   security.sudo.extraRules = [
     {
       groups = [ "wheel" ];
-      commands = map (args: {
-        command = "/run/current-system/sw/bin/smartctl ${args} *";
-        options = [ "NOPASSWD" ];
-      }) [ "-H" "-A" "-H -A" "-a" "-x" ];
+      commands =
+        (map (args: {
+          command = "/run/current-system/sw/bin/smartctl ${args} *";
+          options = [ "NOPASSWD" ];
+        }) [ "-H" "-A" "-H -A" "-a" "-x" ])
+        # --scan takes no device, so it needs an exact entry without the `*`.
+        ++ [{
+          command = "/run/current-system/sw/bin/smartctl --scan";
+          options = [ "NOPASSWD" ];
+        }];
     }
   ];
 
