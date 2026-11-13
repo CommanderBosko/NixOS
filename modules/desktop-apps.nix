@@ -18,6 +18,22 @@
   # so no sudo is needed to check on a drive (journalctl -u smartd).
   services.smartd.enable = true;
 
+  # Passwordless smartctl for wheel: reading SMART data needs CAP_SYS_ADMIN
+  # (NVMe admin ioctl), so group membership can't replace sudo, and Claude
+  # Code's shell has no TTY to type a password into. Scoped to the read-only
+  # flag sets (-H/-A/-a/-x) rather than all of smartctl; the trailing `*` is
+  # the device path. Resolved via the system profile path, as sudo matches
+  # the real command path.
+  security.sudo.extraRules = [
+    {
+      groups = [ "wheel" ];
+      commands = map (args: {
+        command = "/run/current-system/sw/bin/smartctl ${args} *";
+        options = [ "NOPASSWD" ];
+      }) [ "-H" "-A" "-H -A" "-a" "-x" ];
+    }
+  ];
+
   # XDG portals + dconf (GTK settings) — needed by every desktop session, not
   # just SDDM's greeter.
   xdg.portal.enable = true;
