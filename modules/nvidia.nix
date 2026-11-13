@@ -45,6 +45,15 @@
     };
   };
 
+  # btop dlopen()s libnvidia-ml.so (NVML) to detect NVIDIA GPUs. nixpkgs only
+  # adds /run/opengl-driver/lib to its RUNPATH when cudaSupport is set, and
+  # without it btop logs "Failed to load libnvidia-ml.so" and never shows a
+  # GPU box. For btop, cudaSupport = true just adds autoAddDriverRunpath — no
+  # CUDA toolkit is pulled in. (Still needs `gpu0` in btop.conf shown_boxes.)
+  nixpkgs.overlays = [
+    (_final: prev: { btop = prev.btop.override { cudaSupport = true; }; })
+  ];
+
   # Niri (Smithay-based, not wlroots) allocates buffers via GBM and doesn't
   # auto-select the nvidia vendor lib the way KWin does — without these,
   # XWayland/GLX apps and hardware video decode can silently fall back to
