@@ -39,6 +39,7 @@
     pywal # shell.nix replays its cached palette in interactive shells
     qalculate-qt
     qdirstat
+    smartmontools # smartctl for SSD/HDD SMART health checks (needs sudo)
     thunar
     thunar-volman # Auto-mount + notification on removable-media insertion for Thunar
     tty-clock
