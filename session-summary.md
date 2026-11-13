@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-12 (session 151) — btop GPU fix, smartmontools, wowaudit/wowup removal
+
+**Focus**: Close out ten conversations: four small PRs (#111-#114), two pin checks, and a herdr look at natalie-laptop's session.
+
+### What changed (and why)
+- **btop shows the NVIDIA GPU (#113):** the first fix (`gpu0` in `btop.conf`) could not work. nixpkgs' btop lacks `/run/opengl-driver/lib` in its RUNPATH unless built with `cudaSupport`, so `libnvidia-ml.so` never loaded. An overlay in `modules/nvidia.nix` fixes it; the GPU line appeared in the CPU box after the switch.
+- **`smartmontools` on all desktop hosts (#114):** written by natalie-laptop's session, which could not open the PR (`gh` not logged in); this host opened it.
+- **wowaudit MCP dropped from Hermes (#111)** and **`wowup-cf` removed from gaming (#112):** the user no longer wants either (CurseForge replaces WowUp).
+- **Pin checks 11-11 and 11-12:** keep the pin, nothing changed.
+
+### Decisions
+- Fix btop in the build, not in the unmanaged `btop.conf`.
+- smartmontools goes in the shared `desktop-apps.nix`.
+- wowaudit token files left on disk for the user to delete.
+
+### Issues / surprises
+- `~/.hermes/config.yaml` still has the `wowaudit:` block after the Nix removal and the gen 499 switch; cause not diagnosed.
+- `laptop` was unreachable over SSH again; herdr's `SendMessage` does not cross machines (only `--machine` pane commands do).
+
+### Next session
+- Reboot gaming into gen 500; pull and rebuild both laptops; remove the stale wowaudit config and tokens; laptop checklist and natalie-laptop key test; Oracle cleanup; lift the pin when vendor-reset lands.
+
+**Commits**: `abd2911..ca606f2` (4 PRs, #111-#114)
+
+Secret-scan: clean (tree + 2,054 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-09 (session 150) — wowaudit MCP, herdr Hermes status, natalie-laptop key, second rollout
 
 **Focus**: Close out nine conversations: three small PRs (#107-#109), a pin check, a second `/fleet-rollout` in boot mode, and two Q&As.
@@ -114,32 +142,6 @@ Secret-scan: clean (tree + 2,028 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `8589ebe..23a990b` (PR #94, 1 commit)
 
 Secret-scan: clean (tree + 2,016 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-03 (session 146) — vpn-server retired
-
-**Focus**: Close the conversation that retired the dead `vpn-server` host and WireGuard hub (PR #92). Its transcript was not in this close's scan, so this is written from the commit message, the diff and the Recent Decisions entry that PR wrote.
-
-### What changed (and why)
-- **PR #92 (`5395bb4`, merged `73fd51b`):** removed `hosts/vpn-server/`, `modules/vpn.nix`, the `nixpkgs-stable` and `disko` inputs, gaming's aarch64 binfmt, the `vpn-*` aliases and the wg0 firewall and Pinchflat remnants. Oracle admin-disabled the instance on 2026-08-18 and it never came back; Tailscale and the Proton VPN GUI cover access and egress.
-- **Secrets:** the vpn-server sops recipient is gone (`common.yaml` re-keyed), all WireGuard private keys are deleted, and the per-host files for laptop, natalie-laptop and vpn-server are removed.
-- **Tooling:** deleted the `vpn-status`, `remote-rebuild` and `new-peer` skills and the vpn data in `hosts.json`; updated about 20 other skills, the README and both CLAUDE.md files.
-- **This close:** gaming's live generation is 485 (2026-11-03 07:52, before the retirement), so the removal is not live there. Removed three Known Issues the retirement made false and fixed the `server`-host goal that named `nixpkgs-stable`.
-
-### Decisions
-- Remove it entirely rather than leave it commented out as it had been since 2026-08-18: the user no longer plans to use the host, and git history keeps the hub.
-
-### Issues / surprises
-- Still on the user: revoke the OCI API key, terminate the instance or tenancy, delete `~/.oci`.
-- Not checked: whether Pinchflat still downloads without wg0, and whether Proton's client overrides `/etc/resolv.conf` (pi-hole bypass).
-
-### Next session
-- Rebuild gaming (dry-run first) onto the retirement; Oracle cleanup; Waydroid game test; `/fleet-rollout` laptop and natalie-laptop.
-
-**Commits**: `d2559b1..73fd51b` (PR #92, 1 commit)
-
-Secret-scan: clean (tree + 2,012 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 
