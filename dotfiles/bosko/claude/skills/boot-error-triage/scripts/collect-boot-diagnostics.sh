@@ -8,9 +8,25 @@ set -euo pipefail
 # matching lines and print a per-pattern count instead, so nothing disappears silently.
 # - dbus-broker duplicate names: several portal/keyring packages ship the same D-Bus service name.
 # - gkr-pam: the display manager's PAM stack looks for gnome-keyring's control file before it exists.
+# - ACPI CFSP/TFN1: ASUS Q540VJ firmware bug in the fan-status method, repeats every ~30s (fan RPM unreadable, fan is fine).
+# - cupsd CreateProfile: colord isn't installed, so cupsd can't register colour profiles.
+# - io pressure threshold: systemd user managers can't adjust the PSI threshold unprivileged.
+# - VMD hard-wired bus: Intel VMD controller PCI quirk at boot.
+# - /srv/shared mount: CIFS automount fires before wifi is up; it succeeds once the network is.
+# - I2C0.TPL1 + its "During name lookup/catalog" follow-on: firmware references an absent touchpad-variant device; the real touchpad (ASUE120B) binds fine.
+# - blank "kernel:" line: a driver (seen between nvidia-nvlink and iwlwifi) prints an empty message; nothing to hide.
+# NOT filtered on purpose: "GPE 0x14, found both _L14 and _E14" — likely benign but wake-up is untested.
 NOISE_PATTERNS=(
+  'Could not resolve symbol.*I2C0\.TPL1'
+  'ACPI Error: AE_NOT_FOUND, During name lookup/catalog'
+  'kernel: *$'
   'dbus-broker-launch.*Ignoring duplicate name'
   'gkr-pam: unable to locate daemon control file'
+  'ACPI BIOS Error.*(CFSP|TFN1)|Could not resolve symbol.*(CFSP|TFN1)|Aborting method.*(CFSP|TFN1|_FST)'
+  'cupsd.*CreateProfile failed'
+  'Failed to adjust io pressure threshold'
+  'Primary bus is hard wired to 0'
+  'Failed to mount /srv/shared'
 )
 
 RAW=false
