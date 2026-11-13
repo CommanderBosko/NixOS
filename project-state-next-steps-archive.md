@@ -2,6 +2,16 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 147 next steps:**
+1. Oracle cleanup (outside the repo): revoke the API key in the OCI console, terminate the instance or tenancy, delete `~/.oci`. Then check that Pinchflat still downloads with no wg0 egress path, and whether Proton's client overrides `/etc/resolv.conf` (the pi-hole bypass).
+2. Watch the next scheduled `/improve-system` or `/dream` run: confirm `send-results` posts a Doc link to Discord from an environment that may lack the Claude Docs connector.
+3. Finish Waydroid: try League Wild Rift (after clearing Play Store data); if Play still says "won't work", Aurora Store with device spoofing. Confirm outbound internet, one real game and rendering speed on the RTX 3070; complete the Google `android_id` registration and Play sign-in if not done.
+4. `/fleet-rollout` laptop + natalie-laptop (node exporters, Proton VPN, skills including the `send-results` Doc change, powershell, `aria2`, `unrar`, the vpn-server retirement, the older backlog). There is no vpn-server left to roll out.
+5. Hermes calibrate: re-run the 16 nixos, org, research, safety and write items with the Claude taker (finished code + net chunk is `runs/20261027-133342-custom-claude`), merge both `summary.json` files into `~/.local/share/hermes-competency/calibration-v2.0.0.json`, fix items under 90, apply the 1800 s timeout and bump `manifest.json` `.version` once; then a 2nd full run (needs `llm-on`).
+6. Gaming disk (63 GB free as of 10-25): move the Steam library to `/mnt/media` or uninstall games.
+7. Device follow-ups (Fire Stick, Tab A7, TCL update warning, pi-hole `apt upgrade`); lift the `nixpkgs` pin only when vendor-reset (#575192) and pinchflat are settled.
+8. Small items: `hermes-monitor --help` exit 0; competency-test leftovers; `/improve-memory` to shrink `MEMORY.md` (it still holds vpn-server entries); optional `ci-gate.sh` base-tip fix.
+
 **Session 146 next steps:**
 1. Rebuild gaming onto `main` (DONE by session 147: gen 487 is current).
 2. Oracle cleanup (outside the repo): revoke the API key in the OCI console, terminate the instance or tenancy, delete `~/.oci`. Then check that Pinchflat still downloads with no wg0 egress path.
