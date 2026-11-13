@@ -8,10 +8,6 @@
   services = {
     # Enable touchpad
     libinput.enable = true;
-
-    # Background SMART monitoring — drive health/warnings land in the journal,
-    # so no sudo is needed to check on the NVMe (journalctl -u smartd)
-    smartd.enable = true;
   };
 
   # Hardware

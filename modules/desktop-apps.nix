@@ -14,6 +14,10 @@
   # needed it.
   services.gvfs.enable = true;
 
+  # Background SMART monitoring — drive health/warnings land in the journal,
+  # so no sudo is needed to check on a drive (journalctl -u smartd).
+  services.smartd.enable = true;
+
   # XDG portals + dconf (GTK settings) — needed by every desktop session, not
   # just SDDM's greeter.
   xdg.portal.enable = true;
