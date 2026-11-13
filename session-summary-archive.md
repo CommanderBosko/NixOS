@@ -1,3 +1,29 @@
+## Session: 2026-11-03 (session 146) — vpn-server retired
+
+**Focus**: Close the conversation that retired the dead `vpn-server` host and WireGuard hub (PR #92). Its transcript was not in this close's scan, so this is written from the commit message, the diff and the Recent Decisions entry that PR wrote.
+
+### What changed (and why)
+- **PR #92 (`5395bb4`, merged `73fd51b`):** removed `hosts/vpn-server/`, `modules/vpn.nix`, the `nixpkgs-stable` and `disko` inputs, gaming's aarch64 binfmt, the `vpn-*` aliases and the wg0 firewall and Pinchflat remnants. Oracle admin-disabled the instance on 2026-08-18 and it never came back; Tailscale and the Proton VPN GUI cover access and egress.
+- **Secrets:** the vpn-server sops recipient is gone (`common.yaml` re-keyed), all WireGuard private keys are deleted, and the per-host files for laptop, natalie-laptop and vpn-server are removed.
+- **Tooling:** deleted the `vpn-status`, `remote-rebuild` and `new-peer` skills and the vpn data in `hosts.json`; updated about 20 other skills, the README and both CLAUDE.md files.
+- **This close:** gaming's live generation is 485 (2026-11-03 07:52, before the retirement), so the removal is not live there. Removed three Known Issues the retirement made false and fixed the `server`-host goal that named `nixpkgs-stable`.
+
+### Decisions
+- Remove it entirely rather than leave it commented out as it had been since 2026-08-18: the user no longer plans to use the host, and git history keeps the hub.
+
+### Issues / surprises
+- Still on the user: revoke the OCI API key, terminate the instance or tenancy, delete `~/.oci`.
+- Not checked: whether Pinchflat still downloads without wg0, and whether Proton's client overrides `/etc/resolv.conf` (pi-hole bypass).
+
+### Next session
+- Rebuild gaming (dry-run first) onto the retirement; Oracle cleanup; Waydroid game test; `/fleet-rollout` laptop and natalie-laptop.
+
+**Commits**: `d2559b1..73fd51b` (PR #92, 1 commit)
+
+Secret-scan: clean (tree + 2,012 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-03 (session 145) — libndk, gate hardening, PRs landed
 
 **Focus**: Close four conversations since the 11-02 close: Waydroid ARM translation, the local `/improve-system` run, review-gate hardening, and merging the open PRs.
