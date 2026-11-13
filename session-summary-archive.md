@@ -1,3 +1,28 @@
+## Session: 2026-11-03 (session 147) — send-results publishes a Claude Doc
+
+**Focus**: Close the conversation that moved `/send-results` from HTML artifact pages to Claude Docs (PR #94). Its transcript was not in this close's scan, so this is written from the commit message, the memory notes and live checks on gaming.
+
+### What changed (and why)
+- **PR #94 (`4bd25b5`, merged `23a990b`):** `send-results` now creates the report as a Claude Doc through the Claude Docs connector and posts the doc link to Discord. The user's rule is that documents go in Claude Docs, not hand-written HTML pages, so `wrap-html.sh`, `wrapper-template.html` and the `artifact-design` step are deleted; `improve-system`'s caveat and the `why-artifact-not-file-link` note say Doc now.
+- **Live-tested the same day:** doc created, Discord answered HTTP 204, the user confirmed.
+- **This close:** gaming's current system is gen 487 (22:29, after #94) and its booted system is gen 485 with the same kernel, so the vpn-server retirement from session 146 is live there (`wg0` gone, `tailscaled` active). The docs had it as "not live"; fixed.
+
+### Decisions
+- No HTML fallback: if the Docs tools are missing or the create is refused, the skill reports and stops, because falling back would break the rule the change enforces.
+
+### Issues / surprises
+- The weekly cloud `/improve-system` routine and `/dream` also call `send-results`; whether their environment has the Docs connector is untested.
+- Still on the user: revoke the OCI API key, terminate the instance or tenancy, delete `~/.oci` (`config` and `oci_api_key.pem` are still there).
+
+### Next session
+- Oracle cleanup; check Pinchflat without wg0; watch the next scheduled `send-results` call; finish Waydroid; `/fleet-rollout` laptop and natalie-laptop.
+
+**Commits**: `8589ebe..23a990b` (PR #94, 1 commit)
+
+Secret-scan: clean (tree + 2,016 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-03 (session 146) — vpn-server retired
 
 **Focus**: Close the conversation that retired the dead `vpn-server` host and WireGuard hub (PR #92). Its transcript was not in this close's scan, so this is written from the commit message, the diff and the Recent Decisions entry that PR wrote.
