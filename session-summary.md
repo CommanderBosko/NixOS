@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-13 (session 153) — natalie-laptop clock loop, chrony fix, `gh` login
+
+**Focus**: Bring natalie-laptop back after a remote reboot, stop it happening again, and get its Claude session able to open PRs.
+
+### What changed (and why)
+- **natalie-laptop boot loop (#123):** after the reboot its RTC gave 2021-12-31, so Tailscale could not validate TLS, MagicDNS could not reach pi-hole, and chrony could not resolve the pool names; nothing could fix the clock. The user set it by hand in a real terminal (the `!` prefix gave `ssh -t` no TTY). The fix adds two Cloudflare anycast NTP IPs to chrony in the shared `modules/desktop-networking.nix`, so a years-wrong clock finds a source without DNS. Deep-eval passed 3/3; it was not built or booted.
+- **natalie-laptop `gh` (#125):** the first device-flow code expired unentered; the second conversation finished the login. The token is plain text in `~/.config/gh/hosts.yml` because the SSH session had no keyring. Docs-only PR, merged after CI.
+- **Landed from other sessions (summarised from commits, not narrated):** #119/#120 passwordless read-only `smartctl` for wheel, #121 and #124 an 80% charge cap on laptop and natalie-laptop, #122 the `host-health-scan` skill plus a wider `boot-error-triage` noise filter.
+
+### Decisions
+- IP-literal NTP in the shared module, not a DNS or RTC change; the missing resolver fallback and the BIOS clock were left alone.
+- The clock reset was handed to the user in a separate terminal, with no `sudo -S` workaround.
+- natalie-laptop's plain-text `gh` token was accepted rather than chasing a keyring.
+
+### Issues / surprises
+- Not live on natalie-laptop: #123 (no `162.159.*` in `chronyc sources`) and #124 (charge threshold reads 100), so the next reboot there hits the clock loop again.
+- gaming runs gen 500 and has no smartd; staged gen 501 has smartd and the smartctl sudo rule. `laptop` timed out over SSH at close.
+- natalie-laptop's `/etc/resolv.conf` listed only Tailscale's resolver although `desktop-networking.nix` calls 1.1.1.1 a fallback; not investigated.
+
+### Next session
+- Reboot gaming into gen 501 and check smartd and the sudo rule; rebuild natalie-laptop (then confirm the chrony IPs and the 80% cap) and `laptop` (check it is up first); check natalie-laptop's BIOS clock; finish removing the wowaudit config and tokens from Hermes.
+
+**Commits**: `a307ee5..3bfda88` (7 commits, PRs #119-#125)
+
+Secret-scan: clean (tree + 2,076 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-12 (session 152) — laptop `gh` login, smartd on all desktops
 
 **Focus**: Get the laptop agent's smartd PR opened and landed, find out why its own PR step failed, and spread smartd to every desktop host.
@@ -117,31 +145,6 @@ Secret-scan: clean (tree + 2,044 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `8e6fe8e..8086ff8` (7 commits)
 
 Secret-scan: clean (tree + 2,036 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-09 (session 148) — herdr Q&A for the boss session
-
-**Focus**: Answer what herdr is and whether this session can talk to it, then close. The only conversation in this close's scan; it changed no repo files.
-
-### What changed (and why)
-- **Nothing in the repo from this conversation.** PRs #96-#101 landed since the 11-03 close in other conversations whose transcripts were not scanned, so those are recorded from commit messages and live checks: herdr on every desktop host (#101), a Waydroid `ExecStop` so shutdown stops hanging (#96), `wowup-cf` on gaming (#97), the VirtualBox host re-added on natalie-laptop (#98), and the weekly `/improve-system` skill-doc sweep (#100).
-- **herdr answered over its socket, read-only:** this session is pane `w2:p1` and the `herdr pane|agent` CLI works from inside it. The boss session then asked what herdr overlaps with: both list sessions, read output and send input, but herdr works per pane over its own socket while boss uses the `cc-socks` sockets and kitty remote control. Nothing was sent to any pane.
-- **Live state:** gaming's current and booted system are both gen 492 (2026-11-09 08:36/08:37), which carries herdr 0.9.5, `wowup-cf` and the Waydroid fix. laptop and natalie-laptop still owe a rebuild.
-
-### Decisions
-- None made here. Recorded PR #101's: herdr stays a plain `systemPackages` entry with config and the Claude hook imperative, because upstream has no NixOS or Home Manager module and a Nix install must not self-update.
-
-### Issues / surprises
-- `home.activation.trimClaudeSettings` deletes the whole `.hooks` key from `~/.claude/settings.json` on every rebuild, which would remove herdr's `SessionStart` hook. Inferred from the script, not observed yet.
-- The first `scan-session.sh transcript` call failed ("no transcript directory") because I passed the `~/.claude/projects/...` path; it takes the repo path (`/home/bosko/NixOS`).
-
-### Next session
-- Decide how herdr's hook survives `trimClaudeSettings`; `/fleet-rollout` laptop and natalie-laptop; Oracle cleanup; watch the next `send-results` run; finish Waydroid and confirm a clean shutdown.
-
-**Commits**: `0661e4d..b5f09c4` (11 commits, none from this conversation)
-
-Secret-scan: clean (tree + 2,028 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 

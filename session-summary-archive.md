@@ -1,3 +1,28 @@
+## Session: 2026-11-09 (session 148) — herdr Q&A for the boss session
+
+**Focus**: Answer what herdr is and whether this session can talk to it, then close. The only conversation in this close's scan; it changed no repo files.
+
+### What changed (and why)
+- **Nothing in the repo from this conversation.** PRs #96-#101 landed since the 11-03 close in other conversations whose transcripts were not scanned, so those are recorded from commit messages and live checks: herdr on every desktop host (#101), a Waydroid `ExecStop` so shutdown stops hanging (#96), `wowup-cf` on gaming (#97), the VirtualBox host re-added on natalie-laptop (#98), and the weekly `/improve-system` skill-doc sweep (#100).
+- **herdr answered over its socket, read-only:** this session is pane `w2:p1` and the `herdr pane|agent` CLI works from inside it. The boss session then asked what herdr overlaps with: both list sessions, read output and send input, but herdr works per pane over its own socket while boss uses the `cc-socks` sockets and kitty remote control. Nothing was sent to any pane.
+- **Live state:** gaming's current and booted system are both gen 492 (2026-11-09 08:36/08:37), which carries herdr 0.9.5, `wowup-cf` and the Waydroid fix. laptop and natalie-laptop still owe a rebuild.
+
+### Decisions
+- None made here. Recorded PR #101's: herdr stays a plain `systemPackages` entry with config and the Claude hook imperative, because upstream has no NixOS or Home Manager module and a Nix install must not self-update.
+
+### Issues / surprises
+- `home.activation.trimClaudeSettings` deletes the whole `.hooks` key from `~/.claude/settings.json` on every rebuild, which would remove herdr's `SessionStart` hook. Inferred from the script, not observed yet.
+- The first `scan-session.sh transcript` call failed ("no transcript directory") because I passed the `~/.claude/projects/...` path; it takes the repo path (`/home/bosko/NixOS`).
+
+### Next session
+- Decide how herdr's hook survives `trimClaudeSettings`; `/fleet-rollout` laptop and natalie-laptop; Oracle cleanup; watch the next `send-results` run; finish Waydroid and confirm a clean shutdown.
+
+**Commits**: `0661e4d..b5f09c4` (11 commits, none from this conversation)
+
+Secret-scan: clean (tree + 2,028 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-03 (session 147) — send-results publishes a Claude Doc
 
 **Focus**: Close the conversation that moved `/send-results` from HTML artifact pages to Claude Docs (PR #94). Its transcript was not in this close's scan, so this is written from the commit message, the memory notes and live checks on gaming.
