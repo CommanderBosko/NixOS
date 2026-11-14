@@ -39,6 +39,16 @@ let
   } (builtins.readFile ./hermes-memory-check.py);
 in
 {
+  # Build CUDA code only for this host's RTX 3070 (compute capability 8.6)
+  # instead of every architecture nixpkgs supports: llama-cpp-cuda's fattn/mmq
+  # kernels take hours to compile for all of them and the cache has no unfree
+  # CUDA builds. No PTX forward-compat, so a different NVIDIA architecture needs
+  # this list changed (moot after the planned AMD card swap).
+  nixpkgs.config = {
+    cudaCapabilities = [ "8.6" ];
+    cudaForwardCompat = false;
+  };
+
   services.llama-cpp = {
     enable = true;
     package = pkgs.llama-cpp-cuda;
