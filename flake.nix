@@ -5,6 +5,16 @@
     # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # TEMPORARY (added 2026-11-14): nixpkgs rev fe132422 (2026-10-15), the last
+    # one whose linux-zen (7.2.10) boots on gaming. zen 7.3.4 (nixpkgs d4f25a3e)
+    # panics ~1.2s into boot — NULL dereference in process_one_work via
+    # bh_worker/tasklet_action as xhci_pci loads in the initrd (X570 Phantom
+    # Gaming 4), identical on two boots. Consumed only by modules/bootloader.nix
+    # for boot.kernelPackages (kernel + its nvidia module set); it does NOT hold
+    # back nixpkgs itself. Lift: point bootloader.nix back at pkgs.linuxPackages_zen
+    # (or whichever kernel fixes it), then drop this input and flake.lock entry.
+    nixpkgs-kernel.url = "github:nixos/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
+
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
