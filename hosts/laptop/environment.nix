@@ -48,7 +48,6 @@
   # Host-specific packages, on top of the shared modules/desktop-apps.nix list
   environment.systemPackages = with pkgs; [
     element-desktop
-    qutebrowser
     rpi-imager
     tor-browser
   ];
