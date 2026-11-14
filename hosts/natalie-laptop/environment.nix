@@ -52,7 +52,6 @@
   environment.systemPackages = with pkgs; [
     inputs.financeguru.packages.${pkgs.stdenv.hostPlatform.system}.default
     anki
-    qutebrowser
     rpi-imager
     simple-scan
   ];

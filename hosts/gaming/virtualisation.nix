@@ -1,12 +1,14 @@
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 
 {
   # IOMMU — improves VM isolation and is required if passthrough is ever re-enabled.
   # iommu=pt improves performance for devices not passed through.
   boot = {
     kernelParams = [ "amd_iommu=on" "intel_iommu=on" "iommu=pt" ];
-    kernelModules = [ "vendor-reset" "vfio" "vfio_iommu_type1" "vfio_pci" ];
-    extraModulePackages = with config.boot.kernelPackages; [ vendor-reset ];
+    # vendor-reset (AMD GPU reset-bug workaround) was dropped 2026-11-14: the
+    # passthrough VM is scrapped and the module's build broke on linux-zen
+    # (NixOS/nixpkgs#575192). Re-add it only if AMD passthrough is revived.
+    kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" ];
   };
 
   virtualisation.libvirtd = {

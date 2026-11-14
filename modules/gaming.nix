@@ -44,7 +44,6 @@
         freetype
         gdk-pixbuf
         glib
-        gtk2
         gtk3
         krb5
         libdrm
