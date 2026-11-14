@@ -2,6 +2,16 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 148 next steps:**
+1. Decide how herdr's Claude hook survives `trimClaudeSettings` (Known Issues): add it to the managed hooks in `modules/claude-code.nix`, or narrow the `del`. Do this before the next gaming rebuild, or rerun `herdr integration install claude` afterwards.
+2. `/fleet-rollout` laptop + natalie-laptop (herdr, the VirtualBox host on natalie-laptop, node exporters, Proton VPN, skills including the `send-results` Doc change, powershell, `aria2`, `unrar`, the vpn-server retirement, the older backlog). There is no vpn-server left to roll out.
+3. Oracle cleanup (outside the repo): revoke the API key in the OCI console, terminate the instance or tenancy, delete `~/.oci`. Then check that Pinchflat still downloads with no wg0 egress path, and whether Proton's client overrides `/etc/resolv.conf` (the pi-hole bypass).
+4. Watch the next scheduled `/improve-system` or `/dream` run: confirm `send-results` posts a Doc link to Discord from an environment that may lack the Claude Docs connector.
+5. Finish Waydroid: try League Wild Rift (after clearing Play Store data); if Play still says "won't work", Aurora Store with device spoofing. Confirm outbound internet, one real game and rendering speed on the RTX 3070; complete the Google `android_id` registration and Play sign-in if not done. Confirm the next shutdown no longer hangs now that `waydroid-container` has an `ExecStop`.
+6. Hermes calibrate: re-run the 16 nixos, org, research, safety and write items with the Claude taker (finished code + net chunk is `runs/20261027-133342-custom-claude`), merge both `summary.json` files into `~/.local/share/hermes-competency/calibration-v2.0.0.json`, fix items under 90, apply the 1800 s timeout and bump `manifest.json` `.version` once; then a 2nd full run (needs `llm-on`).
+7. Gaming disk (63 GB free as of 10-25): move the Steam library to `/mnt/media` or uninstall games. Device follow-ups (Fire Stick, Tab A7, TCL update warning, pi-hole `apt upgrade`); lift the `nixpkgs` pin only when vendor-reset (#575192) and pinchflat are settled.
+8. Small items: the three skill-audit findings PR #100 left for a human; `hermes-monitor --help` exit 0; competency-test leftovers; `/improve-memory` to shrink `MEMORY.md` (it still holds vpn-server entries); optional `ci-gate.sh` base-tip fix.
+
 **Session 147 next steps:**
 1. Oracle cleanup (outside the repo): revoke the API key in the OCI console, terminate the instance or tenancy, delete `~/.oci`. Then check that Pinchflat still downloads with no wg0 egress path, and whether Proton's client overrides `/etc/resolv.conf` (the pi-hole bypass).
 2. Watch the next scheduled `/improve-system` or `/dream` run: confirm `send-results` posts a Doc link to Discord from an environment that may lack the Claude Docs connector.
