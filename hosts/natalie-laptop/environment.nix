@@ -1,15 +1,33 @@
-{ pkgs, inputs, lib, config, ... }:
+{ pkgs, inputs, lib, config, system, ... }:
 
+let
+  # zen 7.2.10 from the pinned nixpkgs-kernel input (see flake.nix). A separate
+  # instance rather than legacyPackages so allowUnfree applies to the kernel
+  # set's nvidia modules.
+  kernelPkgs = import inputs.nixpkgs-kernel {
+    inherit system;
+    config.allowUnfree = true;
+  };
+in
 {
   # Frozen at this machine's install-time NixOS release — never bump on upgrades
   system.stateVersion = "25.11";
 
-  # Hold this host on the stable kernel instead of modules/bootloader.nix's zen.
-  # zen 7.3.4-zen2 crashes the Intel AX201 Wi-Fi firmware at boot (iwlwifi
-  # "Microcode SW error", no networks, Tailscale never rejoins); zen 7.2.10 and
-  # the same firmware version worked. Laptop and gaming boot 7.3.4-zen2 fine.
-  # Revisit once a newer zen kernel is confirmed to bring Wi-Fi up here.
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
+  # Hold this host on zen 7.2.10 instead of modules/bootloader.nix's
+  # pkgs.linuxPackages_zen (7.3.4). On 7.3.4-zen2 and on stable 6.18.63 the
+  # Intel AX201 Wi-Fi firmware asserts at first load (iwlwifi "Microcode SW
+  # error", "Failed to run INIT ucode: -5"): no networks, Tailscale never
+  # rejoins. Same firmware blob, with or without btusb, pcie_aspm=off or
+  # iwlwifi.power_save=0 — only zen 7.2.10 has booted Wi-Fi here (2026-11-15).
+  # Laptop and gaming boot 7.3.4-zen2 fine. Root cause not found; revisit when a
+  # newer zen is tried with the user at the machine (keep gen 118 as fallback).
+  # Lift: delete kernelPkgs, the overlay, this line, and the nixpkgs-kernel input.
+  # The current nixpkgs' aggregateModules expects the kernel build to emit
+  # modules.cer, which 7.2.10 doesn't, so use the aggregator from the same pin.
+  nixpkgs.overlays = [
+    (_final: _prev: { inherit (kernelPkgs) aggregateModules; })
+  ];
+  boot.kernelPackages = lib.mkForce kernelPkgs.linuxPackages_zen;
 
   # Services
   services = {

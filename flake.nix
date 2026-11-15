@@ -5,6 +5,17 @@
     # Nix packages
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # TEMPORARY (re-added 2026-11-15, originally 2026-11-14): nixpkgs rev fe132422
+    # (2026-10-15), the last one whose linux-zen (7.2.10) boots on natalie-laptop
+    # with working Wi-Fi: on zen 7.3.4-zen2 and stable 6.18.63 its Intel AX201
+    # firmware asserts at first load (iwlwifi "Microcode SW error"). (It was first
+    # added because 7.3.4 panicked on gaming; that was fixed in 7.3.4-zen2.)
+    # Consumed only by hosts/natalie-laptop/environment.nix for
+    # boot.kernelPackages (kernel + its nvidia module set); it does NOT hold back
+    # nixpkgs itself. Lift: delete kernelPkgs, the overlay and the kernelPackages
+    # line there, then drop this input and flake.lock entry.
+    nixpkgs-kernel.url = "github:nixos/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
+
     # Dank Material Shell
     dms.url = "github:AvengeMedia/DankMaterialShell";
 
