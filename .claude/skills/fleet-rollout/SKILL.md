@@ -1,6 +1,6 @@
 ---
 name: fleet-rollout
-description: Deploy a config change across all NixOS hosts one at a time — dry-run gate, stage for next boot (or switch live on request), reboot, full health sweep — advancing only when each host is green. Self-orchestrating loop. Use when the user says "/fleet-rollout", "run fleet-rollout", "roll out across the fleet", or "stage this change to all hosts".
+description: Deploy a config change across all NixOS hosts one at a time — dry-run gate, stage for next boot (or switch live on request), reboot, full health sweep, then `cleanup-host` on remote hosts (never gaming) — advancing only when each host is green. Self-orchestrating loop. Use when the user says "/fleet-rollout", "run fleet-rollout", "roll out across the fleet", or "stage this change to all hosts".
 ---
 
 # Fleet Rollout — Loop
@@ -27,9 +27,9 @@ description: Deploy a config change across all NixOS hosts one at a time — dry
 > Only run OFF when you've already vetted the change and accept unattended staging across
 > the whole fleet.
 >
-> **Step 5 (and the reboot step 5b) always pause for the user on every host, regardless of
-> Training Mode** — budget for those pauses even on unattended/`/loop`-scheduled runs (why:
-> see Gotchas).
+> **Step 5 (and the reboot step 5b, and the cleanup step 6b) always pause for the user on every
+> host they apply to, regardless of Training Mode** — budget for those pauses even on
+> unattended/`/loop`-scheduled runs (why: see Gotchas).
 
 ## Arguments
 
@@ -65,6 +65,9 @@ user's follow-up and is recorded as pending in the Memory file.
 
 **switch mode:** every host in scope is on the **new generation** (matching the current flake),
 reports **zero failed systemd units**, and has **no reboot-pending kernel/initrd mismatch**.
+
+**Both modes:** every remote host in scope **except gaming** has also had `cleanup-host` run
+on it after its sweep went green (Step 6b). gaming is never cleaned up by this loop.
 
 If any host fails, the run is blocked at that host and the rest are NOT touched.
 
@@ -167,10 +170,31 @@ current host passes its health sweep.**
      retry) before treating it as a failure.
    - Done-rule: all of the above pass for that host's row. If any fail, **stop the whole loop**
      at this host, record it, and surface the `rollback` skill as the remediation (do not
-     auto-rollback). Advance to the next host only on full green.
+     auto-rollback). Advance to the next host only on full green (and, for hosts Step 6b
+     applies to, after Step 6b).
 
-7. **Repeat steps 4–6** (including 5b in boot mode) for each remaining host in order until
-   every host in scope is green or one blocks.
+6b. **Per remote host, except gaming — CLEANUP.** Only after the Step 6 sweep is **fully
+   green** for this host: run `cleanup-host <host>` (the zsh function in `modules/shell.nix`;
+   it SSHes to `bosko@<host>` and runs `nh clean all --keep 3 && sudo flatpak remove --unused
+   --noninteractive`), then move on to the next host. Why after the sweep: cleanup deletes the
+   older generations, so the rollback target must not be removed until the new generation has
+   proven healthy.
+   - **Skip, and say so in the report:** the **local** host, and **gaming — always, by name,
+     even if the loop is run from another host so gaming is remote.** The user clears gaming
+     manually; never print or run `cleanup-host gaming`.
+   - Also skip if Step 6 did not go green (the loop is already stopped) — never clean up a
+     host that is blocked or on the rollback path.
+   - **Hand off, don't run it:** `cleanup-host` allocates a TTY (`ssh -t`) and its
+     `sudo flatpak remove` needs a password, so running it through the Bash tool fails with
+     "a terminal is required to read the password." Print **exactly one** command,
+     `cleanup-host <host>`, ask the user to run it in their own separate terminal (no `!`
+     prefix), and wait for confirmation. This pause applies even in Training Mode OFF.
+   - Done-rule: the user confirms `cleanup-host <host>` completed without errors. If it
+     errored, retry up to the cap, then stop and report; a failed cleanup does not by itself
+     warrant a rollback (the host already passed Step 6).
+
+7. **Repeat steps 4–6** (including 5b in boot mode, and 6b where it applies) for each
+   remaining host in order until every host in scope is green or one blocks.
 
 ## Verification plan
 
@@ -203,7 +227,8 @@ Resolve `<today>` as the current date (YYYY-MM-DD). Write BOTH files into
 ## Report
 
 Tell me: the activation mode, the Training Mode, the result, the per-host outcome (dry /
-stage-or-switch+generation / sweep), which steps were skipped vs re-run, where the two files
+stage-or-switch+generation / sweep / cleanup, with gaming and the local host shown as
+"skipped — manual"), which steps were skipped vs re-run, where the two files
 were written, any **pending reboot** (boot mode: the local host — remind me to reboot and run
 `/fleet-status`) and — if blocked — exactly which host and step failed and whether a rollback
 is recommended.
@@ -228,6 +253,10 @@ is recommended.
   leaves the host staged-but-not-running (`staged=YES`) or live-but-unrebooted. Always state the
   mode and print exactly one command; if the sweep shows `staged=YES` on a remote host, it was
   staged but not yet rebooted — that's Step 5b, not a failure.
+- **Step 6b is a hand-off too, and gaming is excluded by name** — `cleanup-host` needs a TTY
+  and sudo, so Claude can't run it; and the user wants to clear gaming's generations/flatpaks
+  by hand, so it is never cleaned up by this loop (local or remote). The cleanup function
+  expects the flake host name to equal the tailnet name (true for all current hosts).
 - **Rebooting the local host ends the session** — hence local-last in boot mode, and the run
   finishing with the local host merely staged. The user reboots it on their own time.
 
