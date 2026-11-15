@@ -4,6 +4,13 @@
   # Frozen at this machine's install-time NixOS release — never bump on upgrades
   system.stateVersion = "25.11";
 
+  # Hold this host on the stable kernel instead of modules/bootloader.nix's zen.
+  # zen 7.3.4-zen2 crashes the Intel AX201 Wi-Fi firmware at boot (iwlwifi
+  # "Microcode SW error", no networks, Tailscale never rejoins); zen 7.2.10 and
+  # the same firmware version worked. Laptop and gaming boot 7.3.4-zen2 fine.
+  # Revisit once a newer zen kernel is confirmed to bring Wi-Fi up here.
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages;
+
   # Services
   services = {
     # Enable touchpad
