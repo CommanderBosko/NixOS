@@ -4,6 +4,36 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-15 (session 154) — nixpkgs pin lifted, pinchflat-ngx, kernel pin dance, natalie-laptop Wi-Fi
+
+**Focus**: Close out two days of gaming and natalie-laptop work (17 conversations): unpin nixpkgs, move Pinchflat to NGX, survive a zen kernel panic, and keep natalie-laptop's Wi-Fi alive.
+
+### What changed (and why)
+- **Pin lift (#127):** `nixpkgs` back on `nixos-unstable`; vendor-reset dropped (the passthrough VM is scrapped), Pinchflat moved to `pinchflat-ngx` after a stopped-service DB backup, `gtk2`/`qutebrowser` dropped, `llama-cpp-cuda` limited to sm_86 so the dry-run stopped compiling ten architectures.
+- **Pinchflat-NGX:** live; 16 migrated sources were typed `playlist` and failed metadata decoding. A URL round-trip fixed the live DB; upstream fixed it in `dev` (#216, PR #218), tested on a backup copy in a sandbox.
+- **Kernel:** zen 7.3.4 panicked gaming's initrd twice, so #128 pinned 7.2.10 via a second input; nixpkgs then shipped 7.3.4-zen2 with the fix, #136 lifted the pin and gaming booted clean.
+- **natalie-laptop (#137, #138):** AX201 firmware asserts on zen 7.3.4-zen2 and stable 6.18; only zen 7.2.10 works, so that host alone is pinned (gen 121). Root cause unknown. `/fleet-rollout` now hands off `cleanup-host` per green remote host, never gaming.
+- **Small:** `shutdown-host` (#132), Wake-on-LAN for gaming (#135), mnemosyne version fix (#133), rtk override lifted (#130), flake bumps #129/#134.
+
+### Decisions
+- Host-only kernel pin for natalie-laptop rather than holding its whole nixpkgs: only 7.2.10 boots; 6.18 failed too.
+- Unpin kept out of the flake bump and merged without a boot test: the reboot is the test.
+- No `workflow` scope on the `gh` token; SSH pushes the upstream hermes-agent PR instead.
+
+### Issues / surprises
+- Two untested fixes each cost an offline reboot on natalie-laptop (now a feedback memory); the clock and Tailscale failures were only symptoms of no Wi-Fi.
+- The dry-run script says `switch` for kernel jumps: use `boot`.
+- Unchecked: WoL (`ethtool`, BIOS), `chronyc sources` and the 80% cap on natalie-laptop, laptop gen 217 details, `lsfg-vk`.
+
+### Next session
+- Verify gaming (smartd, WoL, BIOS), re-check Pinchflat-NGX for a real download on or after 2026-11-17, check natalie-laptop's chrony/cap/BIOS clock, rebuild laptop, settle merge vs squash in the weekly-PR skill.
+
+**Commits**: `2a7fbbf..67fc63f` (26 commits, PRs #127-#138)
+
+Secret-scan: clean (tree + 2,104 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-13 (session 153) — natalie-laptop clock loop, chrony fix, `gh` login
 
 **Focus**: Bring natalie-laptop back after a remote reboot, stop it happening again, and get its Claude session able to open PRs.
@@ -113,38 +143,6 @@ Secret-scan: clean (tree + 2,054 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `7c5b226..48c9a86` (7 commits, 3 PRs)
 
 Secret-scan: clean (tree + 2,044 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-09 (session 149) — fleet rollout, boot-mode skill, Hermes wowaudit + herdr plugin
-
-**Focus**: Close out six conversations: a first `/fleet-rollout` pass over all three hosts, the skill rewrite it motivated, two Hermes config PRs, laptop herdr machines, and a Wispr Flow research note.
-
-### What changed (and why)
-- **`/fleet-rollout` ran on all three hosts** (Training Mode ON): gaming gen 494, laptop gen 207, natalie-laptop gen 111, all rebooted or switched with zero failed units. It cleared the laptops' long rebuild backlog, so about 40 "owes a rebuild" bullets in `project-state.md` were pruned as false.
-- **Remote `dry-activate` is unusable** for `bosko` (polkit denies the `systemd-run` activation), so the remote gate became a local build plus `nix copy`; remote hand-offs need `--elevate sudo --ask-elevate-password`. PR #104 (`0a8ea8e`) folded both into the skill and made boot the default (switch opt-in), with a new Step 5b to reboot remotes and gaming last.
-- **Hermes:** PR #103 registers the wowaudit OAuth MCP server (login still owed, no `~/.hermes/mcp-tokens/` yet); PR #105 enables the `herdr-agent-state` plugin, which is not live until gaming's next switch (gen 494 predates it).
-- **herdr:** laptop and natalie-laptop were added as saved machines (`laptop`, `natalie-laptop`), both over Tailscale IPs, in herdr's own state. The user asked for the `laptop` label; I picked `natalie-laptop` myself.
-- Wispr Flow research saved to memory: no Linux client; `handy`, `whisrs`, `voxtype` exist in nixpkgs, none tried.
-
-### Decisions
-- Boot is the fleet-rollout default because a switch hand-off got run as `boot` anyway, and rebooting gaming ends the Claude session, so gaming goes last.
-- Hermes plugin enablement lives in Nix, installation stays imperative (`herdr integration install hermes`), the same split as PR #101.
-- #104 and #105 were landed without `land-prs`'s order prompt because the user said to land both once green; both merged cleanly (`9c410b0`, `8086ff8`).
-
-### Issues / surprises
-- `trimClaudeSettings` did strip herdr's Claude hook: `~/.claude/settings.json` has no `hooks` key after gen 493/494, while `herdr integration status` still says `current` (it only checks the script file).
-- laptop's `srv-shared.mount` failed right after boot (race against gaming's share) and cleared on its own.
-- The first fleet-rollout sweep of laptop failed twice: the user ran `boot` instead of switch, then the mount race. Neither was a config fault.
-- `hermes mcp list` prints "install out of sync (node: not installed or outdated)"; not diagnosed.
-- The wowaudit-MCP and the #105 plugin conversations were not in this scan; they are recorded from commits and live checks.
-
-### Next session
-- `nh os switch` on gaming for #105, then `hermes mcp login wowaudit --flow browser`; fix the herdr hook strip; verify the laptops; Oracle cleanup; Waydroid; watch the next `send-results` run.
-
-**Commits**: `8e6fe8e..8086ff8` (7 commits)
-
-Secret-scan: clean (tree + 2,036 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 
