@@ -2,6 +2,18 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 149 next steps:**
+1. `nh os switch` on gaming to bring PR #105 (Hermes's herdr plugin) live, restart Hermes, then run `herdr agent list` from a pane running `hermes`. gaming's booted generation is 492, current is 494.
+2. Decide how herdr's Claude hook survives `trimClaudeSettings` (Known Issues; now confirmed stripped): add it to the managed hooks in `modules/claude-code.nix`, or narrow the `del`. Until then rerun `herdr integration install claude` after each rebuild.
+3. `hermes mcp login wowaudit --flow browser` (nothing in `~/.hermes/mcp-tokens/` yet), then check the tool-schema size against the 64K window and add `tools.include` if it is large.
+4. Verify laptop and natalie-laptop after the rollout (the first Current Goals bullet: node exporters, Canon printing, tailscale MCP, pi-hole DNS, VirtualBox, the Proton sign-in). Then revoke the pre-rotation Tailscale OAuth client and uninstall Superpowers/Ponytail from the laptops if present.
+5. Oracle cleanup (outside the repo): revoke the API key in the OCI console, terminate the instance or tenancy, delete `~/.oci`. Then check that Pinchflat still downloads with no wg0 egress path, and whether Proton's client overrides `/etc/resolv.conf` (the pi-hole bypass).
+6. Watch the next scheduled `/improve-system` or `/dream` run: confirm `send-results` posts a Doc link to Discord from an environment that may lack the Claude Docs connector.
+7. Finish Waydroid: try League Wild Rift (after clearing Play Store data); if Play still says "won't work", Aurora Store with device spoofing. Confirm outbound internet, one real game and rendering speed on the RTX 3070; complete the Google `android_id` registration and Play sign-in if not done. Confirm the next shutdown no longer hangs now that `waydroid-container` has an `ExecStop`.
+8. Hermes calibrate: re-run the 16 nixos, org, research, safety and write items with the Claude taker (finished code + net chunk is `runs/20261027-133342-custom-claude`), merge both `summary.json` files into `~/.local/share/hermes-competency/calibration-v2.0.0.json`, fix items under 90, apply the 1800 s timeout and bump `manifest.json` `.version` once; then a 2nd full run (needs `llm-on`).
+9. Gaming disk (63 GB free as of 10-25): move the Steam library to `/mnt/media` or uninstall games. Device follow-ups (Fire Stick, Tab A7, TCL update warning, pi-hole `apt upgrade`); lift the `nixpkgs` pin only when vendor-reset (#575192) and pinchflat are settled.
+10. Small items: use the new boot-mode `/fleet-rollout` on the next rollout (it is untested end to end); the three skill-audit findings PR #100 left for a human; `hermes-monitor --help` exit 0; competency-test leftovers; `/improve-memory` to shrink `MEMORY.md`; optional `ci-gate.sh` base-tip fix; revisit Wispr Flow alternatives (`voxtype` first) when wanted.
+
 **Session 148 next steps:**
 1. Decide how herdr's Claude hook survives `trimClaudeSettings` (Known Issues): add it to the managed hooks in `modules/claude-code.nix`, or narrow the `del`. Do this before the next gaming rebuild, or rerun `herdr integration install claude` afterwards.
 2. `/fleet-rollout` laptop + natalie-laptop (herdr, the VirtualBox host on natalie-laptop, node exporters, Proton VPN, skills including the `send-results` Doc change, powershell, `aria2`, `unrar`, the vpn-server retirement, the older backlog). There is no vpn-server left to roll out.
