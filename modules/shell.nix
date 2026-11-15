@@ -94,6 +94,15 @@ in
           ssh -t bosko@"$1" 'sudo reboot'
         }
 
+        # Powers <host> off. Same shape as reboot-host: -t for sudo's password prompt, MagicDNS name.
+        shutdown-host() {
+          if [[ -z $1 ]]; then
+            echo "usage: shutdown-host <tailnet-host>" >&2
+            return 1
+          fi
+          ssh -t bosko@"$1" 'sudo poweroff'
+        }
+
         # Builds <host> here and stages it for its next boot. The flake host name must match the tailnet name.
         rebuild-host() {
           if [[ -z $1 ]]; then
