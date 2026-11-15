@@ -1,7 +1,21 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   hostName = config.networking.hostName;
+
+  # MAC addresses `wake-host` can wake. Wired hosts only: the laptops are
+  # WiFi-only and can't be woken from power-off.
+  wakeMacs = {
+    gaming = "a8:a1:59:60:d4:59"; # enp4s0
+  };
+  wakeCases = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (host: mac: "    ${host}) mac=${mac} ;;") wakeMacs
+  );
 in
 {
   # Configure shell programs
@@ -103,6 +117,20 @@ in
           ssh -t bosko@"$1" 'sudo poweroff'
         }
 
+        # Wakes <host> with a magic packet. The packet is a LAN broadcast, so run this from a
+        # machine on the home network: it can't cross Tailscale while the target is off.
+        wake-host() {
+          local mac
+          case $1 in
+        ${wakeCases}
+            *)
+              echo "usage: wake-host <host>  (known: ${lib.concatStringsSep ", " (lib.attrNames wakeMacs)})" >&2
+              return 1
+              ;;
+          esac
+          wakeonlan "$mac"
+        }
+
         # Builds <host> here and stages it for its next boot. The flake host name must match the tailnet name.
         rebuild-host() {
           if [[ -z $1 ]]; then
@@ -170,6 +198,7 @@ in
       p7zip
       tree
       unzip
+      wakeonlan
       wget
       yazi
       zip
