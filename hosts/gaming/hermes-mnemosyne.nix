@@ -11,7 +11,7 @@ let
 
   mnemosyne-memory = py.buildPythonPackage {
     pname = "mnemosyne-memory";
-    version = "4.0.0b5";
+    version = "4.1.0";
     inherit src;
     pyproject = true;
     build-system = [ py.setuptools ];
@@ -29,7 +29,7 @@ let
 
   mnemosyne-hermes = py.buildPythonPackage {
     pname = "mnemosyne-hermes";
-    version = "0.7.6";
+    version = "0.7.8";
     src = "${src}/integrations/hermes";
     pyproject = true;
     build-system = [ py.setuptools ];
