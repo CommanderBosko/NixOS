@@ -1,3 +1,31 @@
+## Session: 2026-11-12 (session 151) — btop GPU fix, smartmontools, wowaudit/wowup removal
+
+**Focus**: Close out ten conversations: four small PRs (#111-#114), two pin checks, and a herdr look at natalie-laptop's session.
+
+### What changed (and why)
+- **btop shows the NVIDIA GPU (#113):** the first fix (`gpu0` in `btop.conf`) could not work. nixpkgs' btop lacks `/run/opengl-driver/lib` in its RUNPATH unless built with `cudaSupport`, so `libnvidia-ml.so` never loaded. An overlay in `modules/nvidia.nix` fixes it; the GPU line appeared in the CPU box after the switch.
+- **`smartmontools` on all desktop hosts (#114):** written by natalie-laptop's session, which could not open the PR (`gh` not logged in); this host opened it.
+- **wowaudit MCP dropped from Hermes (#111)** and **`wowup-cf` removed from gaming (#112):** the user no longer wants either (CurseForge replaces WowUp).
+- **Pin checks 11-11 and 11-12:** keep the pin, nothing changed.
+
+### Decisions
+- Fix btop in the build, not in the unmanaged `btop.conf`.
+- smartmontools goes in the shared `desktop-apps.nix`.
+- wowaudit token files left on disk for the user to delete.
+
+### Issues / surprises
+- `~/.hermes/config.yaml` still has the `wowaudit:` block after the Nix removal and the gen 499 switch; cause not diagnosed.
+- `laptop` was unreachable over SSH again; herdr's `SendMessage` does not cross machines (only `--machine` pane commands do).
+
+### Next session
+- Reboot gaming into gen 500; pull and rebuild both laptops; remove the stale wowaudit config and tokens; laptop checklist and natalie-laptop key test; Oracle cleanup; lift the pin when vendor-reset lands.
+
+**Commits**: `abd2911..ca606f2` (4 PRs, #111-#114)
+
+Secret-scan: clean (tree + 2,054 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-09 (session 150) — wowaudit MCP, herdr Hermes status, natalie-laptop key, second rollout
 
 **Focus**: Close out nine conversations: three small PRs (#107-#109), a pin check, a second `/fleet-rollout` in boot mode, and two Q&As.
