@@ -2,6 +2,7 @@
 
 Older `Recent Decisions` entries rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+- **Do not add the `workflow` scope to the `gh` token (2026-11-15, session 154)** — the fork sync needed it, but SSH pushes do not, so the hermes-agent PR was force-pushed over SSH instead.
 - **Fix the clock-reset loop with IP-literal NTP servers in the shared module, not by touching DNS or the RTC (2026-11-12, session 153, PR #123)** — the user chose "prepare the chrony change" over checking the RTC. Cloudflare's anycast NTP IPs need no DNS and the pool entries stay as they were. It sits in `modules/desktop-networking.nix` because all three desktop hosts import it, so each needs a rebuild and natalie-laptop is the one that needs it most. Left alone: the missing resolver fallback and the BIOS clock.
 
 - **Hand the clock reset to the user in a separate terminal (2026-11-12, session 153)** — sudo needs a password on natalie-laptop and the `!` prefix gave `ssh -t` no terminal, so the first try failed; the second ran from a normal terminal. No `sudo -S` workaround, since the password would land in the transcript.

@@ -4,6 +4,30 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-18 (session 156) — Rift popup fix on gaming, stale branch cleanup
+
+**Focus**: Follow-up to the nix-ld work: find out why Rift showed a "Missing dependency" popup after the trim, and land the fix.
+
+### What changed (and why)
+- **#147:** `wmctrl` and `xwininfo` added to gaming's `environment.systemPackages`. Rift shells out to `xwininfo`, `xprop` and `wmctrl` to check characters' online status; they are executables, so nix-ld could never have supplied them and the popup was not caused by #144/#145. `xprop` was already installed. The user rebuilt from the branch and confirmed the popup is gone; merged as `9c8dd41`.
+- Deleted the local `fix/pinchflat-ngx` branch (its only commit, `ab21985`, was PR #57, closed unmerged; `main` already runs pinchflat-ngx). No remote copy; `git branch fix/pinchflat-ngx ab21985` restores it until gc.
+
+### Decisions
+- Rift's "Tray is not supported" message is left alone: Java's XEmbed tray check cannot see niri + DMS's StatusNotifier tray, and `snixembed` (the usual bridge) broke the DMS tray and was reverted 2026-07-30.
+
+### Issues / surprises
+- The dry-run's own check first reported `xwininfo` as missing and said it adds nothing new to the build; after the switch all three tools are in `/run/current-system/sw/bin`, so that was just the pre-switch state.
+- A tree-hash comparison after the merge printed two different hashes because it ran before the fetch finished; `git diff 18e0989 origin/main` was empty.
+
+### Next session
+- Launch Rift from a fresh terminal and check that online status actually updates (Xwayland visibility is the suspect if not); the rest is unchanged from session 155: rebuild both laptops (they lack #140-#145), play one Steam game on gaming, and the session-154 checks (smartd, WoL, Pinchflat-NGX, natalie-laptop chrony).
+
+**Commits**: `67f5e99..9c8dd41` (1 PR: #147)
+
+Secret-scan: clean (tree + 2,121 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-18 (session 155) — nix-ld audit: trim, add, drop mesa/zulu
 
 **Focus**: Review the nix-ld library lists for redundancy and gaps (with a `/research` run), then apply, probe-test and land the result on gaming.
@@ -111,34 +135,6 @@ Secret-scan: clean (tree + 2,076 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `48aa238..830816c` (4 commits, PRs #116-#117)
 
 Secret-scan: clean (tree + 2,060 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-12 (session 151) — btop GPU fix, smartmontools, wowaudit/wowup removal
-
-**Focus**: Close out ten conversations: four small PRs (#111-#114), two pin checks, and a herdr look at natalie-laptop's session.
-
-### What changed (and why)
-- **btop shows the NVIDIA GPU (#113):** the first fix (`gpu0` in `btop.conf`) could not work. nixpkgs' btop lacks `/run/opengl-driver/lib` in its RUNPATH unless built with `cudaSupport`, so `libnvidia-ml.so` never loaded. An overlay in `modules/nvidia.nix` fixes it; the GPU line appeared in the CPU box after the switch.
-- **`smartmontools` on all desktop hosts (#114):** written by natalie-laptop's session, which could not open the PR (`gh` not logged in); this host opened it.
-- **wowaudit MCP dropped from Hermes (#111)** and **`wowup-cf` removed from gaming (#112):** the user no longer wants either (CurseForge replaces WowUp).
-- **Pin checks 11-11 and 11-12:** keep the pin, nothing changed.
-
-### Decisions
-- Fix btop in the build, not in the unmanaged `btop.conf`.
-- smartmontools goes in the shared `desktop-apps.nix`.
-- wowaudit token files left on disk for the user to delete.
-
-### Issues / surprises
-- `~/.hermes/config.yaml` still has the `wowaudit:` block after the Nix removal and the gen 499 switch; cause not diagnosed.
-- `laptop` was unreachable over SSH again; herdr's `SendMessage` does not cross machines (only `--machine` pane commands do).
-
-### Next session
-- Reboot gaming into gen 500; pull and rebuild both laptops; remove the stale wowaudit config and tokens; laptop checklist and natalie-laptop key test; Oracle cleanup; lift the pin when vendor-reset lands.
-
-**Commits**: `abd2911..ca606f2` (4 PRs, #111-#114)
-
-Secret-scan: clean (tree + 2,054 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 
