@@ -89,7 +89,7 @@ Single-flake NixOS config for three hosts: `gaming`, `laptop`, `natalie-laptop`.
 
 ### Key Patterns
 
-- `nix-ld` is enabled only on gaming, for binary compatibility — don't assume it's available elsewhere.
+- `nix-ld` is enabled on every desktop host (via `modules/development.nix`) so the native Claude Code build runs; only gaming adds the extra game/GUI library list (`modules/gaming.nix`).
 - **DE smoke checks**: `lib.deSmoke` in `flake.nix` exposes the laptop config with each DE module swapped in, so CI's weekly `de-smoke` job can deep-evaluate DE modules that no host currently imports — this is what keeps unused DE modules from rotting silently.
 - Both `bosko` and `natty` import the same `dotfiles/common/configs/home.nix`; per-user package/state differences (auto-login, extra packages, stateVersion) live in `modules/users.nix` and `home-manager.nix`, not in the shared HM config.
 
