@@ -79,7 +79,6 @@
         libXt
         libXtst
         libxxf86vm
-        mesa
         nspr
         nss
         openal
@@ -89,7 +88,6 @@
         SDL2_mixer
         vulkan-loader
         wayland
-        zulu
       ];
     };
   };
