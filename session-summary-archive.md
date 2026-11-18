@@ -1,3 +1,34 @@
+## Session: 2026-11-09 (session 150) — wowaudit MCP, herdr Hermes status, natalie-laptop key, second rollout
+
+**Focus**: Close out nine conversations: three small PRs (#107-#109), a pin check, a second `/fleet-rollout` in boot mode, and two Q&As.
+
+### What changed (and why)
+- **wowaudit MCP connects in Hermes (#107):** the startup line "did not connect: wowaudit" was an OAuth login nobody had run. The user ran `hermes mcp login wowaudit --flow browser` (the browser auto-open failed in the sandbox, so the URL was opened by hand). The login grants read scope, so `tools.include` keeps 21 of the 39 tools; the 18 write tools would be rejected anyway and cost context.
+- **Hermes panes show working/idle/blocked in herdr (#108):** my first diagnosis (the plugin reports only the session id) was wrong. herdr detects state from the screen, and its upstream Hermes manifest misses this build's working UI, so panes always read idle. A Home Manager-delivered override adds two working rules; verified live (idle -> working -> idle) and against a real approval prompt.
+- **natalie-laptop's SSH key authorized for bosko (#109):** re-applied the one line on a fresh branch because the old branch was 157 commits behind; both branches deleted.
+- **Second `/fleet-rollout`, first full boot-mode run:** laptop gen 208 and natalie-laptop gen 112 rebooted green; gaming gen 497 was staged last and the user rebooted it straight away.
+- **Pin check:** keep the nixpkgs pin (vendor-reset and pinchflat still block, mcp-nixos fixed). The user chose `pinchflat-ngx` over a waiver.
+- Home Assistant Q&A (no use today without smart-home devices) and "any unmerged PRs?" (none).
+
+### Decisions
+- A local detection manifest, not a plugin, fixes the herdr status: `pane report-agent` is ignored for built-in kinds. Cost: upstream fixes are masked until the override is dropped.
+- wowaudit is limited to read tools; `set_my_defaults` is left out because it writes.
+- Pin lift goes through `pinchflat-ngx` after a fresh DB backup, in the same change as the vendor-reset fix.
+
+### Issues / surprises
+- Rebooting gaming right after `nh os boot` ended the fleet-rollout session before the staged-profile check and the report files, so no new `memory-`/`output-` file exists for this run. The match was confirmed at close (gen 497 = the dry-run path).
+- `laptop` timed out over SSH at close; natalie-laptop (gen 112) and gaming are healthy.
+- `trimClaudeSettings` still strips herdr's Claude hook, but that no longer affects icons.
+
+### Next session
+- Check `laptop` is up and run the laptop checklist; test the natalie-laptop key; try wowaudit in a fresh Hermes chat; Oracle cleanup; Waydroid; watch the next `send-results` run; lift the pin when vendor-reset lands.
+
+**Commits**: `7c5b226..48c9a86` (7 commits, 3 PRs)
+
+Secret-scan: clean (tree + 2,044 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-09 (session 149) — fleet rollout, boot-mode skill, Hermes wowaudit + herdr plugin
 
 **Focus**: Close out six conversations: a first `/fleet-rollout` pass over all three hosts, the skill rewrite it motivated, two Hermes config PRs, laptop herdr machines, and a Wispr Flow research note.
