@@ -25,6 +25,7 @@
   environment.systemPackages = with pkgs; [
     inputs.financeguru.packages.${pkgs.stdenv.hostPlatform.system}.default
     element-desktop
+    ethtool
     mumble
     obs-studio
     qbittorrent
