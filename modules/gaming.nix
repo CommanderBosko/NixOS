@@ -31,13 +31,15 @@
     # Gamescope
     gamescope.enable = true;
 
-    # Dynamic library loader (nix-ld)
+    # Dynamic library loader (nix-ld). Merges with nixpkgs' defaults (zlib, zstd,
+    # stdenv.cc.cc, curl, openssl, systemd, ...), so don't repeat those here.
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
         alsa-lib
         atk
         cairo
+        cups
         dbus
         expat
         fontconfig
@@ -45,16 +47,21 @@
         gdk-pixbuf
         glib
         gtk3
+        icu
         krb5
         libdrm
+        libgbm
         libGL
+        libGLU
         libICE
+        libnotify
         libpulseaudio
         libSM
         libusb1
         libva
         libvdpau
         libX11
+        libxcb
         libXau
         libXcomposite
         libXcursor
@@ -64,22 +71,24 @@
         libXfixes
         libXi
         libXinerama
+        libxkbcommon
         libXrandr
         libXrender
+        libxscrnsaver
+        libxshmfence
         libXt
         libXtst
+        libxxf86vm
         mesa
         nspr
         nss
+        openal
         pango
         pipewire
         SDL2
         SDL2_mixer
-        udev
         vulkan-loader
         wayland
-        xwayland
-        zlib
         zulu
       ];
     };
