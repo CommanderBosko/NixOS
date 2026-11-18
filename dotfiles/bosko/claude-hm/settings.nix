@@ -124,6 +124,27 @@ in
     ''
   );
 
+  # Opt in to Code Mode (experimental, v2.1.323+, native build only): Claude
+  # writes JavaScript that makes several tool calls in one step. Off by default;
+  # Claude Code reads this env var only from user settings, never project
+  # settings. Full-reconcile of just this one key — other env entries are
+  # preserved — so a hand-set "0" is reset on rebuild; to opt out, remove this
+  # block. Sessions started under Code Mode can only be resumed with it on.
+  # Docs: https://code.claude.com/docs/en/code-mode
+  home.activation.claudeCodeMode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${shell.jqEdit}
+    settings="$HOME/.claude/settings.json"
+    if [ -f "$settings" ]; then
+      if ! ${pkgs.jq}/bin/jq -e \
+        '.env.CLAUDE_CODE_EXPERIMENTAL_CODE_MODE == "1"' \
+        "$settings" >/dev/null 2>&1; then
+        claude_jq_edit "$settings" \
+          '.env = ((.env // {}) + {CLAUDE_CODE_EXPERIMENTAL_CODE_MODE: "1"})'
+        $VERBOSE_ECHO "Enabled Code Mode env var in $settings"
+      fi
+    fi
+  '';
+
   # Boss-session status line (~/projects/boss): a guard that execs the boss's
   # own script when it exists, so the boss iterates on it without a rebuild.
   # Set only when .statusLine is absent or already ours (its command points at
