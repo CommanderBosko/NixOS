@@ -31,6 +31,11 @@
     qbittorrent
     tmux
     tor-browser
+    # Rift (EVE intel tool) shells out to these to check characters' online
+    # status; it shows a "Missing dependency" popup without them. xprop is
+    # already on the system via another package.
+    wmctrl
+    xwininfo
   ];
 
   # Lets bosko run `tailscale serve` without sudo (dev testing of Sidekick).
