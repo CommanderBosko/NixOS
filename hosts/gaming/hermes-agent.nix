@@ -162,6 +162,13 @@ in
           timeout = 120;
         }
       ];
+      # Hermes also caps every pre_tool_call callback at
+      # plugins.hook_callback_timeout (default 30 s), whatever the hook's own
+      # timeout says. A `claude -p` check takes ~45 s, so the first memory
+      # save timed out and Hermes then failed closed on EVERY tool call for 60 s
+      # ("callback timed out or is still running"); the 9B model read that as a
+      # system-wide outage. Keep this at or above the hook timeout above.
+      settings.plugins.hook_callback_timeout = 120;
 
       # Same plugins as Claude Code (dotfiles/bosko/claude-hm/plugins.nix),
       # from flake inputs so `nix flake update` bumps them. Plugins are opt-in.
