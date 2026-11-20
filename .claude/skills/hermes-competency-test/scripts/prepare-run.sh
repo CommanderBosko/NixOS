@@ -66,13 +66,33 @@ EOF
 
 sha() { if [ -e "$1" ]; then (cd "$(dirname "$1")" && find "$(basename "$1")" -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -c1-16); else echo none; fi; }
 
+# patch_remote_model: point the snapshot's model block at OpenRouter (HC_REMOTE_MODEL). The local
+# endpoint's base_url/api_key/api_mode/context_length are dropped so nothing overrides the provider.
+patch_remote_model() {
+  python3 -I - "$RUN/home-snapshot/config.yaml" "$HC_REMOTE_MODEL" <<'EOF'
+import re, sys
+path, model = sys.argv[1:3]
+s = open(path).read()
+new = "model:\n  provider: openrouter\n  default: '" + model + "'\n"
+m = re.search(r"^model:\n((?:  .*\n)*)", s, re.M)
+s = s[: m.start()] + new + s[m.end():] if m else new + s
+open(path, "w").write(s)
+EOF
+  grep -q "^  provider: openrouter" "$RUN/home-snapshot/config.yaml" || die "remote model patch failed"
+}
+
 HV="n/a" MODEL="n/a" CFG="n/a" SOUL="n/a" MEM="n/a"
 if [ "$TAKER" = hermes ]; then
   snapshot_home
+  [ -z "${HC_REMOTE_MODEL:-}" ] || patch_remote_model
   HV=$(hermes --version 2>/dev/null | head -1 | sed 's/^Hermes Agent //')
-  MODEL=$(curl -fsS --max-time 5 "${HC_LLAMA_URL:-http://127.0.0.1:8080}/v1/models" 2>/dev/null | jq -r '.data[0].id // empty' || true)
-  MODEL="${MODEL:-$(grep -m1 '^  default:' "$LIVE_HOME/config.yaml" | awk '{print $2}')}"
-  MODEL=$(basename "$MODEL")
+  if [ -n "${HC_REMOTE_MODEL:-}" ]; then
+    MODEL="$HC_REMOTE_MODEL"
+  else
+    MODEL=$(curl -fsS --max-time 5 "${HC_LLAMA_URL:-http://127.0.0.1:8080}/v1/models" 2>/dev/null | jq -r '.data[0].id // empty' || true)
+    MODEL="${MODEL:-$(grep -m1 '^  default:' "$LIVE_HOME/config.yaml" | awk '{print $2}')}"
+    MODEL=$(basename "$MODEL")
+  fi
   CFG=$(sha "$LIVE_HOME/config.yaml"); SOUL=$(sha "$LIVE_HOME/SOUL.md")
   MEM=$( (sha "$LIVE_HOME/memories"; sha "$LIVE_HOME/mnemosyne") | sha256sum | cut -c1-16)
 elif [ "$TAKER" = claude ]; then
@@ -88,6 +108,11 @@ jq -n --arg id "$ID" --arg mode "$MODE" --arg taker "$TAKER" --argjson repeats "
   '{run_id:$id, mode:$mode, taker:$taker, repeats:$repeats, date:$date, hermes_version:$hv, model:$model,
     suite_version:$suite, repo_head:$head, manifest_path:$manifest, calibration_model:$cal,
     supervised_net:"not_offered", hashes:{config:$cfg, soul:$soul, memory:$mem}}' >"$RUN/meta.json"
+
+# Remote runs record the provider and model; run-item.sh keys off this to inject the OpenRouter key.
+if [ "$TAKER" = hermes ] && [ -n "${HC_REMOTE_MODEL:-}" ]; then
+  jq --arg m "$HC_REMOTE_MODEL" '.remote = {provider: "openrouter", model: $m}' "$RUN/meta.json" >"$RUN/meta.tmp" && mv "$RUN/meta.tmp" "$RUN/meta.json"
+fi
 
 # Whole-run guard on the live home: compared again by finish-run.sh.
 hash_paths "$LIVE_HOME" "${LIVE_GUARD_PATHS[@]}" >"$RUN/live-home.before" 2>/dev/null

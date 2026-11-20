@@ -37,6 +37,12 @@ CHECK_TIMEOUT=$(jq -r '.check_timeout_s // 120' "$ITEM/item.json")
 kill_test_procs || fail "Hermes processes on the test home survived SIGTERM and SIGKILL"
 if [ "$TAKER" = hermes ]; then
   rsync -a --delete "$RUN/home-snapshot/" "$TEST_HOME/" || fail "home reset failed"
+  if [ -n "$(jq -r '.remote.model // empty' "$META")" ]; then
+    # Remote run: the key goes into the throwaway home only (the reset above wiped any previous copy).
+    kp=$(remote_key_problem); [ -z "$kp" ] || fail "$kp"
+    ( umask 077; printf '\nOPENROUTER_API_KEY=%s\n' "$(tr -d '[:space:]' <"$REMOTE_KEY_FILE")" >>"$TEST_HOME/.env" ) \
+      || fail "could not write the OpenRouter key into the test home"
+  fi
 else
   rm -rf "$TEST_HOME"; mkdir -p "$TEST_HOME/memories"
 fi

@@ -2,6 +2,9 @@
 
 Older `Recent Decisions` entries rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+- **`pinchflat-ngx` plus a fresh DB backup, not an insecure waiver; drop vendor-reset (2026-11-14, session 154, PR #127)** — the 2026-11-09 decision. The backup was taken with the service stopped (a live copy of a WAL-mode DB can tear, as the 10-24 backup did). vendor-reset was removed rather than fixed because the VM it served is scrapped.
+- **Limit `llama-cpp-cuda` to sm_86 (2026-11-14, session 154)** — instead of cancelling the dry-run to run `/flake-update-verify` first (that would change the lock and force the same rebuild again), the CUDA capability list was narrowed to the RTX 3070 so the second dry-run built fast.
+- **Workaround the playlist/channel type bug in the live DB while fixing it upstream (2026-11-14/15, session 154)** — PATCHing `original_url` to `<url>/videos` and back repaired all 16 sources; the upstream fix (#218) was then tested in a sandbox on a copy of the pre-NGX backup, not on the live service.
 - **Do not add the `workflow` scope to the `gh` token (2026-11-15, session 154)** — the fork sync needed it, but SSH pushes do not, so the hermes-agent PR was force-pushed over SSH instead.
 - **Fix the clock-reset loop with IP-literal NTP servers in the shared module, not by touching DNS or the RTC (2026-11-12, session 153, PR #123)** — the user chose "prepare the chrony change" over checking the RTC. Cloudflare's anycast NTP IPs need no DNS and the pool entries stay as they were. It sits in `modules/desktop-networking.nix` because all three desktop hosts import it, so each needs a rebuild and natalie-laptop is the one that needs it most. Left alone: the missing resolver fallback and the BIOS clock.
 

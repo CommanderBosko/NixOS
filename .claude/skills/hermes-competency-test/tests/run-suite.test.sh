@@ -480,6 +480,56 @@ pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" claude g1 2>&1); rc=$?
 check "precheck: with no run in progress validation does run (positive control)" '[ $rc = 0 ] && [ -e "$T/validate.ran" ]' "rc=$rc $pc"
 cp "$REAL_SKILL/scripts/validate-items.sh" "$T/skill/scripts/validate-items.sh"
 
+# ---- remote-model mode (OpenRouter): plumbing only, no network, no real key
+export HC_REMOTE_MODEL="vendor/some-model:free" HC_SKIP_REMOTE_CHECK=1 HC_SKIP_VALIDATE=1
+mkdir -p "$HC_PRIV_DIR/keys/canary"; [ -f "$HC_PRIV_DIR/keys/canary/rubric.json" ] || echo '{}' >"$HC_PRIV_DIR/keys/canary/rubric.json"
+FAKEKEY="sk-or-v1-testkey0123456789abcdef"
+pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" hermes canary 2>&1); rc=$?
+check "remote precheck: no key file → not ready, says how to save one" '[ $rc = 1 ] && grep -q "no OpenRouter key file" <<<"$pc" && grep -q "save-key" <<<"$pc"' "rc=$rc $pc"
+printf '%s\n' "$FAKEKEY" >"$HC_PRIV_DIR/openrouter.key"; chmod 644 "$HC_PRIV_DIR/openrouter.key"
+pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" hermes canary 2>&1); rc=$?
+check "remote precheck: key file readable by others → not ready" '[ $rc = 1 ] && grep -q "must be mode 600" <<<"$pc"' "rc=$rc $pc"
+chmod 600 "$HC_PRIV_DIR/openrouter.key"
+pc=$(PATH="$T/pc:$PATH" "$T/skill/scripts/precheck.sh" hermes canary 2>&1); rc=$?
+check "remote precheck: good key file, llama down → ready (no llama needed)" '[ $rc = 0 ]' "rc=$rc $pc"
+
+# prepare-run: the snapshot's model block is rewritten; the local endpoint settings go; the key never enters it.
+cp "$HC_LIVE_HOME/config.yaml" "$T/live-config.bak"
+printf 'model:\n  api_key: local-key\n  api_mode: chat_completions\n  base_url: http://127.0.0.1:8080/v1\n  context_length: 65536\n  default: qwen-test\n  provider: custom\napprovals:\n  mode: manual\n  deny:\n  - gh pr merge*\n' >"$HC_LIVE_HOME/config.yaml"
+RR=$("$T/skill/scripts/prepare-run.sh" custom hermes 1 2>"$T/prep-remote.err" | tail -1)
+check "remote prepare: snapshot points at openrouter + the model id" 'grep -q "^  provider: openrouter" "$RR/home-snapshot/config.yaml" && grep -q "^  default: .vendor/some-model:free.$" "$RR/home-snapshot/config.yaml"' "$(cat "$T/prep-remote.err")"
+check "remote prepare: local endpoint keys are gone from the snapshot" '! grep -qE "base_url|api_mode|context_length|local-key|provider: custom" "$RR/home-snapshot/config.yaml"'
+check "remote prepare: approvals patch still applied" 'grep -q "^  single_query_mode: deny" "$RR/home-snapshot/config.yaml" && grep -q "gh pr merge" "$RR/home-snapshot/config.yaml"'
+check "remote prepare: meta records the remote model" '[ "$(jq -r .remote.model "$RR/meta.json")" = "vendor/some-model:free" ] && [ "$(jq -r .model "$RR/meta.json")" = "vendor/some-model:free" ]'
+check "remote prepare: live config untouched" 'cmp -s "$HC_LIVE_HOME/config.yaml" <(printf "model:\n  api_key: local-key\n  api_mode: chat_completions\n  base_url: http://127.0.0.1:8080/v1\n  context_length: 65536\n  default: qwen-test\n  provider: custom\napprovals:\n  mode: manual\n  deny:\n  - gh pr merge*\n")'
+check "remote prepare: key not in the snapshot" '! grep -rqF "$FAKEKEY" "$RR/home-snapshot"'
+cp "$T/live-config.bak" "$HC_LIVE_HOME/config.yaml"
+
+# run-item: the key lands in the throwaway home's .env (mode 600) and nowhere in the repeat's records.
+export STUB_COUNT="$T/stubcount.remote"; rm -f "$STUB_COUNT"
+"$T/skill/scripts/run-item.sh" "$RR" canary 2 hermes >/dev/null 2>"$T/remote-item.err"; rc=$?
+check "remote run-item: repeat completes against the stub" '[ $rc = 0 ]' "rc=$rc $(cat "$T/remote-item.err")"
+check "remote run-item: key written into the test home .env" 'grep -qx "OPENROUTER_API_KEY=$FAKEKEY" "$W/home/.env"'
+check "remote run-item: .env is mode 600" '[ "$(stat -c %a "$W/home/.env")" = 600 ]'
+check "remote run-item: test home model block reaches hermes" 'grep -q "^  provider: openrouter" "$W/home/config.yaml"'
+check "remote run-item: key not in the repeat's recorded files" '! grep -rqF "$FAKEKEY" "$RR/items/canary/r2"'
+check "remote run-item: live .env untouched (still absent in the fake live home)" '[ ! -e "$HC_LIVE_HOME/.env" ]'
+rm -f "$HC_PRIV_DIR/openrouter.key"
+"$T/skill/scripts/run-item.sh" "$RR" canary 3 hermes >/dev/null 2>"$T/remote-item2.err"; rc=$?
+check "remote run-item: key file gone → infrastructure error, not a graded zero" '[ $rc = 1 ] && grep -q "no OpenRouter key file" "$RR/items/canary/r3/error.txt"' "rc=$rc"
+
+# remote-run.sh: save-key refuses a non-terminal; compare lines runs up against the baseline.
+out=$("$T/skill/scripts/remote-run.sh" save-key </dev/null 2>&1); rc=$?
+check "remote-run save-key: refuses to read a key without a terminal" '[ $rc != 0 ] && grep -q "needs a terminal" <<<"$out" && [ ! -e "$HC_PRIV_DIR/openrouter.key" ]' "rc=$rc $out"
+mkdir -p "$T/cmp/base" "$T/cmp/r1/items/c1/r1"
+echo '{"items":{"c1":{"median":40},"c2":{"median":55}}}' >"$T/cmp/base/summary.json"
+echo '{"items":{"c1":{"median":70},"c2":{"median":null}}}' >"$T/cmp/r1/summary.json"
+echo '{"model":"vendor/some-model","spent_usd":0.12}' >"$T/cmp/r1/remote-arm.json"
+echo '{"timed_out":true,"duration_s":9}' >"$T/cmp/r1/items/c1/r1/exit.json"
+out=$(HC_BASELINE="$T/cmp/base" "$T/skill/scripts/remote-run.sh" compare "$T/cmp/r1" 2>&1); rc=$?
+check "remote-run compare: labels, medians, timeout marker and spend" '[ $rc = 0 ] && grep -q "vendor/some-model" <<<"$out" && grep -qE "^c1 +40 +70 \(t1\)" <<<"$out" && grep -q "(spent .0.12)" <<<"$out"' "rc=$rc $out"
+unset HC_REMOTE_MODEL HC_SKIP_REMOTE_CHECK HC_SKIP_VALIDATE STUB_COUNT
+
 # ---- docs: the skill's commands work from any cwd (the Bash tool runs from the project root, not the skill dir)
 bare=$(python3 -I - "$REAL_SKILL" <<'PY'
 import pathlib, re, sys

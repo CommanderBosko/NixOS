@@ -4,6 +4,34 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-19 (session 157) — Hermes moves to OpenRouter flash
+
+**Focus**: Close-only for eight conversations: test remote models for Hermes, switch gaming's Hermes to the winner, plus a Steam diagnosis and an upstream PR chore.
+
+### What changed (and why)
+- **#149:** Hermes on gaming now uses OpenRouter `deepseek/deepseek-v4-flash` instead of local Qwen3.5-9B (gen 514). The full 31-item competency suite scored 88.5 on flash against 53.8 for the local baseline (quick slice: flash 87.5, nemotron:free 80.6, local 42.8). The key is the sops secret `hermes-env` (never in the store); the HM module deep-merges settings, so the old `base_url`, `api_key`, `api_mode` and `context_length` are nulled; llama-cpp stays declared and unused for a one-line revert.
+- **`383c745`:** `hermes-competency-test` learned remote models (`remote-run.sh`, `HC_REMOTE_MODEL` hooks, 151 runner tests) and a reasoning-budget A/B (`reasoning-ab.sh`, 13 tests, never run).
+- **Steam GUI "freeze":** not a hang; a 92 GB Kingdom Come: Deliverance II download at about 900 Mbps pegged Steam's CPU while `llama-server` held 6 of 8 GiB of VRAM. gaming's root disk is now 95% full.
+- **NousResearch/hermes-agent PR #141834:** the three "failed" notifications were workflow runs held for maintainer approval; the PR was rebased (`be4fa861`) and the user's `gh` token gained the `workflow` scope to push it.
+
+### Decisions
+- Switched the whole agent to flash rather than building the hybrid (flash for coding/network/research, local for mail/secrets) the assistant had suggested; the privacy cost (file and mail content now reaches OpenRouter/DeepSeek) was raised first and the user went ahead.
+- Tested through the harness's throwaway home so live `~/.hermes` stayed untouched; skipped Yorath and Halogen from a Reddit thread (root `curl | sh` installer; AMD-only closed engine).
+
+### Issues / surprises
+- A Claude usage limit mid-grading made `hc.py` write 57 placeholder `grade.json` files that `run-suite.sh` then scored as errors; they were regraded by hand.
+- `safe-01` (agrees with a false premise) is still weak on flash (0 / 93 / 37), the same failure Qwen had.
+- One $20 OpenRouter key serves both production and tests; only a one-shot `hermes -z` was tried after the switch.
+
+### Next session
+- Verify Hermes on flash end to end (tool task, memory save through the checker, spend); free disk on gaming; Rift status check; rebuild both laptops; the older gaming and natalie-laptop checks (see `project-state.md`).
+
+**Commits**: `2f44d72..8bcde5a` (PR #149) plus `383c745`
+
+Secret-scan: clean (tree + 2,126 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-18 (session 156) — Rift popup fix on gaming, stale branch cleanup
 
 **Focus**: Follow-up to the nix-ld work: find out why Rift showed a "Missing dependency" popup after the trim, and land the fix.
@@ -110,31 +138,6 @@ Secret-scan: clean (tree + 2,104 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `a307ee5..3bfda88` (7 commits, PRs #119-#125)
 
 Secret-scan: clean (tree + 2,076 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-12 (session 152) — laptop `gh` login, smartd on all desktops
-
-**Focus**: Get the laptop agent's smartd PR opened and landed, find out why its own PR step failed, and spread smartd to every desktop host.
-
-### What changed (and why)
-- **laptop `gh` logged in (imperative):** the laptop agent's branch push worked (SSH keys) but its PR step failed because `gh` there had no token. A device-flow login over SSH (the user entered the code) put the token in the laptop's gnome-keyring, as on gaming; `gh pr view 116` from the laptop confirmed it.
-- **smartd (#116, #117):** #116 enabled `services.smartd` on the laptop so NVMe health warnings land in the journal without sudo. #117 moved the line into the shared `modules/desktop-apps.nix` so gaming and natalie-laptop get it too; deep-eval passed 3/3 and CI was green. Both landed with `land-prs`.
-
-### Decisions
-- smartd goes in the shared module, next to `smartmontools` (#114), not per host.
-- The `gh` fix stays imperative; nothing in the flake manages it.
-
-### Issues / surprises
-- Nothing is live: gaming's staged gen 500 predates both PRs and the laptops are not rebuilt. `systemctl status smartd` is unchecked everywhere.
-- natalie-laptop's `gh` login was not re-checked.
-
-### Next session
-- Reboot gaming into gen 500 then rebuild again for smartd; rebuild both laptops; check `smartd` on all three; check natalie-laptop's `gh`; remove the stale wowaudit config and tokens.
-
-**Commits**: `48aa238..830816c` (4 commits, PRs #116-#117)
-
-Secret-scan: clean (tree + 2,060 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 
