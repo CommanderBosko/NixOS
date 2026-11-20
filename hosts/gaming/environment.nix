@@ -14,10 +14,6 @@
     # Shell aliases
     zsh.shellAliases = {
       rift = "~/Rift/bin/rift";
-      # Local LLM for Hermes Agent (on-demand; frees the GPU for games when off)
-      llm-on = "sudo systemctl start llama-cpp";
-      llm-off = "sudo systemctl stop llama-cpp";
-      llm-status = "systemctl status llama-cpp --no-pager";
     };
   };
 

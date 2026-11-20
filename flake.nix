@@ -45,11 +45,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Hermes Agent — AI agent framework by Nous Research (gaming only).
+    # Hermes Agent — AI agent framework by Nous Research (every desktop host).
     # No `follows`: upstream pins its own nixpkgs.
     hermes-agent.url = "github:NousResearch/hermes-agent";
 
-    # Hermes copies of the Claude Code plugins (hosts/gaming/hermes-agent.nix).
+    # Hermes copies of the Claude Code plugins (modules/hermes-agent.nix).
     # Track the default branch so `nix flake update` bumps them.
     superpowers = {
       url = "github:obra/superpowers";
@@ -59,7 +59,7 @@
       url = "github:DietrichGebert/ponytail";
       flake = false;
     };
-    # Hermes memory provider (hosts/gaming/hermes-mnemosyne.nix).
+    # Hermes memory provider (modules/hermes-mnemosyne.nix).
     mnemosyne = {
       url = "github:mnemosyne-oss/mnemosyne";
       flake = false;
@@ -105,6 +105,8 @@
       "${self}/modules/flatpak.nix"
       "${self}/modules/fonts.nix"
       "${self}/modules/herdr.nix"
+      # Hermes Agent CLI on OpenRouter (HM, bosko); key in secrets/desktop.yaml
+      "${self}/modules/hermes-agent.nix"
       "${self}/modules/home-manager.nix"
       "${self}/modules/jellyfin-client.nix"
       # Host metrics for gaming's Prometheus; tailscale0 only

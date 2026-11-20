@@ -105,7 +105,7 @@ def scan(text):
     return list(dict.fromkeys(found)), text
 
 
-# Mnemosyne's writers (matched in hosts/gaming/hermes-agent.nix). Tools that take a single
+# Mnemosyne's writers (matched in modules/hermes-agent.nix). Tools that take a single
 # text field have no `action`, so each call is one add. {tool: field}
 MNEMOSYNE_TEXT = {
     "mnemosyne_remember": "content",

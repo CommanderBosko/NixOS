@@ -1,6 +1,6 @@
 ---
 name: hermes-memory-checker
-description: Checks proposed entries for Hermes Agent's persistent memory (~/.hermes/memories/MEMORY.md and USER.md) for validity before they're saved, and returns keep, fix, or reject for each with a one-line reason. Called headlessly by the gaming host's Hermes pre_tool_call memory hook (hosts/gaming/hermes-memory-check.py). Can also be used interactively to review existing entries. Read-only: never edits memory itself.
+description: Checks proposed entries for Hermes Agent's persistent memory (~/.hermes/memories/MEMORY.md and USER.md) for validity before they're saved, and returns keep, fix, or reject for each with a one-line reason. Called headlessly by every desktop host's Hermes pre_tool_call memory hook (modules/hermes-memory-check.py). Can also be used interactively to review existing entries. Read-only: never edits memory itself.
 tools: Read, Grep, Glob, mcp__nixos__nix
 model: sonnet
 ---

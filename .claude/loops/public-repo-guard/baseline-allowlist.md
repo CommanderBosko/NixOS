@@ -33,3 +33,4 @@ Mode ON). Each entry: what it is, where, and why it's safe.
 - **gaming Hermes `api_key = "local"` (`hosts/gaming/hermes-agent.nix`)** — a non-empty
   dummy for the localhost-only llama server at `127.0.0.1:8080` (the OpenAI client rejects
   an empty key); it authenticates nothing and is not a credential. Accepted 2026-10-26.
+  Local llama block removed 2026-11-19; entry kept because git history still contains it.
