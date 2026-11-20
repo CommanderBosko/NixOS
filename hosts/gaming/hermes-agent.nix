@@ -1,11 +1,18 @@
 { config, inputs, lib, pkgs, ... }:
 
-# llama.cpp (CUDA) + Hermes Agent for gaming, on-demand.
+# Hermes Agent for gaming, plus an on-demand local llama.cpp (CUDA).
 #
-# llama-server exposes an OpenAI-compatible API at http://127.0.0.1:8080/v1.
-# The service is NOT started at boot (wantedBy cleared): `llm-on` / `llm-off`
-# start and stop it so games get the whole GPU.  Plan and rationale:
-# docs/plans/hermes-agent-local-llm.md.
+# Main model (2026-11-19): OpenRouter deepseek/deepseek-v4-flash. The full
+# 31-item competency suite scored 88.5 on it against 53.8 for local Qwen3.5-9B.
+# The key reaches ~/.hermes/.env through environmentFiles from the sops secret
+# "hermes-env" (KEY=VALUE lines), never the store.  Hermes now sends file
+# contents and tool output to OpenRouter, so the guardrails below stay on.
+#
+# The local server is kept but unused: llama-server exposes an OpenAI-compatible
+# API at http://127.0.0.1:8080/v1.  The service is NOT started at boot
+# (wantedBy cleared): `llm-on` / `llm-off` start and stop it so games get the
+# whole GPU.  To go local again, restore the settings.model block marked below.
+# Plan and rationale: docs/plans/hermes-agent-local-llm.md.
 #
 # Model: Qwen3.5-9B IQ4_XS (unsloth, text-only), hash-pinned in the store.
 #
@@ -70,6 +77,13 @@ in
   # On-demand: don't start at boot.
   systemd.services.llama-cpp.wantedBy = lib.mkForce [ ];
 
+  # OpenRouter key for Hermes, as an env file like pinchflat-env. owner=bosko so
+  # the user-level Home Manager activation can read it without root.
+  sops.secrets."hermes-env" = {
+    sopsFile = ../../secrets/hosts/gaming.yaml;
+    owner = "bosko";
+  };
+
   home-manager.users.bosko = {
     imports = [ inputs.hermes-agent.homeManagerModules.default ];
 
@@ -84,15 +98,26 @@ in
     services.hermes-agent = {
       enable = true;
 
+      # The module deep-merges these settings into the live config.yaml, so a
+      # key dropped from here would linger from the local-model era: the old
+      # base_url and the dummy api_key "local" must be nulled out, or Hermes
+      # would send OpenRouter the wrong key to the wrong URL. Context length is
+      # auto-detected from OpenRouter.
+      #
+      # Local Qwen (to revert): provider = "custom"; default = "qwen3.5-9b";
+      # base_url = "http://127.0.0.1:8080/v1"; api_key = "local" (the OpenAI
+      # client rejects an empty key); api_mode = "chat_completions";
+      # context_length = 65536.
       settings.model = {
-        provider = "custom";
-        default = "qwen3.5-9b";
-        base_url = "http://127.0.0.1:8080/v1";
-        # Non-empty dummy: the OpenAI client rejects an empty key.
-        api_key = "local";
-        api_mode = "chat_completions";
-        context_length = 65536;
+        provider = "openrouter";
+        default = "deepseek/deepseek-v4-flash";
+        base_url = null;
+        api_key = null;
+        api_mode = null;
+        context_length = null;
       };
+      # OPENROUTER_API_KEY=... (mode 600 in .env once activation merges it).
+      environmentFiles = [ config.sops.secrets."hermes-env".path ];
 
       # Same MCP servers as Claude Code (dotfiles/bosko/claude-hm/mcp.nix).
       mcpServers = {
