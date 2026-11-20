@@ -170,9 +170,10 @@ in
           "sudo *"
         ];
       };
-      # Agent-created skills are staged in ~/.hermes/pending/skills for review
+      # Agent-created skills are written directly, with no review step. Set this
+      # back to true to stage them in ~/.hermes/pending/skills for review
       # (/skills approve), the same gate-before-save as the memory checker.
-      settings.skills.write_approval = true;
+      settings.skills.write_approval = false;
 
       # Every memory save (the memory tool and Mnemosyne's writers; the
       # matcher is a full-match regex) goes to a Claude checker first (agent prompt in
