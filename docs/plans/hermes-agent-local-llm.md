@@ -5,6 +5,9 @@ server. Verification checks 3–4 and 6–8 below (VRAM fit, tool calls, long co
 with gaming) have not been recorded yet. Written 2026-10-15. The research behind it is the memory
 `reference_hermes_agent_8gb_research.md`.
 
+**Update 2026-11-19:** the local llama.cpp/Qwen stack was removed and the Hermes module moved to
+`modules/hermes-agent.nix`, which now serves every desktop host. The rest of this plan is historical.
+
 **Deviation from step 2:** Hermes runs through the upstream **Home Manager** module as bosko
 (`~/.hermes`), not the NixOS module with `addToSystemPackages` and the `hermes` group. The current
 CLI refuses to attach to a gateway whose `HERMES_HOME` is owned by another uid

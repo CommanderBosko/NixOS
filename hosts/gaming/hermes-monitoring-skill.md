@@ -46,7 +46,6 @@ hermes-monitor query 'node_systemd_unit_state{state="failed"} == 1'
 
 - The laptops are often switched off. A missing or stale laptop series is normal, not an outage.
 - The monitoring stack runs on gaming, so it only sees things while gaming is on. It sends **no notifications**; you see alerts only when asked.
-- `llama-cpp` being stopped is normal (the user starts it on demand) and is not a failed unit.
 - If `hermes-monitor` can't connect, tell the user the monitoring stack is down. Don't try to start it.
 
 ## Safety rules
