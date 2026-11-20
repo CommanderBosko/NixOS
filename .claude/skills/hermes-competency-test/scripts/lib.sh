@@ -11,6 +11,10 @@ WORK_DIR="${HC_WORK_DIR:-$HOME/projects/hermes-tests/competency}"
 SANDBOX_DIR="$WORK_DIR/sandbox"
 REMOTE_DIR="$WORK_DIR/remote.git"
 LIVE_HOME="${HC_LIVE_HOME:-$HOME/.hermes}"
+# Remote-model mode (HC_REMOTE_MODEL=<OpenRouter model id>): the Hermes taker runs against OpenRouter
+# instead of the local llama-server. The key lives in this mode-600 file and is written only into the
+# throwaway test home's .env at reset time (run-item.sh): never into the snapshot, an archive or a log.
+REMOTE_KEY_FILE="${HC_REMOTE_KEY_FILE:-$PRIV_DIR/openrouter.key}"
 MANIFEST="$SKILL_DIR/manifest.json"
 # Live-home paths hashed before/after each item and each run. mnemosyne/data is a backstop: one
 # upstream Mnemosyne helper hard-codes ~/.hermes/mnemosyne/data/triples.db and ignores HERMES_HOME.
@@ -84,6 +88,22 @@ hash_paths() {
 }
 
 item_json() { jq -r "$2" "$SKILL_DIR/items/$1/item.json"; }
+
+# remote_key_problem: one line saying why the OpenRouter key file is unusable (prints nothing if fine).
+remote_key_problem() {
+  [ -f "$REMOTE_KEY_FILE" ] || { echo "no OpenRouter key file at $REMOTE_KEY_FILE (save it with remote-run.sh save-key)"; return 0; }
+  [ "$(stat -c %a "$REMOTE_KEY_FILE")" = 600 ] || { echo "$REMOTE_KEY_FILE must be mode 600 (chmod 600 it)"; return 0; }
+  grep -q '[^[:space:]]' "$REMOTE_KEY_FILE" || echo "$REMOTE_KEY_FILE is empty"
+  return 0
+}
+
+# remote_key_info: the .data object of OpenRouter's GET /api/v1/key for the saved key, as one JSON line
+# (limits, spend, free-model request counter; no key material). The key goes in a header read from a
+# process substitution, so it never appears in any process's argv.
+remote_key_info() {
+  curl -fsS --max-time 30 -H @<(printf 'Authorization: Bearer %s\n' "$(tr -d '[:space:]' <"$REMOTE_KEY_FILE")") \
+    https://openrouter.ai/api/v1/key 2>/dev/null | jq -c '.data'
+}
 
 # test_home_pids <home>: PIDs of Hermes processes (a chat, the on-demand gateway, its MCP supervisor)
 # whose environment has HERMES_HOME=<home>.

@@ -121,7 +121,31 @@ Fixing an item means editing it under `<skill-dir>/references/authoring-items.md
 - `<skill-dir>/scripts/finish-run.sh <run-root> <stage-outcome>`: final score + history (step 6).
 - `<skill-dir>/scripts/validate-items.sh [ids…]`: item and answer-key validation (`validate` mode, and after any item change).
 - `<skill-dir>/scripts/lib.sh`: shared paths and sandbox helpers.
+- `<skill-dir>/scripts/reasoning-ab.sh <status|arm-up|arm-down|smoke|run|compare>`: manual A/B of llama-server's `--reasoning-budget` on a failing-items slice (see "Reasoning-budget A/B"). Not part of `run-suite.sh`.
+- `<skill-dir>/scripts/remote-run.sh <save-key|check|run|compare>`: runs the suite against an OpenRouter model instead of the local Qwen, and compares it with the local baseline (see "Remote-model runs"). Not part of `run-suite.sh`'s normal flow.
 - `<skill-dir>/tests/run-suite.test.sh`: runner tests (no model time, no real `hermes` or `claude`).
+- `<skill-dir>/tests/reasoning-ab.test.sh`: tests for the A/B helper's argv rewrite, budget parsing and `compare` (no GPU, no sudo).
+
+## Reasoning-budget A/B (manual, only when asked)
+
+Tests whether letting Hermes think (capped) beats the declared `--reasoning-budget 0`. Hermes sends no reasoning setting to our endpoint, so the server flag is the lever. Run it by hand, not from the skill's normal flow: arm B needs the whole GPU and `sudo` for `llm-off`, and a run takes hours.
+
+1. Arm A (control): `llm-on`, then `<skill-dir>/scripts/reasoning-ab.sh smoke` and `... run budget0`.
+2. Arm B: `llm-off`, `... arm-up 2048`, `... smoke`, `... run budget2048`, `... arm-down`, then `llm-on` to restore the declared config.
+3. `... compare <arm-A-run-root> <arm-B-run-root>`.
+
+Default slice (override with `--items`): code-02, code-03, code-05, nix-01, nix-02, safe-01, safe-02, code-08 (control). Run both arms the same day on the same manifest. Custom runs never go to `history.jsonl`; don't call `finish-run.sh` on them.
+
+## Remote-model runs (OpenRouter, manual, only when asked)
+
+Tests whether a hosted model beats the local Qwen3.5-9B on the same items. No llama-server is needed, so no `llm-on`. Setting `HC_REMOTE_MODEL=<model-id>` makes `precheck.sh`, `prepare-run.sh` and `run-item.sh` rewrite the snapshot's `model:` block to `provider: openrouter` and write the key into the throwaway test home's `.env` after each reset. `remote-run.sh` sets it for you.
+
+1. Key (once): in your own terminal, `<skill-dir>/scripts/remote-run.sh save-key`. It reads the key with echo off into `~/.local/share/hermes-competency/openrouter.key` (mode 600). Over ssh from another host: `ssh -t bosko@gaming <skill-dir>/scripts/remote-run.sh save-key`. Set a per-key credit limit in OpenRouter's key settings first.
+2. `<skill-dir>/scripts/remote-run.sh check`: limits, spend and the free-model cap for the saved key.
+3. `<skill-dir>/scripts/remote-run.sh run <model-id>`: the manifest's `quick` slice × 3 repeats as a **custom** run; precheck checks the model lists tools and ≥64K context and the key works. It prints the spend and a key-leak scan of the run directory at the end. One run at a time (the work dir is shared).
+4. `<skill-dir>/scripts/remote-run.sh compare <run-root>...`: per-item medians and timeout counts next to baseline #1.
+
+Gotchas: custom runs never go to `history.jsonl`, so don't call `finish-run.sh` on them. Never put the key in a `!` command or paste it into chat; both echo into the transcript. Free (`:free`) models are capped at 20 requests/min and 50 requests/day (1,000/day once 10 credits have been bought); precheck refuses a free model while the cap is under 1,000 unless `HC_ALLOW_FREE_CAP=1`. The grader is still `claude -p` Sonnet, so grading uses Claude tokens, not OpenRouter's.
 
 ## References
 
