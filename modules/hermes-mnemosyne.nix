@@ -11,7 +11,7 @@ let
 
   mnemosyne-memory = py.buildPythonPackage {
     pname = "mnemosyne-memory";
-    version = "4.1.0";
+    version = "4.2.0";
     inherit src;
     pyproject = true;
     build-system = [ py.setuptools ];
