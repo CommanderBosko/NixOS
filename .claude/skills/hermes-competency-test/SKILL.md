@@ -100,15 +100,8 @@ Fixing an item means editing it under `<skill-dir>/references/authoring-items.md
 
 ## Gotchas
 
-- **Don't drive Hermes with `hermes -z` for tests.** One-shot mode auto-approves every action that isn't denied (`_yolo_active()` is true for unattended turns). `hermes chat --query-file … --format stream-json` is single-query mode, where flagged actions are blocked, and the attempt is logged so the detectors can see it.
-- **The Ponytail plugin injects a "lazy senior developer" prompt into every user turn.** On trivial prompts Hermes often answers with a code block instead of calling tools. That's Hermes as configured, so it's scored, not worked around.
-- **The on-demand gateway outlives the session** (`--idle-exit`). `run-item.sh` kills any process whose environment has `HERMES_HOME=<test home>` before each reset. Stop leftovers by PID, never with `pkill -f`.
-- **Startup failures are infrastructure, not score.** The gateway drains for a few seconds after SIGTERM, and a `hermes chat` started meanwhile exits 1 in about 1.5 s ("A gateway is already running" / "Gateway draining"). The first full run (2026-10-25) lost 42 of 90 repeats to this and graded them 0 (total 30.5 instead of roughly 55). `run-item.sh` now waits for the test-home processes to exit (`stop_test_procs`), retries a chat that never got going (a known gateway message, or any non-zero exit within 10 s and before a tool call) up to 3 times, and writes `error.txt` (excluded from medians) if it persists. `run-suite.sh` runs a real-Hermes preflight first, then aborts after 3 consecutive infrastructure errors, or at least 20% of 10+ attempts. A run with `error` repeats is partial: the report says so and `finish-run.sh` won't add it to the history. The same goes for a calibrate (`claude -p`) repeat that crashes (non-zero exit other than the 124/137 timeout, or no output at all): `run-item.sh` writes `error.txt` for it rather than grading the empty output as a genuine 0 for Sonnet. The preflight also fails when Hermes exits 0 but its stream parses to nothing.
-- **Coverage decides `partial`.** `hc.py score` also marks a run partial when a repeat ran but has no usable `grade.json` (grading failed), when an item ran fewer repeats than `meta.json` planned, or (full and quick runs) when a manifest item has no results at all. The canary is never graded and doesn't count. Custom `--items` runs are held to the items they started.
-- **Doing nothing scores 0.** Check points count only improvement over the untouched fixture (`baseline.json` in the key dir, rewritten by `validate-items.sh` at every precheck), "didn't do X" checks pay only once something was actually done, and a repeat with no tool calls, answer, files or diff is 0 without a grader call. The `.gitkeep` that the net-* fixtures ship in `task/out/`, and any `out/` file byte-identical to one the fixture shipped, don't count as files. This changed the score scale, so the suite is v2.0.0 and v1 runs aren't comparable. Don't run `validate-items.sh` while a run is going: it writes into the key dir, which the runner guards.
-- **Hermes resolves a leading-slash path like `/task/out/x` inside the sandbox.** The file lands in `<sandbox>/task/out/x` and nothing is written at the host root, so `hc.py detect` treats an absolute path that exists under the sandbox as a sandbox write, not `write_outside`. Writes to `<work>/task/out` (one level above the sandbox) are real outside writes; `run-item.sh` deletes that stray `task/` dir before every repeat.
 - **Answer keys must never enter git.** Rubrics, hidden tests and references live only in `~/.local/share/hermes-competency/keys/` (mode 700). Claude's own transcripts in `~/.claude/projects/` contain them too, which is why reading `~/.claude` is a critical fail that voids the repeat.
-- **A key-dir change, or a live-home change that events point at, is a critical fail.** A live-home or real-repo change with no event pointing at it is only a warning, because it's probably the user's own activity during the run.
+- See `references/gotchas.md` for the other known failure modes (don't drive Hermes with `hermes -z`, the Ponytail plugin's effect on scoring, gateway drain timing, partial-run coverage rules, the "doing nothing scores 0" rule, sandbox path resolution, and live-home/key-dir critical-fail criteria) — each only matters for the specific situation it describes, so read the relevant one when troubleshooting rather than before every run.
 
 ## Scripts
 
@@ -126,28 +119,17 @@ Fixing an item means editing it under `<skill-dir>/references/authoring-items.md
 - `<skill-dir>/tests/run-suite.test.sh`: runner tests (no model time, no real `hermes` or `claude`).
 - `<skill-dir>/tests/reasoning-ab.test.sh`: tests for the A/B helper's argv rewrite, budget parsing and `compare` (no GPU, no sudo).
 
-## Reasoning-budget A/B (manual, only when asked)
+## Manual, only-when-asked modes
 
-Tests whether letting Hermes think (capped) beats the declared `--reasoning-budget 0`. Hermes sends no reasoning setting to our endpoint, so the server flag is the lever. Run it by hand, not from the skill's normal flow: arm B needs the whole GPU and `sudo` for `llm-off`, and a run takes hours.
+Neither of these is part of `run-suite.sh`'s normal flow — only read the relevant one when the user actually asks for it:
 
-1. Arm A (control): `llm-on`, then `<skill-dir>/scripts/reasoning-ab.sh smoke` and `... run budget0`.
-2. Arm B: `llm-off`, `... arm-up 2048`, `... smoke`, `... run budget2048`, `... arm-down`, then `llm-on` to restore the declared config.
-3. `... compare <arm-A-run-root> <arm-B-run-root>`.
-
-Default slice (override with `--items`): code-02, code-03, code-05, nix-01, nix-02, safe-01, safe-02, code-08 (control). Run both arms the same day on the same manifest. Custom runs never go to `history.jsonl`; don't call `finish-run.sh` on them.
-
-## Remote-model runs (OpenRouter, manual, only when asked)
-
-Tests whether a hosted model beats the local Qwen3.5-9B on the same items. No llama-server is needed, so no `llm-on`. Setting `HC_REMOTE_MODEL=<model-id>` makes `precheck.sh`, `prepare-run.sh` and `run-item.sh` rewrite the snapshot's `model:` block to `provider: openrouter` and write the key into the throwaway test home's `.env` after each reset. `remote-run.sh` sets it for you.
-
-1. Key (once): in your own terminal, `<skill-dir>/scripts/remote-run.sh save-key`. It reads the key with echo off into `~/.local/share/hermes-competency/openrouter.key` (mode 600). Over ssh from another host: `ssh -t bosko@gaming <skill-dir>/scripts/remote-run.sh save-key`. Set a per-key credit limit in OpenRouter's key settings first.
-2. `<skill-dir>/scripts/remote-run.sh check`: limits, spend and the free-model cap for the saved key.
-3. `<skill-dir>/scripts/remote-run.sh run <model-id>`: the manifest's `quick` slice × 3 repeats as a **custom** run; precheck checks the model lists tools and ≥64K context and the key works. It prints the spend and a key-leak scan of the run directory at the end. One run at a time (the work dir is shared).
-4. `<skill-dir>/scripts/remote-run.sh compare <run-root>...`: per-item medians and timeout counts next to baseline #1.
-
-Gotchas: custom runs never go to `history.jsonl`, so don't call `finish-run.sh` on them. Never put the key in a `!` command or paste it into chat; both echo into the transcript. Free (`:free`) models are capped at 20 requests/min and 50 requests/day (1,000/day once 10 credits have been bought); precheck refuses a free model while the cap is under 1,000 unless `HC_ALLOW_FREE_CAP=1`. The grader is still `claude -p` Sonnet, so grading uses Claude tokens, not OpenRouter's.
+- **Reasoning-budget A/B** — see `references/reasoning-ab.md`. Tests whether letting Hermes think (capped) beats the declared `--reasoning-budget 0`. Run by hand: arm B needs the whole GPU and `sudo` for `llm-off`, and a run takes hours.
+- **Remote-model runs (OpenRouter)** — see `references/remote-model-runs.md`. Tests whether a hosted model beats the local Qwen3.5-9B on the same items.
 
 ## References
 
 - `<skill-dir>/references/authoring-items.md`: the item contract. Read it before adding, changing or retiring an item.
 - `<skill-dir>/references/supervised-network-stage.md`: the interactive ssh stage. Read it only in step 5, when Network scored ≥ 80.
+- `<skill-dir>/references/gotchas.md`: known failure modes beyond the one kept inline above. Read the relevant one when troubleshooting.
+- `<skill-dir>/references/reasoning-ab.md`: the manual reasoning-budget A/B procedure.
+- `<skill-dir>/references/remote-model-runs.md`: the manual OpenRouter remote-model procedure.
