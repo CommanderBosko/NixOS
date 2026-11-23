@@ -50,7 +50,7 @@ It prints one aligned line per root input — `<name>  <original url, e.g. githu
 
 ## Step 2 — Ask which input and what to pin it to
 
-Ask which input to pin via the **AskUserQuestion tool**. The live list above has about 12 names but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`nixpkgs` if it is in the list, then `home-manager`, `dms`, `sops-nix`, where present), and list every other live name in the question text so the user can type one via **Other**. Then ask what to pin it to:
+Ask which input to pin via the **AskUserQuestion tool**. The live list above has about 12 names but the tool takes at most 4 options, so offer the 4 likeliest, recommended first (`nixpkgs` if it is in the list, then `home-manager`, `dms`, `sops-nix`, where present), and list every other live name in the question text so the user can type one via **Other**. This shortlist is a hardcoded guess, not derived from the live list — if any of those four names is no longer among the live input names (`show-pin-state.sh --names`), drop it from the shortlist and recommend from what's actually present instead. Then ask what to pin it to:
 
 > What would you like to pin it to? Options:
 >   - A full commit rev (40-char SHA), e.g. `abc123def456...`
