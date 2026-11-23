@@ -10,6 +10,10 @@ Whenever `/init` is run, in any project, invoke the `claude-rules` skill immedia
 
 The `find` in this environment (`rtk find`) rejects compound predicates outright — no `-o`, `-not`, or `-exec`. A command like `find . -iname "a.md" -o -iname "b.md"` or `find . -not -path "*/node_modules/*"` fails with `rtk: rtk find does not support compound predicates or actions`, not a normal "no matches" exit. Issue one `-iname`/`-name` pattern per `find` call instead — run multiple separate calls (in parallel if independent) rather than combining patterns, and use `grep`/a pipeline for exclusions instead of `-not`/`-exec`. This has been the single most common tool-call failure across this user's projects — check for a compound predicate first whenever a `find` call errors instead of assuming "no matches" or a path typo.
 
+## `rg` Isn't Installed
+
+There is no real `rg` binary on PATH here (in interactive zsh it is only a function that runs the claude binary as `rg`), so an `rg` call through the Bash tool fails with `rtk: search failed: Failed to execute command: No such file or directory (os error 2)` — not a "no matches" result. Use the Grep tool, `git grep -n`, or `grep -rIn` instead.
+
 ## Stale Fast-Moving Research Memories
 
 If a `reference`-type memory tagged `Volatility: fast` surfaces in context (auto-loaded from a project's `MEMORY.md`, or read directly), check its `Researched:` date before relying on it — see `research`'s `references/stale-memory-policy.md` (in `dotfiles/bosko/claude/skills/research/`) for the staleness policy (90-day gut-check, exceptions, what to do if it looks stale). Skip this for `Volatility: slow` memories or ones with no `Volatility` tag at all.

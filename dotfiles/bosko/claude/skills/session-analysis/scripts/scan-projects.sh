@@ -67,7 +67,7 @@ PYEOF
 
 case "$MODE" in
   dream)
-    "$LIB_DIR/list-all-projects.sh" | while IFS=$'\t' read -r real_path transcript_dir; do
+    "$LIB_DIR/list-all-projects.sh" | grep -v -E 'hermes-competency/runs/|hermes-tests/competency/sandbox' | while IFS=$'\t' read -r real_path transcript_dir; do
       [ -z "$transcript_dir" ] && continue
       echo "PROJECT: $real_path"
       echo "TRANSCRIPT_DIR: $transcript_dir"
