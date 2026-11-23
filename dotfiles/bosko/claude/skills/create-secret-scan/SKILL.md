@@ -164,6 +164,7 @@ Tell the user:
   own NixOS `secret-scan`) uses — that skill is one example of a tuned scan, not the
   default for every project.
 - **Script paths:** use the absolute path from this skill's Base directory line, never a bare `scripts/...` — see `~/.claude/skills/lib/script-paths.md`.
+- **The template's header prose mentions the markers.** `assets/secret-scan-template.md` line 2 contains the literal text `<!-- BEGIN -->` and `<!-- END -->` in prose, so a naive `indexOf('<!-- BEGIN -->')` slices from the wrong place and the lint fails. Slice with `indexOf('\n<!-- BEGIN -->\n')` and `lastIndexOf('\n<!-- END -->')` (whole-line markers); then the lint passes.
 
 ## Scripts
 
