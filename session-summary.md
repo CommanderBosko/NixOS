@@ -4,6 +4,36 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-23 (session 158) — Hermes on every desktop, Qwen stack removed, 11-22 rollout
+
+**Focus**: Close-only for five conversations: put Hermes on all three desktops, bump and roll out the flake, and land the weekly improve-system PR.
+
+### What changed (and why)
+- **#152:** Hermes moved from `hosts/gaming` into `modules/hermes-agent.nix` in `desktopModules`; the shared OpenRouter key `hermes-env` moved to `secrets/desktop.yaml`. The user's question "won't a rebuild skip the Qwen model now?" had a no: the llama-cpp unit only didn't start at boot, so every gaming closure still carried `llama-cpp-cuda` and the 4.8 GiB GGUF. The whole local stack was removed (about -5.7 GiB, no CUDA compile on bumps).
+- **#151:** `skills.write_approval = false` (now in the shared module), so agent-created skills are written without review. Reading how it takes effect showed `~/.hermes/config.yaml` is deep-merged by `hermes-config-merge`: declared keys are overwritten, removals in Nix never propagate. That explains the leftover `wowaudit:` block.
+- **#154 + #153:** 2026-11-22 flake bump (nixpkgs `2786a2a`, dms, hermes-agent, home-manager, mnemosyne 4.2.0, ponytail, sops-nix) with the hardcoded mnemosyne label bumped in its own commit; plus an `AGENTS.md` line telling Hermes to delegate code work to Claude Code via herdr.
+- **`/fleet-rollout` 2026-11-22:** natalie-laptop gen 123 (zen 7.2.10 pin held, Wi-Fi and tailnet confirmed, `cleanup-host` dropped gen 118) and gaming gen 517 (zen 7.3.4 to 7.3.5, booted 11-23, no failed units). laptop was off and was skipped.
+- **#156:** the weekly improve-system PR (three skills, 6 files) was reviewed by the `manager` agent and landed with a merge commit.
+
+### Decisions
+- Remove the local model stack rather than keep it declared for a one-line revert; the revert path is git history (`78298e3^`).
+- One shared OpenRouter key for all three desktops, accepting that a leak on any host exposes it.
+- Landed #156 with a merge commit although the manager agent suggested squash (the `land-prs` default and the repo's history).
+
+### Issues / surprises
+- The gaming dry-run script again said `switch` despite a kernel bump; `boot` was used.
+- My first `git commit` for #153 failed on an empty message and nothing was committed; the second try worked.
+- The close-only baseline spans conversations from other sessions; only work visible in the transcripts is narrated here.
+
+### Next session
+- Verify Hermes end to end on each desktop (real tool task, memory save through the checker, first `hermes` run on natalie-laptop to approve the hook, OpenRouter spend); rebuild laptop with `/fleet-rollout`; clean up stale local-model references in the competency-test skill and the memory-checker agent prompt; remove the wowaudit block and token files by hand.
+
+**Commits**: `f111d2a..15fd05c` (PRs #151-#154, #156)
+
+Secret-scan: clean (tree + 2,139 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-19 (session 157) — Hermes moves to OpenRouter flash
 
 **Focus**: Close-only for eight conversations: test remote models for Hermes, switch gaming's Hermes to the winner, plus a Steam diagnosis and an upstream PR chore.
@@ -110,34 +140,6 @@ Secret-scan: clean (tree + 2,118 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `2a7fbbf..67fc63f` (26 commits, PRs #127-#138)
 
 Secret-scan: clean (tree + 2,104 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-13 (session 153) — natalie-laptop clock loop, chrony fix, `gh` login
-
-**Focus**: Bring natalie-laptop back after a remote reboot, stop it happening again, and get its Claude session able to open PRs.
-
-### What changed (and why)
-- **natalie-laptop boot loop (#123):** after the reboot its RTC gave 2021-12-31, so Tailscale could not validate TLS, MagicDNS could not reach pi-hole, and chrony could not resolve the pool names; nothing could fix the clock. The user set it by hand in a real terminal (the `!` prefix gave `ssh -t` no TTY). The fix adds two Cloudflare anycast NTP IPs to chrony in the shared `modules/desktop-networking.nix`, so a years-wrong clock finds a source without DNS. Deep-eval passed 3/3; it was not built or booted.
-- **natalie-laptop `gh` (#125):** the first device-flow code expired unentered; the second conversation finished the login. The token is plain text in `~/.config/gh/hosts.yml` because the SSH session had no keyring. Docs-only PR, merged after CI.
-- **Landed from other sessions (summarised from commits, not narrated):** #119/#120 passwordless read-only `smartctl` for wheel, #121 and #124 an 80% charge cap on laptop and natalie-laptop, #122 the `host-health-scan` skill plus a wider `boot-error-triage` noise filter.
-
-### Decisions
-- IP-literal NTP in the shared module, not a DNS or RTC change; the missing resolver fallback and the BIOS clock were left alone.
-- The clock reset was handed to the user in a separate terminal, with no `sudo -S` workaround.
-- natalie-laptop's plain-text `gh` token was accepted rather than chasing a keyring.
-
-### Issues / surprises
-- Not live on natalie-laptop: #123 (no `162.159.*` in `chronyc sources`) and #124 (charge threshold reads 100), so the next reboot there hits the clock loop again.
-- gaming runs gen 500 and has no smartd; staged gen 501 has smartd and the smartctl sudo rule. `laptop` timed out over SSH at close.
-- natalie-laptop's `/etc/resolv.conf` listed only Tailscale's resolver although `desktop-networking.nix` calls 1.1.1.1 a fallback; not investigated.
-
-### Next session
-- Reboot gaming into gen 501 and check smartd and the sudo rule; rebuild natalie-laptop (then confirm the chrony IPs and the 80% cap) and `laptop` (check it is up first); check natalie-laptop's BIOS clock; finish removing the wowaudit config and tokens from Hermes.
-
-**Commits**: `a307ee5..3bfda88` (7 commits, PRs #119-#125)
-
-Secret-scan: clean (tree + 2,076 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 

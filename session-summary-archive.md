@@ -1,3 +1,31 @@
+## Session: 2026-11-13 (session 153) — natalie-laptop clock loop, chrony fix, `gh` login
+
+**Focus**: Bring natalie-laptop back after a remote reboot, stop it happening again, and get its Claude session able to open PRs.
+
+### What changed (and why)
+- **natalie-laptop boot loop (#123):** after the reboot its RTC gave 2021-12-31, so Tailscale could not validate TLS, MagicDNS could not reach pi-hole, and chrony could not resolve the pool names; nothing could fix the clock. The user set it by hand in a real terminal (the `!` prefix gave `ssh -t` no TTY). The fix adds two Cloudflare anycast NTP IPs to chrony in the shared `modules/desktop-networking.nix`, so a years-wrong clock finds a source without DNS. Deep-eval passed 3/3; it was not built or booted.
+- **natalie-laptop `gh` (#125):** the first device-flow code expired unentered; the second conversation finished the login. The token is plain text in `~/.config/gh/hosts.yml` because the SSH session had no keyring. Docs-only PR, merged after CI.
+- **Landed from other sessions (summarised from commits, not narrated):** #119/#120 passwordless read-only `smartctl` for wheel, #121 and #124 an 80% charge cap on laptop and natalie-laptop, #122 the `host-health-scan` skill plus a wider `boot-error-triage` noise filter.
+
+### Decisions
+- IP-literal NTP in the shared module, not a DNS or RTC change; the missing resolver fallback and the BIOS clock were left alone.
+- The clock reset was handed to the user in a separate terminal, with no `sudo -S` workaround.
+- natalie-laptop's plain-text `gh` token was accepted rather than chasing a keyring.
+
+### Issues / surprises
+- Not live on natalie-laptop: #123 (no `162.159.*` in `chronyc sources`) and #124 (charge threshold reads 100), so the next reboot there hits the clock loop again.
+- gaming runs gen 500 and has no smartd; staged gen 501 has smartd and the smartctl sudo rule. `laptop` timed out over SSH at close.
+- natalie-laptop's `/etc/resolv.conf` listed only Tailscale's resolver although `desktop-networking.nix` calls 1.1.1.1 a fallback; not investigated.
+
+### Next session
+- Reboot gaming into gen 501 and check smartd and the sudo rule; rebuild natalie-laptop (then confirm the chrony IPs and the 80% cap) and `laptop` (check it is up first); check natalie-laptop's BIOS clock; finish removing the wowaudit config and tokens from Hermes.
+
+**Commits**: `a307ee5..3bfda88` (7 commits, PRs #119-#125)
+
+Secret-scan: clean (tree + 2,076 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-12 (session 152) — laptop `gh` login, smartd on all desktops
 
 **Focus**: Get the laptop agent's smartd PR opened and landed, find out why its own PR step failed, and spread smartd to every desktop host.
