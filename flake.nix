@@ -153,6 +153,7 @@
       gpu
       "${self}/hosts/gaming/virtualisation.nix"
       "${self}/hosts/gaming/jellyfin-server.nix"
+      "${self}/hosts/gaming/immich.nix"
       "${self}/hosts/gaming/monitoring.nix"
       "${self}/hosts/gaming/pinchflat.nix"
       "${self}/hosts/gaming/samba-shared.nix"
