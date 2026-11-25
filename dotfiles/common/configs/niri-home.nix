@@ -2,7 +2,7 @@
 # cursor theming. Imported by modules/desktop-environments/niri.nix for every
 # user who can log into a niri session, on top of modules/dms-shell.nix's Home
 # Manager config (DMS itself, qt6ct/kdeglobals theming, idle lock, swaylock).
-{ config, pkgs, osConfig, self, ... }:
+{ config, lib, pkgs, osConfig, self, ... }:
 
 {
   # DMS's gtk.sh copies adw-gtk3 into ~/.local/share/themes and patches its
@@ -84,4 +84,17 @@
     x11.enable = true;
     gtk.enable = true;
   };
+
+  # HM's dconfSettings activation step (fed by the gtk options above) runs
+  # `dconf load` under a throwaway `dbus-run-session`, because the user's real
+  # session bus doesn't exist yet when home-manager-<user>.service runs at boot.
+  # With gvfs's GIO module in GIO_EXTRA_MODULES, that dconf call D-Bus-activates
+  # org.gtk.vfs.Daemon on the throwaway bus, which spawns `gvfsd-fuse ~/.gvfs`;
+  # the bus then dies, gvfsd-fuse SEGVs, and the dead FUSE mount makes Thunar fail
+  # with "Failed to open directory ... ~/.gvfs: Connection refused" until the next
+  # boot (reproduced and fixed live, 2026-11-25). dconf needs no virtual
+  # filesystem, so force GIO's plain local VFS for the rest of activation.
+  home.activation.noGvfsForDconf = lib.hm.dag.entryBetween [ "dconfSettings" ] [ "installPackages" ] ''
+    export GIO_USE_VFS=local
+  '';
 }
