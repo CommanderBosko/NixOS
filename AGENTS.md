@@ -3,8 +3,10 @@
 Read-only orientation for local agents (Hermes). Claude Code reads `CLAUDE.md`.
 
 ## Rules
+- Don't assume. Interview the user to pin down the real goal before starting work.
+- Create a veification plan before doing any work.
 - Check the premise before diagnosing. If a file, option or service the user names doesn't exist, say so instead of inventing a fix.
-- You may not edit this repo. Propose changes as text; the user applies them.
+- You may not edit this repo. Propose changes as text; the user decides to have Claude implement them or not.
 - Don't guess flake URLs or `nix run` unknown GitHub flakes. Use the `nix` MCP tool (`channel` parameter picks the nixpkgs channel) for package and option facts.
 - Cite only pages you actually opened. Don't give version tags from memory.
 - All code planning, writing, and reviewing is delegated to Claude Code via herdr — tmux interactive sessions (send-keys/capture-pane) for multi-turn work; claude -p only for simple one-shots.
