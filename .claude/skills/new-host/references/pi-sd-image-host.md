@@ -2,13 +2,13 @@
 
 Load this when `new-host` Step 1 routes a Raspberry Pi (or any other SD-image board) here, or when you are migrating a Pi from Pi OS to NixOS. A Pi is not one of the `desktop` / `server` / `remote` types, so none of the `assets/` templates apply. This file is the runbook; the heavy lifting is split across three sibling skills, and this file says when to hand off to each.
 
-The LIVING example is `hosts/famdash/configuration.nix` (the famdash Pi, migrated 2026-11-26). Copy it and trim it. Do not paste its contents into docs or into this file: it drifts, and the file itself is the source of truth. `hosts/famdash/famdash.nix` is the dashboard app's service, not part of the Pi pattern, so leave it behind.
+The shared Pi base lives in `modules/pi-sd-image.nix` (image import, firmware, the shared networking imports, persistent capped journald, zram, weekly `nix.gc` and the expand-root-partition fix). The LIVING examples are `hosts/famdash/configuration.nix` (Wi-Fi, a dashboard app; migrated 2026-11-26) and `hosts/pi-hole/configuration.nix` (Ethernet, the DNS appliance; migrated 2026-11-27). A new Pi host imports the shared module and adds only its `stateVersion`, `image.baseName`, link config, firewall ports and app services. Do not paste their contents into docs or into this file: they drift, and the files are the source of truth. `hosts/famdash/famdash.nix` and `hosts/pi-hole/{pihole,clients,adlists}.nix` are the apps' services, not part of the Pi pattern.
 
 **Hand-off rule for the whole runbook.** Claude never runs anything privileged or physical: `sudo`, flashing a card, power cycles, reboots and remote deletes (`rm -rf`, `shred`) on other hosts are all hand-offs. Print exactly ONE command, tell the user to run it in their own separate terminal (no `!` prefix: `sudo` gets no TTY that way), and wait for their confirmation before continuing.
 
 ## 0. What differs from the `remote` template (and why)
 
-A Pi boots U-Boot/extlinux from an SD image. The `remote` template assumes systemd-boot/EFI plus a generated `hardware-configuration.nix`, so it does not fit. A Pi host instead:
+A Pi boots U-Boot/extlinux from an SD image. The `remote` template assumes systemd-boot/EFI plus a generated `hardware-configuration.nix`, so it does not fit. A Pi host instead (most of this list now lives in `modules/pi-sd-image.nix`; the host file sets `image.baseName`, `stateVersion`, the link config and the firewall):
 
 - **Has no `hardware-configuration.nix` and no `disko.nix`.** The upstream image module declares the card layout. Import it with `modulesPath`: `"${modulesPath}/installer/sd-card/sd-image-aarch64.nix"` (so the module arguments include `modulesPath`).
 - **Sets `image.baseName = "<host>"`**, which names the flashable image file so it is easy to find after the build.
@@ -24,7 +24,7 @@ A Pi boots U-Boot/extlinux from an SD image. The `remote` template assumes syste
 
 ### Files to create or edit
 
-1. `hosts/<host>/configuration.nix`: copy famdash's, then trim what is app- or Wi-Fi-specific and adjust the firewall, hostname-derived names and secret names.
+1. `hosts/<host>/configuration.nix`: import `../../modules/pi-sd-image.nix` (see famdash's or pi-hole's file for the shape), then add `stateVersion`, `image.baseName`, the link config, the firewall ports, hostname-derived names and secret names.
 2. `flake.nix`: add the host. Show it first and edit only when the user asks (same rule as `new-host` Step 6). The shape is the famdash entry, with the name and path changed:
 
    ```nix
@@ -74,33 +74,25 @@ Hand off to the `pi-cutover` skill (`.claude/skills/pi-cutover/`): freeze and sn
 
 nixpkgs' sd-image module has a unit, `expand-root-partition`, that grows the root partition on first boot. It fails on current nixpkgs: util-linux 2.42 pads the `MAJ:MIN` column of `lsblk`, so the partition number reads `'2  '` and `sfdisk` aborts with `failed to parse partition number: '2  '`.
 
-`hosts/famdash/configuration.nix` carries the fix, a `lib.mkForce`d `systemd.services.expand-root-partition.script` that is the upstream script with whitespace stripped (`tr -d '[:space:]'`) before the partition number is parsed. **Copy that block into every Pi host** (so `lib` must be in the module arguments); the pi-hole host needs it too.
+`modules/pi-sd-image.nix` carries the fix, a `lib.mkForce`d `systemd.services.expand-root-partition.script` that is the upstream script with whitespace stripped (`tr -d '[:space:]'`) before the partition number is parsed. A Pi host gets it by importing that module.
 
 Caveats:
 
-- The unit only runs while `/nix-path-registration` exists, which is the first boot of a fresh image. The fix has therefore NOT been exercised on a real first boot as of 2026-11-26. After the first Pi that boots from an image containing it, record the result here.
+- The unit only runs while `/nix-path-registration` exists, which is the first boot of a fresh image. **Verified on real hardware:** pi-hole's first boot (2026-11-27) grew the root partition to 99% of the card with the override, no manual step (famdash's first boot hit the original bug, which is why the override exists).
 - If the unit still fails on a first boot, grow the partition by hand on the Pi (device `X`, partition `XN2`, for example `sda` and `sda2`, or `mmcblk0` and `mmcblk0p2`): `echo ",+," | sfdisk -N2 --no-reread /dev/X; partx -u /dev/X; resize2fs /dev/XN2`. This needs root, so it is a hand-off.
 - When upstream fixes the module, drop the override.
 
-## Deferred decision: shared `modules/pi-sd-image.nix`
+## Shared module: done
 
-Do not implement this now. When the SECOND Pi host (pi-hole) is added, extract the common part of the two host files into `modules/pi-sd-image.nix` as a PURE MOVE: the image import and `image.baseName` plumbing, redistributable firmware, the shared networking imports, persistent capped journald, zram, `nix.gc` and the expand-root-partition override. The per-host files keep `stateVersion`, the link config, the firewall ports and the app services.
+`modules/pi-sd-image.nix` was extracted with the pi-hole PR (2026-11-27) as a pure move: famdash's toplevel output path was identical before and after. That comparison is still the proof for any further move: run `nix eval --raw .#nixosConfigurations.famdash.config.system.build.toplevel.outPath` before and after (with new files `git add`ed) and require identical output. Run it from gaming: the private `famdash` flake input is fetched over SSH, and gaming has that access.
 
-Prove the move changed nothing for the live Pi by comparing famdash's toplevel output path before and after:
+## pi-hole (migrated 2026-11-27)
 
-```bash
-nix eval --raw .#nixosConfigurations.famdash.config.system.build.toplevel.outPath
-```
+The DNS appliance followed this workflow; see `.claude/skills/pi-cutover/references/dns-appliance.md` for the record. Facts worth knowing for the next Pi:
 
-Run it before starting the move, save the value, run it again afterwards (with the new module `git add`ed), and require identical output. Run it from gaming: the private `famdash` flake input is fetched over SSH, and gaming has that access. A changed outPath means the move was not pure, so fix it before touching pi-hole.
-
-## pi-hole next
-
-pi-hole is the next Pi to migrate with this same workflow. Facts to plan around:
-
-- **Hardware:** Pi 4B with 1 GB RAM. Never build on it; keep zram on; the journald cap and `nix.gc` matter more here than on famdash.
-- **Network:** Ethernet only. No Wi-Fi profile, no Wi-Fi sops env, no `secrets/hosts/<host>.yaml` unless the pi-hole service itself needs a secret (then use `add-secret`). Its firewall rules go on the Ethernet interface and `tailscale0`, for DNS (53, TCP and UDP) plus whatever web port the admin UI needs.
-- **It is the tailnet's global nameserver, 100.92.242.60.** The tailnet identity must survive the swap (copy `tailscaled.state`), or the replacement gets a new IP and every device loses DNS until the admin console is edited. `modules/desktop-networking.nix` already points every flake host at that IP with a 1.1.1.1 fallback, and notes pi-hole needs `dns.listeningMode = "ALL"` so queries arriving over Tailscale are answered. Carry that setting over. One thing to decide at migration time: that shared module would also make the pi-hole host resolve through itself; check whether it should override `networking.nameservers`.
-- **State:** backups live in `~/pi-backups/pi-hole/` (0700, outside the repo; never copy contents into the repo). The `pihole-api` skill covers the Pi-hole API (not part of this runbook).
-- **Status:** not a flake host yet (`hosts.json` has `flakeHost: false`), and the migration has NOT started.
-- **Timing:** a DNS outage hits the whole household, so the cutover window is the user's call. Do not schedule or start the swap on your own initiative; plan it, then ask.
+- **Hardware:** Pi 4B with 1 GB RAM. Never build on it; zram and the journald cap matter more here than on famdash. Gravity peaks at ~260 MB.
+- **Network:** Ethernet only (NIC `end0`, not `eth0`), static LAN address in a NetworkManager `ensureProfiles` profile that is not bound to an interface name. No Wi-Fi profile or Wi-Fi secret.
+- **It is the tailnet's global nameserver, 100.92.242.60.** The identity survived the swap because the old node's `tailscaled.state` was copied onto the new card. `modules/desktop-networking.nix` points every flake host at that IP with a 1.1.1.1 fallback; the pi-hole host overrides `networking.nameservers` to itself first (`127.0.0.1`, then 1.1.1.1).
+- **Secrets:** `secrets/hosts/pi-hole.yaml` holds the web password hash and the client list (names and MACs); both are sops secrets and are never printed.
+- **Fleet:** `fleetExclude` in `hosts.json` keeps it out of `fleet-rollout`; update it with `deploy-pi-host` in a window the user picks.
+- **Timing:** a DNS outage hits the whole household, so the cutover window is the user's call. Do not schedule or start a swap on your own initiative; plan it, then ask.
