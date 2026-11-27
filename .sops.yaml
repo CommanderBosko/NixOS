@@ -11,8 +11,9 @@
 #                              once decrypted)
 # secrets/hosts/<host>.yaml -> that host only. gaming has one (pinchflat-env,
 #                              jellyfin-api-key and its other gaming-only
-#                              secrets) and so does famdash (its Wi-Fi env file);
-#                              add a rule below for a new per-host file.
+#                              secrets), famdash has one (its Wi-Fi env file) and
+#                              so does pi-hole (its web password hash and client
+#                              list); add a rule below for a new per-host file.
 #
 # Each secret's sopsFile is set where it is declared — grep for `sops.secrets`
 # to see the live wiring. (jellyfin-api-key is stored but not wired into any
@@ -26,6 +27,10 @@ keys:
   # card (never into the image/store), so the Pi can decrypt its Wi-Fi secret and
   # login hashes on the very first boot.
   - &famdash        age1zka0yv4qpfuc7mut9m6sxtqlwcfu4cvc5h8qnr0gha2mnntfy3zsjlt7du
+  # pi-hole's SSH host key is likewise generated BEFORE first boot and copied onto
+  # its SD card (never into the image/store), so the Pi can decrypt its secrets
+  # (login hashes, the Pi-hole web password hash, the client list) on first boot.
+  - &pi-hole        age1mmlv3gcr48202k29zgny82mfhwrgvn63mqskcp8r44rafxlwdags2l9txl
 
 creation_rules:
   - path_regex: secrets/common\.yaml$
@@ -36,6 +41,7 @@ creation_rules:
           - *laptop
           - *natalie-laptop
           - *famdash
+          - *pi-hole
 
   - path_regex: secrets/desktop\.yaml$
     key_groups:
@@ -52,3 +58,7 @@ creation_rules:
   - path_regex: secrets/hosts/famdash\.yaml$
     key_groups:
       - age: [*admin, *famdash]
+
+  - path_regex: secrets/hosts/pi-hole\.yaml$
+    key_groups:
+      - age: [*admin, *pi-hole]

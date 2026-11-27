@@ -200,6 +200,14 @@
       };
     };
 
+    # Runtime test of the pi-hole host's DNS stack (FTL + unbound + declarative
+    # clients) in an x86_64 VM with fixture data. A package, not a flake check:
+    # CI only evaluates it; boot it on gaming with
+    #   nix build .#packages.x86_64-linux.pihole-vm-test -L
+    packages.x86_64-linux.pihole-vm-test = import ./hosts/pi-hole/vm-test.nix {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    };
+
     # Configure nix configurations
     nixosConfigurations = {
       # Gaming
@@ -237,6 +245,17 @@
         system = "aarch64-linux";
         modules = commonModules ++ [
           "${self}/hosts/famdash/configuration.nix"
+        ];
+      };
+
+      # pi-hole — the household DNS appliance Raspberry Pi 4B: Pi-hole v6 + local
+      # unbound, wired, booted from an SD image built on gaming (see
+      # hosts/pi-hole/configuration.nix)
+      pi-hole = mkSystem {
+        name = "pi-hole";
+        system = "aarch64-linux";
+        modules = commonModules ++ [
+          "${self}/hosts/pi-hole/configuration.nix"
         ];
       };
     };

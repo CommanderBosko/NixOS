@@ -35,7 +35,7 @@ description: Deploy a config change across all NixOS hosts one at a time — dry
 
 All optional, parsed from the user's phrasing:
 
-- **Host subset** — roll out to only the named hosts (default: every host in `.flakeHosts`).
+- **Host subset** — roll out to only the named hosts (default: every host in `.flakeHosts` without a `fleetExclude`, i.e. what `hosts_fleet_rollout_names` prints from `.claude/lib/hosts.sh`). A host with a `fleetExclude` reason (`pi-hole`: a reboot takes household DNS down) is skipped by default and rolled out only when the user names it, after asking for its own downtime window.
 - **Order** — a custom host order (default: see Host order below).
 - **Activation mode** — `boot` (default) or `switch`. Use `switch` only when the user asks
   for it ("switch", "live", "no reboot"):
@@ -52,7 +52,7 @@ State the mode in force at the start of the run and in every hand-off message.
 ## Goal
 
 Roll out the current committed config in `/home/bosko/NixOS` to every flake host (`.flakeHosts`
-in `.claude/hosts.json`) one host at a time, gating each on a clean dry-run gate and a full
+in `.claude/hosts.json`, minus hosts with a `fleetExclude`) one host at a time, gating each on a clean dry-run gate and a full
 post-activation health sweep, so a bad change is caught on one host before it reaches the next.
 
 ## Overall done-rule
@@ -73,7 +73,7 @@ If any host fails, the run is blocked at that host and the rest are NOT touched.
 
 ## Host order
 
-The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to day-to-day use goes first, so a bad change is caught before it reaches the machine that is hardest to recover. Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true` — list them with `jq -r '.hosts|to_entries[]|select(.value.desktop)|.key' /home/bosko/NixOS/.claude/hosts.json`) first and any headless hosts (`desktop: false`) last.
+The host set is `.flakeHosts` in `/home/bosko/NixOS/.claude/hosts.json` minus any host with a non-empty `fleetExclude` (`source /home/bosko/NixOS/.claude/lib/hosts.sh && hosts_fleet_rollout_names` prints the set, `hosts_fleet_excluded` the skipped hosts with their reasons; name both in the report) (the single source of truth; resolve each host's SSH target from `.hosts.<name>.ssh`). Order hosts by risk/blast-radius for the specific change being rolled out — the host least central to day-to-day use goes first, so a bad change is caught before it reaches the machine that is hardest to recover. Absent a reason to do otherwise, default to the `.flakeHosts` order with desktop hosts (`desktop: true` — list them with `jq -r '.hosts|to_entries[]|select(.value.desktop)|.key' /home/bosko/NixOS/.claude/hosts.json`) first and any headless hosts (`desktop: false`) last.
 
 If this rollout's change is scoped to (or riskiest for) one particular host — e.g. a module only `gaming` imports, or a GPU-driver change that only applies to one host — put that host first instead, so you get the most relevant signal fastest. State the reordering and why in the report.
 
@@ -259,7 +259,7 @@ is recommended.
   expects the flake host name to equal the tailnet name (true for all current hosts).
 - **Rebooting the local host ends the session** — hence local-last in boot mode, and the run
   finishing with the local host merely staged. The user reboots it on their own time.
-- **aarch64 Pi hosts can only be built from gaming** — the SD-image hosts (such as famdash) need the aarch64 binfmt handler, so the Step 4 remote build-as-gate fails when the loop runs from a laptop; run it from gaming, or use the single-Pi path. For one Pi use the `deploy-pi-host` skill; first installs are `pi-sd-flash` + `pi-cutover`.
+- **aarch64 Pi hosts can only be built from gaming** — the SD-image hosts (such as famdash) need the aarch64 binfmt handler, so the Step 4 remote build-as-gate fails when the loop runs from a laptop; run it from gaming, or use the single-Pi path. For one Pi use the `deploy-pi-host` skill; first installs are `pi-sd-flash` + `pi-cutover`. `pi-hole` carries a `fleetExclude` (it is the household DNS), so the default run skips it: update it with `deploy-pi-host` in a window the user picks.
 
 ## Files
 

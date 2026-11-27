@@ -1,6 +1,6 @@
 ---
 name: deploy-pi-host
-description: Ship one committed config change to one already-migrated Raspberry Pi NixOS host (famdash, later pi-hole) - pre-build the aarch64 toplevel on gaming, hand off the single nixos-rebuild --target-host command, then verify the Pi is running exactly what was built. Use when the user says "deploy to the pi", "deploy the pi host", "update famdash", "push config to the pi", "deploy-pi-host", "rebuild the pi".
+description: Ship one committed config change to one already-migrated Raspberry Pi NixOS host (famdash, pi-hole) - pre-build the aarch64 toplevel on gaming, hand off the single nixos-rebuild --target-host command, then verify the Pi is running exactly what was built. Use when the user says "deploy to the pi", "deploy the pi host", "update famdash", "push config to the pi", "deploy-pi-host", "rebuild the pi".
 version: 0.1.0
 ---
 
@@ -18,7 +18,7 @@ Update ONE already-migrated Raspberry Pi: build its system on gaming, hand the u
 
 Parsed from the user's phrasing:
 
-- **`<host>`** (required) — a Pi flake host from `.claude/hosts.json` (`famdash` today, `pi-hole` once migrated) or one of its aliases. "The pi" is ambiguous once there are two: list the candidates live (`jq -r '.hosts | to_entries[] | select(.value.flakeHost and .value.arch == "aarch64-linux") | .key' /home/bosko/NixOS/.claude/hosts.json`) and ask with the **AskUserQuestion** tool.
+- **`<host>`** (required) — a Pi flake host from `.claude/hosts.json` (`famdash` or `pi-hole`) or one of its aliases. "The pi" is ambiguous once there are two: list the candidates live (`jq -r '.hosts | to_entries[] | select(.value.flakeHost and .value.arch == "aarch64-linux") | .key' /home/bosko/NixOS/.claude/hosts.json`) and ask with the **AskUserQuestion** tool.
 - **mode** (optional) — `switch` (default: activates live) or `boot` (stages the generation; only a reboot activates it). Recommend `boot` when the change bumps the kernel, firmware or bootloader (a nixpkgs / `flake.lock` bump); otherwise use `switch` and say so. Ask via **AskUserQuestion** only when it is genuinely unclear.
 - **`--ip IP`** (optional) — override the tailscale IP from `hosts.json`.
 
@@ -26,7 +26,7 @@ State the host and mode at the start and in every hand-off. In the commands belo
 
 ## Steps
 
-1. **Resolve the host.** Confirm which Pi and which mode. `PD` itself refuses (exit 1) a host that is not aarch64 or not in `.flakeHosts` — a Pi that is not migrated yet (`pi-hole` today, `flakeHost: false`) is a `pi-sd-flash` + `pi-cutover` job, not this one. The deploy ships what the flake in `/home/bosko/NixOS` evaluates to, so the change should be committed.
+1. **Resolve the host.** Confirm which Pi and which mode. `PD` itself refuses (exit 1) a host that is not aarch64 or not in `.flakeHosts` — a Pi that is not migrated yet (`flakeHost: false`) is a `pi-sd-flash` + `pi-cutover` job, not this one. The deploy ships what the flake in `/home/bosko/NixOS` evaluates to, so the change should be committed.
    - Done-rule: host and mode are named.
 
 2. **Build on gaming.** `PD build <host>` (add `--dry-run` first if the user wants to see what would be built or fetched; it writes nothing). Only the binfmt host (gaming) can build aarch64; the laptops cannot, and never build on the Pi itself. It prints `EXPECTED <store path>`, builds, and prints `BUILT <store path>` — **record that path**. A cold build under QEMU can exceed the 10-minute tool timeout: run it with the Bash tool's `run_in_background` and wait for the completion notification instead of polling.
