@@ -17,6 +17,8 @@
     # NTP/TLS would deadlock). It also pins SSH AllowUsers to bosko.
     ../../modules/desktop-networking.nix
     ../../modules/tailscale.nix
+    # Host metrics for gaming's Prometheus; port 9100 is open on tailscale0 only.
+    ../../modules/node-exporter.nix
     ./famdash.nix
   ];
 

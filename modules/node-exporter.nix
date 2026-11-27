@@ -2,7 +2,8 @@
 
 {
   # Host metrics for gaming's Prometheus (hosts/gaming/monitoring.nix). Shared
-  # by every desktop so the laptops get scraped too.
+  # by every desktop so the laptops get scraped too, and by famdash (a headless
+  # Pi that imports it directly).
   services.prometheus.exporters.node = {
     enable = true;
     # `systemd` feeds the SystemdUnitFailed alert. Limited to .service units to

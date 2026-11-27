@@ -6,7 +6,7 @@
 #   Alertmanager   127.0.0.1:9093  no receiver yet: alerts are only visible through Prometheus
 #   blackbox       127.0.0.1:9115  ICMP / DNS / HTTP probes
 #   nvidia-gpu     127.0.0.1:9835  VRAM, GPU load, temperature, power (gaming's RTX 3070)
-#   node exporter  :9100           modules/node-exporter.nix (every desktop, tailscale0 only)
+#   node exporter  :9100           modules/node-exporter.nix (every desktop + famdash, tailscale0 only)
 #
 # Everything here binds to loopback, so nothing is reachable off the box. Hermes
 # gets read-only access through `hermes-monitor` (below) and the skill in
@@ -185,6 +185,7 @@ in
           { targets = [ "127.0.0.1:9100" ]; labels.host = "gaming"; }
           { targets = [ "${ts "laptop"}:9100" ]; labels.host = "laptop"; }
           { targets = [ "${ts "natalie-laptop"}:9100" ]; labels.host = "natalie-laptop"; }
+          { targets = [ "${ts "famdash"}:9100" ]; labels.host = "famdash"; }
         ];
       }
       {
