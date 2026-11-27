@@ -1,3 +1,33 @@
+## Session: 2026-11-15 (session 154) — nixpkgs pin lifted, pinchflat-ngx, kernel pin dance, natalie-laptop Wi-Fi
+
+**Focus**: Close out two days of gaming and natalie-laptop work (17 conversations): unpin nixpkgs, move Pinchflat to NGX, survive a zen kernel panic, and keep natalie-laptop's Wi-Fi alive.
+
+### What changed (and why)
+- **Pin lift (#127):** `nixpkgs` back on `nixos-unstable`; vendor-reset dropped (the passthrough VM is scrapped), Pinchflat moved to `pinchflat-ngx` after a stopped-service DB backup, `gtk2`/`qutebrowser` dropped, `llama-cpp-cuda` limited to sm_86 so the dry-run stopped compiling ten architectures.
+- **Pinchflat-NGX:** live; 16 migrated sources were typed `playlist` and failed metadata decoding. A URL round-trip fixed the live DB; upstream fixed it in `dev` (#216, PR #218), tested on a backup copy in a sandbox.
+- **Kernel:** zen 7.3.4 panicked gaming's initrd twice, so #128 pinned 7.2.10 via a second input; nixpkgs then shipped 7.3.4-zen2 with the fix, #136 lifted the pin and gaming booted clean.
+- **natalie-laptop (#137, #138):** AX201 firmware asserts on zen 7.3.4-zen2 and stable 6.18; only zen 7.2.10 works, so that host alone is pinned (gen 121). Root cause unknown. `/fleet-rollout` now hands off `cleanup-host` per green remote host, never gaming.
+- **Small:** `shutdown-host` (#132), Wake-on-LAN for gaming (#135), mnemosyne version fix (#133), rtk override lifted (#130), flake bumps #129/#134.
+
+### Decisions
+- Host-only kernel pin for natalie-laptop rather than holding its whole nixpkgs: only 7.2.10 boots; 6.18 failed too.
+- Unpin kept out of the flake bump and merged without a boot test: the reboot is the test.
+- No `workflow` scope on the `gh` token; SSH pushes the upstream hermes-agent PR instead.
+
+### Issues / surprises
+- Two untested fixes each cost an offline reboot on natalie-laptop (now a feedback memory); the clock and Tailscale failures were only symptoms of no Wi-Fi.
+- The dry-run script says `switch` for kernel jumps: use `boot`.
+- Unchecked: WoL (`ethtool`, BIOS), `chronyc sources` and the 80% cap on natalie-laptop, laptop gen 217 details, `lsfg-vk`.
+
+### Next session
+- Verify gaming (smartd, WoL, BIOS), re-check Pinchflat-NGX for a real download on or after 2026-11-17, check natalie-laptop's chrony/cap/BIOS clock, rebuild laptop, settle merge vs squash in the weekly-PR skill.
+
+**Commits**: `2a7fbbf..67fc63f` (26 commits, PRs #127-#138)
+
+Secret-scan: clean (tree + 2,104 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-13 (session 153) — natalie-laptop clock loop, chrony fix, `gh` login
 
 **Focus**: Bring natalie-laptop back after a remote reboot, stop it happening again, and get its Claude session able to open PRs.
