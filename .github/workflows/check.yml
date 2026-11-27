@@ -35,6 +35,14 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@v22
 
+      # The famdash host's flake input is a PRIVATE repo (CommanderBosko/FamDash)
+      # fetched over SSH, and the deep-eval below forces it. Load a read-only
+      # deploy key (repo secret FAMDASH_DEPLOY_KEY) so the runner can fetch it.
+      # No other host references that input, so the de-smoke job needs no key.
+      - uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.FAMDASH_DEPLOY_KEY }}
+
       # nix flake check only SHALLOWLY verifies nixosConfigurations (it checks
       # the toplevel is a derivation without forcing its full eval) — a broken
       # package deep in systemPackages sails through it. Proven 2026-07-02:
