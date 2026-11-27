@@ -259,6 +259,7 @@ is recommended.
   expects the flake host name to equal the tailnet name (true for all current hosts).
 - **Rebooting the local host ends the session** — hence local-last in boot mode, and the run
   finishing with the local host merely staged. The user reboots it on their own time.
+- **aarch64 Pi hosts can only be built from gaming** — the SD-image hosts (such as famdash) need the aarch64 binfmt handler, so the Step 4 remote build-as-gate fails when the loop runs from a laptop; run it from gaming, or use the single-Pi path. For one Pi use the `deploy-pi-host` skill; first installs are `pi-sd-flash` + `pi-cutover`.
 
 ## Files
 
