@@ -5,7 +5,7 @@ tools: "*"
 color: purple
 ---
 
-> ## ⚙️ Manager Training Mode: **ON**
+> ## ⚙️ Manager Training Mode: **OFF**
 > Flip this toggle by changing the line above to `OFF` once you trust this agent's judgment.
 >
 > **When ON (default — new agent, not yet trusted):**
