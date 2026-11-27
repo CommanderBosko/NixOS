@@ -85,12 +85,23 @@ in
       # a local 64K-context one, where the extra schemas cost ~19K tokens; the
       # model is on OpenRouter now. The blast radius is the OAuth client behind
       # tailscale-mcp-env: devices, routes, dns, policy_file and auth_keys (no
-      # oauth_keys). include = null rather than just omitted: config.yaml is
-      # deep-merged, so a removed key would survive on a host that already
-      # carries the old read-only filter. A running Hermes keeps its MCP tool
-      # list from startup: restart it (gateway included) to pick this up.
+      # oauth_keys). The tools that mint or reshape credentials stay off
+      # (user decision 2026-11-27): create_key makes auth keys, OAuth clients
+      # and federated identities in one tool, create_oauth_app makes OAuth
+      # apps, update_key can widen an existing key's scopes, delete_key can
+      # revoke the connector's own credentials. include = null rather than just
+      # omitted: config.yaml is deep-merged, so a removed key would survive on a
+      # host that already carries the old read-only filter. A running Hermes
+      # keeps its MCP tool list from startup: restart it (gateway included) to
+      # pick this up.
       settings.mcp_servers.tailscale = {
         tools.include = null;
+        tools.exclude = [
+          "tailscale_create_key"
+          "tailscale_create_oauth_app"
+          "tailscale_update_key"
+          "tailscale_delete_key"
+        ];
         trust = "trusted";
       };
 
