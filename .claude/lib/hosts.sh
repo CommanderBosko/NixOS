@@ -17,6 +17,9 @@
 #   hosts_ssh <name>            SSH target for one host; empty output if unknown
 #   hosts_table                 key<TAB>ssh<TAB>ip<TAB>notes for every host
 #   hosts_flake_ssh_pairs       name<TAB>ssh for every host with flakeHost=true
+#   hosts_fleet_rollout_names   flake hosts a fleet-wide rollout may touch: .flakeHosts
+#                               minus any host with a non-empty `fleetExclude`
+#   hosts_fleet_excluded        name<TAB>reason for every excluded flake host
 #
 # Callers keep their own `set -uo pipefail`; nothing here changes shell options.
 # Requires jq.
@@ -55,4 +58,16 @@ hosts_table() {
 
 hosts_flake_ssh_pairs() {
   hosts_jq -r '.hosts | to_entries[] | select(.value.flakeHost) | "\(.key)\t\(.value.ssh)"'
+}
+
+# `fleetExclude` (a reason string on a host entry) keeps a host out of the
+# fleet-wide rollout, e.g. pi-hole, whose reboot takes household DNS down. Such a
+# host is deployed on its own, by name. fleet-status is read-only and still
+# covers every flake host.
+hosts_fleet_rollout_names() {
+  hosts_jq -r '. as $d | $d.flakeHosts[] | select((($d.hosts[.].fleetExclude) // "") == "")'
+}
+
+hosts_fleet_excluded() {
+  hosts_jq -r '. as $d | $d.flakeHosts[] | select((($d.hosts[.].fleetExclude) // "") != "") | "\(.)\t\($d.hosts[.].fleetExclude)"'
 }

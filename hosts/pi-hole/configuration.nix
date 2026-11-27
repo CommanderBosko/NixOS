@@ -76,6 +76,25 @@
   piHole.webEnvFile = config.sops.secrets."pihole-web-env".path;
   piHole.clients.file = config.sops.secrets."pihole-clients".path;
 
+  # The pihole-api skill authenticates with Pi-hole's CLI password
+  # (/etc/pihole/cli_pw, pihole:pihole 0600). This lets bosko read that one file
+  # as root without a sudo password, and nothing else: the rule names the exact
+  # command and its argument, so every other sudo still asks. It replaces the
+  # blanket passwordless sudo the old Pi OS box had (user decision 2026-11-27).
+  # The cost: whoever holds bosko's SSH key can call the Pi-hole API (lists,
+  # blocking) without a sudo password.
+  security.sudo.extraRules = [
+    {
+      users = [ "bosko" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/cat /etc/pihole/cli_pw";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
+
   environment.systemPackages = with pkgs; [
     dnsutils # dig, for checking the resolver by hand
     jq # the pihole-api skill parses API responses with it

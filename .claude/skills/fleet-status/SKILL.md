@@ -8,7 +8,7 @@ version: 0.2.0
 # Fleet Status
 
 A one-shot, read-only health sweep of every flakeHost in `.claude/hosts.json`
-(`.flakeHosts`). Answers "is everything healthy right now?" in a single call. Safe — all per-host probes are unprivileged; no `sudo` is used.
+(`.flakeHosts`, including hosts with a `fleetExclude` such as pi-hole: the sweep is read-only). Answers "is everything healthy right now?" in a single call. Safe — all per-host probes are unprivileged; no `sudo` is used.
 
 ## Arguments
 

@@ -4,7 +4,7 @@
 # one follow-up call against it, in a single SSH round-trip.
 #
 # Auth mechanics (ground truth from a real session, 2026-08-25):
-#   PW=$(sudo -n cat /etc/pihole/cli_pw)
+#   PW=$(sudo -n /run/current-system/sw/bin/cat /etc/pihole/cli_pw)
 #   SID=$(curl -skS -X POST "http://127.0.0.1/api/auth" --data "{\"password\":\"${PW}\"}" | jq -r ".session.sid")
 # The SID is then reused as a `sid:` header on the actual call. Auth is cheap
 # to redo per invocation — no session caching across runs.
@@ -66,9 +66,9 @@ METHOD="$(printf '%s' "$1" | base64 -d)"
 API_PATH="$(printf '%s' "$2" | base64 -d)"
 BODY="$(printf '%s' "${3:-}" | base64 -d)"
 
-PW=$(sudo -n cat /etc/pihole/cli_pw 2>/dev/null)
+PW=$(sudo -n /run/current-system/sw/bin/cat /etc/pihole/cli_pw 2>/dev/null)
 if [ -z "$PW" ]; then
-  echo "ERROR: could not read /etc/pihole/cli_pw via 'sudo -n' — check passwordless sudo is still in place for bosko@pi-hole" >&2
+  echo "ERROR: could not read /etc/pihole/cli_pw via 'sudo -n' — hosts/pi-hole/configuration.nix grants bosko exactly that one command without a password (security.sudo.extraRules); check the host runs a generation that has it" >&2
   exit 1
 fi
 

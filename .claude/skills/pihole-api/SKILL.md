@@ -1,6 +1,6 @@
 ---
 name: pihole-api
-description: Authenticate to the pi-hole host's local REST API (session-based auth via the CLI password file) and run one or more follow-up calls against it. Use when the user says "pi-hole api", "call the pihole api", "add a blocklist to pi-hole", "query pi-hole lists", or "trigger pihole gravity rebuild".
+description: Authenticate to the pi-hole host's local REST API (session-based auth via the CLI password file, read with one narrow passwordless sudo rule) and run one or more follow-up calls against it. Use when the user says "pi-hole api", "call the pihole api", "add a blocklist to pi-hole", "query pi-hole lists", or "trigger pihole gravity rebuild".
 ---
 
 # Pi-hole API
@@ -20,7 +20,7 @@ If the user's phrasing doesn't map cleanly to one of the common calls below, pas
 
 ## How auth works
 
-Pi-hole v6's API is session-based: you POST the CLI password (readable only via `sudo`) to `/api/auth` to mint a session ID (SID), then send that SID as a `sid:` header on every subsequent call. `scripts/pihole-api.sh` does this whole dance in one SSH round-trip per invocation — call it fresh each time rather than trying to cache a SID between calls.
+Pi-hole v6's API is session-based: you POST the CLI password (`/etc/pihole/cli_pw`, readable only by root and the `pihole` user; `hosts/pi-hole/configuration.nix` lets bosko read exactly that file with one passwordless `sudo` rule, nothing else) to `/api/auth` to mint a session ID (SID), then send that SID as a `sid:` header on every subsequent call. `scripts/pihole-api.sh` does this whole dance in one SSH round-trip per invocation — call it fresh each time rather than trying to cache a SID between calls.
 
 ## Steps
 
@@ -30,7 +30,9 @@ Pi-hole v6's API is session-based: you POST the CLI password (readable only via 
    ```bash
    bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh <METHOD> <path-with-query> [json-body]
    ```
-   The script resolves the `pi-hole` host from `.claude/hosts.json` itself (same convention as `ssh-host`/`journal`/`verify-service` — never hardcode the SSH target here), reads the CLI password via `sudo -n cat /etc/pihole/cli_pw`, mints a SID against `/api/auth`, makes the requested call, and prints the raw JSON response.
+   The script resolves the `pi-hole` host from `.claude/hosts.json` itself (same convention as `ssh-host`/`journal`/`verify-service` — never hardcode the SSH target here), reads the CLI password via `sudo -n /run/current-system/sw/bin/cat /etc/pihole/cli_pw`, mints a SID against `/api/auth`, makes the requested call, and prints the raw JSON response.
+
+   **The pi-hole host is declarative:** its permanent lists live in `hosts/pi-hole/adlists.nix` and its groups and clients come from sops (`pihole-clients.service`). A list added through the API is an additive extra: it survives restarts (nothing is deleted) but is not in the repo, so change the permanent set in Nix.
 
    **List block lists (adlists):**
    ```bash
@@ -55,20 +57,20 @@ Pi-hole v6's API is session-based: you POST the CLI password (readable only via 
    bash /home/bosko/NixOS/.claude/skills/pihole-api/scripts/pihole-api.sh DELETE "/api/lists/<url-encoded-address>?type=block"
    ```
 
-   **Trigger a gravity rebuild — do NOT route this through the API.** The real session that produced this skill never used a REST endpoint for it; gravity was rebuilt with a plain CLI command over the same SSH connection:
+   **Trigger a gravity rebuild — a hand-off, not an API call.** The `pihole` CLI wrapper and `systemctl start` both need a sudo password on NixOS, and the one passwordless rule covers only `cli_pw`. Hand the user the single command:
    ```bash
-   ssh $(bash /home/bosko/NixOS/.claude/lib/resolve-host.sh pi-hole) "sudo -n pihole -g"
+   ssh -t bosko@pi-hole sudo systemctl start pihole-gravity.service
    ```
-   Run this directly (not via `pihole-api.sh`) after any add/disable/delete calls that need gravity re-processed to take effect. Tail the output for `[✓] Building gravity tree` and the final domain-count line to confirm it parsed cleanly; a stray list URL that fails to download shows up here as a warning rather than an error, so skim the whole tail, not just the exit code.
+   Gravity also reruns at every `pihole-ftl` start and weekly (`pihole-gravity.timer`). Check it with `ssh bosko@pi-hole 'systemctl status pihole-gravity --no-pager'`: the log ends with the gravity domain count and `[✓] Done.`; a list URL that fails to download shows up as a warning, so skim the whole log, not just the exit code.
 
 3. **Interpret the response** and report back in plain terms — e.g. "added, list now has N entries", "disabled", "deleted", or the specific `error.message` if the call failed. If a `bad_request`/`401`/`404` comes back, don't guess a fix blind: re-check the path/query-vs-body placement against the gotcha above, or fall back to `GET /api/lists?type=block` to see current state before retrying a PUT/DELETE with the wrong address encoding.
 
 ## Scripts
 
-- `.claude/skills/pihole-api/scripts/pihole-api.sh <METHOD> <path-with-query> [json-body]` — resolves the pi-hole host, does the `sudo -n cat cli_pw` → `POST /api/auth` → SID dance over one SSH connection, runs the requested call with the SID header, and prints the raw response (Step 2). Values are base64-encoded across the SSH boundary so JSON bodies and query strings survive intact instead of being re-tokenized by the remote shell.
+- `.claude/skills/pihole-api/scripts/pihole-api.sh <METHOD> <path-with-query> [json-body]` — resolves the pi-hole host, does the `sudo -n …/cat /etc/pihole/cli_pw` → `POST /api/auth` → SID dance over one SSH connection, runs the requested call with the SID header, and prints the raw response (Step 2). Values are base64-encoded across the SSH boundary so JSON bodies and query strings survive intact instead of being re-tokenized by the remote shell.
 
 ## Gotchas
 
 - `type` (`block`/`allow`) belongs in the **query string**, not the JSON body, for every `/api/lists` call — see Step 2.
-- Gravity rebuilds go through the CLI (`sudo -n pihole -g` over SSH), not the REST API — there's no `/api/action/gravity`-style endpoint used in practice here.
+- Gravity rebuilds are a hand-off (`sudo systemctl start pihole-gravity.service`), not an API call: only `cli_pw` is passwordless on this host.
 - List PUT/DELETE addresses must be URL-encoded as the path segment. If a call 404s, double-check the encoding rather than assuming the list doesn't exist — `GET /api/lists?type=block` first to confirm the exact stored `address` string.

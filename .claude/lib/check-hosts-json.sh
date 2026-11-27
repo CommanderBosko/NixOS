@@ -17,6 +17,9 @@
 # not equal to any host key (resolve-host.sh tries host keys first, so a
 # shadowing alias would never resolve).
 #
+# The optional `.fleetExclude` (hosts_fleet_rollout_names in hosts.sh skips such a
+# host in fleet-rollout) must be a non-empty reason string on a flake host.
+#
 # Prints each mismatch and exits 1 on any drift or bad alias; exits 0 (with an
 # OK line) when everything agrees. Eval-only, read-only. Run by
 # .github/workflows/check.yml.
@@ -77,8 +80,25 @@ if [ -n "$bad_aliases" ]; then
   printf '%s\n' "$bad_aliases" | sed 's/^/    /'
 fi
 
+# One "<problem>: <host>" line per bad fleetExclude; empty when all are fine.
+if ! bad_excl="$(hosts_jq -r '
+  .flakeHosts as $fh
+  | .hosts | to_entries[] | select(.value | has("fleetExclude"))
+  | .key as $k | .value.fleetExclude as $e
+  | if (($e | type) != "string") or (($e | length) == 0) then "not a non-empty string: \($k)"
+    elif ($fh | index($k)) == null then "not a flake host: \($k)"
+    else empty end')"; then
+  echo "check-hosts-json.sh: could not read .hosts[].fleetExclude" >&2
+  exit 2
+fi
+if [ -n "$bad_excl" ]; then
+  rc=1
+  echo "BAD fleetExclude in hosts.json .hosts[].fleetExclude"
+  printf '%s\n' "$bad_excl" | sed 's/^/    /'
+fi
+
 if [ "$rc" -eq 0 ]; then
-  echo "OK: hosts.json flake hosts match nixosConfigurations ($(printf '%s' "$expected" | tr '\n' ' ' | sed 's/ $//')); aliases unique"
+  echo "OK: hosts.json flake hosts match nixosConfigurations ($(printf '%s' "$expected" | tr '\n' ' ' | sed 's/ $//')); aliases unique; fleetExclude valid"
 fi
 
 exit "$rc"
