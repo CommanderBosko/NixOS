@@ -77,19 +77,33 @@ in
             "-c"
             "set -a; source ${config.sops.secrets."tailscale-mcp-env".path}; set +a; exec ${pkgs.tailscale-mcp}/bin/tailscale-mcp"
           ];
-          # Read-only tools only: all 94 schemas take ~19K tokens of the 64K
-          # context. These globs match exactly the 39 readOnlyHint tools.
-          tools.include = [
-            "tailscale_get_*"
-            "tailscale_list_*"
-            "tailscale_validate_*"
-            "tailscale_status"
-            "tailscale_preview_acl"
-          ];
         };
       };
-      # Untrusted: any write-capable call still asks for approval first.
-      settings.mcp_servers.tailscale.trust = "untrusted";
+      # Full tailnet management for Hermes (user decision 2026-11-27): all 94
+      # tools, writes included, and no approval prompt per call. It was
+      # read-only + "untrusted" (the 39 readOnlyHint tools) while the model was
+      # a local 64K-context one, where the extra schemas cost ~19K tokens; the
+      # model is on OpenRouter now. The blast radius is the OAuth client behind
+      # tailscale-mcp-env: devices, routes, dns, policy_file and auth_keys (no
+      # oauth_keys). The tools that mint or reshape credentials stay off
+      # (user decision 2026-11-27): create_key makes auth keys, OAuth clients
+      # and federated identities in one tool, create_oauth_app makes OAuth
+      # apps, update_key can widen an existing key's scopes, delete_key can
+      # revoke the connector's own credentials. include = null rather than just
+      # omitted: config.yaml is deep-merged, so a removed key would survive on a
+      # host that already carries the old read-only filter. A running Hermes
+      # keeps its MCP tool list from startup: restart it (gateway included) to
+      # pick this up.
+      settings.mcp_servers.tailscale = {
+        tools.include = null;
+        tools.exclude = [
+          "tailscale_create_key"
+          "tailscale_create_oauth_app"
+          "tailscale_update_key"
+          "tailscale_delete_key"
+        ];
+        trust = "trusted";
+      };
 
       # No Nous Portal hosted connectors (Notion, Slack, ...): none are used,
       # and the 9B model mistook their "connected: false" for broken MCP.
