@@ -4,6 +4,38 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-27 (session 159) — Both Pis on NixOS: famdash and pi-hole cut over, Hermes manages Tailscale
+
+**Focus**: Move both Raspberry Pis from Raspberry Pi OS to NixOS (famdash first, then the pi-hole), land the Pi skills, and finish the housekeeping. The range since the last close also holds #158-#161 (dream fixes, Immich on gaming, the gvfs/dconf fix, Hermes interview rules) from other conversations; they are not narrated here.
+
+### What changed (and why)
+- **famdash (#162-#164):** the image is the flake's own `sdImage` built on gaming under binfmt, because there is no generic Pi ISO and nixos-anywhere was out (no kexec on the Pi OS kernel, Wi-Fi-only, would wipe the only `db.json`). It runs from its own SD card with the host key and `tailscaled.state` copied on, `db.json` restored byte-identical, Wi-Fi from a sops env file, and a node-exporter scrape on gaming.
+- **Shared Pi base (#162, #166):** nixpkgs' `expand-root-partition` fails on first boot with util-linux 2.42 (`lsblk` pads MAJ:MIN), so the root partition never grew. A `lib.mkForce` replacement now lives in `modules/pi-sd-image.nix` and was proven on real hardware (root at 99%).
+- **pi-hole (#166):** flashed over its own SD card (no spare), same Tailscale node 100.92.242.60, static 10.0.0.19 on `end0`, Pi-hole v6 with local unbound, 25 declared adlists, a weekly gravity timer, and groups and clients from a sops list. 14/14 boot checks, about a minute of gravity at a 259 MB peak.
+- **`fleetExclude` and `pihole-api` (#166):** a `hosts.json` reason keeps pi-hole out of the default `/fleet-rollout` (a fleet reboot takes household DNS down); `pihole-api` reads `cli_pw` through one NOPASSWD sudo rule for exactly that command.
+- **Hermes and Tailscale (#167):** trusted write access to the Tailscale MCP minus the four credential-minting tools. The nameserver swap during the cutover needed it.
+- **Skills (#165):** `pi-sd-flash`, `pi-cutover`, `deploy-pi-host` and `pi-host.sh`, built by the manager agent and reviewed here.
+
+### Decisions
+- Flash the pi-hole over its own card with a verified full-card image as rollback, then delete that image once both Pis proved themselves; carry each Pi's Tailscale identity by copying `tailscaled.state` instead of new nodes plus an auth key.
+- Hermes keeps Tailscale write access but not credential minting (the OAuth scopes could mint keys); `tools.include = null` because the live config is deep-merged.
+- `pihole-api` gets one narrow sudo rule over blanket NOPASSWD or a sops-exposed password, accepting that anyone holding bosko's SSH key can call the Pi-hole API.
+
+### Issues / surprises
+- The first pi-hole deploy hand-off was reported done but the Pi still showed generation 1; comparing the Pi's generations and store path against the build caught it, and the second attempt worked.
+- Hermes used curl and the OAuth secret when its MCP tools were read-only, and its running daemon kept the 39-tool list after the config edit. Its self-reports are unreliable, so every claim was checked with a read-only MCP call.
+- The Tailscale MCP `set_nameservers` dropped `useWithExitNode` on both Hermes's change and mine; the user re-ticked it in the admin console.
+- Remote `rm -rf` was blocked by auto mode, so the staging-directory deletions were user hand-offs.
+
+### Next session
+- Watch the first weekly pi-hole gravity run (Sun 2026-11-29 04:00 EST), roll laptop and natalie-laptop forward with `/fleet-rollout`, then the carried-over Hermes verification, stale local-model cleanup and gaming checks listed in project-state.md.
+
+**Commits**: `22539d9..06b68ff` (PRs #162-#167)
+
+Secret-scan: clean (tree + 2,170 commits, all 5 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-23 (session 158) — Hermes on every desktop, Qwen stack removed, 11-22 rollout
 
 **Focus**: Close-only for five conversations: put Hermes on all three desktops, bump and roll out the flake, and land the weekly improve-system PR.
@@ -110,36 +142,6 @@ Secret-scan: clean (tree + 2,121 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `06d266c..552b108` (6 PRs, #140-#145; this session's own are #144 and #145)
 
 Secret-scan: clean (tree + 2,118 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-15 (session 154) — nixpkgs pin lifted, pinchflat-ngx, kernel pin dance, natalie-laptop Wi-Fi
-
-**Focus**: Close out two days of gaming and natalie-laptop work (17 conversations): unpin nixpkgs, move Pinchflat to NGX, survive a zen kernel panic, and keep natalie-laptop's Wi-Fi alive.
-
-### What changed (and why)
-- **Pin lift (#127):** `nixpkgs` back on `nixos-unstable`; vendor-reset dropped (the passthrough VM is scrapped), Pinchflat moved to `pinchflat-ngx` after a stopped-service DB backup, `gtk2`/`qutebrowser` dropped, `llama-cpp-cuda` limited to sm_86 so the dry-run stopped compiling ten architectures.
-- **Pinchflat-NGX:** live; 16 migrated sources were typed `playlist` and failed metadata decoding. A URL round-trip fixed the live DB; upstream fixed it in `dev` (#216, PR #218), tested on a backup copy in a sandbox.
-- **Kernel:** zen 7.3.4 panicked gaming's initrd twice, so #128 pinned 7.2.10 via a second input; nixpkgs then shipped 7.3.4-zen2 with the fix, #136 lifted the pin and gaming booted clean.
-- **natalie-laptop (#137, #138):** AX201 firmware asserts on zen 7.3.4-zen2 and stable 6.18; only zen 7.2.10 works, so that host alone is pinned (gen 121). Root cause unknown. `/fleet-rollout` now hands off `cleanup-host` per green remote host, never gaming.
-- **Small:** `shutdown-host` (#132), Wake-on-LAN for gaming (#135), mnemosyne version fix (#133), rtk override lifted (#130), flake bumps #129/#134.
-
-### Decisions
-- Host-only kernel pin for natalie-laptop rather than holding its whole nixpkgs: only 7.2.10 boots; 6.18 failed too.
-- Unpin kept out of the flake bump and merged without a boot test: the reboot is the test.
-- No `workflow` scope on the `gh` token; SSH pushes the upstream hermes-agent PR instead.
-
-### Issues / surprises
-- Two untested fixes each cost an offline reboot on natalie-laptop (now a feedback memory); the clock and Tailscale failures were only symptoms of no Wi-Fi.
-- The dry-run script says `switch` for kernel jumps: use `boot`.
-- Unchecked: WoL (`ethtool`, BIOS), `chronyc sources` and the 80% cap on natalie-laptop, laptop gen 217 details, `lsfg-vk`.
-
-### Next session
-- Verify gaming (smartd, WoL, BIOS), re-check Pinchflat-NGX for a real download on or after 2026-11-17, check natalie-laptop's chrony/cap/BIOS clock, rebuild laptop, settle merge vs squash in the weekly-PR skill.
-
-**Commits**: `2a7fbbf..67fc63f` (26 commits, PRs #127-#138)
-
-Secret-scan: clean (tree + 2,104 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 
