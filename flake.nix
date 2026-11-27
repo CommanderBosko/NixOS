@@ -45,6 +45,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # FamDash — the family dashboard app run by the famdash Raspberry Pi
+    # (hosts/famdash/famdash.nix). PRIVATE repo, fetched over SSH. flake = false
+    # makes it lazy: only the famdash host references it, so gaming and the
+    # laptops never fetch it, but the lock entry must stay committed, a full
+    # `nix flake update` needs SSH access to the repo (gaming has it), and CI
+    # loads a read-only deploy key (see .github/workflows/check.yml).
+    famdash = {
+      url = "git+ssh://git@github.com/CommanderBosko/FamDash";
+      flake = false;
+    };
+
     # Hermes Agent — AI agent framework by Nous Research (every desktop host).
     # No `follows`: upstream pins its own nixpkgs.
     hermes-agent.url = "github:NousResearch/hermes-agent";
@@ -216,6 +227,16 @@
           "${self}/modules/nvidia.nix"
           "${self}/modules/qbittorrent.nix"
           "${self}/modules/shared-folder-client.nix"
+        ];
+      };
+
+      # famdash — family dashboard Raspberry Pi 4B: headless, Wi-Fi only, booted
+      # from an SD image built on gaming (see hosts/famdash/configuration.nix)
+      famdash = mkSystem {
+        name = "famdash";
+        system = "aarch64-linux";
+        modules = commonModules ++ [
+          "${self}/hosts/famdash/configuration.nix"
         ];
       };
     };

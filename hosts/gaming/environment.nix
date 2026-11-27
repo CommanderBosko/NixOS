@@ -34,6 +34,11 @@
     xwininfo
   ];
 
+  # Run aarch64 binaries under QEMU so gaming can build the Raspberry Pi hosts'
+  # SD images (famdash, later pi-hole) with the flake's real closures; stock
+  # packages still come from cache.nixos.org, only custom derivations emulate.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
   # Lets bosko run `tailscale serve` without sudo (dev testing of Sidekick).
   services.tailscale.extraSetFlags = [ "--operator=bosko" ];
 

@@ -74,6 +74,22 @@
         "type": "github"
       }
     },
+    "famdash": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795215755,
+        "narHash": "sha256-IAXaKzlS+Dc0ijlUFoBB/IjgT2ulpgSfVzLxhgr0L10=",
+        "ref": "refs/heads/main",
+        "rev": "5d86d48cb543882ccdd17f77f6574d281b7e35c4",
+        "revCount": 118,
+        "type": "git",
+        "url": "ssh://git@github.com/CommanderBosko/FamDash"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/CommanderBosko/FamDash"
+      }
+    },
     "financeguru": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
@@ -408,6 +424,7 @@
     "root": {
       "inputs": {
         "dms": "dms",
+        "famdash": "famdash",
         "financeguru": "financeguru",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
