@@ -6,7 +6,7 @@
 # or disko.nix. Build the flashable image with:
 #   nix build .#nixosConfigurations.famdash.config.system.build.sdImage
 # (gaming builds it under QEMU: boot.binfmt.emulatedSystems in its environment.nix).
-{ config, modulesPath, pkgs, ... }:
+{ config, lib, modulesPath, pkgs, ... }:
 
 {
   imports = [
@@ -76,6 +76,19 @@
     Storage = "persistent";
     SystemMaxUse = "200M";
   };
+
+  # nixpkgs' sd-image unit that grows the root partition on boot fails on every
+  # device: util-linux 2.42 pads lsblk's MAJ:MIN column, so the partition number
+  # reads '2  ' and sfdisk rejects it. Same steps as upstream, padding stripped.
+  systemd.services.expand-root-partition.script = lib.mkForce ''
+    rootPart=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /)
+    bootDevice=$(${pkgs.util-linux}/bin/lsblk -npo PKNAME "$rootPart")
+    partNum=$(${pkgs.util-linux}/bin/lsblk -npo MAJ:MIN "$rootPart" | ${pkgs.coreutils}/bin/tr -d '[:space:]' | ${pkgs.gawk}/bin/gawk -F: '{print $2}')
+
+    echo ",+," | ${pkgs.util-linux}/bin/sfdisk -N"$partNum" --no-reread "$bootDevice"
+    ${pkgs.parted}/bin/partprobe
+    ${pkgs.e2fsprogs}/bin/resize2fs "$rootPart"
+  '';
 
   # 4 GB board with no swap otherwise.
   zramSwap.enable = true;
