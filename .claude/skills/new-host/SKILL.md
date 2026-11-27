@@ -2,7 +2,7 @@
 name: new-host
 description: Use this skill when the user wants to "add a new host", "scaffold a new machine", "add a new NixOS system", "create a new host", or "add X to the flake". It scaffolds all host files, registers the host with sops-nix, and shows the flake.nix entry to add.
 model: haiku
-version: 0.5.0
+version: 0.6.0
 ---
 
 # New NixOS Host Scaffolder
@@ -29,7 +29,9 @@ Ask the user the following questions. Batch them into a single message. Do not p
 2. **Host type** — One of:
    - `desktop` — Uses `desktopModules`. Has a display manager, a DE, flatpaks, Home Manager. Follows the gaming/laptop/natalie-laptop pattern.
    - `server` — Headless, uses `commonModules` only. No DE, no flatpaks, no Home Manager. Follows the server pattern.
-   - `remote` — Headless, uses `commonModules`, may be a different architecture (e.g. ARM). Uses a single `configuration.nix` rather than separate `environment.nix` + `networking.nix`. No host currently in the flake uses this pattern — `assets/remote/configuration.nix` is the template.
+   - `remote` — For a **non-Pi** remote machine (boots via systemd-boot/EFI and has a generated `hardware-configuration.nix`). Headless, uses `commonModules`, may be a different architecture (e.g. ARM). Uses a single `configuration.nix` rather than separate `environment.nix` + `networking.nix`. No host currently in the flake uses this pattern — `assets/remote/configuration.nix` is the template. A Raspberry Pi is NOT this type (see the routing rule below).
+
+   **Routing rule — check this before asking the type question, and again if any answer shows the machine is a Pi:** if the machine is a Raspberry Pi or any other SD-image board, do NOT scaffold from these templates. Read `references/pi-sd-image-host.md` and follow that runbook (it hands off to the `pi-sd-flash`, `pi-cutover` and `deploy-pi-host` skills), then stop — Steps 2-9 below do not apply.
 
    If the user did not already state the host type, present this pick via the **AskUserQuestion tool** with three options (`desktop`, `server`, `remote`) rather than free-form prose; skip the question if the user already supplied it.
 
@@ -140,7 +142,7 @@ After showing the flake entry, tell the user:
 
 ## Step 8 — Register the host with sops-nix (REQUIRED)
 
-Once the new host boots for the first time, see `references/sops-registration.md` to register it with sops-nix — required before password login works.
+Once the new host boots for the first time, see `references/sops-registration.md` to register it with sops-nix — required before password login works. (A Raspberry Pi is the exception: its host key is pre-generated BEFORE first boot, so follow the sops section of `references/pi-sd-image-host.md` instead.)
 
 ---
 
@@ -171,3 +173,9 @@ or the `nixos-dry-run` skill, before doing a full rebuild.
 
 `scripts/derive-age-key.sh <hostname>` — SSHes to the host and converts its SSH ed25519 host key to
 an age recipient key via `ssh-to-age`. Used in Step 8. Prints only the public key.
+
+## References
+
+- `references/pi-sd-image-host.md` — runbook for a Raspberry Pi / SD-image host (what differs from `remote`, sops key pre-generation, hand-offs to `pi-sd-flash`, `pi-cutover` and `deploy-pi-host`, the expand-root-partition bug). Load it whenever the machine is a Pi; Step 1 routes there.
+- `references/sops-registration.md` — Step 8's post-first-boot sops-nix registration. Load it in Step 8 for every non-Pi host.
+- `references/history.md` — background on why two of Step 3's placeholder rules exist. Load it only if one of those rules looks wrong.
