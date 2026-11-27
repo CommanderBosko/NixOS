@@ -2,6 +2,15 @@
 
 Older `Next Steps` session blocks rotated out of [project-state.md](project-state.md) by session-closer, most recent first. Git history holds every pre-rotation version of that file.
 
+**Session 155 next steps:**
+1. Rebuild laptop and natalie-laptop from `main` with `/fleet-rollout` (natalie-laptop stays on its zen 7.2.10 pin): they lack #140-#145. Then confirm nix-ld works there (`echo $NIX_LD`, `ls /run/current-system/sw/share/nix-ld/lib | head`) and the native `claude` build starts. If an Electron, AppImage or downloaded .NET binary fails on a laptop, add a small shared tier to `modules/development.nix` (libgbm, libxkbcommon, libxcb, icu) instead of copying gaming's list.
+2. Play one Steam game on gaming (gen 511) as a sanity check of the trimmed nix-ld list; only a probe binary and Rift were tested.
+3. gaming checks still open from session 154: `systemctl status smartd`, `sudo -n smartctl -H <nvme device>` (no password), `sudo ethtool enp4s0` shows `Wake-on: g` (ethtool is now installed, #142), BIOS "PCIE Devices Power On" on and ErP off, then `wake-host gaming` from another LAN machine; in btop press `5` for the `gpu0` panel.
+4. Re-check Pinchflat-NGX for a real download (dashboard Downloads, `journalctl -u pinchflat`, new files under `/mnt/media/YouTube`); the #218 fix is only in `dev`.
+5. natalie-laptop (gen 121, zen 7.2.10 pin): `chronyc sources` should list `162.159.200.*`, the charge threshold should read 80, check the BIOS clock, CMOS battery and `/etc/resolv.conf`; never touch the pin without the user at the machine; offer `cleanup-host natalie-laptop` after a few stable days.
+6. Hermes (#143, from another conversation, not verified here): save one memory and confirm the pre_tool_call check no longer fails closed for 60 s. Still open: remove the wowaudit MCP block and four token files (see Current Goals).
+7. Carried over, details in Current Goals: laptop checklist (node exporters, Canon printing, tailscale MCP, pi-hole DNS, VirtualBox, Proton sign-in), `ssh bosko@gaming`/`ssh bosko@laptop` from natalie-laptop (PR #109 key), revoke the pre-rotation Tailscale OAuth client, Oracle cleanup outside the repo, settle merge vs squash in `review-improve-system-pr`, watch the next `/improve-system` or `/dream` run's `send-results`, Waydroid (Wild Rift), Hermes calibrate (re-run 16 items), gaming root disk 93% full, device follow-ups (Fire Stick, Tab A7, TCL update, pi-hole `apt upgrade`), `/improve-memory` to shrink `MEMORY.md`.
+
 **Session 154 next steps:**
 1. gaming (gen 507): run `systemctl status smartd`, `sudo -n smartctl -H <nvme device>` (no password), `sudo ethtool enp4s0` (look for `Wake-on: g`), check the BIOS has "PCIE Devices Power On" on and ErP off, then `wake-host gaming` from another LAN machine. In btop press `5` once for the `gpu0` panel. Check `lsfg-vk` still works.
 2. On or after 2026-11-17 re-check Pinchflat-NGX for a real download (dashboard Downloads count, `journalctl -u pinchflat`, new files under `/mnt/media/YouTube`). The re-check is in Current Goals; the upstream fix #218 is in `dev` only until a release ships.

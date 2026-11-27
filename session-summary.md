@@ -4,6 +4,31 @@ _Older entries are in [session-summary-archive.md](session-summary-archive.md)._
 
 ---
 
+## Session: 2026-11-27 (session 160) — 11-27 flake bump merged and rolled out to the whole fleet
+
+**Focus**: Close-only. Five conversations since the session 159 close: the 2026-11-27 flake bump (#169), a full `/fleet-rollout` of it, gaming's reboot and a `/fleet-status` sweep. Nothing else was committed.
+
+### What changed (and why)
+- **Flake bump #169:** dms, famdash, hermes-agent, home-manager, mnemosyne and sops-nix moved; nixpkgs did not (still `2786a2a7`). mnemosyne upstream is still 4.2.0 / 0.7.8, so its hardcoded label needed no edit. `flake-check` and `deep-eval-check` passed on all five hosts. Landed with `land-prs` (main is protected).
+- **Fleet rollout (boot mode, Training Mode on):** natalie-laptop gen 124 (zen 7.2.10 pin held, Wi-Fi and tailnet fine), laptop gen 223 (nixpkgs 11-13 to 11-21, kernel 7.3.4 to 7.3.5), famdash gen 4, gaming gen 527 (user rebooted; clean boot), pi-hole untouched at gen 2. `cleanup-host` ran on both laptops. `/fleet-status` afterwards: all five hosts failed none, staged no, reboot no.
+
+### Decisions
+- pi-hole was skipped because its built toplevel was identical to the running one (checked before asking for a downtime window), so household DNS never blipped.
+- famdash skipped `cleanup-host` (flatpak step does not apply; the Pi has its own `nix-gc.timer`); gaming stayed in boot mode although the dry-run script said `switch` (only `dms-shell` and `dux-qt-base` changed).
+
+### Issues / surprises
+- The first famdash verify and sweep raced the Pi's boot and reported it unreachable; one retry a minute later passed. `fleet-rollout` has no post-boot retry for the Pis and its Step 6b does not know they differ (recorded in Known Issues).
+- Claude could not reboot gaming (polkit refused, sudo needs a password), so it was a user hand-off. Gaming's config revision is not recorded, so "gen 527 includes #169" is inferred from build time, not proven.
+
+### Next session
+- Check NIX_LD, the native `claude` build, the Hermes tool list and the memory hook on both laptops; watch pi-hole's first weekly gravity run (Sun 2026-11-29 04:00 EST); then the carried-over Hermes verification, stale local-model cleanup and gaming checks listed in project-state.md.
+
+**Commits**: `d80517d..b4f6aef` (PR #169: flake.lock bump plus its merge)
+
+Secret-scan: clean (tree + 2,174 commits, all 5 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-27 (session 159) — Both Pis on NixOS: famdash and pi-hole cut over, Hermes manages Tailscale
 
 **Focus**: Move both Raspberry Pis from Raspberry Pi OS to NixOS (famdash first, then the pi-hole), land the Pi skills, and finish the housekeeping. The range since the last close also holds #158-#161 (dream fixes, Immich on gaming, the gvfs/dconf fix, Hermes interview rules) from other conversations; they are not narrated here.
@@ -115,33 +140,6 @@ Secret-scan: clean (tree + 2,126 commits, all 3 `secrets/*.yaml` encrypted).
 **Commits**: `67f5e99..9c8dd41` (1 PR: #147)
 
 Secret-scan: clean (tree + 2,121 commits, all 3 `secrets/*.yaml` encrypted).
-
----
-
-## Session: 2026-11-18 (session 155) — nix-ld audit: trim, add, drop mesa/zulu
-
-**Focus**: Review the nix-ld library lists for redundancy and gaps (with a `/research` run), then apply, probe-test and land the result on gaming.
-
-### What changed (and why)
-- **#144:** gaming's list dropped `zlib` (a nixpkgs default), `udev` (default systemd has libudev.so.1) and `xwayland` (no `.so` in its lib/), and gained `libgbm`, `libxkbcommon`, `libxcb`, `libxscrnsaver`, `libxshmfence`, `cups`, `libnotify`, `libxxf86vm`, `openal`, `libGLU` and `icu`; a comment notes the list merges with the defaults.
-- **#145:** `zulu` and `mesa` dropped after the user chose to test them. Rift has its own runtime so zulu was unused (and its `libjvm.so` sits in a subdirectory nix-ld ignores); a probe binary through nix-ld showed GL/EGL/Vulkan work without mesa (RTX 3070 enumerated), and adding mesa back changed nothing. Closure -352 MiB.
-- Also merged since the last close but done in other conversations: #140 Code Mode opt-in, #141 nix-ld on every desktop host, #142 ethtool on gaming, #143 Hermes hook timeout 120 s.
-
-### Decisions
-- Ground truth came from `nix eval` of the locked nixpkgs, not the web: the module merges user libraries with 14 defaults, which contradicted one Discourse post. 9 of 10 research sources were readable, most thin.
-- Laptops stay on the defaults until a real binary fails there; a shared tier belongs in `development.nix`, not a copy of gaming's list.
-- #145 landed only after the user rebuilt from the branch and the probe passed (the branch was kept unmerged for that test).
-
-### Issues / surprises
-- A `nix eval` helper first read `glib`, `pango`, `libva` and a few others as empty because their default output is `bin`/`dev`; `lib.getLib` was needed. Not a real finding.
-- A shared REPL variable (`d`) was shadowed once, so a memory edit failed and was redone with an explicit path.
-
-### Next session
-- Rebuild laptop and natalie-laptop (they lack #140-#145) and confirm nix-ld plus the native `claude` build there; play one Steam game on gaming; the session-154 checks (smartd, WoL, Pinchflat-NGX, natalie-laptop chrony) are still open.
-
-**Commits**: `06d266c..552b108` (6 PRs, #140-#145; this session's own are #144 and #145)
-
-Secret-scan: clean (tree + 2,118 commits, all 3 `secrets/*.yaml` encrypted).
 
 ---
 

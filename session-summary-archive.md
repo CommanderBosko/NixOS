@@ -1,3 +1,30 @@
+## Session: 2026-11-18 (session 155) — nix-ld audit: trim, add, drop mesa/zulu
+
+**Focus**: Review the nix-ld library lists for redundancy and gaps (with a `/research` run), then apply, probe-test and land the result on gaming.
+
+### What changed (and why)
+- **#144:** gaming's list dropped `zlib` (a nixpkgs default), `udev` (default systemd has libudev.so.1) and `xwayland` (no `.so` in its lib/), and gained `libgbm`, `libxkbcommon`, `libxcb`, `libxscrnsaver`, `libxshmfence`, `cups`, `libnotify`, `libxxf86vm`, `openal`, `libGLU` and `icu`; a comment notes the list merges with the defaults.
+- **#145:** `zulu` and `mesa` dropped after the user chose to test them. Rift has its own runtime so zulu was unused (and its `libjvm.so` sits in a subdirectory nix-ld ignores); a probe binary through nix-ld showed GL/EGL/Vulkan work without mesa (RTX 3070 enumerated), and adding mesa back changed nothing. Closure -352 MiB.
+- Also merged since the last close but done in other conversations: #140 Code Mode opt-in, #141 nix-ld on every desktop host, #142 ethtool on gaming, #143 Hermes hook timeout 120 s.
+
+### Decisions
+- Ground truth came from `nix eval` of the locked nixpkgs, not the web: the module merges user libraries with 14 defaults, which contradicted one Discourse post. 9 of 10 research sources were readable, most thin.
+- Laptops stay on the defaults until a real binary fails there; a shared tier belongs in `development.nix`, not a copy of gaming's list.
+- #145 landed only after the user rebuilt from the branch and the probe passed (the branch was kept unmerged for that test).
+
+### Issues / surprises
+- A `nix eval` helper first read `glib`, `pango`, `libva` and a few others as empty because their default output is `bin`/`dev`; `lib.getLib` was needed. Not a real finding.
+- A shared REPL variable (`d`) was shadowed once, so a memory edit failed and was redone with an explicit path.
+
+### Next session
+- Rebuild laptop and natalie-laptop (they lack #140-#145) and confirm nix-ld plus the native `claude` build there; play one Steam game on gaming; the session-154 checks (smartd, WoL, Pinchflat-NGX, natalie-laptop chrony) are still open.
+
+**Commits**: `06d266c..552b108` (6 PRs, #140-#145; this session's own are #144 and #145)
+
+Secret-scan: clean (tree + 2,118 commits, all 3 `secrets/*.yaml` encrypted).
+
+---
+
 ## Session: 2026-11-15 (session 154) — nixpkgs pin lifted, pinchflat-ngx, kernel pin dance, natalie-laptop Wi-Fi
 
 **Focus**: Close out two days of gaming and natalie-laptop work (17 conversations): unpin nixpkgs, move Pinchflat to NGX, survive a zen kernel panic, and keep natalie-laptop's Wi-Fi alive.
